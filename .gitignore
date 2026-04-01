@@ -1,0 +1,8 @@
+node_modules/
+vendor/
+dist/
+release/
+*.sql
+*.tar.gz
+*.zip
+.DS_Store

@@ -1,0 +1,28 @@
+{
+	"name": "automattic/newspack-lite-site",
+	"description": "Lightweight Newspack site configuration",
+	"type": "wordpress-plugin",
+	"license": "GPL-3.0",
+	"require-dev": {
+		"automattic/vipwpcs": "^3.0",
+		"wp-coding-standards/wpcs": "^3.0",
+		"dealerdirect/phpcodesniffer-composer-installer": "*",
+		"phpcompatibility/phpcompatibility-wp": "*",
+		"yoast/phpunit-polyfills": "^2.0",
+		"phpunit/phpunit": "^9.5"
+	},
+	"autoload": {
+		"classmap": [
+			"./includes"
+		]
+	},
+	"config": {
+		"platform": {
+			"php": "8.3"
+		},
+		"allow-plugins": {
+			"composer/installers": true,
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}
