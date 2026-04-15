@@ -69,13 +69,13 @@ namespace Newspack_Lite_Site;
 	$all_posts = array_slice( $all_posts, 0, Lite_Site::get_number_of_posts() );
 
 	foreach ( $all_posts as $current_post ) {
+		$is_sticky = in_array( $current_post->ID, $sticky_post_ids, true );
 		printf(
-			'<li>%s<a href="/%s/%d">%s</a>%s</li>',
-			in_array( $current_post->ID, $sticky_post_ids, true ) ? '<h3>' : '',
-			esc_attr( Lite_Site::get_url_base() ),
-			esc_attr( $current_post->ID ),
+			'<li>%s<a href="%s">%s</a>%s</li>',
+			$is_sticky ? '<h3>' : '',
+			esc_url( Lite_Site::get_lite_page_url( $current_post ) ),
 			esc_html( $current_post->post_title ),
-			in_array( $current_post->ID, $sticky_post_ids, true ) ? '</h3>' : ''
+			$is_sticky ? '</h3>' : ''
 		);
 	}
 	?>
