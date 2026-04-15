@@ -106,41 +106,174 @@ class Lite_Site_Settings {
 	 * Render settings page
 	 */
 	public static function render_settings_page() {
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'Lite Site', 'newspack-lite-site' ); ?></h1>
+			<p><?php esc_html_e( 'Lite Site is a text-only version of this website that loads faster and uses less data.', 'newspack-lite-site' ); ?></p>
+			<p><?php esc_html_e( 'It’s designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies.', 'newspack-lite-site' ); ?></p>
+			<form action="options.php" method="post">
+				<?php
+				settings_fields( 'newspack_lite_site' );
+				do_settings_sections( 'newspack_lite_site' );
+				submit_button();
+				?>
+			</form>
+		</div>
+		<?php
 	}
 
 	/**
 	 * Render enabled field
 	 */
 	public static function render_enabled_field() {
+		$settings = get_option( Lite_Site::OPTION_NAME, [] );
+		?>
+		<label>
+			<input
+				type="checkbox"
+				name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[enabled]"
+				value="1"
+				<?php checked( ! empty( $settings['enabled'] ) ); ?>
+			>
+			<?php esc_html_e( 'Enable lite site feature', 'newspack-lite-site' ); ?>
+		</label>
+		<?php
 	}
 
 	/**
 	 * Render URL base field
 	 */
 	public static function render_url_base_field() {
+		$settings = get_option( Lite_Site::OPTION_NAME, [] );
+		$url_base = ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
+		?>
+		<input
+			type="text"
+			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[url_base]"
+			value="<?php echo esc_attr( $url_base ); ?>"
+			class="regular-text"
+		>
+		<p class="description">
+			<?php
+			printf(
+				/* translators: %s: is the site URL without a trailing slash, ex: https://example.com */
+				esc_html__( 'The URL base for the lite site (e.g. "lite" for %s/article-slug/lite).', 'newspack-lite-site' ),
+				esc_url( untrailingslashit( home_url() ) )
+			);
+			?>
+		</p>
+		<?php
 	}
 
 	/**
 	 * Render number of posts field
 	 */
 	public static function render_number_of_posts_field() {
+		$settings        = get_option( Lite_Site::OPTION_NAME, [] );
+		$number_of_posts = ! empty( $settings['number_of_posts'] ) ? intval( $settings['number_of_posts'] ) : 20;
+		?>
+		<input
+			type="number"
+			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[number_of_posts]"
+			value="<?php echo esc_attr( $number_of_posts ); ?>"
+			min="1"
+			max="100"
+			step="1"
+		>
+		<?php
 	}
 
 	/**
 	 * Render categories field
 	 */
 	public static function render_categories_field() {
+		$settings            = get_option( Lite_Site::OPTION_NAME, [] );
+		$selected_categories = ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
+		$categories          = get_categories( [ 'hide_empty' => false ] );
+		?>
+		<select
+			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[categories][]"
+			multiple
+			class="regular-text"
+			style="min-height: 100px;"
+		>
+			<option value="" <?php selected( empty( $selected_categories ) ); ?>>
+				<?php esc_html_e( 'All categories', 'newspack-lite-site' ); ?>
+			</option>
+			<?php foreach ( $categories as $category ) : ?>
+				<option
+					value="<?php echo esc_attr( $category->term_id ); ?>"
+					<?php selected( in_array( $category->term_id, $selected_categories, true ) ); ?>
+				>
+					<?php echo esc_html( $category->name ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+		<p class="description">
+			<?php esc_html_e( 'Select categories to include.', 'newspack-lite-site' ); ?>
+		</p>
+		<?php
 	}
 
 	/**
 	 * Render footer HTML field
 	 */
 	public static function render_footer_html_field() {
+		$settings    = get_option( Lite_Site::OPTION_NAME, [] );
+		$footer_html = ! empty( $settings['footer_html'] ) ? $settings['footer_html'] : '';
+		?>
+		<textarea
+			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[footer_html]"
+			rows="5"
+			class="large-text"
+		><?php echo esc_textarea( $footer_html ); ?></textarea>
+		<p class="description">
+			<?php esc_html_e( 'HTML to be displayed in the footer of lite site pages.', 'newspack-lite-site' ); ?>
+		</p>
+		<?php
 	}
 
 	/**
 	 * Render GA4 Measurement ID field
 	 */
 	public static function render_ga4_measurement_id_field() {
+		$settings           = get_option( Lite_Site::OPTION_NAME, [] );
+		$ga4_measurement_id = ! empty( $settings['ga4_measurement_id'] ) ? $settings['ga4_measurement_id'] : '';
+		?>
+		<input
+			type="text"
+			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[ga4_measurement_id]"
+			value="<?php echo esc_attr( $ga4_measurement_id ); ?>"
+			class="regular-text"
+			placeholder="G-XXXXXXXXXX"
+		>
+		<p class="description">
+			<?php esc_html_e( 'Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking.', 'newspack-lite-site' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Sanitize settings
+	 *
+	 * @param array $settings The settings to sanitize.
+	 * @return array The sanitized settings.
+	 */
+	public static function sanitize_settings( $settings ) {
+		flush_rewrite_rules(); // phpcs:ignore
+
+		// Handle "All categories" selection.
+		if ( ! empty( $settings['categories'] ) && in_array( '', $settings['categories'], true ) ) {
+			$settings['categories'] = [];
+		}
+
+		return [
+			'enabled'            => ! empty( $settings['enabled'] ),
+			'url_base'           => sanitize_title( $settings['url_base'] ),
+			'number_of_posts'    => min( 100, max( 1, intval( $settings['number_of_posts'] ) ) ),
+			'categories'         => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
+			'footer_html'        => wp_kses_post( $settings['footer_html'] ),
+			'ga4_measurement_id' => sanitize_text_field( $settings['ga4_measurement_id'] ),
+		];
 	}
 }
