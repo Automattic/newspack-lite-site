@@ -153,4 +153,153 @@ class Lite_Site {
 			exit;
 		}
 	}
+
+	/**
+	 * Get the supported post types for lite site rendering
+	 *
+	 * @return string[]
+	 */
+	public static function get_supported_post_types() {
+		/**
+		 * Filter the post types eligible for lite site rendering.
+		 *
+		 * @param string[] $types Array of post type slugs.
+		 */
+		return apply_filters( 'newspack_lite_site_supported_post_types', [ 'post', 'page' ] );
+	}
+
+	/**
+	 * Resolve a URL path to a published WP_Post
+	 *
+	 * @param string $path URL path without leading slash.
+	 * @return WP_Post|null
+	 */
+	public static function resolve_post( $path ) {
+		if ( empty( $path ) ) {
+			return null;
+		}
+
+		$url       = home_url( '/' . ltrim( $path, '/' ) );
+		$cache_key = 'nls_post_' . md5( $url );
+		$post_id   = wp_cache_get( $cache_key, 'newspack_lite_site' );
+
+		if ( false === $post_id ) {
+			$post_id = url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
+
+			if ( ! $post_id ) {
+				$post_id = url_to_postid( trailingslashit( $url ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
+			}
+
+			wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site' );
+		}
+
+		if ( ! $post_id ) {
+			return null;
+		}
+
+		$post = get_post( $post_id );
+
+		return ( $post && 'publish' === $post->post_status ) ? $post : null;
+	}
+
+	/**
+	 * Get the author(s) for a post
+	 *
+	 * @param WP_Post $post The post object.
+	 * @return string The formatted author(s) string with links.
+	 */
+	public static function get_authors( $post ) {
+		if ( function_exists( 'get_coauthors' ) ) {
+			$authors      = get_coauthors( $post->ID );
+			$author_links = array_map(
+				function ( $author ) {
+					return sprintf(
+						'<a href="%s">%s</a>',
+						esc_url( get_author_posts_url( $author->ID, $author->user_nicename ) ),
+						esc_html( $author->display_name )
+					);
+				},
+				$authors
+			);
+
+			if ( count( $author_links ) > 1 ) {
+				$last_author   = array_pop( $author_links );
+				$first_authors = implode(
+					', ',
+					$author_links
+				);
+
+				$author_string = sprintf(
+					/* translators: %1$s: a comma separated list of authors names with links and, after the "and" %2$s: one last author link */
+					__( '%1$s and %2$s', 'newspack-lite-site' ),
+					$first_authors,
+					$last_author
+				);
+
+			} else {
+				$author_string = $author_links[0] ?? '';
+			}
+		} else {
+			$author_string = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( get_author_posts_url( $post->post_author ) ),
+				esc_html( get_the_author_meta( 'display_name', $post->post_author ) )
+			);
+		}
+
+		return sprintf(
+			/* translators: %s: author name(s) */
+			__( 'By %s', 'newspack-lite-site' ),
+			$author_string
+		);
+	}
+
+	/**
+	 * Clean the post content for lite display
+	 *
+	 * @param string $content The post content.
+	 * @return string The cleaned content.
+	 */
+	public static function clean_content( $content ) {
+		// Remove HTML comments.
+		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
+
+		// First remove figures and their contents (including images and captions).
+		$content = preg_replace( '/<figure.*?>.*?<\/figure>/is', '', $content );
+
+		// Remove script tags.
+		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
+
+		// Define allowed HTML elements for text-only content.
+		$allowed_html = [
+			'p'          => [],
+			'h1'         => [],
+			'h2'         => [],
+			'h3'         => [],
+			'h4'         => [],
+			'h5'         => [],
+			'h6'         => [],
+			'ul'         => [],
+			'ol'         => [],
+			'li'         => [],
+			'blockquote' => [],
+			'strong'     => [],
+			'em'         => [],
+			'b'          => [],
+			'i'          => [],
+			'a'          => [
+				'href'  => true,
+				'title' => true,
+			],
+			'br'         => [],
+		];
+
+		// Strip all HTML except allowed elements.
+		$content = wp_kses( $content, $allowed_html );
+
+		// Clean up any empty paragraphs.
+		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
+
+		return $content;
+	}
 }
