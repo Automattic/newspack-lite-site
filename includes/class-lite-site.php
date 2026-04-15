@@ -37,11 +37,63 @@ class Lite_Site {
 	}
 
 	/**
+	 * Check if the current request is for the lite site.
+	 *
+	 * @return bool True if it's a lite site request, false otherwise.
+	 */
+	public static function is_lite_site_request() {
+		$is_lite = get_query_var( 'is_lite' );
+		return ! empty( $is_lite );
+	}
+
+	/**
 	 * Get the URL base (slug used for lite pages)
 	 */
 	public static function get_url_base() {
 		$settings = get_option( self::OPTION_NAME, [] );
 		return ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
+	}
+
+	/**
+	 * Get the number of posts to display in the archive
+	 */
+	public static function get_number_of_posts() {
+		$settings = get_option( self::OPTION_NAME, [] );
+		return ! empty( $settings['number_of_posts'] ) ? intval( $settings['number_of_posts'] ) : 20;
+	}
+
+	/**
+	 * Get the selected categories
+	 */
+	public static function get_categories() {
+		$settings = get_option( self::OPTION_NAME, [] );
+		return ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
+	}
+
+	/**
+	 * Get the footer HTML
+	 */
+	public static function get_footer_html() {
+		$settings = get_option( self::OPTION_NAME, [] );
+		return ! empty( $settings['footer_html'] ) ? $settings['footer_html'] : '';
+	}
+
+	/**
+	 * Get the GA4 Measurement ID
+	 */
+	public static function get_ga4_measurement_id() {
+		$settings = get_option( self::OPTION_NAME, [] );
+		return ! empty( $settings['ga4_measurement_id'] ) ? $settings['ga4_measurement_id'] : '';
+	}
+
+	/**
+	 * Get the lite version URL for a post
+	 *
+	 * @param WP_Post $post The post object.
+	 * @return string
+	 */
+	public static function get_lite_page_url( $post ) {
+		return untrailingslashit( get_permalink( $post ) ) . '/' . self::get_url_base();
 	}
 
 	/**
