@@ -24,6 +24,7 @@ class Lite_Site {
 		if ( self::is_enabled() ) {
 			add_action( 'init', [ __CLASS__, 'register_rewrite_rules' ] );
 			add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
+			add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		}
 	}
 
@@ -33,6 +34,14 @@ class Lite_Site {
 	public static function is_enabled() {
 		$settings = get_option( self::OPTION_NAME, [] );
 		return ! empty( $settings['enabled'] );
+	}
+
+	/**
+	 * Get the URL base (slug used for lite pages)
+	 */
+	public static function get_url_base() {
+		$settings = get_option( self::OPTION_NAME, [] );
+		return ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
 	}
 
 	/**
@@ -66,5 +75,30 @@ class Lite_Site {
 		$vars[] = 'is_lite';
 		$vars[] = 'lite_path';
 		return $vars;
+	}
+
+	/**
+	 * Handle template routing for lite site pages
+	 */
+	public static function handle_lite_site_templates() {
+		$is_lite = get_query_var( 'is_lite' );
+
+		if ( ! $is_lite ) {
+			return;
+		}
+
+		// Disable all other output.
+		remove_all_actions( 'wp_head' );
+		remove_all_actions( 'wp_footer' );
+
+		if ( 'archive' === $is_lite ) {
+			include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
+			exit;
+		}
+
+		if ( 'single' === $is_lite ) {
+			include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+			exit;
+		}
 	}
 }
