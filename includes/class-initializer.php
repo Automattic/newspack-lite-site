@@ -16,6 +16,7 @@ class Initializer {
 	 * Runs the initialization.
 	 */
 	public static function init() {
+		Lite_Site::init();
 		Lite_Site_Settings::init();
 	}
 }
