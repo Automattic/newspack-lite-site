@@ -16,6 +16,6 @@ class Initializer {
 	 * Runs the initialization.
 	 */
 	public static function init() {
-		// Register hooks and features here.
+		Lite_Site_Settings::init();
 	}
 }
