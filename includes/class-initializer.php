@@ -2,7 +2,7 @@
 /**
  * Newspack Lite Site plugin initialization.
  *
- * @package Newspack
+ * @package newspack-lite-site
  */
 
 namespace Newspack_Lite_Site;
