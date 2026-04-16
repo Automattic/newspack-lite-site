@@ -83,11 +83,25 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the primary color
+	 * Get the primary color (admin override takes priority, then theme default)
 	 *
 	 * @return string The primary color.
 	 */
 	public static function get_primary_color() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		if ( ! empty( $settings['primary_color'] ) ) {
+			return $settings['primary_color'];
+		}
+
+		return self::get_theme_primary_color();
+	}
+
+	/**
+	 * Get the theme's primary color, ignoring any admin override.
+	 *
+	 * @return string Hex color or 'currentcolor' if undetectable.
+	 */
+	public static function get_theme_primary_color() {
 		if ( wp_is_block_theme() ) {
 			$settings = wp_get_global_settings();
 			$palettes = $settings['color']['palette'] ?? [];
