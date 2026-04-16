@@ -14,6 +14,10 @@ namespace Newspack_Lite_Site;
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php bloginfo( 'name' ); ?></title>
+	<?php $font_import_url = Lite_Site::get_font_import_url(); ?>
+	<?php if ( $font_import_url ) : ?>
+		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
+	<?php endif; ?>
 	<?php require __DIR__ . '/lite-site-styles.php'; ?>
 	<?php
 	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();

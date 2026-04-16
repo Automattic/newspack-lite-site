@@ -92,6 +92,29 @@ class Lite_Site_Settings {
 			'newspack_lite_site',
 			'newspack_lite_site_main'
 		);
+
+		add_settings_section(
+			'newspack_lite_site_appearance',
+			__( 'Appearance', 'newspack-lite-site' ),
+			'__return_null',
+			'newspack_lite_site'
+		);
+
+		add_settings_field(
+			'font_import_url',
+			__( 'Font Import URL', 'newspack-lite-site' ),
+			[ __CLASS__, 'render_font_import_url_field' ],
+			'newspack_lite_site',
+			'newspack_lite_site_appearance'
+		);
+
+		add_settings_field(
+			'font_body',
+			__( 'Body Font', 'newspack-lite-site' ),
+			[ __CLASS__, 'render_font_body_field' ],
+			'newspack_lite_site',
+			'newspack_lite_site_appearance'
+		);
 	}
 
 	/**
@@ -259,6 +282,46 @@ class Lite_Site_Settings {
 	}
 
 	/**
+	 * Render font import URL field
+	 */
+	public static function render_font_import_url_field() {
+		$settings         = get_option( self::OPTION_NAME, [] );
+		$font_import_url  = ! empty( $settings['font_import_url'] ) ? $settings['font_import_url'] : '';
+		?>
+		<input
+			type="text"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[font_import_url]"
+			value="<?php echo esc_attr( $font_import_url ); ?>"
+			class="large-text"
+			placeholder="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
+		>
+		<p class="description">
+			<?php esc_html_e( 'URL or &lt;link&gt; tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages.', 'newspack-lite-site' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render body font field
+	 */
+	public static function render_font_body_field() {
+		$settings  = get_option( self::OPTION_NAME, [] );
+		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
+		?>
+		<input
+			type="text"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[font_body]"
+			value="<?php echo esc_attr( $font_body ); ?>"
+			class="regular-text"
+			placeholder="Open Sans"
+		>
+		<p class="description">
+			<?php esc_html_e( 'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.', 'newspack-lite-site' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Sanitize settings
 	 *
 	 * @param array $settings The settings to sanitize.
@@ -279,6 +342,28 @@ class Lite_Site_Settings {
 			'categories'         => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
 			'footer_html'        => wp_kses_post( $settings['footer_html'] ),
 			'ga4_measurement_id' => sanitize_text_field( $settings['ga4_measurement_id'] ),
+			'font_import_url'    => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
+			'font_body'          => sanitize_text_field( $settings['font_body'] ?? '' ),
 		];
+	}
+
+	/**
+	 * Sanitize a font import URL or <link> tag — always stores just the URL
+	 *
+	 * @param string $value Raw input (URL or full <link> tag).
+	 * @return string Sanitized URL, or empty string if invalid.
+	 */
+	private static function sanitize_font_import_url( $value ) {
+		$value = trim( $value );
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		if ( str_contains( $value, '<link' ) ) {
+			preg_match( '/href=["\']([^"\']+)["\']/', $value, $matches );
+			$value = $matches[1] ?? '';
+		}
+
+		return esc_url_raw( $value );
 	}
 }

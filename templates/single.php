@@ -22,6 +22,10 @@ if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_sup
 	<title><?php echo esc_html( $current_post->post_title ); ?> - <?php bloginfo( 'name' ); ?></title>
 	<link rel="canonical" href="<?php echo esc_url( get_permalink( $current_post ) ); ?>">
 	<meta name="robots" content="noindex, follow">
+	<?php $font_import_url = Lite_Site::get_font_import_url(); ?>
+	<?php if ( $font_import_url ) : ?>
+		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
+	<?php endif; ?>
 	<?php require __DIR__ . '/lite-site-styles.php'; ?>
 	<?php
 	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
