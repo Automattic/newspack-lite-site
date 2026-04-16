@@ -13,6 +13,11 @@ namespace Newspack_Lite_Site;
 class Lite_Site_Settings {
 
 	/**
+	 * The option name for storing settings
+	 */
+	const OPTION_NAME = 'newspack_lite_site_settings';
+
+	/**
 	 * Initialize the settings functionality
 	 */
 	public static function init() {
@@ -26,7 +31,7 @@ class Lite_Site_Settings {
 	public static function register_settings() {
 		register_setting(
 			'newspack_lite_site',
-			Lite_Site::OPTION_NAME,
+			self::OPTION_NAME,
 			[
 				'type'              => 'object',
 				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
@@ -126,12 +131,12 @@ class Lite_Site_Settings {
 	 * Render enabled field
 	 */
 	public static function render_enabled_field() {
-		$settings = get_option( Lite_Site::OPTION_NAME, [] );
+		$settings = get_option( self::OPTION_NAME, [] );
 		?>
 		<label>
 			<input
 				type="checkbox"
-				name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[enabled]"
+				name="<?php echo esc_attr( self::OPTION_NAME ); ?>[enabled]"
 				value="1"
 				<?php checked( ! empty( $settings['enabled'] ) ); ?>
 			>
@@ -144,12 +149,12 @@ class Lite_Site_Settings {
 	 * Render URL base field
 	 */
 	public static function render_url_base_field() {
-		$settings = get_option( Lite_Site::OPTION_NAME, [] );
+		$settings = get_option( self::OPTION_NAME, [] );
 		$url_base = ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
 		?>
 		<input
 			type="text"
-			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[url_base]"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[url_base]"
 			value="<?php echo esc_attr( $url_base ); ?>"
 			class="regular-text"
 		>
@@ -169,12 +174,12 @@ class Lite_Site_Settings {
 	 * Render number of posts field
 	 */
 	public static function render_number_of_posts_field() {
-		$settings        = get_option( Lite_Site::OPTION_NAME, [] );
+		$settings        = get_option( self::OPTION_NAME, [] );
 		$number_of_posts = ! empty( $settings['number_of_posts'] ) ? intval( $settings['number_of_posts'] ) : 20;
 		?>
 		<input
 			type="number"
-			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[number_of_posts]"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[number_of_posts]"
 			value="<?php echo esc_attr( $number_of_posts ); ?>"
 			min="1"
 			max="100"
@@ -187,12 +192,12 @@ class Lite_Site_Settings {
 	 * Render categories field
 	 */
 	public static function render_categories_field() {
-		$settings            = get_option( Lite_Site::OPTION_NAME, [] );
+		$settings            = get_option( self::OPTION_NAME, [] );
 		$selected_categories = ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
 		$categories          = get_categories( [ 'hide_empty' => false ] );
 		?>
 		<select
-			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[categories][]"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[categories][]"
 			multiple
 			class="regular-text"
 			style="min-height: 100px;"
@@ -219,11 +224,11 @@ class Lite_Site_Settings {
 	 * Render footer HTML field
 	 */
 	public static function render_footer_html_field() {
-		$settings    = get_option( Lite_Site::OPTION_NAME, [] );
+		$settings    = get_option( self::OPTION_NAME, [] );
 		$footer_html = ! empty( $settings['footer_html'] ) ? $settings['footer_html'] : '';
 		?>
 		<textarea
-			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[footer_html]"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[footer_html]"
 			rows="5"
 			class="large-text"
 		><?php echo esc_textarea( $footer_html ); ?></textarea>
@@ -237,12 +242,12 @@ class Lite_Site_Settings {
 	 * Render GA4 Measurement ID field
 	 */
 	public static function render_ga4_measurement_id_field() {
-		$settings           = get_option( Lite_Site::OPTION_NAME, [] );
+		$settings           = get_option( self::OPTION_NAME, [] );
 		$ga4_measurement_id = ! empty( $settings['ga4_measurement_id'] ) ? $settings['ga4_measurement_id'] : '';
 		?>
 		<input
 			type="text"
-			name="<?php echo esc_attr( Lite_Site::OPTION_NAME ); ?>[ga4_measurement_id]"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[ga4_measurement_id]"
 			value="<?php echo esc_attr( $ga4_measurement_id ); ?>"
 			class="regular-text"
 			placeholder="G-XXXXXXXXXX"
