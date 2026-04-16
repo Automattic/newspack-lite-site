@@ -101,6 +101,14 @@ class Lite_Site_Settings {
 		);
 
 		add_settings_field(
+			'primary_color',
+			__( 'Primary Color', 'newspack-lite-site' ),
+			[ __CLASS__, 'render_primary_color_field' ],
+			'newspack_lite_site',
+			'newspack_lite_site_appearance'
+		);
+
+		add_settings_field(
 			'font_import_url',
 			__( 'Font Import URL', 'newspack-lite-site' ),
 			[ __CLASS__, 'render_font_import_url_field' ],
@@ -282,6 +290,40 @@ class Lite_Site_Settings {
 	}
 
 	/**
+	 * Render primary color field
+	 */
+	public static function render_primary_color_field() {
+		$settings      = get_option( self::OPTION_NAME, [] );
+		$saved_color   = ! empty( $settings['primary_color'] ) ? $settings['primary_color'] : '';
+		$has_override  = ! empty( $saved_color );
+		$theme_color   = Lite_Site::get_theme_primary_color();
+		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+		$picker_value  = $has_override ? $saved_color : $default_color;
+		?>
+		<input
+			type="color"
+			id="nls-primary-color-picker"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[primary_color]"
+			value="<?php echo esc_attr( $picker_value ); ?>"
+		>
+		<button type="button" id="nls-reset-color" class="button" style="margin-left: 8px;">
+			<?php esc_html_e( 'Reset to default', 'newspack-lite-site' ); ?>
+		</button>
+		<script>
+			( function() {
+				var picker       = document.getElementById( 'nls-primary-color-picker' );
+				var resetBtn     = document.getElementById( 'nls-reset-color' );
+				var defaultColor = '<?php echo esc_js( $default_color ); ?>';
+
+				resetBtn.addEventListener( 'click', function() {
+					picker.value = defaultColor;
+				} );
+			} )();
+		</script>
+		<?php
+	}
+
+	/**
 	 * Render font import URL field
 	 */
 	public static function render_font_import_url_field() {
@@ -342,6 +384,7 @@ class Lite_Site_Settings {
 			'categories'         => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
 			'footer_html'        => wp_kses_post( $settings['footer_html'] ),
 			'ga4_measurement_id' => sanitize_text_field( $settings['ga4_measurement_id'] ),
+			'primary_color'      => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',
 			'font_import_url'    => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
 			'font_body'          => sanitize_text_field( $settings['font_body'] ?? '' ),
 		];
