@@ -11,10 +11,6 @@ namespace Newspack_Lite_Site;
  * Lite Site class
  */
 class Lite_Site {
-	/**
-	 * The option name for storing settings
-	 */
-	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
 	 * Initialize the lite site functionality
@@ -32,7 +28,7 @@ class Lite_Site {
 	 * Check if the lite site feature is enabled
 	 */
 	public static function is_enabled() {
-		$settings = get_option( self::OPTION_NAME, [] );
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
 		return ! empty( $settings['enabled'] );
 	}
 
@@ -50,7 +46,7 @@ class Lite_Site {
 	 * Get the URL base (slug used for lite pages)
 	 */
 	public static function get_url_base() {
-		$settings = get_option( self::OPTION_NAME, [] );
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
 		return ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
 	}
 
@@ -58,7 +54,7 @@ class Lite_Site {
 	 * Get the number of posts to display in the archive
 	 */
 	public static function get_number_of_posts() {
-		$settings = get_option( self::OPTION_NAME, [] );
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
 		return ! empty( $settings['number_of_posts'] ) ? intval( $settings['number_of_posts'] ) : 20;
 	}
 
@@ -66,7 +62,7 @@ class Lite_Site {
 	 * Get the selected categories
 	 */
 	public static function get_categories() {
-		$settings = get_option( self::OPTION_NAME, [] );
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
 		return ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
 	}
 
@@ -74,7 +70,7 @@ class Lite_Site {
 	 * Get the footer HTML
 	 */
 	public static function get_footer_html() {
-		$settings = get_option( self::OPTION_NAME, [] );
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
 		return ! empty( $settings['footer_html'] ) ? $settings['footer_html'] : '';
 	}
 
@@ -82,7 +78,7 @@ class Lite_Site {
 	 * Get the GA4 Measurement ID
 	 */
 	public static function get_ga4_measurement_id() {
-		$settings = get_option( self::OPTION_NAME, [] );
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
 		return ! empty( $settings['ga4_measurement_id'] ) ? $settings['ga4_measurement_id'] : '';
 	}
 
