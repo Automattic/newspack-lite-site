@@ -87,6 +87,25 @@ class Lite_Site {
 	}
 
 	/**
+	 * Get the primary color
+	 *
+	 * @return string The primary color.
+	 */
+	public static function get_primary_color() {
+		if ( ! function_exists( 'newspack_get_primary_color' ) ) {
+			return 'currentcolor';
+		}
+
+		$primary_color = newspack_get_primary_color();
+
+		if ( 'default' !== get_theme_mod( 'theme_colors' ) ) {
+			$primary_color = get_theme_mod( 'primary_color_hex', $primary_color );
+		}
+
+		return $primary_color;
+	}
+
+	/**
 	 * Get the lite version URL for a post
 	 *
 	 * @param WP_Post $post The post object.
