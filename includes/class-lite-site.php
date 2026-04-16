@@ -93,7 +93,9 @@ class Lite_Site {
 	 * @return string
 	 */
 	public static function get_lite_page_url( $post ) {
-		return untrailingslashit( get_permalink( $post ) ) . '/' . self::get_url_base();
+		$permalink = untrailingslashit( get_permalink( $post ) );
+		$path      = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
+		return home_url( self::get_url_base() . '/' . $path );
 	}
 
 	/**
@@ -109,9 +111,9 @@ class Lite_Site {
 			'top'
 		);
 
-		// Single: /{post-slug}/{url_base}.
+		// Single: /{url_base}/{post-slug}.
 		add_rewrite_rule(
-			'^(.+)/' . $url_base . '/?$',
+			'^' . $url_base . '/(.+)/?$',
 			'index.php?is_lite=single&lite_path=$matches[1]',
 			'top'
 		);
@@ -177,6 +179,12 @@ class Lite_Site {
 	public static function resolve_post( $path ) {
 		if ( empty( $path ) ) {
 			return null;
+		}
+
+		// Support numeric post IDs.
+		if ( is_numeric( $path ) ) {
+			$post = get_post( (int) $path );
+			return ( $post && 'publish' === $post->post_status ) ? $post : null;
 		}
 
 		$url       = home_url( '/' . ltrim( $path, '/' ) );
