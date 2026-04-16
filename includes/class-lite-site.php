@@ -115,6 +115,31 @@ class Lite_Site {
 	}
 
 	/**
+	 * Get the font import URL set in the lite site settings
+	 *
+	 * @return string Font provider URL, or empty string if not set.
+	 */
+	public static function get_font_import_url() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['font_import_url'] ) ? $settings['font_import_url'] : '';
+	}
+
+	/**
+	 * Get the font family for the lite site body text
+	 *
+	 * @return string CSS font-family value.
+	 */
+	public static function get_font_family() {
+		$settings  = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
+		if ( ! empty( $font_body ) ) {
+			return $font_body;
+		}
+
+		return 'system-ui, -apple-system, sans-serif';
+	}
+
+	/**
 	 * Get the lite version URL for a post
 	 *
 	 * @param WP_Post $post The post object.

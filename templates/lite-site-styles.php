@@ -10,7 +10,7 @@ namespace Newspack_Lite_Site;
 ?>
 <style>
 	body {
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family: <?php echo esc_html( Lite_Site::get_font_family() ); ?>;
 		font-size: clamp( 1.125rem, 0.929rem + 0.402vw, 1.25rem );
 		line-height: 1.6;
 		margin: 0 auto;
