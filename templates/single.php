@@ -13,6 +13,14 @@ if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_sup
 	status_header( 404 );
 	exit( 'Post not found' );
 }
+
+$is_liveblog  = Lite_Site::is_liveblog( $current_post );
+$post_content = Lite_Site::clean_content( $current_post->post_content );
+
+if ( $is_liveblog ) {
+	$liveblog_state   = Lite_Site::get_liveblog_state( $current_post );
+	$liveblog_entries = Lite_Site::get_liveblog_entries( $current_post->ID );
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?php bloginfo( 'language' ); ?>">
@@ -27,6 +35,9 @@ if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_sup
 		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
 	<?php endif; ?>
 	<?php require __DIR__ . '/lite-site-styles.php'; ?>
+	<?php if ( $is_liveblog ) : ?>
+		<?php require __DIR__ . '/liveblog-styles.php'; ?>
+	<?php endif; ?>
 	<?php
 	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
 	if ( $ga4_measurement_id ) :
@@ -57,9 +68,51 @@ if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_sup
 	</div>
 	<hr class="separator">
 
-	<div class="content">
-		<?php echo wp_kses_post( Lite_Site::clean_content( $current_post->post_content ) ); ?>
-	</div>
+	<?php if ( $post_content ) : ?>
+		<div class="content">
+			<?php echo wp_kses_post( $post_content ); ?>
+		</div>
+		<?php if ( $is_liveblog ) : ?>
+			<hr class="separator">
+		<?php endif; ?>
+	<?php endif; ?>
+
+	<?php if ( $is_liveblog ) : ?>
+		<div class="liveblog-status <?php echo esc_attr( $liveblog_state ); ?>">
+			<?php if ( 'enable' === $liveblog_state ) : ?>
+				<?php esc_html_e( 'Live', 'newspack-lite-site' ); ?>
+			<?php else : ?>
+				<?php esc_html_e( 'Archived', 'newspack-lite-site' ); ?>
+			<?php endif; ?>
+		</div>
+
+		<?php if ( ! empty( $liveblog_entries ) ) : ?>
+			<div class="liveblog-entries">
+				<?php foreach ( $liveblog_entries as $entry ) : ?>
+					<div class="liveblog-entry">
+						<div class="liveblog-entry-meta">
+							<time><?php echo esc_html( get_comment_date( 'g:i a', $entry ) ); ?></time>
+							<?php if ( $entry->user_id ) : ?>
+								&mdash; <?php echo esc_html( get_the_author_meta( 'display_name', $entry->user_id ) ); ?>
+							<?php elseif ( $entry->comment_author ) : ?>
+								&mdash; <?php echo esc_html( $entry->comment_author ); ?>
+							<?php endif; ?>
+						</div>
+						<div class="liveblog-entry-content">
+							<?php echo wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ); ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		<?php else : ?>
+			<p>
+				<?php
+				esc_html_e( 'There are no entries on this page.', 'newspack-lite-site' );
+				?>
+			</p>
+		<?php endif; ?>
+	<?php endif; ?>
+	
 	<?php
 	$footer_html = Lite_Site::get_footer_html();
 	if ( ! empty( $footer_html ) ) :

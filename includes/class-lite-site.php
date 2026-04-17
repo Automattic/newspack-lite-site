@@ -330,6 +330,60 @@ class Lite_Site {
 	}
 
 	/**
+	 * Check if a post is an active or archived liveblog.
+	 *
+	 * @param WP_Post $post The post object.
+	 * @return bool
+	 */
+	public static function is_liveblog( $post ) {
+		$state = self::get_liveblog_state( $post );
+		return in_array( $state, [ 'enable', 'archive' ], true );
+	}
+
+	/**
+	 * Get the liveblog state for a post.
+	 *
+	 * @param WP_Post $post The post object.
+	 * @return string 'enable', 'archive', or 'disable'.
+	 */
+	public static function get_liveblog_state( $post ) {
+		return get_post_meta( $post->ID, 'liveblog', true );
+	}
+
+	/**
+	 * Get liveblog entries for a post, with replaced/deleted entries filtered out.
+	 *
+	 * @param int $post_id The post ID.
+	 * @param int $limit   Max number of entries to return.
+	 * @return WP_Comment[]
+	 */
+	public static function get_liveblog_entries( $post_id, $limit = 100 ) {
+		$entries = get_comments(
+			[
+				'post_id' => $post_id,
+				'type'    => 'liveblog',
+				'status'  => 'liveblog',
+				'orderby' => 'comment_date_gmt',
+				'order'   => 'DESC',
+				'number'  => $limit,
+			]
+		);
+
+		if ( empty( $entries ) ) {
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				$entries,
+				function ( $entry ) {
+					return ! get_comment_meta( $entry->comment_ID, 'liveblog_replaces', true );
+				}
+			)
+		);
+	}
+
+	/**
 	 * Clean the post content for lite display
 	 *
 	 * @param string $content The post content.
