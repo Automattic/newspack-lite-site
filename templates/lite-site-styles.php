@@ -32,6 +32,9 @@ namespace Newspack_Lite_Site;
 	a {
 		color: currentcolor;
 	}
+	.content a {
+		color: <?php echo esc_html( Lite_Site::get_primary_color() ); ?>;
+	}
 	hr.separator {
 		border: 0.125rem solid <?php echo esc_html( Lite_Site::get_primary_color() ); ?>;
 		margin: 2rem 0;
