@@ -131,5 +131,42 @@ if ( $is_liveblog ) {
 	 */
 	do_action( 'newspack_lite_site_single_after_footer', $current_post );
 	?>
+	
+	<script>
+		( function() {
+			document.addEventListener( 'click', function( e ) {
+				var btn = e.target.closest( '.lite-image-load-btn' );
+				if ( ! btn ) {
+					return;
+				}
+				var placeholder = btn.closest( '.lite-image-placeholder' );
+				if ( ! placeholder ) {
+					return;
+				}
+
+				var src     = placeholder.getAttribute( 'data-src' );
+				var srcset  = placeholder.getAttribute( 'data-srcset' );
+				var alt     = placeholder.getAttribute( 'data-alt' ) || '';
+				var caption = placeholder.getAttribute( 'data-caption' ) || '';
+
+				var figure = document.createElement( 'figure' );
+				var img    = document.createElement( 'img' );
+				img.src = src;
+				img.alt = alt;
+				if ( srcset ) {
+					img.srcset = srcset;
+				}
+				figure.appendChild( img );
+
+				if ( caption ) {
+					var figcaption = document.createElement( 'figcaption' );
+					figcaption.textContent = caption;
+					figure.appendChild( figcaption );
+				}
+
+				placeholder.parentNode.replaceChild( figure, placeholder );
+			} );
+		} )();
+	</script>
 </body>
 </html>

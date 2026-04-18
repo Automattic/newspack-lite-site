@@ -393,15 +393,19 @@ class Lite_Site {
 		// Remove HTML comments.
 		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
 
-		// First remove figures and their contents (including images and captions).
-		$content = preg_replace( '/<figure.*?>.*?<\/figure>/is', '', $content );
+		// Replace figures with lazy-load placeholders before stripping.
+		$content = preg_replace_callback(
+			'/<figure\b[^>]*>.*?<\/figure>/is',
+			[ __CLASS__, 'figure_to_placeholder' ],
+			$content
+		);
 
 		// Remove script tags.
 		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
 
 		// Define allowed HTML elements for text-only content.
 		$allowed_html = [
-			'p'          => [],
+			'p'          => [ 'class' => true ],
 			'h1'         => [],
 			'h2'         => [],
 			'h3'         => [],
@@ -421,6 +425,17 @@ class Lite_Site {
 				'title' => true,
 			],
 			'br'         => [],
+			'div'        => [
+				'class'        => true,
+				'data-src'     => true,
+				'data-srcset'  => true,
+				'data-alt'     => true,
+				'data-caption' => true,
+			],
+			'button'     => [
+				'class' => true,
+				'type'  => true,
+			],
 		];
 
 		// Strip all HTML except allowed elements.
@@ -430,5 +445,68 @@ class Lite_Site {
 		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
 
 		return $content;
+	}
+
+	/**
+	 * Convert a <figure> element into a lazy-load image placeholder.
+	 *
+	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
+	 * @return string Placeholder div HTML, or empty string if no image src found.
+	 */
+	private static function figure_to_placeholder( $matches ) {
+		$figure_html = $matches[0];
+
+		$src    = '';
+		$srcset = '';
+		$alt    = '';
+
+		if ( preg_match( '/<img\b([^>]*)>/i', $figure_html, $img_match ) ) {
+			$attrs = $img_match[1];
+			if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/', $attrs, $m ) ) {
+				$src = $m[1];
+			}
+			if ( preg_match( '/\bsrcset=["\']([^"\']+)["\']/', $attrs, $m ) ) {
+				$srcset = $m[1];
+			}
+			if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
+				$alt = $m[1];
+			}
+		}
+
+		if ( ! $src ) {
+			return '';
+		}
+
+		$caption = '';
+		if ( preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $cap_match ) ) {
+			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
+		}
+
+		$label = ! empty( $alt )
+		/* translators: %s: image alt text */
+			? sprintf( __( 'Image | %s', 'newspack-lite-site' ), $alt )
+			: __( 'Image', 'newspack-lite-site' );
+
+		$html  = '<div class="lite-image-placeholder"';
+		$html .= ' data-src="' . esc_url( $src ) . '"';
+		if ( $srcset ) {
+			$html .= ' data-srcset="' . esc_attr( $srcset ) . '"';
+		}
+		if ( $alt ) {
+			$html .= ' data-alt="' . esc_attr( $alt ) . '"';
+		}
+		if ( $caption ) {
+			$html .= ' data-caption="' . esc_attr( $caption ) . '"';
+		}
+		$html .= '>';
+		$html .= '<p class="lite-image-label">' . esc_html( $label ) . '</p>';
+		if ( $caption ) {
+			/* translators: %s: image caption text */
+			$html .= '<p class="lite-image-caption">' . esc_html( sprintf( __( 'Caption: %s', 'newspack-lite-site' ), $caption ) ) . '</p>';
+		}
+		$html .= '<button class="lite-image-load-btn" type="button">' . esc_html__( 'Load image', 'newspack-lite-site' ) . '</button>';
+		$html .= '</div>';
+
+		return $html;
 	}
 }

@@ -35,6 +35,36 @@ namespace Newspack_Lite_Site;
 	.content a {
 		color: <?php echo esc_html( Lite_Site::get_primary_color() ); ?>;
 	}
+	.content figure {
+		margin: 0 0 1.5rem;
+	}
+	.content figure img {
+		display: block;
+		max-width: 100%;
+	}
+	.content figcaption {
+		font-size: 0.875rem;
+		margin-top: 0.5rem;
+	}
+	.lite-image-placeholder {
+		border: 1px solid currentcolor;
+		margin: 0 0 1.5rem;
+		padding: 1rem;
+	}
+	.lite-image-label {
+		margin: 0 0 0.5rem;
+	}
+	.lite-image-caption {
+		font-size: 0.875rem;
+		margin: 0 0 1rem;
+	}
+	.lite-image-load-btn {
+		background: transparent;
+		border: 1px solid currentcolor;
+		cursor: pointer;
+		font-family: inherit;
+		padding: 0.375rem 0.75rem;
+	}
 	hr.separator {
 		border: 0.125rem solid <?php echo esc_html( Lite_Site::get_primary_color() ); ?>;
 		margin: 2rem 0;
