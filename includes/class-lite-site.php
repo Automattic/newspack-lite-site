@@ -22,6 +22,17 @@ class Lite_Site {
 			add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
 			add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		}
+
+		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
+	}
+
+	/**
+	 * Return the path to the lite site offline template.
+	 *
+	 * @return string Absolute path to the offline template file.
+	 */
+	public static function get_offline_template() {
+		return NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/offline.php';
 	}
 
 	/**
