@@ -38,6 +38,15 @@ namespace Newspack_Lite_Site;
 	.content figure {
 		margin: 0 0 1.5rem;
 	}
+	@media ( prefers-reduced-motion: no-preference ) {
+		@keyframes nls-fade-in {
+			from { opacity: 0; }
+			to { opacity: 1; }
+		}
+		.content figure {
+			animation: nls-fade-in 0.3s ease;
+		}
+	}
 	.content figure img {
 		display: block;
 		max-width: 100%;
