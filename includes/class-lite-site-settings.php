@@ -154,6 +154,7 @@ class Lite_Site_Settings {
 				submit_button();
 				?>
 			</form>
+			<?php self::render_import_section(); ?>
 		</div>
 		<?php
 	}
@@ -408,5 +409,92 @@ class Lite_Site_Settings {
 		}
 
 		return esc_url_raw( $value );
+	}
+
+	/**
+	 * Render the RSS import section on the settings page.
+	 */
+	public static function render_import_section() {
+		$transient_key = 'newspack_lite_site_rss_import_notice_' . get_current_user_id();
+		$notice        = get_transient( $transient_key );
+		if ( $notice ) {
+			delete_transient( $transient_key );
+		}
+
+		$error    = ! empty( $notice['error'] ) ? $notice['error'] : '';
+		$imported = isset( $notice['imported'] ) ? $notice['imported'] : null;
+		$skipped  = isset( $notice['skipped'] ) ? $notice['skipped'] : null;
+		?>
+		<hr style="margin: 2em 0;">
+		<h2><?php esc_html_e( 'RSS Feed Import', 'newspack-lite-site' ); ?></h2>
+		<p><?php esc_html_e( 'Import posts from an external RSS feed.', 'newspack-lite-site' ); ?></p>
+
+		<?php if ( ! empty( $error ) ) : ?>
+			<div class="notice notice-error inline is-dismissible">
+				<p><?php echo esc_html( $error ); ?></p>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( null !== $imported ) : ?>
+			<div class="notice notice-success inline is-dismissible">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: number of posts imported, 2: number of posts skipped */
+						esc_html__( 'Import complete: %1$d post(s) imported, %2$d skipped (already existed).', 'newspack-lite-site' ),
+						absint( $imported ),
+						absint( $skipped )
+					);
+					?>
+				</p>
+			</div>
+		<?php endif; ?>
+
+		<form id="nls-rss-import-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'newspack_lite_site_rss_import' ); ?>
+			<input type="hidden" name="action" value="newspack_lite_site_rss_import">
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row">
+						<label for="rss_feed_url"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></label>
+					</th>
+					<td>
+						<input
+							type="url"
+							id="rss_feed_url"
+							name="rss_feed_url"
+							class="large-text"
+							placeholder="https://example.com/feed/"
+							required
+						>
+						<p class="description">
+							<?php esc_html_e( 'Enter the full URL of the RSS feed to import.', 'newspack-lite-site' ); ?>
+						</p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( __( 'Run Import', 'newspack-lite-site' ), 'secondary', 'nls-rss-import-submit' ); ?>
+		</form>
+		<script>
+		( function() {
+			var form = document.getElementById( 'nls-rss-import-form' );
+			if ( ! form ) {
+				return;
+			}
+			form.addEventListener( 'submit', function() {
+				var btn = document.getElementById( 'nls-rss-import-submit' );
+				if ( ! btn ) {
+					return;
+				}
+				var spinner = document.createElement( 'span' );
+				spinner.className = 'spinner is-active';
+				spinner.style.cssText = 'float:none;margin:0 0 0 4px;vertical-align:middle;';
+				btn.disabled = true;
+				btn.insertAdjacentElement( 'afterend', spinner );
+				btn.value = '<?php echo esc_js( __( 'Importing…', 'newspack-lite-site' ) ); ?>';
+			} );
+		} )();
+		</script>
+		<?php
 	}
 }
