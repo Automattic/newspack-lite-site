@@ -485,7 +485,8 @@ class Lite_Site_Settings {
 		?>
 		<p><?php esc_html_e( 'Imports all items from the feed as published posts. Duplicate items (matched by GUID) are automatically skipped.', 'newspack-lite-site' ); ?></p>
 
-		<form id="nls-rss-import-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<noscript><p><strong><?php esc_html_e( 'JavaScript is required to run the RSS import.', 'newspack-lite-site' ); ?></strong></p></noscript>
+		<form id="nls-rss-import-form" method="post">
 			<?php wp_nonce_field( 'newspack_lite_site_rss_import' ); ?>
 			<input type="hidden" name="action" value="newspack_lite_site_rss_import">
 			<table class="form-table" role="presentation">
