@@ -19,49 +19,42 @@ class RSS_Importer {
 	 * Initialize hooks.
 	 */
 	public static function init() {
-		add_action( 'admin_post_newspack_lite_site_rss_import', [ __CLASS__, 'handle_import' ] );
+		add_action( 'wp_ajax_newspack_lite_site_rss_import', [ __CLASS__, 'handle_ajax_import' ] );
 	}
 
 	/**
-	 * Handle the import form submission.
-	 * Validates the request, runs the import, and redirects back with a result notice.
+	 * Handle the AJAX import request.
+	 * Validates the request, runs the import, and returns a JSON response.
 	 */
-	public static function handle_import() {
-		check_admin_referer( 'newspack_lite_site_rss_import' );
+	public static function handle_ajax_import() {
+		check_ajax_referer( 'newspack_lite_site_rss_import' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'newspack-lite-site' ) );
+			wp_send_json_error( __( 'You do not have permission to perform this action.', 'newspack-lite-site' ) );
 		}
 
 		$feed_url = isset( $_POST['rss_feed_url'] ) ? esc_url_raw( wp_unslash( $_POST['rss_feed_url'] ) ) : '';
 
-		$redirect_url = admin_url( 'admin.php?page=newspack-lite-site-rss-import' );
-
 		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
-			wp_safe_redirect(
-				add_query_arg( 'rss_import_error', rawurlencode( __( 'Please enter a valid feed URL.', 'newspack-lite-site' ) ), $redirect_url )
-			);
-			exit;
+			wp_send_json_error( __( 'Please enter a valid feed URL.', 'newspack-lite-site' ) );
 		}
 
 		$result = self::run_import( $feed_url );
 
 		if ( is_wp_error( $result ) ) {
-			set_transient( 'newspack_lite_site_rss_import_notice_' . get_current_user_id(), [ 'error' => $result->get_error_message() ], 60 );
-			wp_safe_redirect( $redirect_url );
-			exit;
+			wp_send_json_error( $result->get_error_message() );
 		}
 
-		set_transient(
-			'newspack_lite_site_rss_import_notice_' . get_current_user_id(),
+		wp_send_json_success(
 			[
-				'imported' => $result['imported'],
-				'skipped'  => $result['skipped'],
-			],
-			60
+				'message' => sprintf(
+					/* translators: 1: number of posts imported, 2: number of posts skipped */
+					__( 'Import complete: %1$d post(s) imported, %2$d skipped (already existed).', 'newspack-lite-site' ),
+					$result['imported'],
+					$result['skipped']
+				),
+			]
 		);
-		wp_safe_redirect( $redirect_url );
-		exit;
 	}
 
 	/**
