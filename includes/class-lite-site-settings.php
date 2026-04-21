@@ -443,38 +443,8 @@ class Lite_Site_Settings {
 	 * Render the RSS import section on the settings page.
 	 */
 	public static function render_import_section() {
-		$transient_key = 'newspack_lite_site_rss_import_notice_' . get_current_user_id();
-		$notice        = get_transient( $transient_key );
-		if ( $notice ) {
-			delete_transient( $transient_key );
-		}
-
-		$error    = ! empty( $notice['error'] ) ? $notice['error'] : '';
-		$imported = isset( $notice['imported'] ) ? $notice['imported'] : null;
-		$skipped  = isset( $notice['skipped'] ) ? $notice['skipped'] : null;
 		?>
 		<p><?php esc_html_e( 'Imports all items from the feed as published posts. Duplicate items (matched by GUID) are automatically skipped.', 'newspack-lite-site' ); ?></p>
-
-		<?php if ( ! empty( $error ) ) : ?>
-			<div class="notice notice-error inline is-dismissible">
-				<p><?php echo esc_html( $error ); ?></p>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( null !== $imported ) : ?>
-			<div class="notice notice-success inline is-dismissible">
-				<p>
-					<?php
-					printf(
-						/* translators: 1: number of posts imported, 2: number of posts skipped */
-						esc_html__( 'Import complete: %1$d post(s) imported, %2$d skipped (already existed).', 'newspack-lite-site' ),
-						absint( $imported ),
-						absint( $skipped )
-					);
-					?>
-				</p>
-			</div>
-		<?php endif; ?>
 
 		<form id="nls-rss-import-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'newspack_lite_site_rss_import' ); ?>
@@ -507,17 +477,77 @@ class Lite_Site_Settings {
 			if ( ! form ) {
 				return;
 			}
-			form.addEventListener( 'submit', function() {
+
+			function showNotice( message, type ) {
+				var existing = document.getElementById( 'nls-import-notice' );
+				if ( existing ) {
+					existing.remove();
+				}
+				var notice = document.createElement( 'div' );
+				notice.id = 'nls-import-notice';
+				notice.className = 'notice notice-' + type + ' inline is-dismissible';
+				var p = document.createElement( 'p' );
+				p.textContent = message;
+				var btn = document.createElement( 'button' );
+				btn.type = 'button';
+				btn.className = 'notice-dismiss';
+				btn.addEventListener( 'click', function() { notice.remove(); } );
+				notice.appendChild( p );
+				notice.appendChild( btn );
+				form.insertAdjacentElement( 'beforebegin', notice );
+			}
+
+			function beforeUnloadHandler( e ) {
+				e.preventDefault();
+				e.returnValue = '';
+			}
+
+			form.addEventListener( 'submit', function( e ) {
+				e.preventDefault();
+
 				var btn = document.getElementById( 'nls-rss-import-submit' );
 				if ( ! btn ) {
 					return;
 				}
+
 				var spinner = document.createElement( 'span' );
 				spinner.className = 'spinner is-active';
 				spinner.style.cssText = 'float:none;margin:0 0 0 4px;vertical-align:middle;';
 				btn.disabled = true;
 				btn.insertAdjacentElement( 'afterend', spinner );
 				btn.value = '<?php echo esc_js( __( 'Importing…', 'newspack-lite-site' ) ); ?>';
+
+				window.addEventListener( 'beforeunload', beforeUnloadHandler );
+
+				var formData = new FormData( form );
+
+				fetch( ajaxurl, {
+					method: 'POST',
+					body: formData,
+					credentials: 'same-origin',
+				} )
+				.then( function( response ) {
+					return response.json();
+				} )
+				.then( function( data ) {
+					window.removeEventListener( 'beforeunload', beforeUnloadHandler );
+					spinner.remove();
+					btn.disabled = false;
+					btn.value = '<?php echo esc_js( __( 'Run Import', 'newspack-lite-site' ) ); ?>';
+
+					if ( data.success ) {
+						showNotice( data.data.message, 'success' );
+					} else {
+						showNotice( data.data, 'error' );
+					}
+				} )
+				.catch( function() {
+					window.removeEventListener( 'beforeunload', beforeUnloadHandler );
+					spinner.remove();
+					btn.disabled = false;
+					btn.value = '<?php echo esc_js( __( 'Run Import', 'newspack-lite-site' ) ); ?>';
+					showNotice( '<?php echo esc_js( __( 'An unexpected error occurred. Please try again.', 'newspack-lite-site' ) ); ?>', 'error' );
+				} );
 			} );
 		} )();
 		</script>
