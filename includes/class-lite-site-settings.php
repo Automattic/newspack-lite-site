@@ -174,7 +174,8 @@ class Lite_Site_Settings {
 			'manage_options',
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ],
-			'dashicons-admin-site'
+			'dashicons-admin-site',
+			26
 		);
 		add_submenu_page(
 			'newspack-lite-site',
