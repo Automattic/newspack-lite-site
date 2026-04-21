@@ -69,7 +69,7 @@ class RSS_Importer {
 		$feed = fetch_feed( $feed_url );
 
 		if ( is_wp_error( $feed ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'feed_error',
 				sprintf(
 					/* translators: %s: error message from the feed parser */
@@ -82,7 +82,7 @@ class RSS_Importer {
 		$items = $feed->get_items();
 
 		if ( empty( $items ) ) {
-			return new WP_Error( 'feed_empty', __( 'The feed contains no items.', 'newspack-lite-site' ) );
+			return new \WP_Error( 'feed_empty', __( 'The feed contains no items.', 'newspack-lite-site' ) );
 		}
 
 		$imported = 0;
