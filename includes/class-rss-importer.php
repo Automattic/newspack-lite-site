@@ -35,7 +35,7 @@ class RSS_Importer {
 
 		$feed_url = isset( $_POST['rss_feed_url'] ) ? esc_url_raw( wp_unslash( $_POST['rss_feed_url'] ) ) : '';
 
-		$redirect_url = admin_url( 'options-general.php?page=newspack-lite-site' );
+		$redirect_url = admin_url( 'admin.php?page=newspack-lite-site-rss-import' );
 
 		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
 			wp_safe_redirect(

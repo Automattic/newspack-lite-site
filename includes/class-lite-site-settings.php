@@ -129,12 +129,29 @@ class Lite_Site_Settings {
 	 * Add menu page
 	 */
 	public static function add_menu_page() {
-		add_options_page(
-			__( 'Lite Site', 'newspack-plugin' ),
-			__( 'Lite Site', 'newspack-plugin' ),
+		add_menu_page(
+			__( 'Lite Site', 'newspack-lite-site' ),
+			__( 'Lite Site', 'newspack-lite-site' ),
+			'manage_options',
+			'newspack-lite-site',
+			[ __CLASS__, 'render_settings_page' ],
+			'dashicons-admin-site'
+		);
+		add_submenu_page(
+			'newspack-lite-site',
+			__( 'Settings & Appearance', 'newspack-lite-site' ),
+			__( 'Settings & Appearance', 'newspack-lite-site' ),
 			'manage_options',
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
+		);
+		add_submenu_page(
+			'newspack-lite-site',
+			__( 'RSS Feed Import', 'newspack-lite-site' ),
+			__( 'RSS Feed Import', 'newspack-lite-site' ),
+			'manage_options',
+			'newspack-lite-site-rss-import',
+			[ __CLASS__, 'render_import_page' ]
 		);
 	}
 
@@ -144,9 +161,9 @@ class Lite_Site_Settings {
 	public static function render_settings_page() {
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Lite Site', 'newspack-lite-site' ); ?></h1>
+			<h1><?php esc_html_e( 'Settings & Appearance', 'newspack-lite-site' ); ?></h1>
 			<p><?php esc_html_e( 'Lite Site is a text-only version of this website that loads faster and uses less data.', 'newspack-lite-site' ); ?></p>
-			<p><?php esc_html_e( 'It’s designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies.', 'newspack-lite-site' ); ?></p>
+			<p><?php esc_html_e( 'It\'s designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies.', 'newspack-lite-site' ); ?></p>
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'newspack_lite_site' );
@@ -154,6 +171,17 @@ class Lite_Site_Settings {
 				submit_button();
 				?>
 			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render RSS Feed Import page
+	 */
+	public static function render_import_page() {
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'RSS Feed Import', 'newspack-lite-site' ); ?></h1>
 			<?php self::render_import_section(); ?>
 		</div>
 		<?php
@@ -425,9 +453,7 @@ class Lite_Site_Settings {
 		$imported = isset( $notice['imported'] ) ? $notice['imported'] : null;
 		$skipped  = isset( $notice['skipped'] ) ? $notice['skipped'] : null;
 		?>
-		<hr style="margin: 2em 0;">
-		<h2><?php esc_html_e( 'RSS Feed Import', 'newspack-lite-site' ); ?></h2>
-		<p><?php esc_html_e( 'Import posts from an external RSS feed.', 'newspack-lite-site' ); ?></p>
+		<p><?php esc_html_e( 'Imports all items from the feed as published posts. Duplicate items (matched by GUID) are automatically skipped.', 'newspack-lite-site' ); ?></p>
 
 		<?php if ( ! empty( $error ) ) : ?>
 			<div class="notice notice-error inline is-dismissible">
