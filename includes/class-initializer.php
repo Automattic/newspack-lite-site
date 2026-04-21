@@ -18,5 +18,6 @@ class Initializer {
 	public static function init() {
 		Lite_Site::init();
 		Lite_Site_Settings::init();
+		RSS_Importer::init();
 	}
 }
