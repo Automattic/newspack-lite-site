@@ -18,11 +18,50 @@ class Lite_Site_Settings {
 	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
+	 * The hook suffix for the RSS import admin page.
+	 *
+	 * @var string
+	 */
+	private static $import_page_hook = '';
+
+	/**
 	 * Initialize the settings functionality
 	 */
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_import_scripts' ] );
+	}
+
+	/**
+	 * Enqueue scripts for the RSS import admin page.
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 */
+	public static function enqueue_import_scripts( $hook_suffix ) {
+		if ( $hook_suffix !== self::$import_page_hook ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'newspack-lite-site-rss-import',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'assets/js/rss-import.js',
+			[],
+			'0.1.0',
+			true
+		);
+
+		wp_localize_script(
+			'newspack-lite-site-rss-import',
+			'nlsRssImport',
+			[
+				'i18n' => [
+					'importing'       => __( 'Importing…', 'newspack-lite-site' ),
+					'runImport'       => __( 'Run Import', 'newspack-lite-site' ),
+					'unexpectedError' => __( 'An unexpected error occurred. Please try again.', 'newspack-lite-site' ),
+				],
+			]
+		);
 	}
 
 	/**
@@ -145,7 +184,7 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
 		);
-		add_submenu_page(
+		self::$import_page_hook = add_submenu_page(
 			'newspack-lite-site',
 			__( 'RSS Feed Import', 'newspack-lite-site' ),
 			__( 'RSS Feed Import', 'newspack-lite-site' ),
@@ -471,86 +510,6 @@ class Lite_Site_Settings {
 			</table>
 			<?php submit_button( __( 'Run Import', 'newspack-lite-site' ), 'secondary', 'nls-rss-import-submit' ); ?>
 		</form>
-		<script>
-		( function() {
-			var form = document.getElementById( 'nls-rss-import-form' );
-			if ( ! form ) {
-				return;
-			}
-
-			function showNotice( message, type ) {
-				var existing = document.getElementById( 'nls-import-notice' );
-				if ( existing ) {
-					existing.remove();
-				}
-				var notice = document.createElement( 'div' );
-				notice.id = 'nls-import-notice';
-				notice.className = 'notice notice-' + type + ' inline is-dismissible';
-				var p = document.createElement( 'p' );
-				p.textContent = message;
-				var btn = document.createElement( 'button' );
-				btn.type = 'button';
-				btn.className = 'notice-dismiss';
-				btn.addEventListener( 'click', function() { notice.remove(); } );
-				notice.appendChild( p );
-				notice.appendChild( btn );
-				form.insertAdjacentElement( 'beforebegin', notice );
-			}
-
-			function beforeUnloadHandler( e ) {
-				e.preventDefault();
-				e.returnValue = '';
-			}
-
-			form.addEventListener( 'submit', function( e ) {
-				e.preventDefault();
-
-				var btn = document.getElementById( 'nls-rss-import-submit' );
-				if ( ! btn ) {
-					return;
-				}
-
-				var spinner = document.createElement( 'span' );
-				spinner.className = 'spinner is-active';
-				spinner.style.cssText = 'float:none;margin:0 0 0 4px;vertical-align:middle;';
-				btn.disabled = true;
-				btn.insertAdjacentElement( 'afterend', spinner );
-				btn.value = '<?php echo esc_js( __( 'Importing…', 'newspack-lite-site' ) ); ?>';
-
-				window.addEventListener( 'beforeunload', beforeUnloadHandler );
-
-				var formData = new FormData( form );
-
-				fetch( ajaxurl, {
-					method: 'POST',
-					body: formData,
-					credentials: 'same-origin',
-				} )
-				.then( function( response ) {
-					return response.json();
-				} )
-				.then( function( data ) {
-					window.removeEventListener( 'beforeunload', beforeUnloadHandler );
-					spinner.remove();
-					btn.disabled = false;
-					btn.value = '<?php echo esc_js( __( 'Run Import', 'newspack-lite-site' ) ); ?>';
-
-					if ( data.success ) {
-						showNotice( data.data.message, 'success' );
-					} else {
-						showNotice( data.data, 'error' );
-					}
-				} )
-				.catch( function() {
-					window.removeEventListener( 'beforeunload', beforeUnloadHandler );
-					spinner.remove();
-					btn.disabled = false;
-					btn.value = '<?php echo esc_js( __( 'Run Import', 'newspack-lite-site' ) ); ?>';
-					showNotice( '<?php echo esc_js( __( 'An unexpected error occurred. Please try again.', 'newspack-lite-site' ) ); ?>', 'error' );
-				} );
-			} );
-		} )();
-		</script>
 		<?php
 	}
 }
