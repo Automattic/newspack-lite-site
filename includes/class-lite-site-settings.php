@@ -18,50 +18,11 @@ class Lite_Site_Settings {
 	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
-	 * The hook suffix for the RSS import admin page.
-	 *
-	 * @var string
-	 */
-	private static $import_page_hook = '';
-
-	/**
 	 * Initialize the settings functionality
 	 */
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
-		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_import_scripts' ] );
-	}
-
-	/**
-	 * Enqueue scripts for the RSS import admin page.
-	 *
-	 * @param string $hook_suffix The current admin page hook suffix.
-	 */
-	public static function enqueue_import_scripts( $hook_suffix ) {
-		if ( $hook_suffix !== self::$import_page_hook ) {
-			return;
-		}
-
-		wp_enqueue_script(
-			'newspack-lite-site-rss-import',
-			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'assets/js/rss-import.js',
-			[],
-			'0.1.0',
-			true
-		);
-
-		wp_localize_script(
-			'newspack-lite-site-rss-import',
-			'nlsRssImport',
-			[
-				'i18n' => [
-					'importing'       => __( 'Importing…', 'newspack-lite-site' ),
-					'runImport'       => __( 'Run Import', 'newspack-lite-site' ),
-					'unexpectedError' => __( 'An unexpected error occurred. Please try again.', 'newspack-lite-site' ),
-				],
-			]
-		);
 	}
 
 	/**
@@ -185,7 +146,7 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
 		);
-		self::$import_page_hook = add_submenu_page(
+		add_submenu_page(
 			'newspack-lite-site',
 			__( 'RSS Feed Import', 'newspack-lite-site' ),
 			__( 'RSS Feed Import', 'newspack-lite-site' ),
@@ -480,38 +441,176 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render the RSS import section on the settings page.
+	 * Render the RSS importer configuration section.
+	 *
+	 * Displays an "Add Feed" form, followed by a management table of all
+	 * configured feeds with pause/resume, edit interval, and delete actions.
 	 */
 	public static function render_import_section() {
-		?>
-		<p><?php esc_html_e( 'Imports all items from the feed as published posts. Duplicate items (matched by GUID) are automatically skipped.', 'newspack-lite-site' ); ?></p>
+		$feeds          = RSS_Importer::get_feeds();
+		$cron_disabled  = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
+		$date_format    = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+		$interval_labels = RSS_Importer::get_interval_labels();
 
-		<noscript><p><strong><?php esc_html_e( 'JavaScript is required to run the RSS import.', 'newspack-lite-site' ); ?></strong></p></noscript>
-		<form id="nls-rss-import-form" method="post">
-			<?php wp_nonce_field( 'newspack_lite_site_rss_import' ); ?>
-			<input type="hidden" name="action" value="newspack_lite_site_rss_import">
+		$notice = get_transient( 'nls_rss_importer_notice' );
+		if ( $notice ) {
+			delete_transient( 'nls_rss_importer_notice' );
+		}
+		?>
+
+		<?php if ( $cron_disabled ) : ?>
+			<div class="notice notice-warning inline">
+				<p>
+					<?php esc_html_e( 'WP-Cron is disabled. Automatic imports require a server cron job.', 'newspack-lite-site' ); ?>
+				</p>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( $notice ) : ?>
+			<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> inline is-dismissible">
+				<p><?php echo esc_html( $notice['message'] ); ?></p>
+			</div>
+		<?php endif; ?>
+
+		<h2><?php esc_html_e( 'Add Feed', 'newspack-lite-site' ); ?></h2>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'nls_rss_add_feed' ); ?>
+			<input type="hidden" name="action" value="nls_rss_add_feed">
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row">
-						<label for="rss_feed_url"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></label>
+						<label for="rss_importer_feed_url"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></label>
 					</th>
 					<td>
 						<input
 							type="url"
-							id="rss_feed_url"
-							name="rss_feed_url"
+							id="rss_importer_feed_url"
+							name="rss_importer_feed_url"
 							class="large-text"
 							placeholder="https://example.com/feed/"
 							required
 						>
-						<p class="description">
-							<?php esc_html_e( 'Enter the full URL of the RSS feed to import.', 'newspack-lite-site' ); ?>
-						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="rss_importer_interval"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></label>
+					</th>
+					<td>
+						<select id="rss_importer_interval" name="rss_importer_interval">
+							<?php foreach ( $interval_labels as $key => $label ) : ?>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( 'daily', $key ); ?>>
+									<?php echo esc_html( $label ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
 					</td>
 				</tr>
 			</table>
-			<?php submit_button( __( 'Run Import', 'newspack-lite-site' ), 'secondary', 'nls-rss-import-submit' ); ?>
+			<?php submit_button( __( 'Add Feed', 'newspack-lite-site' ), 'primary', 'submit', false ); ?>
 		</form>
+
+		<hr style="margin: 20px 0;">
+
+		<h2><?php esc_html_e( 'Scheduled Feeds', 'newspack-lite-site' ); ?></h2>
+
+		<?php if ( empty( $feeds ) ) : ?>
+			<p><?php esc_html_e( 'No feeds configured. Add one above.', 'newspack-lite-site' ); ?></p>
+		<?php else : ?>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th scope="col"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></th>
+						<th scope="col" style="width: 120px;"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Last Run', 'newspack-lite-site' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Next Run', 'newspack-lite-site' ); ?></th>
+						<th scope="col" style="width: 80px;"><?php esc_html_e( 'Status', 'newspack-lite-site' ); ?></th>
+						<th scope="col" style="width: 160px;"><?php esc_html_e( 'Actions', 'newspack-lite-site' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $feeds as $feed_id => $feed ) : ?>
+						<?php
+						$next_run  = wp_next_scheduled( RSS_Importer::CRON_HOOK, [ $feed_id ] );
+						$is_active = 'active' === $feed['status'];
+						?>
+						<tr>
+							<td>
+								<strong><?php echo esc_html( $feed['feed_url'] ); ?></strong>
+							</td>
+							<td>
+								<?php echo esc_html( $interval_labels[ $feed['interval'] ] ?? $feed['interval'] ); ?>
+							</td>
+							<td>
+								<?php if ( ! is_null( $feed['last_run'] ) ) : ?>
+									<?php
+									$last_run_formatted = wp_date( $date_format, $feed['last_run'] );
+									if ( isset( $feed['last_result']['error'] ) ) {
+										printf(
+											/* translators: 1: date/time of last run, 2: error message */
+											esc_html__( '%1$s — Error: %2$s', 'newspack-lite-site' ),
+											esc_html( $last_run_formatted ),
+											esc_html( $feed['last_result']['error'] )
+										);
+									} else {
+										printf(
+											/* translators: 1: date/time of last run, 2: number imported, 3: number skipped */
+											esc_html__( '%1$s — %2$d imported, %3$d skipped', 'newspack-lite-site' ),
+											esc_html( $last_run_formatted ),
+											absint( $feed['last_result']['imported'] ?? 0 ),
+											absint( $feed['last_result']['skipped'] ?? 0 )
+										);
+									}
+									?>
+								<?php else : ?>
+									<em><?php esc_html_e( 'Never', 'newspack-lite-site' ); ?></em>
+								<?php endif; ?>
+							</td>
+							<td>
+								<?php if ( $next_run && ! $cron_disabled ) : ?>
+									<?php echo esc_html( wp_date( $date_format, $next_run ) ); ?>
+								<?php else : ?>
+									&mdash;
+								<?php endif; ?>
+							</td>
+							<td>
+								<?php if ( $is_active ) : ?>
+									<span style="color: #00a32a;"><?php esc_html_e( 'Active', 'newspack-lite-site' ); ?></span>
+								<?php else : ?>
+									<span style="color: #996800;"><?php esc_html_e( 'Paused', 'newspack-lite-site' ); ?></span>
+								<?php endif; ?>
+							</td>
+							<td>
+								<?php if ( $is_active ) : ?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;">
+										<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
+										<input type="hidden" name="action" value="nls_rss_feed_action">
+										<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
+										<input type="hidden" name="feed_action" value="pause">
+										<?php submit_button( __( 'Pause', 'newspack-lite-site' ), 'small', 'submit', false ); ?>
+									</form>
+								<?php else : ?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;">
+										<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
+										<input type="hidden" name="action" value="nls_rss_feed_action">
+										<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
+										<input type="hidden" name="feed_action" value="resume">
+										<?php submit_button( __( 'Resume', 'newspack-lite-site' ), 'small', 'submit', false ); ?>
+									</form>
+								<?php endif; ?>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this feed?', 'newspack-lite-site' ) ); ?>');">
+									<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
+									<input type="hidden" name="action" value="nls_rss_feed_action">
+									<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
+									<input type="hidden" name="feed_action" value="delete">
+									<?php submit_button( __( 'Delete', 'newspack-lite-site' ), 'small delete', 'submit', false ); ?>
+								</form>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
 		<?php
 	}
 }
