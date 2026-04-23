@@ -54,7 +54,7 @@ class RSS_Importer {
 	 */
 	public static function init() {
 		add_action( self::CRON_HOOK, [ __CLASS__, 'run_scheduled_import' ] );
-		add_filter( 'cron_schedules', [ __CLASS__, 'register_cron_intervals' ] );
+		add_filter( 'cron_schedules', [ __CLASS__, 'register_cron_intervals' ] ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
 		add_action( 'admin_post_nls_rss_add_feed', [ __CLASS__, 'handle_add_feed' ] );
 		add_action( 'admin_post_nls_rss_feed_action', [ __CLASS__, 'handle_feed_action' ] );
 	}
