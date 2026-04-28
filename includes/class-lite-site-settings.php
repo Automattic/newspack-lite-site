@@ -23,6 +23,7 @@ class Lite_Site_Settings {
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_assets' ] );
 	}
 
 	/**
@@ -136,6 +137,38 @@ class Lite_Site_Settings {
 			[ __CLASS__, 'render_font_body_field' ],
 			'newspack_lite_site',
 			'newspack_lite_site_appearance'
+		);
+	}
+
+	/**
+	 * Enqueue admin assets for the plugin's settings pages.
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 */
+	public static function enqueue_admin_assets( $hook_suffix ) {
+		$settings_hook = 'toplevel_page_newspack-lite-site';
+
+		if ( $settings_hook !== $hook_suffix ) {
+			return;
+		}
+
+		$theme_color   = Lite_Site::get_theme_primary_color();
+		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+
+		wp_enqueue_script(
+			'newspack-lite-site-admin',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'assets/js/admin.js',
+			[],
+			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'assets/js/admin.js' ),
+			true
+		);
+
+		wp_localize_script(
+			'newspack-lite-site-admin',
+			'nlsAdmin',
+			[
+				'defaultColor' => $default_color,
+			]
 		);
 	}
 
@@ -358,17 +391,6 @@ class Lite_Site_Settings {
 		<button type="button" id="nls-reset-color" class="button" style="margin-left: 8px;">
 			<?php esc_html_e( 'Reset to default', 'newspack-lite-site' ); ?>
 		</button>
-		<script>
-			( function() {
-				var picker       = document.getElementById( 'nls-primary-color-picker' );
-				var resetBtn     = document.getElementById( 'nls-reset-color' );
-				var defaultColor = '<?php echo esc_js( $default_color ); ?>';
-
-				resetBtn.addEventListener( 'click', function() {
-					picker.value = defaultColor;
-				} );
-			} )();
-		</script>
 		<?php
 	}
 
