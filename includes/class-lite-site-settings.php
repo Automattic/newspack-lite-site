@@ -484,7 +484,6 @@ class Lite_Site_Settings {
 			delete_transient( 'nls_rss_importer_notice' );
 		}
 		?>
-
 		<?php if ( $cron_disabled ) : ?>
 			<div class="notice notice-warning inline">
 				<p>
@@ -498,7 +497,19 @@ class Lite_Site_Settings {
 				<p><?php echo esc_html( $notice['message'] ); ?></p>
 			</div>
 		<?php endif; ?>
+		<?php
 
+		self::render_add_feed_form( $interval_labels );
+		self::render_feeds_table( $feeds, $date_format, $interval_labels, $cron_disabled );
+	}
+
+	/**
+	 * Render the Add Feed form.
+	 *
+	 * @param array $interval_labels Associative array of interval keys to labels.
+	 */
+	private static function render_add_feed_form( $interval_labels ) {
+		?>
 		<h2><?php esc_html_e( 'Add Feed', 'newspack-lite-site' ); ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'nls_rss_add_feed' ); ?>
@@ -536,7 +547,19 @@ class Lite_Site_Settings {
 			</table>
 			<?php submit_button( __( 'Add Feed', 'newspack-lite-site' ), 'primary', 'submit', false ); ?>
 		</form>
+		<?php
+	}
 
+	/**
+	 * Render the Scheduled Feeds management table.
+	 *
+	 * @param array  $feeds           All configured feeds.
+	 * @param string $date_format     WordPress date+time format string.
+	 * @param array  $interval_labels Associative array of interval keys to labels.
+	 * @param bool   $cron_disabled   Whether WP-Cron is disabled.
+	 */
+	private static function render_feeds_table( $feeds, $date_format, $interval_labels, $cron_disabled ) {
+		?>
 		<hr style="margin: 20px 0;">
 
 		<h2><?php esc_html_e( 'Scheduled Feeds', 'newspack-lite-site' ); ?></h2>
@@ -557,87 +580,87 @@ class Lite_Site_Settings {
 				</thead>
 				<tbody>
 					<?php foreach ( $feeds as $feed_id => $feed ) : ?>
-						<?php
-						$next_run  = wp_next_scheduled( RSS_Importer::CRON_HOOK, [ $feed_id ] );
-						$is_active = 'active' === $feed['status'];
-						?>
-						<tr>
-							<td>
-								<strong><?php echo esc_html( $feed['feed_url'] ); ?></strong>
-							</td>
-							<td>
-								<?php echo esc_html( $interval_labels[ $feed['interval'] ] ?? $feed['interval'] ); ?>
-							</td>
-							<td>
-								<?php if ( ! is_null( $feed['last_run'] ) ) : ?>
-									<?php
-									$last_run_formatted = wp_date( $date_format, $feed['last_run'] );
-									if ( isset( $feed['last_result']['error'] ) ) {
-										printf(
-											/* translators: 1: date/time of last run, 2: error message */
-											esc_html__( '%1$s — Error: %2$s', 'newspack-lite-site' ),
-											esc_html( $last_run_formatted ),
-											esc_html( $feed['last_result']['error'] )
-										);
-									} else {
-										printf(
-											/* translators: 1: date/time of last run, 2: number imported, 3: number skipped */
-											esc_html__( '%1$s — %2$d imported, %3$d skipped', 'newspack-lite-site' ),
-											esc_html( $last_run_formatted ),
-											absint( $feed['last_result']['imported'] ?? 0 ),
-											absint( $feed['last_result']['skipped'] ?? 0 )
-										);
-									}
-									?>
-								<?php else : ?>
-									<em><?php esc_html_e( 'Never', 'newspack-lite-site' ); ?></em>
-								<?php endif; ?>
-							</td>
-							<td>
-								<?php if ( $next_run && ! $cron_disabled ) : ?>
-									<?php echo esc_html( wp_date( $date_format, $next_run ) ); ?>
-								<?php else : ?>
-									&mdash;
-								<?php endif; ?>
-							</td>
-							<td>
-								<?php if ( $is_active ) : ?>
-									<span style="color: #00a32a;"><?php esc_html_e( 'Active', 'newspack-lite-site' ); ?></span>
-								<?php else : ?>
-									<span style="color: #996800;"><?php esc_html_e( 'Paused', 'newspack-lite-site' ); ?></span>
-								<?php endif; ?>
-							</td>
-							<td>
-								<?php if ( $is_active ) : ?>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;">
-										<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
-										<input type="hidden" name="action" value="nls_rss_feed_action">
-										<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
-										<input type="hidden" name="feed_action" value="pause">
-										<?php submit_button( __( 'Pause', 'newspack-lite-site' ), 'small', 'submit', false ); ?>
-									</form>
-								<?php else : ?>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;">
-										<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
-										<input type="hidden" name="action" value="nls_rss_feed_action">
-										<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
-										<input type="hidden" name="feed_action" value="resume">
-										<?php submit_button( __( 'Resume', 'newspack-lite-site' ), 'small', 'submit', false ); ?>
-									</form>
-								<?php endif; ?>
-								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this feed?', 'newspack-lite-site' ) ); ?>');">
-									<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
-									<input type="hidden" name="action" value="nls_rss_feed_action">
-									<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
-									<input type="hidden" name="feed_action" value="delete">
-									<?php submit_button( __( 'Delete', 'newspack-lite-site' ), 'small delete', 'submit', false ); ?>
-								</form>
-							</td>
-						</tr>
+						<?php self::render_feed_row( $feed_id, $feed, $date_format, $interval_labels, $cron_disabled ); ?>
 					<?php endforeach; ?>
 				</tbody>
 			</table>
 		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render a single row in the feeds table.
+	 *
+	 * @param string $feed_id         The feed ID.
+	 * @param array  $feed            The feed configuration array.
+	 * @param string $date_format     WordPress date+time format string.
+	 * @param array  $interval_labels Associative array of interval keys to labels.
+	 * @param bool   $cron_disabled   Whether WP-Cron is disabled.
+	 */
+	private static function render_feed_row( $feed_id, $feed, $date_format, $interval_labels, $cron_disabled ) {
+		$next_run  = wp_next_scheduled( RSS_Importer::CRON_HOOK, [ $feed_id ] );
+		$is_active = 'active' === $feed['status'];
+		?>
+		<tr>
+			<td><strong><?php echo esc_html( $feed['feed_url'] ); ?></strong></td>
+			<td><?php echo esc_html( $interval_labels[ $feed['interval'] ] ?? $feed['interval'] ); ?></td>
+			<td>
+				<?php
+				if ( is_null( $feed['last_run'] ) ) {
+					echo '<em>' . esc_html__( 'Never', 'newspack-lite-site' ) . '</em>';
+				} elseif ( isset( $feed['last_result']['error'] ) ) {
+					printf(
+						/* translators: 1: date/time of last run, 2: error message */
+						esc_html__( '%1$s — Error: %2$s', 'newspack-lite-site' ),
+						esc_html( wp_date( $date_format, $feed['last_run'] ) ),
+						esc_html( $feed['last_result']['error'] )
+					);
+				} else {
+					printf(
+						/* translators: 1: date/time of last run, 2: number imported, 3: number skipped */
+						esc_html__( '%1$s — %2$d imported, %3$d skipped', 'newspack-lite-site' ),
+						esc_html( wp_date( $date_format, $feed['last_run'] ) ),
+						absint( $feed['last_result']['imported'] ?? 0 ),
+						absint( $feed['last_result']['skipped'] ?? 0 )
+					);
+				}
+				?>
+			</td>
+			<td>
+				<?php if ( $next_run && ! $cron_disabled ) : ?>
+					<?php echo esc_html( wp_date( $date_format, $next_run ) ); ?>
+				<?php else : ?>
+					&mdash;
+				<?php endif; ?>
+			</td>
+			<td>
+				<?php if ( $is_active ) : ?>
+					<span style="color: #00a32a;"><?php esc_html_e( 'Active', 'newspack-lite-site' ); ?></span>
+				<?php else : ?>
+					<span style="color: #996800;"><?php esc_html_e( 'Paused', 'newspack-lite-site' ); ?></span>
+				<?php endif; ?>
+			</td>
+			<td>
+				<?php
+				$toggle_action = $is_active ? 'pause' : 'resume';
+				$toggle_label  = $is_active ? __( 'Pause', 'newspack-lite-site' ) : __( 'Resume', 'newspack-lite-site' );
+				?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;">
+					<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
+					<input type="hidden" name="action" value="nls_rss_feed_action">
+					<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
+					<input type="hidden" name="feed_action" value="<?php echo esc_attr( $toggle_action ); ?>">
+					<?php submit_button( $toggle_label, 'small', 'submit', false ); ?>
+				</form>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this feed?', 'newspack-lite-site' ) ); ?>');">
+					<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
+					<input type="hidden" name="action" value="nls_rss_feed_action">
+					<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
+					<input type="hidden" name="feed_action" value="delete">
+					<?php submit_button( __( 'Delete', 'newspack-lite-site' ), 'small delete', 'submit', false ); ?>
+				</form>
+			</td>
+		</tr>
 		<?php
 	}
 }
