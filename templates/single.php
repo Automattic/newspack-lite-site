@@ -1,6 +1,6 @@
 <?php
 /**
- * Template for the lite site single post page
+ * Template for the lite site single post page.
  *
  * @package newspack-lite-site
  */
@@ -135,22 +135,22 @@ if ( $is_liveblog ) {
 	<script>
 		( function() {
 			document.addEventListener( 'click', function( e ) {
-				var btn = e.target.closest( '.lite-image-load-btn' );
+				const btn = e.target.closest( '.lite-image-load-btn' );
 				if ( ! btn ) {
 					return;
 				}
-				var placeholder = btn.closest( '.lite-image-placeholder' );
+				const placeholder = btn.closest( '.lite-image-placeholder' );
 				if ( ! placeholder ) {
 					return;
 				}
 
-				var src     = placeholder.getAttribute( 'data-src' );
-				var srcset  = placeholder.getAttribute( 'data-srcset' );
-				var alt     = placeholder.getAttribute( 'data-alt' ) || '';
-				var caption = placeholder.getAttribute( 'data-caption' ) || '';
+				const src     = placeholder.getAttribute( 'data-src' );
+				const srcset  = placeholder.getAttribute( 'data-srcset' );
+				const alt     = placeholder.getAttribute( 'data-alt' ) || '';
+				const caption = placeholder.getAttribute( 'data-caption' ) || '';
 
-				var figure = document.createElement( 'figure' );
-				var img    = document.createElement( 'img' );
+				const figure = document.createElement( 'figure' );
+				const img    = document.createElement( 'img' );
 				img.src = src;
 				img.alt = alt;
 				if ( srcset ) {
@@ -159,7 +159,7 @@ if ( $is_liveblog ) {
 				figure.appendChild( img );
 
 				if ( caption ) {
-					var figcaption = document.createElement( 'figcaption' );
+					const figcaption = document.createElement( 'figcaption' );
 					figcaption.textContent = caption;
 					figure.appendChild( figcaption );
 				}
