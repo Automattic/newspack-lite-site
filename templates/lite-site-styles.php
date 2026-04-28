@@ -1,6 +1,6 @@
 <?php
 /**
- * Shared styles for lite site templates
+ * Shared styles for lite site templates.
  *
  * @package newspack-lite-site
  */

@@ -1,6 +1,6 @@
 <?php
 /**
- * RSS Feed Importer
+ * RSS Feed Importer.
  *
  * @package newspack-lite-site
  */

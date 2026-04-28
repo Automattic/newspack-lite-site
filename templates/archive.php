@@ -1,6 +1,6 @@
 <?php
 /**
- * Template for the lite site archive page
+ * Template for the lite site archive page.
  *
  * @package newspack-lite-site
  */

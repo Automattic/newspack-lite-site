@@ -1,6 +1,6 @@
 <?php
 /**
- * Styles for lite site liveblog pages
+ * Styles for lite site liveblog pages.
  *
  * @package newspack-lite-site
  */
