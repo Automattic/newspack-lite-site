@@ -147,29 +147,39 @@ class Lite_Site_Settings {
 	 */
 	public static function enqueue_admin_assets( $hook_suffix ) {
 		$settings_hook = 'toplevel_page_newspack-lite-site';
+		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
 
-		if ( $settings_hook !== $hook_suffix ) {
+		if ( ! in_array( $hook_suffix, [ $settings_hook, $import_hook ], true ) ) {
 			return;
 		}
 
-		$theme_color   = Lite_Site::get_theme_primary_color();
-		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
-
-		wp_enqueue_script(
-			'newspack-lite-site-admin',
-			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'assets/js/admin.js',
+		wp_enqueue_style(
+			'newspack-lite-site-settings',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/settings-style.css',
 			[],
-			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'assets/js/admin.js' ),
-			true
+			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/settings-style.css' )
 		);
 
-		wp_localize_script(
-			'newspack-lite-site-admin',
-			'nlsAdmin',
-			[
-				'defaultColor' => $default_color,
-			]
-		);
+		if ( $settings_hook === $hook_suffix ) {
+			$theme_color   = Lite_Site::get_theme_primary_color();
+			$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+
+			wp_enqueue_script(
+				'newspack-lite-site-settings',
+				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/settings.js',
+				[],
+				filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/settings.js' ),
+				true
+			);
+
+			wp_localize_script(
+				'newspack-lite-site-settings',
+				'nlsAdmin',
+				[
+					'defaultColor' => $default_color,
+				]
+			);
+		}
 	}
 
 	/**
@@ -312,8 +322,7 @@ class Lite_Site_Settings {
 		<select
 			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[categories][]"
 			multiple
-			class="regular-text"
-			style="min-height: 100px;"
+			class="regular-text nls-categories-select"
 		>
 			<option value="" <?php selected( empty( $selected_categories ) ); ?>>
 				<?php esc_html_e( 'All categories', 'newspack-lite-site' ); ?>
@@ -388,7 +397,7 @@ class Lite_Site_Settings {
 			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[primary_color]"
 			value="<?php echo esc_attr( $picker_value ); ?>"
 		>
-		<button type="button" id="nls-reset-color" class="button" style="margin-left: 8px;">
+		<button type="button" id="nls-reset-color" class="button">
 			<?php esc_html_e( 'Reset to default', 'newspack-lite-site' ); ?>
 		</button>
 		<?php
@@ -582,7 +591,7 @@ class Lite_Site_Settings {
 	 */
 	private static function render_feeds_table( $feeds, $date_format, $interval_labels, $cron_disabled ) {
 		?>
-		<hr style="margin: 20px 0;">
+		<hr class="nls-section-divider">
 
 		<h2><?php esc_html_e( 'Scheduled Feeds', 'newspack-lite-site' ); ?></h2>
 
@@ -593,11 +602,11 @@ class Lite_Site_Settings {
 				<thead>
 					<tr>
 						<th scope="col"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></th>
-						<th scope="col" style="width: 120px;"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></th>
+						<th scope="col" class="nls-col-frequency"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Last Run', 'newspack-lite-site' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Next Run', 'newspack-lite-site' ); ?></th>
-						<th scope="col" style="width: 80px;"><?php esc_html_e( 'Status', 'newspack-lite-site' ); ?></th>
-						<th scope="col" style="width: 160px;"><?php esc_html_e( 'Actions', 'newspack-lite-site' ); ?></th>
+						<th scope="col" class="nls-col-status"><?php esc_html_e( 'Status', 'newspack-lite-site' ); ?></th>
+						<th scope="col" class="nls-col-actions"><?php esc_html_e( 'Actions', 'newspack-lite-site' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -657,9 +666,9 @@ class Lite_Site_Settings {
 			</td>
 			<td>
 				<?php if ( $is_active ) : ?>
-					<span style="color: #00a32a;"><?php esc_html_e( 'Active', 'newspack-lite-site' ); ?></span>
+					<span class="nls-feed-status--active"><?php esc_html_e( 'Active', 'newspack-lite-site' ); ?></span>
 				<?php else : ?>
-					<span style="color: #996800;"><?php esc_html_e( 'Paused', 'newspack-lite-site' ); ?></span>
+					<span class="nls-feed-status--paused"><?php esc_html_e( 'Paused', 'newspack-lite-site' ); ?></span>
 				<?php endif; ?>
 			</td>
 			<td>
@@ -667,14 +676,14 @@ class Lite_Site_Settings {
 				$toggle_action = $is_active ? 'pause' : 'resume';
 				$toggle_label  = $is_active ? __( 'Pause', 'newspack-lite-site' ) : __( 'Resume', 'newspack-lite-site' );
 				?>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="nls-inline-form">
 					<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
 					<input type="hidden" name="action" value="nls_rss_feed_action">
 					<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
 					<input type="hidden" name="feed_action" value="<?php echo esc_attr( $toggle_action ); ?>">
 					<?php submit_button( $toggle_label, 'small', 'submit', false ); ?>
 				</form>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this feed?', 'newspack-lite-site' ) ); ?>');">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="nls-inline-form" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this feed?', 'newspack-lite-site' ) ); ?>');">
 					<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
 					<input type="hidden" name="action" value="nls_rss_feed_action">
 					<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
