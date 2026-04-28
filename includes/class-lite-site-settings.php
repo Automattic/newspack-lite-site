@@ -1,6 +1,6 @@
 <?php
 /**
- * Lite Site settings and admin page
+ * Lite Site settings and admin page.
  *
  * @package newspack-lite-site
  */
@@ -8,17 +8,17 @@
 namespace Newspack_Lite_Site;
 
 /**
- * Lite Site Settings class
+ * Lite Site Settings class.
  */
 class Lite_Site_Settings {
 
 	/**
-	 * The option name for storing settings
+	 * The option name for storing settings.
 	 */
 	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
-	 * Initialize the settings functionality
+	 * Initialize the settings functionality.
 	 */
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
@@ -26,7 +26,10 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Register settings
+	 * Register settings.
+	 *
+	 * Registers the plugin option and exposes fields for general settings (enabled state,
+	 * URL base, post count, categories, footer HTML, GA4 ID) and appearance (primary colour, font).
 	 */
 	public static function register_settings() {
 		register_setting(
@@ -38,6 +41,7 @@ class Lite_Site_Settings {
 			]
 		);
 
+		// General settings: controls how the lite site behaves and what content it serves.
 		add_settings_section(
 			'newspack_lite_site_main',
 			__( 'Settings', 'newspack-lite-site' ),
@@ -45,6 +49,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site'
 		);
 
+		// Toggle to activate or deactivate the lite site feature entirely.
 		add_settings_field(
 			'enabled',
 			__( 'Enable Lite Site', 'newspack-lite-site' ),
@@ -53,6 +58,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
+		// URL slug appended to post permalinks to serve the lite version.
 		add_settings_field(
 			'url_base',
 			__( 'URL Base', 'newspack-lite-site' ),
@@ -61,6 +67,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
+		// Maximum number of posts shown on the lite site archive page.
 		add_settings_field(
 			'number_of_posts',
 			__( 'Number of posts to display', 'newspack-lite-site' ),
@@ -69,6 +76,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
+		// Restricts the archive to specific categories; empty means all categories are included.
 		add_settings_field(
 			'categories',
 			__( 'Categories', 'newspack-lite-site' ),
@@ -77,6 +85,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
+		// Custom HTML injected into the footer of every lite site page.
 		add_settings_field(
 			'footer_html',
 			__( 'Footer HTML', 'newspack-lite-site' ),
@@ -85,6 +94,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
+		// GA4 Measurement ID for tracking on lite pages.
 		add_settings_field(
 			'ga4_measurement_id',
 			__( 'GA4 Measurement ID', 'newspack-lite-site' ),
@@ -93,6 +103,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
+		// Appearance settings: controls the visual style of lite site pages.
 		add_settings_section(
 			'newspack_lite_site_appearance',
 			__( 'Appearance', 'newspack-lite-site' ),
@@ -100,6 +111,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site'
 		);
 
+		// Overrides the theme's primary colour on lite pages.
 		add_settings_field(
 			'primary_color',
 			__( 'Primary Color', 'newspack-lite-site' ),
@@ -108,6 +120,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_appearance'
 		);
 
+		// URL (or <link> tag) for loading a web font from an external provider on lite pages.
 		add_settings_field(
 			'font_import_url',
 			__( 'Font Import URL', 'newspack-lite-site' ),
@@ -116,6 +129,7 @@ class Lite_Site_Settings {
 			'newspack_lite_site_appearance'
 		);
 
+		// CSS font-family name applied to body text; must match the imported font.
 		add_settings_field(
 			'font_body',
 			__( 'Body Font', 'newspack-lite-site' ),
@@ -126,9 +140,10 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Add menu page
+	 * Add menu page.
 	 */
 	public static function add_menu_page() {
+		// Top-level "Lite Site" menu entry in the WP admin sidebar.
 		add_menu_page(
 			__( 'Lite Site', 'newspack-lite-site' ),
 			__( 'Lite Site', 'newspack-lite-site' ),
@@ -138,6 +153,8 @@ class Lite_Site_Settings {
 			'dashicons-admin-site',
 			26
 		);
+
+		// Settings & Appearance: general plugin settings and visual customisation.
 		add_submenu_page(
 			'newspack-lite-site',
 			__( 'Settings & Appearance', 'newspack-lite-site' ),
@@ -146,6 +163,8 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
 		);
+
+		// RSS Feed Import: manage scheduled RSS feeds that pull external content.
 		add_submenu_page(
 			'newspack-lite-site',
 			__( 'RSS Feed Import', 'newspack-lite-site' ),
@@ -157,7 +176,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render settings page
+	 * Render settings page.
 	 */
 	public static function render_settings_page() {
 		?>
@@ -177,7 +196,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render RSS Feed Import page
+	 * Render RSS Feed Import page.
 	 */
 	public static function render_import_page() {
 		?>
@@ -189,7 +208,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render enabled field
+	 * Render enabled field.
 	 */
 	public static function render_enabled_field() {
 		$settings = get_option( self::OPTION_NAME, [] );
@@ -207,7 +226,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render URL base field
+	 * Render URL base field.
 	 */
 	public static function render_url_base_field() {
 		$settings = get_option( self::OPTION_NAME, [] );
@@ -232,7 +251,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render number of posts field
+	 * Render number of posts field.
 	 */
 	public static function render_number_of_posts_field() {
 		$settings        = get_option( self::OPTION_NAME, [] );
@@ -250,7 +269,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render categories field
+	 * Render categories field.
 	 */
 	public static function render_categories_field() {
 		$settings            = get_option( self::OPTION_NAME, [] );
@@ -282,7 +301,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render footer HTML field
+	 * Render footer HTML field.
 	 */
 	public static function render_footer_html_field() {
 		$settings    = get_option( self::OPTION_NAME, [] );
@@ -300,7 +319,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render GA4 Measurement ID field
+	 * Render GA4 Measurement ID field.
 	 */
 	public static function render_ga4_measurement_id_field() {
 		$settings           = get_option( self::OPTION_NAME, [] );
@@ -320,7 +339,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render primary color field
+	 * Render primary color field.
 	 */
 	public static function render_primary_color_field() {
 		$settings      = get_option( self::OPTION_NAME, [] );
@@ -354,7 +373,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render font import URL field
+	 * Render font import URL field.
 	 */
 	public static function render_font_import_url_field() {
 		$settings         = get_option( self::OPTION_NAME, [] );
@@ -374,7 +393,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render body font field
+	 * Render body font field.
 	 */
 	public static function render_font_body_field() {
 		$settings  = get_option( self::OPTION_NAME, [] );
@@ -394,13 +413,21 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Sanitize settings
+	 * Sanitize settings.
 	 *
 	 * @param array $settings The settings to sanitize.
 	 * @return array The sanitized settings.
 	 */
 	public static function sanitize_settings( $settings ) {
-		flush_rewrite_rules(); // phpcs:ignore
+		$old_settings = get_option( self::OPTION_NAME, [] );
+
+		// Only flush rewrite rules when settings that affect URL routing change.
+		$url_base_changed = ( $old_settings['url_base'] ?? '' ) !== sanitize_title( $settings['url_base'] );
+		$enabled_changed  = ! empty( $old_settings['enabled'] ) !== ! empty( $settings['enabled'] );
+
+		if ( $url_base_changed || $enabled_changed ) {
+			flush_rewrite_rules(); // phpcs:ignore
+		}
 
 		// Handle "All categories" selection.
 		if ( ! empty( $settings['categories'] ) && in_array( '', $settings['categories'], true ) ) {
@@ -421,7 +448,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Sanitize a font import URL or <link> tag — always stores just the URL
+	 * Sanitize a font import URL or <link> tag — always stores just the URL.
 	 *
 	 * @param string $value Raw input (URL or full <link> tag).
 	 * @return string Sanitized URL, or empty string if invalid.
@@ -447,9 +474,9 @@ class Lite_Site_Settings {
 	 * configured feeds with pause/resume, edit interval, and delete actions.
 	 */
 	public static function render_import_section() {
-		$feeds          = RSS_Importer::get_feeds();
-		$cron_disabled  = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
-		$date_format    = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+		$feeds           = RSS_Importer::get_feeds();
+		$cron_disabled   = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
+		$date_format     = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 		$interval_labels = RSS_Importer::get_interval_labels();
 
 		$notice = get_transient( 'nls_rss_importer_notice' );
