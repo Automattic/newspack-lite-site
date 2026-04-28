@@ -271,12 +271,7 @@ class Lite_Site {
 
 		if ( false === $post_id ) {
 			$post_id = url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
-
-			if ( ! $post_id ) {
-				$post_id = url_to_postid( trailingslashit( $url ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
-			}
-
-			wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site' );
+			wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
 		}
 
 		if ( ! $post_id ) {
