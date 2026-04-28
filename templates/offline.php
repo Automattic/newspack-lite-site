@@ -1,6 +1,6 @@
 <?php
 /**
- * Template for the lite site offline page
+ * Template for the lite site offline page.
  *
  * Served by the PWA plugin's service worker when the user is offline
  * and the requested page has not been cached.
