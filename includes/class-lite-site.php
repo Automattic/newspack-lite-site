@@ -1,6 +1,6 @@
 <?php
 /**
- * Lite Site functionality
+ * Lite Site functionality.
  *
  * @package newspack-lite-site
  */
@@ -8,12 +8,12 @@
 namespace Newspack_Lite_Site;
 
 /**
- * Lite Site class
+ * Lite Site class.
  */
 class Lite_Site {
 
 	/**
-	 * Initialize the lite site functionality
+	 * Initialize the lite site functionality.
 	 */
 	public static function init() {
 		// Only register rewrite rules if the feature is enabled.
@@ -36,7 +36,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Check if the lite site feature is enabled
+	 * Check if the lite site feature is enabled.
 	 */
 	public static function is_enabled() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -54,7 +54,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the URL base (slug used for lite pages)
+	 * Get the URL base (slug used for lite pages).
 	 */
 	public static function get_url_base() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -62,7 +62,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the number of posts to display in the archive
+	 * Get the number of posts to display in the archive.
 	 */
 	public static function get_number_of_posts() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -70,7 +70,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the selected categories
+	 * Get the selected categories.
 	 */
 	public static function get_categories() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -78,7 +78,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the footer HTML
+	 * Get the footer HTML.
 	 */
 	public static function get_footer_html() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -86,7 +86,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the GA4 Measurement ID
+	 * Get the GA4 Measurement ID.
 	 */
 	public static function get_ga4_measurement_id() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -94,7 +94,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the primary color (admin override takes priority, then theme default)
+	 * Get the primary color (admin override takes priority, then theme default).
 	 *
 	 * @return string The primary color.
 	 */
@@ -140,7 +140,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the font import URL set in the lite site settings
+	 * Get the font import URL set in the lite site settings.
 	 *
 	 * @return string Font provider URL, or empty string if not set.
 	 */
@@ -150,7 +150,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the font family for the lite site body text
+	 * Get the font family for the lite site body text.
 	 *
 	 * @return string CSS font-family value.
 	 */
@@ -165,7 +165,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the lite version URL for a post
+	 * Get the lite version URL for a post.
 	 *
 	 * @param WP_Post $post The post object.
 	 * @return string
@@ -177,7 +177,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Register rewrite rules for lite site pages
+	 * Register rewrite rules for lite site pages.
 	 */
 	public static function register_rewrite_rules() {
 		$url_base = self::get_url_base();
@@ -198,7 +198,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Register custom query variables
+	 * Register custom query variables.
 	 *
 	 * @param array $vars The array of query variables.
 	 * @return array The modified array of query variables.
@@ -210,7 +210,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Handle template routing for lite site pages
+	 * Handle template routing for lite site pages.
 	 */
 	public static function handle_lite_site_templates() {
 		$is_lite = get_query_var( 'is_lite' );
@@ -235,7 +235,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the supported post types for lite site rendering
+	 * Get the supported post types for lite site rendering.
 	 *
 	 * @return string[]
 	 */
@@ -249,7 +249,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Resolve a URL path to a published WP_Post
+	 * Resolve a URL path to a published WP_Post.
 	 *
 	 * @param string $path URL path without leading slash.
 	 * @return WP_Post|null
@@ -289,7 +289,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the author(s) for a post
+	 * Get the author(s) for a post.
 	 *
 	 * @param WP_Post $post The post object.
 	 * @return string The formatted author(s) string with links.
@@ -395,7 +395,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Clean the post content for lite display
+	 * Clean the post content for lite display.
 	 *
 	 * @param string $content The post content.
 	 * @return string The cleaned content.
@@ -498,26 +498,36 @@ class Lite_Site {
 			? sprintf( __( 'Image | %s', 'newspack-lite-site' ), $alt )
 			: __( 'Image', 'newspack-lite-site' );
 
-		$html  = '<div class="lite-image-placeholder"';
-		$html .= ' data-src="' . esc_url( $src ) . '"';
+		$attrs = sprintf( ' data-src="%s"', esc_url( $src ) );
 		if ( $srcset ) {
-			$html .= ' data-srcset="' . esc_attr( $srcset ) . '"';
+			$attrs .= sprintf( ' data-srcset="%s"', esc_attr( $srcset ) );
 		}
 		if ( $alt ) {
-			$html .= ' data-alt="' . esc_attr( $alt ) . '"';
+			$attrs .= sprintf( ' data-alt="%s"', esc_attr( $alt ) );
 		}
 		if ( $caption ) {
-			$html .= ' data-caption="' . esc_attr( $caption ) . '"';
+			$attrs .= sprintf( ' data-caption="%s"', esc_attr( $caption ) );
 		}
-		$html .= '>';
-		$html .= '<p class="lite-image-label">' . esc_html( $label ) . '</p>';
-		if ( $caption ) {
-			/* translators: %s: image caption text */
-			$html .= '<p class="lite-image-caption">' . esc_html( sprintf( __( 'Caption: %s', 'newspack-lite-site' ), $caption ) ) . '</p>';
-		}
-		$html .= '<button class="lite-image-load-btn" type="button">' . esc_html__( 'Load image', 'newspack-lite-site' ) . '</button>';
-		$html .= '</div>';
 
-		return $html;
+		$caption_html = $caption
+			? sprintf(
+				'<p class="lite-image-caption">%s</p>',
+				esc_html(
+					sprintf(
+						/* translators: %s: image caption text */
+						__( 'Caption: %s', 'newspack-lite-site' ),
+						$caption
+					)
+				)
+			)
+			: '';
+
+		return sprintf(
+			'<div class="lite-image-placeholder"%s><p class="lite-image-label">%s</p>%s<button class="lite-image-load-btn" type="button">%s</button></div>',
+			$attrs,
+			esc_html( $label ),
+			$caption_html,
+			esc_html__( 'Load image', 'newspack-lite-site' )
+		);
 	}
 }
