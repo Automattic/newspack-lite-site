@@ -647,13 +647,40 @@ class Lite_Site_Settings {
 						esc_html( $feed['last_result']['error'] )
 					);
 				} else {
-					printf(
-						/* translators: 1: date/time of last run, 2: number imported, 3: number skipped */
-						esc_html__( '%1$s — %2$d imported, %3$d skipped', 'newspack-lite-site' ),
-						esc_html( wp_date( $date_format, $feed['last_run'] ) ),
-						absint( $feed['last_result']['imported'] ?? 0 ),
-						absint( $feed['last_result']['skipped'] ?? 0 )
-					);
+					$imported   = absint( $feed['last_result']['imported'] ?? 0 );
+					$failed     = absint( $feed['last_result']['failed'] ?? 0 );
+					$up_to_date = ! empty( $feed['last_result']['up_to_date'] );
+					$date_str   = wp_date( $date_format, $feed['last_run'] );
+
+					if ( $up_to_date && 0 === $imported ) {
+						printf(
+							/* translators: %s: date/time of last run */
+							esc_html__( '%s — Up to date', 'newspack-lite-site' ),
+							esc_html( $date_str )
+						);
+					} elseif ( $up_to_date ) {
+						printf(
+							/* translators: 1: date/time of last run, 2: number imported */
+							esc_html__( '%1$s — %2$d imported, up to date', 'newspack-lite-site' ),
+							esc_html( $date_str ),
+							absint( $imported )
+						);
+					} elseif ( $failed > 0 ) {
+						printf(
+							/* translators: 1: date/time of last run, 2: number imported, 3: number failed */
+							esc_html__( '%1$s — %2$d imported, %3$d failed', 'newspack-lite-site' ),
+							esc_html( $date_str ),
+							absint( $imported ),
+							absint( $failed )
+						);
+					} else {
+						printf(
+							/* translators: 1: date/time of last run, 2: number imported */
+							esc_html__( '%1$s — %2$d imported', 'newspack-lite-site' ),
+							esc_html( $date_str ),
+							absint( $imported )
+						);
+					}
 				}
 				?>
 			</td>

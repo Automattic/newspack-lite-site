@@ -37,6 +37,11 @@ class RSS_Importer {
 	const LOCK_TTL = 300;
 
 	/**
+	 * Number of feed items to check for duplicates in a single DB query.
+	 */
+	const GUID_BATCH_SIZE = 20;
+
+	/**
 	 * The supported import interval keys.
 	 */
 	const INTERVALS = [
@@ -312,7 +317,7 @@ class RSS_Importer {
 	 *
 	 * @param string $feed_url  The RSS feed URL to import from.
 	 * @param int    $author_id WordPress user ID to assign as post author.
-	 * @return array|\WP_Error Array with 'imported' and 'skipped' counts, or WP_Error on failure.
+	 * @return array|\WP_Error Array with 'imported', 'failed', and 'up_to_date' keys, or WP_Error on failure.
 	 */
 	public static function run_import( $feed_url, $author_id = 0 ) {
 		include_once ABSPATH . WPINC . '/feed.php';
@@ -337,66 +342,101 @@ class RSS_Importer {
 		}
 
 		$imported   = 0;
-		$skipped    = 0;
+		$failed     = 0;
+		$up_to_date = false;
 		$start_time = time();
 		$time_limit = (int) ini_get( 'max_execution_time' );
+		$batches    = array_chunk( $items, self::GUID_BATCH_SIZE );
 
-		foreach ( $items as $item ) {
-			// Timeout protection: stop if within 15 seconds of the PHP time limit.
-			if ( $time_limit > 0 && ( time() - $start_time ) > ( $time_limit - 15 ) ) {
-				break;
-			}
+		foreach ( $batches as $batch ) {
+			$existing_guids = self::get_existing_guids( $batch );
 
-			$result = self::import_item( $item, $feed_url, $author_id );
+			foreach ( $batch as $item ) {
+				// Timeout protection: stop if within 15 seconds of the PHP time limit.
+				if ( $time_limit > 0 && ( time() - $start_time ) > ( $time_limit - 15 ) ) {
+					break 2;
+				}
 
-			if ( 'imported' === $result ) {
-				$imported++;
-			} elseif ( 'exists' === $result ) {
-				// Break on first duplicate — everything below has been imported.
-				$skipped++;
-				break;
-			} else {
-				$skipped++;
+				$result = self::import_item( $item, $feed_url, $author_id, $existing_guids );
+
+				if ( 'imported' === $result ) {
+					$imported++;
+				} elseif ( 'exists' === $result ) {
+					// Break on first duplicate.
+					$up_to_date = true;
+					break 2;
+				} else {
+					$failed++;
+				}
 			}
 		}
 
 		return [
-			'imported' => $imported,
-			'skipped'  => $skipped,
+			'imported'   => $imported,
+			'failed'     => $failed,
+			'up_to_date' => $up_to_date,
 		];
+	}
+
+	/**
+	 * Fetch the set of already-imported GUIDs for a batch of feed items.
+	 *
+	 * @param \SimplePie_Item[] $items Batch of feed items to check.
+	 * @return array<string, true> Map of existing GUIDs.
+	 */
+	private static function get_existing_guids( array $items ): array {
+		$guids = array_values(
+			array_filter(
+				array_map( fn( $item ) => $item->get_id(), $items )
+			)
+		);
+
+		if ( empty( $guids ) ) {
+			return [];
+		}
+
+		$existing_posts = get_posts(
+			[
+				'post_type'              => 'any',
+				'post_status'            => 'any',
+				'posts_per_page'         => count( $guids ),
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+				'meta_query'             => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					[
+						'key'     => '_rss_import_guid',
+						'value'   => $guids,
+						'compare' => 'IN',
+					],
+				],
+			]
+		);
+
+		$existing_guids = [];
+		foreach ( $existing_posts as $post ) {
+			$guid = get_post_meta( $post->ID, '_rss_import_guid', true );
+			if ( $guid ) {
+				$existing_guids[ $guid ] = true;
+			}
+		}
+
+		return $existing_guids;
 	}
 
 	/**
 	 * Import a single feed item as a WordPress post.
 	 *
-	 * @param \SimplePie_Item $item      The feed item to import.
-	 * @param string          $feed_url  The feed URL this item came from.
-	 * @param int             $author_id WordPress user ID to assign as post author.
-	 * @return string 'imported', 'exists', or 'skipped'.
+	 * @param \SimplePie_Item     $item           The feed item to import.
+	 * @param string              $feed_url       The feed URL this item came from.
+	 * @param int                 $author_id      WordPress user ID to assign as post author.
+	 * @param array<string, true> $existing_guids Pre-fetched map of already-imported GUIDs.
+	 * @return string 'imported', 'exists', or 'failed'.
 	 */
-	private static function import_item( $item, $feed_url, $author_id = 0 ) {
+	private static function import_item( $item, $feed_url, $author_id = 0, array $existing_guids = [] ) {
 		$guid = $item->get_id();
 
-		// Duplicate detection via GUID post meta.
-		if ( ! empty( $guid ) ) {
-			$existing = get_posts(
-				[
-					'post_type'      => 'any',
-					'post_status'    => 'any',
-					'posts_per_page' => 1,
-					'fields'         => 'ids',
-					'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-						[
-							'key'   => '_rss_import_guid',
-							'value' => $guid,
-						],
-					],
-				]
-			);
-
-			if ( ! empty( $existing ) ) {
-				return 'exists';
-			}
+		if ( ! empty( $guid ) && isset( $existing_guids[ $guid ] ) ) {
+			return 'exists';
 		}
 
 		$title   = wp_strip_all_tags( $item->get_title() ?? '' );
@@ -421,7 +461,7 @@ class RSS_Importer {
 		);
 
 		if ( is_wp_error( $post_id ) || ! $post_id ) {
-			return 'skipped';
+			return 'failed';
 		}
 
 		// Store import metadata for duplicate detection and traceability.
