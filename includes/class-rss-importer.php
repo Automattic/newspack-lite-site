@@ -311,6 +311,8 @@ class RSS_Importer {
 		$feed   = $feeds[ $feed_id ];
 		$result = self::run_import( $feed['feed_url'], (int) $feed['author_id'] );
 
+		wp_cache_delete( 'alloptions', 'options' );
+		$feeds                            = self::get_feeds();
 		$feeds[ $feed_id ]['last_run']    = time();
 		$feeds[ $feed_id ]['last_result'] = is_wp_error( $result )
 			? [ 'error' => $result->get_error_message() ]
