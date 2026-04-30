@@ -591,6 +591,23 @@ class Lite_Site_Settings {
 						</select>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row">
+						<label for="rss_importer_author_id"><?php esc_html_e( 'Author', 'newspack-lite-site' ); ?></label>
+					</th>
+					<td>
+						<?php
+						wp_dropdown_users(
+							[
+								'name'       => 'rss_importer_author_id',
+								'id'         => 'rss_importer_author_id',
+								'selected'   => get_current_user_id(),
+								'capability' => [ 'publish_posts' ],
+							]
+						);
+						?>
+					</td>
+				</tr>
 			</table>
 			<?php submit_button( __( 'Add Feed', 'newspack-lite-site' ), 'primary', 'submit', false ); ?>
 		</form>
@@ -618,9 +635,10 @@ class Lite_Site_Settings {
 				<thead>
 					<tr>
 						<th scope="col"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></th>
-						<th scope="col" class="nls-col-frequency"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Last Run', 'newspack-lite-site' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Next Run', 'newspack-lite-site' ); ?></th>
+						<th scope="col" class="nls-col-frequency"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></th>					
+						<th scope="col" class="nls-col-author"><?php esc_html_e( 'Author', 'newspack-lite-site' ); ?></th>						
+						<th scope="col" class="nls-col-last-run"><?php esc_html_e( 'Last Run', 'newspack-lite-site' ); ?></th>
+						<th scope="col" class="nls-col-next-run"><?php esc_html_e( 'Next Run', 'newspack-lite-site' ); ?></th>
 						<th scope="col" class="nls-col-status"><?php esc_html_e( 'Status', 'newspack-lite-site' ); ?></th>
 						<th scope="col" class="nls-col-actions"><?php esc_html_e( 'Actions', 'newspack-lite-site' ); ?></th>
 					</tr>
@@ -650,11 +668,21 @@ class Lite_Site_Settings {
 		?>
 		<tr>
 			<td><strong><?php echo esc_html( $feed['feed_url'] ); ?></strong></td>
-			<td><?php echo esc_html( $interval_labels[ $feed['interval'] ] ?? $feed['interval'] ); ?></td>
-			<td>
+			<td class="nls-col-frequency"><?php echo esc_html( $interval_labels[ $feed['interval'] ] ?? $feed['interval'] ); ?></td>
+			<td class="nls-col-author">
+				<?php
+				$author = get_userdata( (int) ( $feed['author_id'] ?? 0 ) );
+				if ( $author ) {
+					echo esc_html( $author->display_name );
+				} else {
+					printf( '<em>%s</em>', esc_html__( 'Unknown', 'newspack-lite-site' ) );
+				}
+				?>
+			</td>
+			<td class="nls-col-last-run">
 				<?php
 				if ( is_null( $feed['last_run'] ) ) {
-					echo '<em>' . esc_html__( 'Never', 'newspack-lite-site' ) . '</em>';
+					printf( '<em>%s</em>', esc_html__( 'Never', 'newspack-lite-site' ) );
 				} elseif ( isset( $feed['last_result']['error'] ) ) {
 					printf(
 						/* translators: 1: date/time of last run, 2: error message */
@@ -700,7 +728,7 @@ class Lite_Site_Settings {
 				}
 				?>
 			</td>
-			<td>
+			<td class="nls-col-next-run">
 				<?php if ( $next_run && ! $cron_disabled ) : ?>
 					<?php echo esc_html( wp_date( $date_format, $next_run ) ); ?>
 				<?php else : ?>
