@@ -230,7 +230,23 @@ class Lite_Site_Settings {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'newspack_lite_site' );
-				do_settings_sections( 'newspack_lite_site' );
+
+				// Settings section.
+				printf( '<h2>%s</h2>', esc_html__( 'Settings', 'newspack-lite-site' ) );
+				echo '<table class="form-table" role="presentation">';
+				do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_main' );
+				echo '</table>';
+
+				// Separator before Appearance section.
+				echo '<hr>';
+
+				// Appearance section.
+				printf( '<h2>%s</h2>', esc_html__( 'Appearance', 'newspack-lite-site' ) );
+				printf( '<p>%s</p>', esc_html__( 'Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections.', 'newspack-lite-site' ) );
+				echo '<table class="form-table" role="presentation">';
+				do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_appearance' );
+				echo '</table>';
+
 				submit_button();
 				?>
 			</form>
@@ -285,7 +301,7 @@ class Lite_Site_Settings {
 			<?php
 			printf(
 				/* translators: %s: is the site URL without a trailing slash, ex: https://example.com */
-				esc_html__( 'The URL base for the lite site (e.g. "lite" for %s/article-slug/lite).', 'newspack-lite-site' ),
+				esc_html__( 'The URL base for the lite site (e.g. "lite" for %s/lite/article-slug).', 'newspack-lite-site' ),
 				esc_url( untrailingslashit( home_url() ) )
 			);
 			?>
