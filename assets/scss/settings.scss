@@ -1,29 +1,30 @@
 // Categories multi-select height.
 .nls-categories-select {
-	min-height: 100px !important;
+	min-height: 6.25rem !important;
 }
 
 // Color picker reset button spacing.
 #nls-reset-color {
-	margin-left: 8px;
+	margin-left: 0.5rem;
 }
 
 // Divider between "Add Feed" form and feeds table.
 .nls-section-divider {
-	margin: 20px 0;
+	margin: 1.25rem 0;
 }
 
 // Fixed-width feed table columns.
+.nls-col-author,
 .nls-col-frequency {
-	width: 120px;
+	width: 7.5rem;
 }
 
 .nls-col-status {
-	width: 80px;
+	width: 5rem;
 }
 
 .nls-col-actions {
-	width: 160px;
+	width: 10rem;
 }
 
 // Feed status badge colours.
@@ -38,4 +39,14 @@
 // Inline action forms in the feeds table.
 .nls-inline-form {
 	display: inline;
+}
+
+// Hide secondary columns on narrow screens.
+@media (max-width: 782px) {
+	.nls-col-frequency,
+	.nls-col-author,
+	.nls-col-last-run,
+	.nls-col-next-run {
+		display: none;
+	}
 }

@@ -155,8 +155,21 @@ class RSS_Importer {
 			wp_die( esc_html__( 'You do not have permission to perform this action.', 'newspack-lite-site' ) );
 		}
 
-		$feed_url = isset( $_POST['rss_importer_feed_url'] ) ? esc_url_raw( wp_unslash( $_POST['rss_importer_feed_url'] ) ) : '';
-		$interval = isset( $_POST['rss_importer_interval'] ) ? sanitize_key( wp_unslash( $_POST['rss_importer_interval'] ) ) : 'daily';
+		$feed_url  = isset( $_POST['rss_importer_feed_url'] ) ? esc_url_raw( wp_unslash( $_POST['rss_importer_feed_url'] ) ) : '';
+		$interval  = isset( $_POST['rss_importer_interval'] ) ? sanitize_key( wp_unslash( $_POST['rss_importer_interval'] ) ) : 'daily';
+		$author_id = isset( $_POST['rss_importer_author_id'] ) ? absint( wp_unslash( $_POST['rss_importer_author_id'] ) ) : 0;
+		if ( ! $author_id || ! get_userdata( $author_id ) ) {
+			set_transient(
+				'nls_rss_importer_notice',
+				[
+					'type'    => 'error',
+					'message' => __( 'Please select a valid author.', 'newspack-lite-site' ),
+				],
+				60
+			);
+			wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
+			exit;
+		}
 
 		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
 			set_transient(
@@ -194,7 +207,7 @@ class RSS_Importer {
 		$feeds[ $feed_id ] = [
 			'feed_url'    => $feed_url,
 			'interval'    => $interval,
-			'author_id'   => get_current_user_id(),
+			'author_id'   => $author_id,
 			'status'      => 'active',
 			'last_run'    => null,
 			'last_result' => null,
