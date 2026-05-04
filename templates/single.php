@@ -133,17 +133,27 @@ if ( $is_liveblog ) {
 	?>
 	
 	<script>
-		( function() {
-			document.addEventListener( 'click', function( e ) {
+		class ImageLoader {
+			constructor() {
+				document.addEventListener( 'click', ( e ) => this.handleClick( e ) );
+			}
+
+			handleClick( e ) {
 				const btn = e.target.closest( '.lite-image-load-btn' );
 				if ( ! btn ) {
 					return;
 				}
+
 				const placeholder = btn.closest( '.lite-image-placeholder' );
 				if ( ! placeholder ) {
 					return;
 				}
 
+				const figure = this.buildFigure( placeholder );
+				placeholder.parentNode.replaceChild( figure, placeholder );
+			}
+
+			buildFigure( placeholder ) {
 				const src     = placeholder.getAttribute( 'data-src' );
 				const srcset  = placeholder.getAttribute( 'data-srcset' );
 				const alt     = placeholder.getAttribute( 'data-alt' ) || '';
@@ -151,11 +161,14 @@ if ( $is_liveblog ) {
 
 				const figure = document.createElement( 'figure' );
 				const img    = document.createElement( 'img' );
+
 				img.src = src;
 				img.alt = alt;
+
 				if ( srcset ) {
 					img.srcset = srcset;
 				}
+
 				figure.appendChild( img );
 
 				if ( caption ) {
@@ -164,9 +177,11 @@ if ( $is_liveblog ) {
 					figure.appendChild( figcaption );
 				}
 
-				placeholder.parentNode.replaceChild( figure, placeholder );
-			} );
-		} )();
+				return figure;
+			}
+		}
+
+		new ImageLoader();
 	</script>
 </body>
 </html>
