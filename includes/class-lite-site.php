@@ -37,6 +37,8 @@ class Lite_Site {
 
 	/**
 	 * Check if the lite site feature is enabled.
+	 *
+	 * @return bool True if enabled, false otherwise.
 	 */
 	public static function is_enabled() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -55,6 +57,8 @@ class Lite_Site {
 
 	/**
 	 * Get the URL base (slug used for lite pages).
+	 *
+	 * @return string The URL base slug.
 	 */
 	public static function get_url_base() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -63,6 +67,8 @@ class Lite_Site {
 
 	/**
 	 * Get the number of posts to display in the archive.
+	 *
+	 * @return int Number of posts to display.
 	 */
 	public static function get_number_of_posts() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -71,6 +77,8 @@ class Lite_Site {
 
 	/**
 	 * Get the selected categories.
+	 *
+	 * @return int[] Array of selected category IDs, or empty array for all categories.
 	 */
 	public static function get_categories() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -79,6 +87,8 @@ class Lite_Site {
 
 	/**
 	 * Get the footer HTML.
+	 *
+	 * @return string Footer HTML, or empty string if not set.
 	 */
 	public static function get_footer_html() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -87,6 +97,8 @@ class Lite_Site {
 
 	/**
 	 * Get the GA4 Measurement ID.
+	 *
+	 * @return string GA4 Measurement ID, or empty string if not set.
 	 */
 	public static function get_ga4_measurement_id() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
@@ -168,7 +180,7 @@ class Lite_Site {
 	 * Get the lite version URL for a post.
 	 *
 	 * @param WP_Post $post The post object.
-	 * @return string
+	 * @return string The lite site URL for the post.
 	 */
 	public static function get_lite_page_url( $post ) {
 		$permalink = untrailingslashit( get_permalink( $post ) );
@@ -237,7 +249,7 @@ class Lite_Site {
 	/**
 	 * Get the supported post types for lite site rendering.
 	 *
-	 * @return string[]
+	 * @return string[] Array of supported post type slugs.
 	 */
 	public static function get_supported_post_types() {
 		/**
@@ -252,7 +264,7 @@ class Lite_Site {
 	 * Resolve a URL path to a published WP_Post.
 	 *
 	 * @param string $path URL path without leading slash.
-	 * @return WP_Post|null
+	 * @return WP_Post|null The resolved post, or null if not found or not published.
 	 */
 	public static function resolve_post( $path ) {
 		if ( empty( $path ) ) {
@@ -290,7 +302,7 @@ class Lite_Site {
 	 * @return string The formatted author(s) string with links.
 	 */
 	public static function get_authors( $post ) {
-		if ( function_exists( 'get_coauthors' ) ) {
+		if ( function_exists( 'coauthors_posts_links' ) ) {
 			$authors      = get_coauthors( $post->ID );
 			$author_links = array_map(
 				function ( $author ) {
@@ -339,7 +351,7 @@ class Lite_Site {
 	 * Check if a post is an active or archived liveblog.
 	 *
 	 * @param WP_Post $post The post object.
-	 * @return bool
+	 * @return bool True if the post is an active or archived liveblog, false otherwise.
 	 */
 	public static function is_liveblog( $post ) {
 		$state = self::get_liveblog_state( $post );
@@ -361,7 +373,7 @@ class Lite_Site {
 	 *
 	 * @param int $post_id The post ID.
 	 * @param int $limit   Max number of entries to return.
-	 * @return WP_Comment[]
+	 * @return WP_Comment[] Array of liveblog comment entries.
 	 */
 	public static function get_liveblog_entries( $post_id, $limit = 100 ) {
 		$entries = get_comments(
