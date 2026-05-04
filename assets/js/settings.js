@@ -1,13 +1,20 @@
 /* global nlsAdmin */
-( function () {
-	const picker = document.getElementById( 'nls-primary-color-picker' );
-	const resetBtn = document.getElementById( 'nls-reset-color' );
 
-	if ( ! picker || ! resetBtn ) {
-		return;
+class ColorPickerSettings {
+	constructor() {
+		this.picker = document.getElementById( 'nls-primary-color-picker' );
+		this.resetBtn = document.getElementById( 'nls-reset-color' );
+
+		if ( ! this.picker || ! this.resetBtn ) {
+			return;
+		}
+
+		this.resetBtn.addEventListener( 'click', () => this.resetToDefault() );
 	}
 
-	resetBtn.addEventListener( 'click', function () {
-		picker.value = nlsAdmin.defaultColor;
-	} );
-} )();
+	resetToDefault() {
+		this.picker.value = nlsAdmin.defaultColor;
+	}
+}
+
+new ColorPickerSettings();
