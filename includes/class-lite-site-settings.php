@@ -23,7 +23,8 @@ class Lite_Site_Settings {
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
-		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_assets' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
 	}
 
 	/**
@@ -141,11 +142,11 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Enqueue admin assets for the plugin's settings pages.
+	 * Enqueue admin styles for the plugin's settings pages.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
-	public static function enqueue_admin_assets( $hook_suffix ) {
+	public static function enqueue_admin_styles( $hook_suffix ) {
 		$settings_hook = 'toplevel_page_newspack-lite-site';
 		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
 
@@ -159,27 +160,36 @@ class Lite_Site_Settings {
 			[],
 			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/settings-style.css' )
 		);
+	}
 
-		if ( $settings_hook === $hook_suffix ) {
-			$theme_color   = Lite_Site::get_theme_primary_color();
-			$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
-
-			wp_enqueue_script(
-				'newspack-lite-site-settings',
-				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/settings.js',
-				[],
-				filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/settings.js' ),
-				true
-			);
-
-			wp_localize_script(
-				'newspack-lite-site-settings',
-				'nlsAdmin',
-				[
-					'defaultColor' => $default_color,
-				]
-			);
+	/**
+	 * Enqueue admin scripts for the plugin's settings pages.
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 */
+	public static function enqueue_admin_scripts( $hook_suffix ) {
+		if ( 'toplevel_page_newspack-lite-site' !== $hook_suffix ) {
+			return;
 		}
+
+		$theme_color   = Lite_Site::get_theme_primary_color();
+		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+
+		wp_enqueue_script(
+			'newspack-lite-site',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/index.js',
+			[],
+			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.js' ),
+			true
+		);
+
+		wp_localize_script(
+			'newspack-lite-site',
+			'nlsAdmin',
+			[
+				'defaultColor' => $default_color,
+			]
+		);
 	}
 
 	/**
@@ -230,23 +240,22 @@ class Lite_Site_Settings {
 			<form action="options.php" method="post">
 				<?php
 				settings_fields( 'newspack_lite_site' );
+				?>
 
-				// Settings section.
-				printf( '<h2>%s</h2>', esc_html__( 'Settings', 'newspack-lite-site' ) );
-				echo '<table class="form-table" role="presentation">';
-				do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_main' );
-				echo '</table>';
+				<h2><?php esc_html_e( 'Settings', 'newspack-lite-site' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<?php do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_main' ); ?>
+				</table>
 
-				// Separator before Appearance section.
-				echo '<hr>';
+				<hr>
 
-				// Appearance section.
-				printf( '<h2>%s</h2>', esc_html__( 'Appearance', 'newspack-lite-site' ) );
-				printf( '<p>%s</p>', esc_html__( 'Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections.', 'newspack-lite-site' ) );
-				echo '<table class="form-table" role="presentation">';
-				do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_appearance' );
-				echo '</table>';
+				<h2><?php esc_html_e( 'Appearance', 'newspack-lite-site' ); ?></h2>
+				<p><?php esc_html_e( 'Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections.', 'newspack-lite-site' ); ?></p>
+				<table class="form-table" role="presentation">
+					<?php do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_appearance' ); ?>
+				</table>
 
+				<?php
 				submit_button();
 				?>
 			</form>
@@ -423,8 +432,8 @@ class Lite_Site_Settings {
 	 * Render font import URL field.
 	 */
 	public static function render_font_import_url_field() {
-		$settings         = get_option( self::OPTION_NAME, [] );
-		$font_import_url  = ! empty( $settings['font_import_url'] ) ? $settings['font_import_url'] : '';
+		$settings        = get_option( self::OPTION_NAME, [] );
+		$font_import_url = ! empty( $settings['font_import_url'] ) ? $settings['font_import_url'] : '';
 		?>
 		<input
 			type="text"
@@ -486,7 +495,7 @@ class Lite_Site_Settings {
 			'url_base'           => sanitize_title( $settings['url_base'] ),
 			'number_of_posts'    => min( 100, max( 1, intval( $settings['number_of_posts'] ) ) ),
 			'categories'         => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
-			'footer_html'        => wp_kses_post( $settings['footer_html'] ),
+			'footer_html'        => wp_kses_post( trim( $settings['footer_html'] ) ),
 			'ga4_measurement_id' => sanitize_text_field( $settings['ga4_measurement_id'] ),
 			'primary_color'      => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',
 			'font_import_url'    => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
@@ -634,13 +643,22 @@ class Lite_Site_Settings {
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
-						<th scope="col"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></th>
-						<th scope="col" class="nls-col-frequency"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></th>					
-						<th scope="col" class="nls-col-author"><?php esc_html_e( 'Author', 'newspack-lite-site' ); ?></th>						
-						<th scope="col" class="nls-col-last-run"><?php esc_html_e( 'Last Run', 'newspack-lite-site' ); ?></th>
-						<th scope="col" class="nls-col-next-run"><?php esc_html_e( 'Next Run', 'newspack-lite-site' ); ?></th>
-						<th scope="col" class="nls-col-status"><?php esc_html_e( 'Status', 'newspack-lite-site' ); ?></th>
-						<th scope="col" class="nls-col-actions"><?php esc_html_e( 'Actions', 'newspack-lite-site' ); ?></th>
+						<?php
+						$columns = [
+							'nls-col-feed-url'  => __( 'Feed URL', 'newspack-lite-site' ),
+							'nls-col-frequency' => __( 'Frequency', 'newspack-lite-site' ),
+							'nls-col-author'    => __( 'Author', 'newspack-lite-site' ),
+							'nls-col-last-run'  => __( 'Last Run', 'newspack-lite-site' ),
+							'nls-col-next-run'  => __( 'Next Run', 'newspack-lite-site' ),
+							'nls-col-status'    => __( 'Status', 'newspack-lite-site' ),
+							'nls-col-actions'   => __( 'Actions', 'newspack-lite-site' ),
+						];
+						foreach ( $columns as $class => $label ) :
+							?>
+							<th scope="col" class="<?php echo esc_attr( $class ); ?>">
+								<?php echo esc_html( $label ); ?>
+							</th>
+						<?php endforeach; ?>
 					</tr>
 				</thead>
 				<tbody>
@@ -672,11 +690,10 @@ class Lite_Site_Settings {
 			<td class="nls-col-author">
 				<?php
 				$author = get_userdata( (int) ( $feed['author_id'] ?? 0 ) );
-				if ( $author ) {
-					echo esc_html( $author->display_name );
-				} else {
-					printf( '<em>%s</em>', esc_html__( 'Unknown', 'newspack-lite-site' ) );
-				}
+				printf(
+					'%s',
+					$author ? esc_html( $author->display_name ) : '<em>' . esc_html__( 'Unknown', 'newspack-lite-site' ) . '</em>'
+				);
 				?>
 			</td>
 			<td class="nls-col-last-run">
@@ -697,34 +714,39 @@ class Lite_Site_Settings {
 					$date_str   = wp_date( $date_format, $feed['last_run'] );
 
 					if ( $up_to_date && 0 === $imported ) {
-						printf(
-							/* translators: %s: date/time of last run */
-							esc_html__( '%s — Up to date', 'newspack-lite-site' ),
-							esc_html( $date_str )
-						);
+						$case = 'up_to_date_empty';
 					} elseif ( $up_to_date ) {
-						printf(
-							/* translators: 1: date/time of last run, 2: number imported */
-							esc_html__( '%1$s — %2$d imported, up to date', 'newspack-lite-site' ),
-							esc_html( $date_str ),
-							absint( $imported )
-						);
+						$case = 'up_to_date';
 					} elseif ( $failed > 0 ) {
-						printf(
-							/* translators: 1: date/time of last run, 2: number imported, 3: number failed */
-							esc_html__( '%1$s — %2$d imported, %3$d failed', 'newspack-lite-site' ),
-							esc_html( $date_str ),
-							absint( $imported ),
-							absint( $failed )
-						);
+						$case = 'failed';
 					} else {
-						printf(
-							/* translators: 1: date/time of last run, 2: number imported */
-							esc_html__( '%1$s — %2$d imported', 'newspack-lite-site' ),
-							esc_html( $date_str ),
-							absint( $imported )
-						);
+						$case = 'imported';
 					}
+
+					switch ( $case ) {
+						case 'up_to_date_empty':
+							/* translators: %s: date/time of last run */
+							$format = __( '%s — Up to date', 'newspack-lite-site' );
+							$args   = [ $date_str ];
+							break;
+						case 'up_to_date':
+							/* translators: 1: date/time of last run, 2: number imported */
+							$format = __( '%1$s — %2$d imported, up to date', 'newspack-lite-site' );
+							$args   = [ $date_str, $imported ];
+							break;
+						case 'failed':
+							/* translators: 1: date/time of last run, 2: number imported, 3: number failed */
+							$format = __( '%1$s — %2$d imported, %3$d failed', 'newspack-lite-site' );
+							$args   = [ $date_str, $imported, $failed ];
+							break;
+						default:
+							/* translators: 1: date/time of last run, 2: number imported */
+							$format = __( '%1$s — %2$d imported', 'newspack-lite-site' );
+							$args   = [ $date_str, $imported ];
+							break;
+					}
+
+					echo esc_html( vsprintf( $format, $args ) );
 				}
 				?>
 			</td>
