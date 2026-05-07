@@ -7,6 +7,23 @@
 
 namespace Newspack_Lite_Site;
 
+$posts_per_page = Lite_Site::get_posts_per_page();
+$categories     = Lite_Site::get_categories();
+$current_page   = max( 1, absint( get_query_var( 'lite_page', 1 ) ) );
+
+$query_args = [
+	'post_status'    => 'publish',
+	'posts_per_page' => $posts_per_page,
+	'paged'          => $current_page,
+];
+if ( ! empty( $categories ) ) {
+	$query_args['category__in'] = $categories;
+}
+
+$query        = new \WP_Query( $query_args );
+$total_pages  = max( 1, (int) $query->max_num_pages );
+$current_page = min( $current_page, $total_pages );
+
 ?>
 <!DOCTYPE html>
 <html lang="<?php bloginfo( 'language' ); ?>">
@@ -42,6 +59,23 @@ namespace Newspack_Lite_Site;
 	<ul class="post-list">
 		<?php require __DIR__ . '/post-list.php'; ?>
 	</ul>
+
+	<?php
+	$pagination = paginate_links(
+		[
+			'base'    => home_url( Lite_Site::get_url_base() . '/%_%' ),
+			'format'  => 'page/%#%/',
+			'current' => $current_page,
+			'total'   => $total_pages,
+		]
+	);
+	if ( $pagination ) :
+		?>
+		<nav class="pagination" aria-label="<?php esc_attr_e( 'Archive pagination', 'newspack-lite-site' ); ?>">
+			<?php echo wp_kses_post( $pagination ); ?>
+		</nav>
+	<?php endif; ?>
+
 	<?php
 	$footer_html = Lite_Site::get_footer_html();
 	if ( ! empty( $footer_html ) ) :

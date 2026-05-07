@@ -99,6 +99,14 @@ namespace Newspack_Lite_Site;
 	.site-footer > :last-child {
 		margin-bottom: 0;
 	}
+	.pagination {
+		display: flex;
+		flex-wrap: wrap;
+		font-size: 1rem;
+		gap: 0.5rem;
+		justify-content: center;
+		margin-top: 2rem;
+	}
 
 	<?php
 	/**

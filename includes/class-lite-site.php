@@ -66,23 +66,41 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the number of posts to display in the archive.
+	 * Get the number of posts to display per page in the archive.
 	 *
-	 * @return int Number of posts to display.
+	 * Falls back to the WordPress Reading setting (Blog pages show at most) if not explicitly configured.
+	 *
+	 * @return int Posts per page.
 	 */
-	public static function get_number_of_posts() {
+	public static function get_posts_per_page() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
-		return ! empty( $settings['number_of_posts'] ) ? intval( $settings['number_of_posts'] ) : 20;
+		return ! empty( $settings['posts_per_page'] )
+			? intval( $settings['posts_per_page'] )
+			: (int) get_option( 'posts_per_page', 10 );
 	}
 
 	/**
-	 * Get the selected categories.
+	 * Get the selected categories and all their descendants.
 	 *
-	 * @return int[] Array of selected category IDs, or empty array for all categories.
+	 * @return int[] Category IDs, or empty array for all categories.
 	 */
 	public static function get_categories() {
 		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
-		return ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
+		if ( empty( $settings['categories'] ) ) {
+			return [];
+		}
+
+		$selected = array_map( 'intval', (array) $settings['categories'] );
+
+		$all_ids = $selected;
+		foreach ( $selected as $term_id ) {
+			$children = get_term_children( $term_id, 'category' );
+			if ( ! is_wp_error( $children ) ) {
+				$all_ids = array_merge( $all_ids, array_map( 'intval', $children ) );
+			}
+		}
+
+		return array_unique( $all_ids );
 	}
 
 	/**
@@ -201,6 +219,13 @@ class Lite_Site {
 			'top'
 		);
 
+		// Archive paginated: /{url_base}/page/{n}. Must come before the single post catch-all.
+		add_rewrite_rule(
+			'^' . $url_base . '/page/([0-9]+)/?$',
+			'index.php?is_lite=archive&lite_page=$matches[1]',
+			'top'
+		);
+
 		// Single: /{url_base}/{post-slug}.
 		add_rewrite_rule(
 			'^' . $url_base . '/(.+)/?$',
@@ -218,6 +243,7 @@ class Lite_Site {
 	public static function register_query_vars( $vars ) {
 		$vars[] = 'is_lite';
 		$vars[] = 'lite_path';
+		$vars[] = 'lite_page';
 		return $vars;
 	}
 
