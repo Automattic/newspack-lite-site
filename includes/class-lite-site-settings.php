@@ -31,7 +31,7 @@ class Lite_Site_Settings {
 	 * Register settings.
 	 *
 	 * Registers the plugin option and exposes fields for general settings (enabled state,
-	 * URL base, post count, categories, footer HTML, GA4 ID) and appearance (primary colour, font).
+	 * URL base, posts per page, categories, footer HTML, GA4 ID) and appearance (primary colour, font).
 	 */
 	public static function register_settings() {
 		register_setting(
@@ -69,11 +69,11 @@ class Lite_Site_Settings {
 			'newspack_lite_site_main'
 		);
 
-		// Maximum number of posts shown on the lite site archive page.
+		// Number of posts per page; determines when pagination appears.
 		add_settings_field(
-			'number_of_posts',
-			__( 'Number of posts to display', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_number_of_posts_field' ],
+			'posts_per_page',
+			__( 'Archive pages show at most', 'newspack-lite-site' ),
+			[ __CLASS__, 'render_posts_per_page_field' ],
 			'newspack_lite_site',
 			'newspack_lite_site_main'
 		);
@@ -319,20 +319,25 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render number of posts field.
+	 * Render posts per page field.
 	 */
-	public static function render_number_of_posts_field() {
-		$settings        = get_option( self::OPTION_NAME, [] );
-		$number_of_posts = ! empty( $settings['number_of_posts'] ) ? intval( $settings['number_of_posts'] ) : 20;
+	public static function render_posts_per_page_field() {
+		$settings       = get_option( self::OPTION_NAME, [] );
+		$wp_default     = (int) get_option( 'posts_per_page', 10 );
+		$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : $wp_default;
 		?>
 		<input
 			type="number"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[number_of_posts]"
-			value="<?php echo esc_attr( $number_of_posts ); ?>"
+			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[posts_per_page]"
+			value="<?php echo esc_attr( $posts_per_page ); ?>"
 			min="1"
 			max="100"
 			step="1"
 		>
+		<?php esc_html_e( 'posts', 'newspack-lite-site' ); ?>
+		<p class="description">
+			<?php esc_html_e( 'Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting.', 'newspack-lite-site' ); ?>
+		</p>
 		<?php
 	}
 
@@ -342,27 +347,30 @@ class Lite_Site_Settings {
 	public static function render_categories_field() {
 		$settings            = get_option( self::OPTION_NAME, [] );
 		$selected_categories = ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
-		$categories          = get_categories( [ 'hide_empty' => false ] );
+
+		$all_categories = get_categories( [ 'hide_empty' => false ] );
+
+		$ordered_categories = self::build_ordered_categories( $all_categories, parent_id: 0, depth: 0 );
 		?>
 		<select
 			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[categories][]"
 			multiple
-			class="regular-text nls-categories-select"
+			class="nls-categories-select"
 		>
 			<option value="" <?php selected( empty( $selected_categories ) ); ?>>
 				<?php esc_html_e( 'All categories', 'newspack-lite-site' ); ?>
 			</option>
-			<?php foreach ( $categories as $category ) : ?>
+			<?php foreach ( $ordered_categories as $category ) : ?>
 				<option
 					value="<?php echo esc_attr( $category->term_id ); ?>"
 					<?php selected( in_array( $category->term_id, $selected_categories, true ) ); ?>
 				>
-					<?php echo esc_html( $category->name ); ?>
+					<?php echo esc_html( str_repeat( '— ', $category->depth ) . $category->name ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
 		<p class="description">
-			<?php esc_html_e( 'Select categories to include.', 'newspack-lite-site' ); ?>
+			<?php esc_html_e( 'Select categories to show on the lite site archive. Selecting a category automatically includes all its subcategories.', 'newspack-lite-site' ); ?>
 		</p>
 		<?php
 	}
@@ -469,6 +477,46 @@ class Lite_Site_Settings {
 	}
 
 	/**
+	 * Builds a hierarchically ordered category list with depth information.
+	 *
+	 * Categories are returned in tree order, where each parent category
+	 * is immediately followed by its descendants recursively.
+	 *
+	 * Adds a temporary `depth` property to each WP_Term object representing
+	 * its nesting level in the hierarchy.
+	 *
+	 * @param WP_Term[] $all_categories Flat array of category terms.
+	 * @param int       $parent_id      Parent term ID to process.
+	 * @param int       $depth          Current hierarchy depth. Top level is 0.
+	 * @return WP_Term[] Ordered category list with added `depth` property.
+	 */
+	private static function build_ordered_categories( array $all_categories, int $parent_id, int $depth ): array {
+		$ordered_categories = [];
+
+		foreach ( $all_categories as $category ) {
+			if ( (int) $category->parent !== $parent_id ) {
+				continue;
+			}
+
+			$category->depth = $depth;
+			$ordered_categories[] = $category;
+
+			$children = self::build_ordered_categories(
+				$all_categories,
+				$category->term_id,
+				$depth + 1
+			);
+
+			$ordered_categories = array_merge(
+				$ordered_categories,
+				$children
+			);
+		}
+
+		return $ordered_categories;
+	}
+
+	/**
 	 * Sanitize settings.
 	 *
 	 * @param array $settings The settings to sanitize.
@@ -493,7 +541,7 @@ class Lite_Site_Settings {
 		return [
 			'enabled'            => ! empty( $settings['enabled'] ),
 			'url_base'           => sanitize_title( $settings['url_base'] ),
-			'number_of_posts'    => min( 100, max( 1, intval( $settings['number_of_posts'] ) ) ),
+			'posts_per_page'     => min( 100, max( 1, intval( $settings['posts_per_page'] ?? get_option( 'posts_per_page', 10 ) ) ) ),
 			'categories'         => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
 			'footer_html'        => wp_kses_post( trim( $settings['footer_html'] ) ),
 			'ga4_measurement_id' => sanitize_text_field( $settings['ga4_measurement_id'] ),
