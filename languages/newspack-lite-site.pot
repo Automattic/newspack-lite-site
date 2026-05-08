@@ -1,0 +1,517 @@
+# Copyright (C) 2026 Automattic
+# This file is distributed under the GPL3.
+msgid ""
+msgstr ""
+"Project-Id-Version: Newspack Lite Site 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/newspack-lite-site\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-05-08T08:00:48+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: newspack-lite-site\n"
+
+#. Plugin Name of the plugin
+#: newspack-lite-site.php
+msgid "Newspack Lite Site"
+msgstr ""
+
+#. Description of the plugin
+#: newspack-lite-site.php
+msgid "Lightweight Newspack site configuration."
+msgstr ""
+
+#. Author of the plugin
+#: newspack-lite-site.php
+msgid "Automattic"
+msgstr ""
+
+#. Author URI of the plugin
+#: newspack-lite-site.php
+msgid "https://newspack.com/"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:49
+#: includes/class-lite-site-settings.php:243
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:48
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:235
+msgid "Settings"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:57
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:56
+msgid "Enable Lite Site"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:66
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:65
+msgid "URL Base"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:75
+msgid "Archive pages show at most"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:84
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:83
+msgid "Categories"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:93
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:92
+msgid "Footer HTML"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:102
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:101
+msgid "GA4 Measurement ID"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:111
+#: includes/class-lite-site-settings.php:250
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:110
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:244
+msgid "Appearance"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:119
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:118
+msgid "Primary Color"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:128
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:127
+msgid "Font Import URL"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:137
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:136
+msgid "Body Font"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:201
+#: includes/class-lite-site-settings.php:202
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:191
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:192
+msgid "Lite Site"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:213
+#: includes/class-lite-site-settings.php:214
+#: includes/class-lite-site-settings.php:237
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:203
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:204
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:227
+msgid "Settings & Appearance"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:223
+#: includes/class-lite-site-settings.php:224
+#: includes/class-lite-site-settings.php:270
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:213
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:214
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:263
+msgid "RSS Feed Import"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:238
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:228
+msgid "Lite Site is a text-only version of this website that loads faster and uses less data."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:239
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:229
+msgid "It's designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:251
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:245
+msgid "Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:289
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:282
+msgid "Enable lite site feature"
+msgstr ""
+
+#. translators: %s: is the site URL without a trailing slash, ex: https://example.com
+#: includes/class-lite-site-settings.php:311
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:304
+#, php-format
+msgid "The URL base for the lite site (e.g. \"lite\" for %s/lite/article-slug)."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:335
+msgid "posts"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:337
+msgid "Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:359
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:344
+msgid "All categories"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:371
+msgid "Select categories to show on the lite site archive. Selecting a category automatically includes all its subcategories."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:389
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:374
+msgid "HTML to be displayed in the footer of lite site pages."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:409
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:394
+msgid "Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:432
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:417
+msgid "Reset to default"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:452
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:437
+msgid "URL or &lt;link&gt; tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:472
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:457
+msgid "Font name to use for body text, must match the imported font (e.g. \"Open Sans\"). Leave empty to use the system font."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:592
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:537
+msgid "WP-Cron is disabled. Automatic imports require a server cron job."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:615
+#: includes/class-lite-site-settings.php:667
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:560
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:612
+msgid "Add Feed"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:622
+#: includes/class-lite-site-settings.php:694
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:567
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:637
+msgid "Feed URL"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:637
+#: includes/class-lite-site-settings.php:695
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:582
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:638
+msgid "Frequency"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:651
+#: includes/class-lite-site-settings.php:696
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:596
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:639
+msgid "Author"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:684
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:629
+msgid "Scheduled Feeds"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:687
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:632
+msgid "No feeds configured. Add one above."
+msgstr ""
+
+#: includes/class-lite-site-settings.php:697
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:640
+msgid "Last Run"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:698
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:641
+msgid "Next Run"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:699
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:642
+msgid "Status"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:700
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:643
+msgid "Actions"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:741
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:678
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:748
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:685
+msgid "Never"
+msgstr ""
+
+#. translators: 1: date/time of last run, 2: error message
+#: includes/class-lite-site-settings.php:752
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:689
+#, php-format
+msgid "%1$s — Error: %2$s"
+msgstr ""
+
+#. translators: %s: date/time of last run
+#: includes/class-lite-site-settings.php:764
+#, php-format
+msgid "%1$s — Up to date"
+msgstr ""
+
+#. translators: 1: date/time of last run, 2: number imported
+#: includes/class-lite-site-settings.php:767
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:708
+#, php-format
+msgid "%1$s — %2$d imported, up to date"
+msgstr ""
+
+#. translators: 1: date/time of last run, 2: number imported, 3: number failed
+#: includes/class-lite-site-settings.php:770
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:715
+#, php-format
+msgid "%1$s — %2$d imported, %3$d failed"
+msgstr ""
+
+#. translators: 1: date/time of last run, 2: number imported
+#: includes/class-lite-site-settings.php:773
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:723
+#, php-format
+msgid "%1$s — %2$d imported"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:789
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:740
+msgid "Active"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:791
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:742
+msgid "Paused"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:797
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:748
+msgid "Pause"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:797
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:748
+msgid "Resume"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:806
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:757
+msgid "Delete this feed?"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:811
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:762
+msgid "Delete"
+msgstr ""
+
+#. translators: %1$s: a comma separated list of authors names with links and, after the "and" %2$s: one last author link
+#: includes/class-lite-site.php:357
+#: release/newspack-lite-site/includes/class-lite-site.php:315
+#, php-format
+msgid "%1$s and %2$s"
+msgstr ""
+
+#. translators: %s: author name(s)
+#: includes/class-lite-site.php:375
+#: release/newspack-lite-site/includes/class-lite-site.php:333
+#, php-format
+msgid "By %s"
+msgstr ""
+
+#. translators: %s: image alt text
+#: includes/class-lite-site.php:542
+#: release/newspack-lite-site/includes/class-lite-site.php:493
+#, php-format
+msgid "Image | %s"
+msgstr ""
+
+#: includes/class-lite-site.php:543
+#: release/newspack-lite-site/includes/class-lite-site.php:494
+msgid "Image"
+msgstr ""
+
+#. translators: %s: image caption text
+#: includes/class-lite-site.php:562
+#: release/newspack-lite-site/includes/class-lite-site.php:513
+#, php-format
+msgid "Caption: %s"
+msgstr ""
+
+#: includes/class-lite-site.php:574
+#: release/newspack-lite-site/includes/class-lite-site.php:525
+msgid "Load image"
+msgstr ""
+
+#: includes/class-rss-importer.php:77
+#: includes/class-rss-importer.php:138
+#: release/newspack-lite-site/includes/class-rss-importer.php:77
+#: release/newspack-lite-site/includes/class-rss-importer.php:138
+msgid "Every 5 Minutes"
+msgstr ""
+
+#: includes/class-rss-importer.php:81
+#: includes/class-rss-importer.php:139
+#: release/newspack-lite-site/includes/class-rss-importer.php:81
+#: release/newspack-lite-site/includes/class-rss-importer.php:139
+msgid "Every 10 Minutes"
+msgstr ""
+
+#: includes/class-rss-importer.php:85
+#: includes/class-rss-importer.php:140
+#: release/newspack-lite-site/includes/class-rss-importer.php:85
+#: release/newspack-lite-site/includes/class-rss-importer.php:140
+msgid "Every 30 Minutes"
+msgstr ""
+
+#: includes/class-rss-importer.php:89
+#: release/newspack-lite-site/includes/class-rss-importer.php:89
+msgid "Once Weekly"
+msgstr ""
+
+#: includes/class-rss-importer.php:141
+#: release/newspack-lite-site/includes/class-rss-importer.php:141
+msgid "Hourly"
+msgstr ""
+
+#: includes/class-rss-importer.php:142
+#: release/newspack-lite-site/includes/class-rss-importer.php:142
+msgid "Twice Daily"
+msgstr ""
+
+#: includes/class-rss-importer.php:143
+#: release/newspack-lite-site/includes/class-rss-importer.php:143
+msgid "Daily"
+msgstr ""
+
+#: includes/class-rss-importer.php:144
+#: release/newspack-lite-site/includes/class-rss-importer.php:144
+msgid "Weekly"
+msgstr ""
+
+#: includes/class-rss-importer.php:155
+#: includes/class-rss-importer.php:239
+#: release/newspack-lite-site/includes/class-rss-importer.php:155
+#: release/newspack-lite-site/includes/class-rss-importer.php:239
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-rss-importer.php:166
+#: release/newspack-lite-site/includes/class-rss-importer.php:166
+msgid "Please select a valid author."
+msgstr ""
+
+#: includes/class-rss-importer.php:179
+#: release/newspack-lite-site/includes/class-rss-importer.php:179
+msgid "Please enter a valid feed URL."
+msgstr ""
+
+#: includes/class-rss-importer.php:199
+#: release/newspack-lite-site/includes/class-rss-importer.php:199
+msgid "This feed is already configured."
+msgstr ""
+
+#: includes/class-rss-importer.php:223
+#: release/newspack-lite-site/includes/class-rss-importer.php:223
+msgid "Feed added successfully."
+msgstr ""
+
+#: includes/class-rss-importer.php:276
+#: release/newspack-lite-site/includes/class-rss-importer.php:276
+msgid "Feed updated."
+msgstr ""
+
+#: includes/class-rss-importer.php:339
+msgid "A valid feed URL is required."
+msgstr ""
+
+#: includes/class-rss-importer.php:343
+msgid "A valid author ID is required."
+msgstr ""
+
+#. translators: %s: error message from the feed parser
+#: includes/class-rss-importer.php:355
+#: release/newspack-lite-site/includes/class-rss-importer.php:347
+#, php-format
+msgid "Could not retrieve feed: %s"
+msgstr ""
+
+#: includes/class-rss-importer.php:364
+#: release/newspack-lite-site/includes/class-rss-importer.php:356
+msgid "The feed contains no items."
+msgstr ""
+
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:74
+msgid "Number of posts to display"
+msgstr ""
+
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:356
+msgid "Select categories to include."
+msgstr ""
+
+#. translators: %s: date/time of last run
+#: release/newspack-lite-site/includes/class-lite-site-settings.php:702
+#, php-format
+msgid "%s — Up to date"
+msgstr ""
+
+#: release/newspack-lite-site/templates/archive.php:38
+#: templates/archive.php:55
+msgid "View full site"
+msgstr ""
+
+#: release/newspack-lite-site/templates/offline.php:19
+#: release/newspack-lite-site/templates/offline.php:30
+#: templates/offline.php:19
+#: templates/offline.php:30
+msgid "You are offline"
+msgstr ""
+
+#: release/newspack-lite-site/templates/offline.php:28
+#: release/newspack-lite-site/templates/single.php:57
+#: templates/offline.php:28
+#: templates/single.php:57
+msgid "Back to posts"
+msgstr ""
+
+#: release/newspack-lite-site/templates/single.php:58
+#: templates/single.php:58
+msgid "View full article"
+msgstr ""
+
+#: release/newspack-lite-site/templates/single.php:83
+#: templates/single.php:83
+msgid "Live"
+msgstr ""
+
+#: release/newspack-lite-site/templates/single.php:85
+#: templates/single.php:85
+msgid "Archived"
+msgstr ""
+
+#: release/newspack-lite-site/templates/single.php:110
+#: templates/single.php:110
+msgid "There are no entries on this page."
+msgstr ""
+
+#: templates/archive.php:74
+msgid "Archive pagination"
+msgstr ""
