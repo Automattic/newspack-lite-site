@@ -406,6 +406,13 @@ class Lite_Site {
 	 * @return WP_Comment[] Array of liveblog comment entries.
 	 */
 	public static function get_liveblog_entries( $post_id, $limit = 100 ) {
+		$post_id = absint( $post_id );
+		$limit   = absint( $limit );
+
+		if ( ! $post_id ) {
+			return [];
+		}
+
 		$entries = get_comments(
 			[
 				'post_id' => $post_id,
