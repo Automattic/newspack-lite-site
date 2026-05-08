@@ -2,7 +2,7 @@
 /**
  * Newspack Lite Site plugin initialization.
  *
- * @package Newspack
+ * @package newspack-lite-site
  */
 
 namespace Newspack_Lite_Site;
@@ -16,6 +16,8 @@ class Initializer {
 	 * Runs the initialization.
 	 */
 	public static function init() {
-		// Register hooks and features here.
+		Lite_Site::init();
+		Lite_Site_Settings::init();
+		RSS_Importer::init();
 	}
 }
