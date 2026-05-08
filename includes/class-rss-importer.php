@@ -335,6 +335,14 @@ class RSS_Importer {
 	 * @return array|\WP_Error Array with 'imported', 'failed', and 'up_to_date' keys, or WP_Error on failure.
 	 */
 	public static function run_import( $feed_url, $author_id = 0 ) {
+		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
+			return new \WP_Error( 'invalid_url', __( 'A valid feed URL is required.', 'newspack-lite-site' ) );
+		}
+
+		if ( ! $author_id || ! get_userdata( $author_id ) ) {
+			return new \WP_Error( 'invalid_author', __( 'A valid author ID is required.', 'newspack-lite-site' ) );
+		}
+
 		include_once ABSPATH . WPINC . '/feed.php';
 
 		$feed = fetch_feed( $feed_url );
