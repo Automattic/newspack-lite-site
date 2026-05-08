@@ -154,10 +154,12 @@ if ( $is_liveblog ) {
 			}
 
 			buildFigure( placeholder ) {
-				const src     = placeholder.getAttribute( 'data-src' );
-				const srcset  = placeholder.getAttribute( 'data-srcset' );
-				const alt     = placeholder.getAttribute( 'data-alt' ) || '';
-				const caption = placeholder.getAttribute( 'data-caption' ) || '';
+				const {
+					src,
+					srcset,
+					alt = '',
+					caption = '',
+				} = placeholder.dataset;
 
 				const figure = document.createElement( 'figure' );
 				const img    = document.createElement( 'img' );

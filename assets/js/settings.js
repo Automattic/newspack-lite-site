@@ -17,4 +17,4 @@ class ColorPickerSettings {
 	}
 }
 
-new ColorPickerSettings();
+export default ColorPickerSettings;

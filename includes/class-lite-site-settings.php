@@ -238,9 +238,7 @@ class Lite_Site_Settings {
 			<p><?php esc_html_e( 'Lite Site is a text-only version of this website that loads faster and uses less data.', 'newspack-lite-site' ); ?></p>
 			<p><?php esc_html_e( 'It\'s designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies.', 'newspack-lite-site' ); ?></p>
 			<form action="options.php" method="post">
-				<?php
-				settings_fields( 'newspack_lite_site' );
-				?>
+				<?php settings_fields( 'newspack_lite_site' ); ?>
 
 				<h2><?php esc_html_e( 'Settings', 'newspack-lite-site' ); ?></h2>
 				<table class="form-table" role="presentation">
@@ -762,39 +760,20 @@ class Lite_Site_Settings {
 					$date_str   = wp_date( $date_format, $feed['last_run'] );
 
 					if ( $up_to_date && 0 === $imported ) {
-						$case = 'up_to_date_empty';
+						/* translators: %s: date/time of last run */
+						$format = __( '%1$s — Up to date', 'newspack-lite-site' );
 					} elseif ( $up_to_date ) {
-						$case = 'up_to_date';
+						/* translators: 1: date/time of last run, 2: number imported */
+						$format = __( '%1$s — %2$d imported, up to date', 'newspack-lite-site' );
 					} elseif ( $failed > 0 ) {
-						$case = 'failed';
+						/* translators: 1: date/time of last run, 2: number imported, 3: number failed */
+						$format = __( '%1$s — %2$d imported, %3$d failed', 'newspack-lite-site' );
 					} else {
-						$case = 'imported';
+						/* translators: 1: date/time of last run, 2: number imported */
+						$format = __( '%1$s — %2$d imported', 'newspack-lite-site' );
 					}
 
-					switch ( $case ) {
-						case 'up_to_date_empty':
-							/* translators: %s: date/time of last run */
-							$format = __( '%s — Up to date', 'newspack-lite-site' );
-							$args   = [ $date_str ];
-							break;
-						case 'up_to_date':
-							/* translators: 1: date/time of last run, 2: number imported */
-							$format = __( '%1$s — %2$d imported, up to date', 'newspack-lite-site' );
-							$args   = [ $date_str, $imported ];
-							break;
-						case 'failed':
-							/* translators: 1: date/time of last run, 2: number imported, 3: number failed */
-							$format = __( '%1$s — %2$d imported, %3$d failed', 'newspack-lite-site' );
-							$args   = [ $date_str, $imported, $failed ];
-							break;
-						default:
-							/* translators: 1: date/time of last run, 2: number imported */
-							$format = __( '%1$s — %2$d imported', 'newspack-lite-site' );
-							$args   = [ $date_str, $imported ];
-							break;
-					}
-
-					echo esc_html( vsprintf( $format, $args ) );
+					echo esc_html( sprintf( $format, $date_str, $imported, $failed ) );
 				}
 				?>
 			</td>

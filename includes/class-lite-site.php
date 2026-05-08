@@ -241,10 +241,14 @@ class Lite_Site {
 	 * @return array The modified array of query variables.
 	 */
 	public static function register_query_vars( $vars ) {
-		$vars[] = 'is_lite';
-		$vars[] = 'lite_path';
-		$vars[] = 'lite_page';
-		return $vars;
+		return array_merge(
+			$vars,
+			[
+				'is_lite',
+				'lite_path',
+				'lite_page',
+			]
+		);
 	}
 
 	/**
