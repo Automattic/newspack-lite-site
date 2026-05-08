@@ -532,7 +532,7 @@ class RSS_Importer {
 			// Priority 2: enclosure or media:content with an image MIME type.
 			$link      = $enclosure->get_link();
 			$mime_type = $enclosure->get_type();
-			if ( ! empty( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
+			if ( ! empty( $link ) && wp_http_validate_url( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
 				return $link;
 			}
 		}
@@ -548,7 +548,7 @@ class RSS_Importer {
 
 				$link      = $enc->get_link();
 				$mime_type = $enc->get_type();
-				if ( ! empty( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
+				if ( ! empty( $link ) && wp_http_validate_url( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
 					return $link;
 				}
 			}
