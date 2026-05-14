@@ -248,7 +248,7 @@ class Lite_Site_Settings {
 			[
 				'id'    => 'view-lite-site',
 				'title' => __( 'View Lite Site', 'newspack-lite-site' ),
-				'href'  => home_url( Lite_Site::get_url_base() ),
+				'href'  => esc_url( home_url( Lite_Site::get_url_base() ) ),
 				'meta'  => [
 					'target' => '_blank',
 					'rel'    => 'noopener',
