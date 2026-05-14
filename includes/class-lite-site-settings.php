@@ -25,6 +25,7 @@ class Lite_Site_Settings {
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
+		add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_link' ], 100 );
 	}
 
 	/**
@@ -225,6 +226,34 @@ class Lite_Site_Settings {
 			'manage_options',
 			'newspack-lite-site-rss-import',
 			[ __CLASS__, 'render_import_page' ]
+		);
+	}
+
+	/**
+	 * Add a "View Lite Site" link to the admin toolbar on the Lite Site settings screen.
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar The admin bar instance.
+	 */
+	public static function add_admin_bar_link( $wp_admin_bar ) {
+		if ( ! Lite_Site::is_enabled() ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || 'toplevel_page_newspack-lite-site' !== $screen->id ) {
+			return;
+		}
+
+		$wp_admin_bar->add_node(
+			[
+				'id'    => 'view-lite-site',
+				'title' => __( 'View Lite Site', 'newspack-lite-site' ),
+				'href'  => home_url( Lite_Site::get_url_base() ),
+				'meta'  => [
+					'target' => '_blank',
+					'rel'    => 'noopener',
+				],
+			]
 		);
 	}
 
