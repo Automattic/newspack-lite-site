@@ -1,0 +1,54 @@
+/**
+ * Shared admin page styles.
+ *
+ * Styles shared across the Settings and RSS Feed Import admin pages,
+ * including the page background, section headers, section fields, and snackbar.
+ */
+
+body.newspack-lite-admin-header {
+
+	#wpwrap {
+		background: #fff;
+	}
+}
+
+.newspack-lite-settings-wrap {
+
+	.components-notice {
+		margin: 16px 24px 0;
+	}
+}
+
+.newspack-lite-section-header {
+	margin: 64px 0 32px;
+
+	h3 {
+		font-size: 1.125rem;
+		line-height: 1.4;
+		margin: 0;
+	}
+
+	p {
+		color: #757575;
+		margin: 8px 0 0;
+	}
+}
+
+.newspack-lite-section-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+// Snackbar toast, pinned to the bottom center of the viewport.
+.newspack-lite-snackbar-container {
+	bottom: 24px;
+	left: 50%;
+	position: fixed;
+	transform: translateX(-50%);
+	z-index: 99999;
+
+	&--error .components-snackbar {
+		background-color: #cc1818;
+	}
+}
