@@ -1,0 +1,34 @@
+/**
+ * Settings page styles.
+ *
+ * Styles specific to the Settings admin page, including the sections layout,
+ * save button card, and color picker field.
+ */
+
+.newspack-lite-sections {
+	margin: 0 auto;
+	max-width: 760px;
+	padding: 48px 24px 0;
+
+	// Container padding handles top spacing; first section removes its top margin.
+	> .newspack-lite-section:first-child {
+
+		.newspack-lite-section-header {
+			margin-top: 0;
+		}
+	}
+}
+
+.newspack-lite-buttons-card {
+	display: flex;
+	flex-direction: row-reverse;
+	margin: 64px 0 32px;
+}
+
+.newspack-lite-color-picker-wrap {
+
+	// Reset ColorPicker's default max-width so it fills the section column.
+	.components-color-picker {
+		max-width: none;
+	}
+}
