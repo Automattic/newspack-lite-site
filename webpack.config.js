@@ -2,7 +2,9 @@ const getWebpackConfig = require( 'newspack-scripts/config/getWebpackConfig' );
 
 module.exports = getWebpackConfig( {
 	entry: {
-		index: './assets/js/index.js',
-		'settings-style': './assets/scss/index.scss',
+		index: './src/settings/index.tsx',
+		'admin-header': './src/admin-header/index.tsx',
+		style: './src/style.scss',
+		'rss-feed-import': './src/rss-feed-import/index.tsx',
 	},
 } );
