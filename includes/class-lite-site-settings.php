@@ -7,6 +7,8 @@
 
 namespace Newspack_Lite_Site;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Lite Site Settings class.
  */
@@ -21,18 +23,21 @@ class Lite_Site_Settings {
 	 * Initialize the settings functionality.
 	 */
 	public static function init() {
-		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
+		add_action( 'init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_link' ], 100 );
+		add_action( 'in_admin_header', [ __CLASS__, 'render_admin_header' ] );
+		add_filter( 'admin_body_class', [ __CLASS__, 'admin_header_body_class' ] );
 	}
 
 	/**
 	 * Register settings.
 	 *
-	 * Registers the plugin option and exposes fields for general settings (enabled state,
-	 * URL base, posts per page, categories, footer HTML, GA4 ID) and appearance (primary colour, font).
+	 * Registers the plugin option with a full REST API schema so it is accessible
+	 * via /wp/v2/settings. Sanitization is handled by sanitize_settings(), which
+	 * fires on every update_option() call regardless of caller.
 	 */
 	public static function register_settings() {
 		register_setting(
@@ -40,110 +45,61 @@ class Lite_Site_Settings {
 			self::OPTION_NAME,
 			[
 				'type'              => 'object',
+				'default'           => [],
 				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
+				'show_in_rest'      => [
+					'schema' => [
+						'type'                 => 'object',
+						'additionalProperties' => false,
+						'properties'           => [
+							'enabled'            => [
+								'type'    => 'boolean',
+								'default' => false,
+							],
+							'url_base'           => [
+								'type'    => 'string',
+								'default' => 'lite',
+							],
+							'posts_per_page'     => [
+								'type'    => 'integer',
+								'default' => 10,
+								'minimum' => 1,
+								'maximum' => 100,
+							],
+							'categories'         => [
+								'type'    => 'array',
+								'default' => [],
+								'items'   => [ 'type' => 'integer' ],
+							],
+							'footer_html'        => [
+								'type'    => 'string',
+								'default' => '',
+							],
+							'ga4_measurement_id' => [
+								'type'    => 'string',
+								'default' => '',
+							],
+							'primary_color'      => [
+								'type'    => 'string',
+								'default' => '',
+							],
+							'font_import_url'    => [
+								'type'    => 'string',
+								'default' => '',
+							],
+							'font_body'          => [
+								'type'    => 'string',
+								'default' => '',
+							],
+						],
+					],
+				],
 			]
-		);
-
-		// General settings: controls how the lite site behaves and what content it serves.
-		add_settings_section(
-			'newspack_lite_site_main',
-			__( 'Settings', 'newspack-lite-site' ),
-			'__return_null',
-			'newspack_lite_site'
-		);
-
-		// Toggle to activate or deactivate the lite site feature entirely.
-		add_settings_field(
-			'enabled',
-			__( 'Enable Lite Site', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_enabled_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_main'
-		);
-
-		// URL slug appended to post permalinks to serve the lite version.
-		add_settings_field(
-			'url_base',
-			__( 'URL Base', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_url_base_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_main'
-		);
-
-		// Number of posts per page; determines when pagination appears.
-		add_settings_field(
-			'posts_per_page',
-			__( 'Archive pages show at most', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_posts_per_page_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_main'
-		);
-
-		// Restricts the archive to specific categories; empty means all categories are included.
-		add_settings_field(
-			'categories',
-			__( 'Categories', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_categories_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_main'
-		);
-
-		// Custom HTML injected into the footer of every lite site page.
-		add_settings_field(
-			'footer_html',
-			__( 'Footer HTML', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_footer_html_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_main'
-		);
-
-		// GA4 Measurement ID for tracking on lite pages.
-		add_settings_field(
-			'ga4_measurement_id',
-			__( 'GA4 Measurement ID', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_ga4_measurement_id_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_main'
-		);
-
-		// Appearance settings: controls the visual style of lite site pages.
-		add_settings_section(
-			'newspack_lite_site_appearance',
-			__( 'Appearance', 'newspack-lite-site' ),
-			'__return_null',
-			'newspack_lite_site'
-		);
-
-		// Overrides the theme's primary colour on lite pages.
-		add_settings_field(
-			'primary_color',
-			__( 'Primary Color', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_primary_color_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_appearance'
-		);
-
-		// URL (or <link> tag) for loading a web font from an external provider on lite pages.
-		add_settings_field(
-			'font_import_url',
-			__( 'Font Import URL', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_font_import_url_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_appearance'
-		);
-
-		// CSS font-family name applied to body text; must match the imported font.
-		add_settings_field(
-			'font_body',
-			__( 'Body Font', 'newspack-lite-site' ),
-			[ __CLASS__, 'render_font_body_field' ],
-			'newspack_lite_site',
-			'newspack_lite_site_appearance'
 		);
 	}
 
 	/**
-	 * Enqueue admin styles for the plugin's settings pages.
+	 * Enqueue admin styles for the plugin's admin pages.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
@@ -155,46 +111,215 @@ class Lite_Site_Settings {
 			return;
 		}
 
+		// Admin header CSS shared across the Settings and RSS Feed Import pages.
+		$header_asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/admin-header.asset.php';
+		$header_version    = file_exists( $header_asset_file )
+			? ( require $header_asset_file )['version']
+			: '';
+
 		wp_enqueue_style(
-			'newspack-lite-site-settings',
-			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/settings-style.css',
-			[],
-			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/settings-style.css' )
+			'newspack-lite-site-header',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/admin-header.css',
+			[ 'wp-components' ],
+			$header_version
 		);
+
+		// Shared admin page CSS.
+		wp_enqueue_style(
+			'newspack-lite-site-style',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/style.css',
+			[],
+			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/style.css' )
+		);
+
+		// Settings page CSS.
+		if ( $settings_hook === $hook_suffix ) {
+			$index_asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.asset.php';
+			$index_version    = file_exists( $index_asset_file )
+				? ( require $index_asset_file )['version']
+				: '';
+
+			wp_enqueue_style(
+				'newspack-lite-site-app',
+				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/index.css',
+				[],
+				$index_version
+			);
+		}
 	}
 
 	/**
-	 * Enqueue admin scripts for the plugin's settings pages.
+	 * Enqueue admin scripts for the plugin's pages.
+	 *
+	 * The admin-header bundle is shared across both pages; each page also receives
+	 * its own app bundle with bootstrap data.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
 	public static function enqueue_admin_scripts( $hook_suffix ) {
-		if ( 'toplevel_page_newspack-lite-site' !== $hook_suffix ) {
+		$settings_hook = 'toplevel_page_newspack-lite-site';
+		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
+
+		if ( ! in_array( $hook_suffix, [ $settings_hook, $import_hook ], true ) ) {
 			return;
 		}
 
-		$theme_color   = Lite_Site::get_theme_primary_color();
-		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+		// Admin header bundle, enqueued on the Settings and RSS Feed Import pages.
+		$header_asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/admin-header.asset.php';
+		$header_asset      = file_exists( $header_asset_file )
+			? require $header_asset_file
+			: [
+				'dependencies' => [ 'wp-element' ],
+				'version'      => '',
+			];
+
+		wp_enqueue_script(
+			'newspack-lite-site-header',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/admin-header.js',
+			$header_asset['dependencies'],
+			$header_asset['version'],
+			true
+		);
+
+		$is_settings = ( $settings_hook === $hook_suffix );
+		$current_tab = sanitize_key( filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_SPECIAL_CHARS ) ?? 'general' );
+
+		$tabs = [];
+		if ( $is_settings ) {
+			$tabs = [
+				[
+					'id'       => 'general',
+					'label'    => __( 'General', 'newspack-lite-site' ),
+					'href'     => admin_url( 'admin.php?page=newspack-lite-site' ),
+					'isActive' => ( 'general' === $current_tab || '' === $current_tab ),
+				],
+				[
+					'id'       => 'appearance',
+					'label'    => __( 'Appearance', 'newspack-lite-site' ),
+					'href'     => admin_url( 'admin.php?page=newspack-lite-site&tab=appearance' ),
+					'isActive' => ( 'appearance' === $current_tab ),
+				],
+			];
+		}
+
+		$title = $is_settings
+			? __( 'Settings', 'newspack-lite-site' )
+			: __( 'RSS Feed Import', 'newspack-lite-site' );
+
+		wp_localize_script(
+			'newspack-lite-site-header',
+			'NewspackLiteSiteAdminHeader',
+			[
+				'title' => $title,
+				'tabs'  => $tabs,
+			]
+		);
+
+		// RSS Import app bundle, enqueued on the RSS Feed Import page only.
+		if ( ! $is_settings ) {
+			$interval_labels = RSS_Importer::get_interval_labels();
+			$rss_asset_file  = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/rss-feed-import.asset.php';
+			$rss_asset       = file_exists( $rss_asset_file )
+				? require $rss_asset_file
+				: [
+					'dependencies' => [],
+					'version'      => '',
+				];
+
+			wp_enqueue_script(
+				'newspack-lite-site-rss-import',
+				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/rss-feed-import.js',
+				$rss_asset['dependencies'],
+				$rss_asset['version'],
+				true
+			);
+
+			wp_enqueue_style(
+				'newspack-lite-site-rss-import',
+				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/rss-feed-import.css',
+				[ 'wp-components' ],
+				$rss_asset['version']
+			);
+
+			wp_localize_script(
+				'newspack-lite-site-rss-import',
+				'NewspackLiteSiteRssImport',
+				[
+					'cronDisabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
+					'intervals'    => array_values(
+						array_map(
+							fn( $value, $label ) => compact( 'value', 'label' ),
+							array_keys( $interval_labels ),
+							$interval_labels
+						)
+					),
+					'authors'      => array_values(
+						array_map(
+							fn( $u ) => [
+								'value' => (string) $u->ID,
+								'label' => $u->display_name,
+							],
+							get_users(
+								[
+									'capability' => 'publish_posts',
+									'fields'     => [ 'ID', 'display_name' ],
+								]
+							)
+						)
+					),
+				]
+			);
+			return;
+		}
+
+		// Settings app bundle, enqueued on the Settings page only.
+		$asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.asset.php';
+		$asset      = file_exists( $asset_file )
+			? require $asset_file
+			: [
+				'dependencies' => [],
+				'version'      => '',
+			];
 
 		wp_enqueue_script(
 			'newspack-lite-site',
 			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/index.js',
-			[],
-			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.js' ),
+			$asset['dependencies'],
+			$asset['version'],
 			true
 		);
 
+		wp_set_script_translations( 'newspack-lite-site', 'newspack-lite-site' );
+
+		// Build hierarchy-ordered category list for the React categories field.
+		$all_categories     = get_categories( [ 'hide_empty' => false ] );
+		$ordered_categories = self::build_ordered_categories( $all_categories, 0, 0 );
+
+		$theme_color   = Lite_Site::get_theme_primary_color();
+		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+
 		wp_localize_script(
 			'newspack-lite-site',
-			'nlsAdmin',
+			'NewspackLiteSiteSettings',
 			[
 				'defaultColor' => $default_color,
+				'tab'          => $current_tab,
+				'categories'   => array_values(
+					array_map(
+						fn( $cat ) => [
+							'id'    => $cat->term_id,
+							'name'  => $cat->name,
+							'depth' => $cat->depth,
+						],
+						$ordered_categories
+					)
+				),
 			]
 		);
 	}
 
 	/**
-	 * Add menu page.
+	 * Register the top-level Lite Site menu and its Settings and RSS Feed Import subpages.
 	 */
 	public static function add_menu_page() {
 		// Top-level "Lite Site" menu entry in the WP admin sidebar.
@@ -208,11 +333,11 @@ class Lite_Site_Settings {
 			26
 		);
 
-		// Settings & Appearance: general plugin settings and visual customisation.
+		// Settings: general plugin settings and visual customisation.
 		add_submenu_page(
 			'newspack-lite-site',
-			__( 'Settings & Appearance', 'newspack-lite-site' ),
-			__( 'Settings & Appearance', 'newspack-lite-site' ),
+			__( 'Settings', 'newspack-lite-site' ),
+			__( 'Settings', 'newspack-lite-site' ),
 			'manage_options',
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
@@ -258,248 +383,97 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render settings page.
+	 * Add body class for admin header pages (enables sticky positioning in CSS).
+	 *
+	 * @param string $classes Existing body classes.
+	 * @return string Modified body classes.
+	 */
+	public static function admin_header_body_class( $classes ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen ) {
+			return $classes;
+		}
+
+		$our_hooks = [
+			'toplevel_page_newspack-lite-site',
+			'lite-site_page_newspack-lite-site-rss-import',
+		];
+
+		if ( in_array( $screen->id, $our_hooks, true ) ) {
+			$classes .= ' newspack-lite-admin-header';
+		}
+
+		return $classes;
+	}
+
+	/**
+	 * Render the Newspack-style admin header skeleton.
+	 *
+	 * Hooked to `in_admin_header` so it renders outside `.wrap`, giving the
+	 * header full viewport width. The React admin-header bundle mounts into
+	 * #newspack-lite-admin-header and replaces this loading skeleton.
+	 *
+	 * SVG path data matches the NewspackIcon React component (viewBox 0 0 24 24).
+	 */
+	public static function render_admin_header() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen ) {
+			return;
+		}
+
+		$settings_hook = 'toplevel_page_newspack-lite-site';
+		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
+
+		if ( ! in_array( $screen->id, [ $settings_hook, $import_hook ], true ) ) {
+			return;
+		}
+
+		$is_settings = ( $settings_hook === $screen->id );
+		$title       = $is_settings
+			? __( 'Settings', 'newspack-lite-site' )
+			: __( 'RSS Feed Import', 'newspack-lite-site' );
+		?>
+		<div id="newspack-lite-admin-header">
+			<div class="newspack-lite-header">
+				<div class="newspack-lite-header__inner">
+					<div class="newspack-lite-title">
+						<svg xmlns="http://www.w3.org/2000/svg" height="36" width="36" viewBox="0 0 24 24" class="newspack-lite-icon" aria-hidden="true" focusable="false">
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M24 12C24 18.6271 18.6271 24 12 24C5.37213 24 0 18.6271 0 12C0 5.3729 5.3729 0 12 0C18.6271 0 24 5.3729 24 12ZM17.4545 17.4546L6.54545 6.54545V17.4545H8.72727V11.8182L14.3636 17.4546H17.4545ZM11.2727 8.18182H17.4545V6.54545H9.63636L11.2727 8.18182ZM17.4545 11.2727H14.3636L12.7273 9.63636H17.4545V11.2727ZM17.4545 12.7273V14.3636L15.8182 12.7273H17.4545Z"/>
+						</svg>
+						<div><h2><?php echo esc_html( $title ); ?></h2></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php if ( $is_settings ) : ?>
+		<div id="newspack-lite-tabs-nav"></div>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Render the Settings page.
+	 *
+	 * Mount point for the React settings app. Title and tab nav are rendered by render_admin_header().
 	 */
 	public static function render_settings_page() {
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Settings & Appearance', 'newspack-lite-site' ); ?></h1>
-			<p><?php esc_html_e( 'Lite Site is a text-only version of this website that loads faster and uses less data.', 'newspack-lite-site' ); ?></p>
-			<p><?php esc_html_e( 'It\'s designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies.', 'newspack-lite-site' ); ?></p>
-			<form action="options.php" method="post">
-				<?php settings_fields( 'newspack_lite_site' ); ?>
-
-				<h2><?php esc_html_e( 'Settings', 'newspack-lite-site' ); ?></h2>
-				<table class="form-table" role="presentation">
-					<?php do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_main' ); ?>
-				</table>
-
-				<hr>
-
-				<h2><?php esc_html_e( 'Appearance', 'newspack-lite-site' ); ?></h2>
-				<p><?php esc_html_e( 'Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections.', 'newspack-lite-site' ); ?></p>
-				<table class="form-table" role="presentation">
-					<?php do_settings_fields( 'newspack_lite_site', 'newspack_lite_site_appearance' ); ?>
-				</table>
-
-				<?php
-				submit_button();
-				?>
-			</form>
+			<div id="newspack-lite-settings-app"></div>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Render RSS Feed Import page.
+	 * Render the RSS Feed Import page.
+	 *
+	 * Mount point for the React RSS import app. Title is rendered by render_admin_header().
 	 */
 	public static function render_import_page() {
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'RSS Feed Import', 'newspack-lite-site' ); ?></h1>
-			<?php self::render_import_section(); ?>
+			<div id="newspack-lite-rss-import-app"></div>
 		</div>
-		<?php
-	}
-
-	/**
-	 * Render enabled field.
-	 */
-	public static function render_enabled_field() {
-		$settings = get_option( self::OPTION_NAME, [] );
-		?>
-		<label>
-			<input
-				type="checkbox"
-				name="<?php echo esc_attr( self::OPTION_NAME ); ?>[enabled]"
-				value="1"
-				<?php checked( ! empty( $settings['enabled'] ) ); ?>
-			>
-			<?php esc_html_e( 'Enable lite site feature', 'newspack-lite-site' ); ?>
-		</label>
-		<?php
-	}
-
-	/**
-	 * Render URL base field.
-	 */
-	public static function render_url_base_field() {
-		$settings = get_option( self::OPTION_NAME, [] );
-		$url_base = ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
-		?>
-		<input
-			type="text"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[url_base]"
-			value="<?php echo esc_attr( $url_base ); ?>"
-			class="regular-text"
-		>
-		<p class="description">
-			<?php
-			printf(
-				/* translators: %s: is the site URL without a trailing slash, ex: https://example.com */
-				esc_html__( 'The URL base for the lite site (e.g. "lite" for %s/lite/article-slug).', 'newspack-lite-site' ),
-				esc_url( untrailingslashit( home_url() ) )
-			);
-			?>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Render posts per page field.
-	 */
-	public static function render_posts_per_page_field() {
-		$settings       = get_option( self::OPTION_NAME, [] );
-		$wp_default     = (int) get_option( 'posts_per_page', 10 );
-		$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : $wp_default;
-		?>
-		<input
-			type="number"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[posts_per_page]"
-			value="<?php echo esc_attr( $posts_per_page ); ?>"
-			min="1"
-			max="100"
-			step="1"
-		>
-		<?php esc_html_e( 'posts', 'newspack-lite-site' ); ?>
-		<p class="description">
-			<?php esc_html_e( 'Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting.', 'newspack-lite-site' ); ?>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Render categories field.
-	 */
-	public static function render_categories_field() {
-		$settings            = get_option( self::OPTION_NAME, [] );
-		$selected_categories = ! empty( $settings['categories'] ) ? (array) $settings['categories'] : [];
-
-		$all_categories = get_categories( [ 'hide_empty' => false ] );
-
-		$ordered_categories = self::build_ordered_categories( $all_categories, parent_id: 0, depth: 0 );
-		?>
-		<select
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[categories][]"
-			multiple
-			class="nls-categories-select"
-		>
-			<option value="" <?php selected( empty( $selected_categories ) ); ?>>
-				<?php esc_html_e( 'All categories', 'newspack-lite-site' ); ?>
-			</option>
-			<?php foreach ( $ordered_categories as $category ) : ?>
-				<option
-					value="<?php echo esc_attr( $category->term_id ); ?>"
-					<?php selected( in_array( $category->term_id, $selected_categories, true ) ); ?>
-				>
-					<?php echo esc_html( str_repeat( '— ', $category->depth ) . $category->name ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<p class="description">
-			<?php esc_html_e( 'Select categories to show on the lite site archive. Selecting a category automatically includes all its subcategories.', 'newspack-lite-site' ); ?>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Render footer HTML field.
-	 */
-	public static function render_footer_html_field() {
-		$settings    = get_option( self::OPTION_NAME, [] );
-		$footer_html = ! empty( $settings['footer_html'] ) ? $settings['footer_html'] : '';
-		?>
-		<textarea
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[footer_html]"
-			rows="5"
-			class="large-text"
-		><?php echo esc_textarea( $footer_html ); ?></textarea>
-		<p class="description">
-			<?php esc_html_e( 'HTML to be displayed in the footer of lite site pages.', 'newspack-lite-site' ); ?>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Render GA4 Measurement ID field.
-	 */
-	public static function render_ga4_measurement_id_field() {
-		$settings           = get_option( self::OPTION_NAME, [] );
-		$ga4_measurement_id = ! empty( $settings['ga4_measurement_id'] ) ? $settings['ga4_measurement_id'] : '';
-		?>
-		<input
-			type="text"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[ga4_measurement_id]"
-			value="<?php echo esc_attr( $ga4_measurement_id ); ?>"
-			class="regular-text"
-			placeholder="G-XXXXXXXXXX"
-		>
-		<p class="description">
-			<?php esc_html_e( 'Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking.', 'newspack-lite-site' ); ?>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Render primary color field.
-	 */
-	public static function render_primary_color_field() {
-		$settings      = get_option( self::OPTION_NAME, [] );
-		$saved_color   = ! empty( $settings['primary_color'] ) ? $settings['primary_color'] : '';
-		$has_override  = ! empty( $saved_color );
-		$theme_color   = Lite_Site::get_theme_primary_color();
-		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
-		$picker_value  = $has_override ? $saved_color : $default_color;
-		?>
-		<input
-			type="color"
-			id="nls-primary-color-picker"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[primary_color]"
-			value="<?php echo esc_attr( $picker_value ); ?>"
-		>
-		<button type="button" id="nls-reset-color" class="button">
-			<?php esc_html_e( 'Reset to default', 'newspack-lite-site' ); ?>
-		</button>
-		<?php
-	}
-
-	/**
-	 * Render font import URL field.
-	 */
-	public static function render_font_import_url_field() {
-		$settings        = get_option( self::OPTION_NAME, [] );
-		$font_import_url = ! empty( $settings['font_import_url'] ) ? $settings['font_import_url'] : '';
-		?>
-		<input
-			type="text"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[font_import_url]"
-			value="<?php echo esc_attr( $font_import_url ); ?>"
-			class="large-text"
-			placeholder="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
-		>
-		<p class="description">
-			<?php esc_html_e( 'URL or &lt;link&gt; tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages.', 'newspack-lite-site' ); ?>
-		</p>
-		<?php
-	}
-
-	/**
-	 * Render body font field.
-	 */
-	public static function render_font_body_field() {
-		$settings  = get_option( self::OPTION_NAME, [] );
-		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
-		?>
-		<input
-			type="text"
-			name="<?php echo esc_attr( self::OPTION_NAME ); ?>[font_body]"
-			value="<?php echo esc_attr( $font_body ); ?>"
-			class="regular-text"
-			placeholder="Open Sans"
-		>
-		<p class="description">
-			<?php esc_html_e( 'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.', 'newspack-lite-site' ); ?>
-		</p>
 		<?php
 	}
 
@@ -544,10 +518,13 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Sanitize settings.
+	 * Sanitize and validate settings before saving.
 	 *
-	 * @param array $settings The settings to sanitize.
-	 * @return array The sanitized settings.
+	 * Flushes rewrite rules when url_base or enabled changes, since both affect
+	 * URL routing. Sanitizes each field with the appropriate WordPress function.
+	 *
+	 * @param array $settings Raw settings array from the REST API.
+	 * @return array Sanitized settings ready to be stored in the database.
 	 */
 	public static function sanitize_settings( $settings ) {
 		$old_settings = get_option( self::OPTION_NAME, [] );
@@ -596,251 +573,5 @@ class Lite_Site_Settings {
 		}
 
 		return esc_url_raw( $value );
-	}
-
-	/**
-	 * Render the RSS importer configuration section.
-	 *
-	 * Displays an "Add Feed" form, followed by a management table of all
-	 * configured feeds with pause/resume, edit interval, and delete actions.
-	 */
-	public static function render_import_section() {
-		$feeds           = RSS_Importer::get_feeds();
-		$cron_disabled   = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
-		$date_format     = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
-		$interval_labels = RSS_Importer::get_interval_labels();
-
-		$notice = get_transient( 'nls_rss_importer_notice' );
-		if ( $notice ) {
-			delete_transient( 'nls_rss_importer_notice' );
-		}
-		?>
-		<?php if ( $cron_disabled ) : ?>
-			<div class="notice notice-warning inline">
-				<p>
-					<?php esc_html_e( 'WP-Cron is disabled. Automatic imports require a server cron job.', 'newspack-lite-site' ); ?>
-				</p>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( $notice ) : ?>
-			<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> inline is-dismissible">
-				<p><?php echo esc_html( $notice['message'] ); ?></p>
-			</div>
-		<?php endif; ?>
-		<?php
-
-		self::render_add_feed_form( $interval_labels );
-		self::render_feeds_table( $feeds, $date_format, $interval_labels, $cron_disabled );
-	}
-
-	/**
-	 * Render the Add Feed form.
-	 *
-	 * @param array $interval_labels Associative array of interval keys to labels.
-	 */
-	private static function render_add_feed_form( $interval_labels ) {
-		?>
-		<h2><?php esc_html_e( 'Add Feed', 'newspack-lite-site' ); ?></h2>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php wp_nonce_field( 'nls_rss_add_feed' ); ?>
-			<input type="hidden" name="action" value="nls_rss_add_feed">
-			<table class="form-table" role="presentation">
-				<tr>
-					<th scope="row">
-						<label for="rss_importer_feed_url"><?php esc_html_e( 'Feed URL', 'newspack-lite-site' ); ?></label>
-					</th>
-					<td>
-						<input
-							type="url"
-							id="rss_importer_feed_url"
-							name="rss_importer_feed_url"
-							class="large-text"
-							placeholder="https://example.com/feed/"
-							required
-						>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row">
-						<label for="rss_importer_interval"><?php esc_html_e( 'Frequency', 'newspack-lite-site' ); ?></label>
-					</th>
-					<td>
-						<select id="rss_importer_interval" name="rss_importer_interval">
-							<?php foreach ( $interval_labels as $key => $label ) : ?>
-								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( 'daily', $key ); ?>>
-									<?php echo esc_html( $label ); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row">
-						<label for="rss_importer_author_id"><?php esc_html_e( 'Author', 'newspack-lite-site' ); ?></label>
-					</th>
-					<td>
-						<?php
-						wp_dropdown_users(
-							[
-								'name'       => 'rss_importer_author_id',
-								'id'         => 'rss_importer_author_id',
-								'selected'   => get_current_user_id(),
-								'capability' => [ 'publish_posts' ],
-							]
-						);
-						?>
-					</td>
-				</tr>
-			</table>
-			<?php submit_button( __( 'Add Feed', 'newspack-lite-site' ), 'primary', 'submit', false ); ?>
-		</form>
-		<?php
-	}
-
-	/**
-	 * Render the Scheduled Feeds management table.
-	 *
-	 * @param array  $feeds           All configured feeds.
-	 * @param string $date_format     WordPress date+time format string.
-	 * @param array  $interval_labels Associative array of interval keys to labels.
-	 * @param bool   $cron_disabled   Whether WP-Cron is disabled.
-	 */
-	private static function render_feeds_table( $feeds, $date_format, $interval_labels, $cron_disabled ) {
-		?>
-		<hr class="nls-section-divider">
-
-		<h2><?php esc_html_e( 'Scheduled Feeds', 'newspack-lite-site' ); ?></h2>
-
-		<?php if ( empty( $feeds ) ) : ?>
-			<p><?php esc_html_e( 'No feeds configured. Add one above.', 'newspack-lite-site' ); ?></p>
-		<?php else : ?>
-			<table class="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<?php
-						$columns = [
-							'nls-col-feed-url'  => __( 'Feed URL', 'newspack-lite-site' ),
-							'nls-col-frequency' => __( 'Frequency', 'newspack-lite-site' ),
-							'nls-col-author'    => __( 'Author', 'newspack-lite-site' ),
-							'nls-col-last-run'  => __( 'Last Run', 'newspack-lite-site' ),
-							'nls-col-next-run'  => __( 'Next Run', 'newspack-lite-site' ),
-							'nls-col-status'    => __( 'Status', 'newspack-lite-site' ),
-							'nls-col-actions'   => __( 'Actions', 'newspack-lite-site' ),
-						];
-						foreach ( $columns as $class => $label ) :
-							?>
-							<th scope="col" class="<?php echo esc_attr( $class ); ?>">
-								<?php echo esc_html( $label ); ?>
-							</th>
-						<?php endforeach; ?>
-					</tr>
-				</thead>
-				<tbody>
-					<?php foreach ( $feeds as $feed_id => $feed ) : ?>
-						<?php self::render_feed_row( $feed_id, $feed, $date_format, $interval_labels, $cron_disabled ); ?>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
-		<?php endif; ?>
-		<?php
-	}
-
-	/**
-	 * Render a single row in the feeds table.
-	 *
-	 * @param string $feed_id         The feed ID.
-	 * @param array  $feed            The feed configuration array.
-	 * @param string $date_format     WordPress date+time format string.
-	 * @param array  $interval_labels Associative array of interval keys to labels.
-	 * @param bool   $cron_disabled   Whether WP-Cron is disabled.
-	 */
-	private static function render_feed_row( $feed_id, $feed, $date_format, $interval_labels, $cron_disabled ) {
-		$next_run  = wp_next_scheduled( RSS_Importer::CRON_HOOK, [ $feed_id ] );
-		$is_active = 'active' === $feed['status'];
-		?>
-		<tr>
-			<td><strong><?php echo esc_html( $feed['feed_url'] ); ?></strong></td>
-			<td class="nls-col-frequency"><?php echo esc_html( $interval_labels[ $feed['interval'] ] ?? $feed['interval'] ); ?></td>
-			<td class="nls-col-author">
-				<?php
-				$author = get_userdata( (int) ( $feed['author_id'] ?? 0 ) );
-				printf(
-					'%s',
-					$author ? esc_html( $author->display_name ) : '<em>' . esc_html__( 'Unknown', 'newspack-lite-site' ) . '</em>'
-				);
-				?>
-			</td>
-			<td class="nls-col-last-run">
-				<?php
-				if ( is_null( $feed['last_run'] ) ) {
-					printf( '<em>%s</em>', esc_html__( 'Never', 'newspack-lite-site' ) );
-				} elseif ( isset( $feed['last_result']['error'] ) ) {
-					printf(
-						/* translators: 1: date/time of last run, 2: error message */
-						esc_html__( '%1$s — Error: %2$s', 'newspack-lite-site' ),
-						esc_html( wp_date( $date_format, $feed['last_run'] ) ),
-						esc_html( $feed['last_result']['error'] )
-					);
-				} else {
-					$imported   = absint( $feed['last_result']['imported'] ?? 0 );
-					$failed     = absint( $feed['last_result']['failed'] ?? 0 );
-					$up_to_date = ! empty( $feed['last_result']['up_to_date'] );
-					$date_str   = wp_date( $date_format, $feed['last_run'] );
-
-					if ( $up_to_date && 0 === $imported ) {
-						/* translators: %s: date/time of last run */
-						$format = __( '%1$s — Up to date', 'newspack-lite-site' );
-					} elseif ( $up_to_date ) {
-						/* translators: 1: date/time of last run, 2: number imported */
-						$format = __( '%1$s — %2$d imported, up to date', 'newspack-lite-site' );
-					} elseif ( $failed > 0 ) {
-						/* translators: 1: date/time of last run, 2: number imported, 3: number failed */
-						$format = __( '%1$s — %2$d imported, %3$d failed', 'newspack-lite-site' );
-					} else {
-						/* translators: 1: date/time of last run, 2: number imported */
-						$format = __( '%1$s — %2$d imported', 'newspack-lite-site' );
-					}
-
-					echo esc_html( sprintf( $format, $date_str, $imported, $failed ) );
-				}
-				?>
-			</td>
-			<td class="nls-col-next-run">
-				<?php if ( $next_run && ! $cron_disabled ) : ?>
-					<?php echo esc_html( wp_date( $date_format, $next_run ) ); ?>
-				<?php else : ?>
-					&mdash;
-				<?php endif; ?>
-			</td>
-			<td>
-				<?php if ( $is_active ) : ?>
-					<span class="nls-feed-status--active"><?php esc_html_e( 'Active', 'newspack-lite-site' ); ?></span>
-				<?php else : ?>
-					<span class="nls-feed-status--paused"><?php esc_html_e( 'Paused', 'newspack-lite-site' ); ?></span>
-				<?php endif; ?>
-			</td>
-			<td>
-				<?php
-				$toggle_action = $is_active ? 'pause' : 'resume';
-				$toggle_label  = $is_active ? __( 'Pause', 'newspack-lite-site' ) : __( 'Resume', 'newspack-lite-site' );
-				?>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="nls-inline-form">
-					<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
-					<input type="hidden" name="action" value="nls_rss_feed_action">
-					<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
-					<input type="hidden" name="feed_action" value="<?php echo esc_attr( $toggle_action ); ?>">
-					<?php submit_button( $toggle_label, 'small', 'submit', false ); ?>
-				</form>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="nls-inline-form" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this feed?', 'newspack-lite-site' ) ); ?>');">
-					<?php wp_nonce_field( 'nls_rss_feed_action' ); ?>
-					<input type="hidden" name="action" value="nls_rss_feed_action">
-					<input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
-					<input type="hidden" name="feed_action" value="delete">
-					<?php submit_button( __( 'Delete', 'newspack-lite-site' ), 'small delete', 'submit', false ); ?>
-				</form>
-			</td>
-		</tr>
-		<?php
 	}
 }

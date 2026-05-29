@@ -7,6 +7,8 @@
 
 namespace Newspack_Lite_Site;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Lite Site class.
  */
