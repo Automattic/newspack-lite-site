@@ -1,0 +1,123 @@
+/**
+ * Admin header styles.
+ *
+ * Styles for the fixed header bar (logo + page title) and sticky tab navigation
+ * rendered on the Settings and RSS Feed Import admin pages.
+ */
+
+#newspack-lite-admin-header {
+	margin-left: -20px;
+}
+
+#newspack-lite-tabs-nav {
+	margin-left: -20px;
+	position: sticky;
+	top: 0;
+	z-index: 100;
+
+	.admin-bar & {
+
+		@media only screen and ( min-width: 601px ) {
+			top: 46px;
+		}
+
+		@media only screen and ( min-width: 782px ) {
+			top: 32px;
+		}
+	}
+}
+
+.newspack-lite-icon {
+	background: #003da5;
+	fill: #fff;
+	padding: 12px;
+}
+
+.newspack-lite-header {
+	align-items: center;
+	background: #fff;
+	border-bottom: 1px solid #ddd;
+	display: flex;
+
+	&__inner {
+		flex: 1 1 100%;
+	}
+}
+
+.newspack-lite-title {
+	align-items: center;
+	display: flex;
+
+	h2 {
+		margin: 0;
+		padding: 0;
+	}
+
+	> div {
+		align-items: baseline;
+		display: flex;
+		padding: 0 24px;
+	}
+}
+
+.newspack-lite-tabbed-navigation {
+	background: #fff;
+	width: 100%;
+
+	ul {
+		box-shadow: 0 -1px 0 inset #ddd;
+		display: flex;
+		flex-wrap: wrap;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li {
+		margin-bottom: 0;
+		width: 100%;
+
+		@media screen and ( min-width: 600px ) {
+			width: auto;
+		}
+
+		a {
+			align-items: center;
+			box-sizing: border-box;
+			color: #1d2327;
+			display: flex;
+			font-weight: 700;
+			height: 48px;
+			outline: none;
+			padding: 12px 15px;
+			text-decoration: none;
+
+			@media screen and ( min-width: 600px ) {
+				border-bottom: 4px solid transparent;
+				padding-bottom: 8px;
+			}
+
+			&:active,
+			&:focus,
+			&:hover {
+				color: var(--wp-admin-theme-color);
+			}
+
+			&:focus-visible {
+				outline: 2px solid var(--wp-admin-theme-color);
+				outline-offset: -2px;
+			}
+
+			&.selected {
+				box-shadow:
+					inset 0 0 0 2px #fff,
+					inset 0 0 0 4px var(--wp-admin-theme-color);
+
+				@media screen and ( min-width: 600px ) {
+					border-color: var(--wp-admin-theme-color);
+					box-shadow: none;
+				}
+			}
+		}
+	}
+}
