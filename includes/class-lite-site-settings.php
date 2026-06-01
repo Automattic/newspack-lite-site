@@ -23,7 +23,8 @@ class Lite_Site_Settings {
 	 * Initialize the settings functionality.
 	 */
 	public static function init() {
-		add_action( 'init', [ __CLASS__, 'register_settings' ] );
+		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
+		add_action( 'rest_api_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
@@ -120,7 +121,7 @@ class Lite_Site_Settings {
 		wp_enqueue_style(
 			'newspack-lite-site-header',
 			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/admin-header.css',
-			[ 'wp-components' ],
+			[],
 			$header_version
 		);
 
@@ -288,8 +289,6 @@ class Lite_Site_Settings {
 			$asset['version'],
 			true
 		);
-
-		wp_set_script_translations( 'newspack-lite-site', 'newspack-lite-site' );
 
 		// Build hierarchy-ordered category list for the React categories field.
 		$all_categories     = get_categories( [ 'hide_empty' => false ] );

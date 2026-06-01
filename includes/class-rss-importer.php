@@ -53,6 +53,15 @@ class RSS_Importer {
 	}
 
 	/**
+	 * Check whether the current user has permission to manage plugin options.
+	 *
+	 * @return bool True if the current user can manage options.
+	 */
+	public static function check_admin_permission(): bool {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
 	 * Register REST API routes for the RSS Feed Import admin UI.
 	 */
 	public static function register_rest_routes() {
@@ -65,12 +74,12 @@ class RSS_Importer {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ __CLASS__, 'rest_get_feeds' ],
-					'permission_callback' => fn() => current_user_can( 'manage_options' ),
+					'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ __CLASS__, 'rest_add_feed' ],
-					'permission_callback' => fn() => current_user_can( 'manage_options' ),
+					'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
 					'args'                => [
 						'feed_url'  => [
 							'type'              => 'string',
@@ -98,7 +107,7 @@ class RSS_Importer {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ __CLASS__, 'rest_feed_action' ],
-				'permission_callback' => fn() => current_user_can( 'manage_options' ),
+				'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
 				'args'                => [
 					'id'     => [
 						'type'              => 'string',
@@ -174,9 +183,10 @@ class RSS_Importer {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public static function rest_add_feed( $request ) {
-		$feed_url  = $request->get_param( 'feed_url' );
-		$interval  = $request->get_param( 'interval' );
-		$author_id = $request->get_param( 'author_id' );
+		$params    = $request->get_params();
+		$feed_url  = $params['feed_url'] ?? '';
+		$interval  = $params['interval'] ?? 'daily';
+		$author_id = $params['author_id'] ?? 0;
 
 		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
 			return new \WP_Error(
@@ -244,8 +254,9 @@ class RSS_Importer {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public static function rest_feed_action( $request ) {
-		$feed_id     = $request->get_param( 'id' );
-		$feed_action = $request->get_param( 'action' );
+		$params      = $request->get_params();
+		$feed_id     = $params['id'] ?? '';
+		$feed_action = $params['action'] ?? '';
 		$feeds       = self::get_feeds();
 
 		if ( empty( $feed_id ) || ! isset( $feeds[ $feed_id ] ) ) {
