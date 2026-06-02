@@ -72,6 +72,15 @@ export interface NewFeedData {
 }
 
 /**
+ * Internal form state managed by the Add Feed DataForm.
+ */
+export interface FeedFormData {
+	feed_url: string;
+	interval: string;
+	author_id: string;
+}
+
+/**
  * Props for the FeedForm component.
  */
 export interface FeedFormProps {

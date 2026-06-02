@@ -6,39 +6,34 @@
  * WordPress dependencies.
  */
 import { useState } from '@wordpress/element';
-import { Button, TextControl, SelectControl } from '@wordpress/components';
+import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { DataForm } from '@wordpress/dataviews';
 
 /**
  * Internal dependencies.
  */
 import { type FeedFormProps } from '../types/rss-feed-import';
-
-const intervals = window.newspackLiteSite?.intervals ?? [];
-const authors = window.newspackLiteSite?.authors ?? [];
+import { DEFAULT_FEED, FEED_FORM_FIELDS } from '../utils/feeds-dataform';
 
 /**
  * Form for adding a new RSS feed.
  *
  * Accepts a feed URL, import frequency, and author, then calls onAdd on submit.
- * Resets the URL field after a successful submission.
+ * Resets the form after a successful submission.
  */
 export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
-	const [ feedUrl, setFeedUrl ] = useState( '' );
-	const [ interval, setInterval ] = useState(
-		intervals[ 0 ]?.value ?? 'daily'
-	);
-	const [ authorId, setAuthorId ] = useState( authors[ 0 ]?.value ?? '' );
+	const [ feedData, setFeedData ] = useState( DEFAULT_FEED );
 
 	const handleSubmit = async ( e: React.FormEvent ) => {
 		e.preventDefault();
 		const success = await onAdd( {
-			feed_url: feedUrl,
-			interval,
-			author_id: parseInt( authorId, 10 ),
+			feed_url: feedData.feed_url,
+			interval: feedData.interval,
+			author_id: parseInt( feedData.author_id, 10 ),
 		} );
 		if ( success ) {
-			setFeedUrl( '' );
+			setFeedData( DEFAULT_FEED );
 		}
 	};
 
@@ -56,32 +51,26 @@ export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
 
 			<form onSubmit={ handleSubmit }>
 				<div className="newspack-lite-section-fields">
-					<TextControl
-						label={ __( 'Feed URL', 'newspack-lite-site' ) }
-						type="url"
-						value={ feedUrl }
-						onChange={ setFeedUrl }
-						placeholder="https://example.com/feed/"
-						required
-					/>
-					<SelectControl
-						label={ __( 'Frequency', 'newspack-lite-site' ) }
-						value={ interval }
-						options={ intervals }
-						onChange={ setInterval }
-					/>
-					<SelectControl
-						label={ __( 'Author', 'newspack-lite-site' ) }
-						value={ authorId }
-						options={ authors }
-						onChange={ setAuthorId }
+					<DataForm
+						data={ feedData }
+						fields={ FEED_FORM_FIELDS }
+						form={ {
+							layout: { type: 'regular' },
+							fields: [ 'feed_url', 'interval', 'author_id' ],
+						} }
+						onChange={ ( partial ) =>
+							setFeedData( ( prev ) => ( {
+								...prev,
+								...partial,
+							} ) )
+						}
 					/>
 					<div>
 						<Button
 							variant="secondary"
 							type="submit"
 							isBusy={ isAdding }
-							disabled={ isAdding || ! feedUrl }
+							disabled={ isAdding || ! feedData.feed_url }
 						>
 							{ isAdding
 								? __( 'Adding…', 'newspack-lite-site' )
