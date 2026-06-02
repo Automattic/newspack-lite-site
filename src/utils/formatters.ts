@@ -1,5 +1,5 @@
 /**
- * Data formatting utilities for the RSS Feed Import page.
+ * Data formatting utilities.
  */
 
 /**
@@ -11,6 +11,7 @@ import { __, sprintf } from '@wordpress/i18n';
  * Internal dependencies.
  */
 import { type LastResult } from '../types/rss-feed-import';
+import { type CategoryData } from '../types/settings';
 
 /**
  * Convert a Unix timestamp to a locale-formatted date/time string.
@@ -62,4 +63,14 @@ export function formatLastResult( result: LastResult | null ): string {
 		__( '— %d imported', 'newspack-lite-site' ),
 		imported
 	);
+}
+
+/**
+ * Return a display label for a category, indented by depth.
+ *
+ * @param cat Category data object.
+ */
+export function getCategoryLabel( cat: CategoryData ): string {
+	const prefix = '—'.repeat( cat.depth );
+	return prefix ? prefix + ' ' + cat.name : cat.name;
 }
