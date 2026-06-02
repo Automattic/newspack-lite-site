@@ -13,6 +13,7 @@ import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
  */
 import { type SiteSettings } from '../types/settings';
 import { CategoriesField } from '../components/CategoriesField';
+import { ColorPickerField } from '../components/ColorPickerField';
 
 /**
  * Custom Edit component wrapping CategoriesField for use in DataForm.
@@ -24,6 +25,19 @@ const CategoriesFieldEdit = ( {
 	<CategoriesField
 		value={ data.categories ?? [] }
 		onChange={ ( ids ) => onChange( { categories: ids } ) }
+	/>
+);
+
+/**
+ * Custom Edit component wrapping ColorPickerField for use in DataForm.
+ */
+const ColorPickerFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<ColorPickerField
+		value={ data.primary_color ?? '' }
+		onChange={ ( val ) => onChange( { primary_color: val } ) }
 	/>
 );
 
@@ -66,6 +80,7 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	{
 		id: 'footer_html',
 		label: __( 'Footer HTML', 'newspack-lite-site' ),
+		type: 'text',
 		Edit: { control: 'textarea', rows: 5 },
 		description: __(
 			'HTML to be displayed in the footer of lite site pages.',
@@ -78,6 +93,35 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		type: 'text',
 		description: __(
 			'Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking.',
+			'newspack-lite-site'
+		),
+	},
+];
+
+/**
+ * Field definitions for the Appearance settings DataForm.
+ */
+export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
+	{
+		id: 'primary_color',
+		label: __( 'Primary Color', 'newspack-lite-site' ),
+		Edit: ColorPickerFieldEdit,
+	},
+	{
+		id: 'font_import_url',
+		label: __( 'Font Import URL', 'newspack-lite-site' ),
+		type: 'text',
+		description: __(
+			'URL or <link> tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages.',
+			'newspack-lite-site'
+		),
+	},
+	{
+		id: 'font_body',
+		label: __( 'Body Font', 'newspack-lite-site' ),
+		type: 'text',
+		description: __(
+			'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.',
 			'newspack-lite-site'
 		),
 	},

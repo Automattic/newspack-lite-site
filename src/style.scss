@@ -76,6 +76,14 @@ body.newspack-lite-admin-header {
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
+
+	.dataforms-layouts-regular__header {
+		margin: 16px 0 8px 0;
+
+		h2 {
+			font-size: 1.125rem;
+		}
+	}
 }
 
 /* Snackbar toast, pinned to the bottom center of the viewport. */
