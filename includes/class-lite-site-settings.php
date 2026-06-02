@@ -29,7 +29,6 @@ class Lite_Site_Settings {
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_link' ], 100 );
-		add_action( 'in_admin_header', [ __CLASS__, 'render_admin_header' ] );
 		add_filter( 'admin_body_class', [ __CLASS__, 'admin_header_body_class' ] );
 	}
 
@@ -105,175 +104,57 @@ class Lite_Site_Settings {
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
 	public static function enqueue_admin_styles( $hook_suffix ) {
-		$settings_hook = 'toplevel_page_newspack-lite-site';
-		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
+		$allowed = [
+			'toplevel_page_newspack-lite-site',
+			'lite-site_page_newspack-lite-site-rss-import',
+		];
 
-		if ( ! in_array( $hook_suffix, [ $settings_hook, $import_hook ], true ) ) {
+		if ( ! in_array( $hook_suffix, $allowed, true ) ) {
 			return;
 		}
 
-		// Admin header CSS shared across the Settings and RSS Feed Import pages.
-		$header_asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/admin-header.asset.php';
-		$header_version    = file_exists( $header_asset_file )
-			? ( require $header_asset_file )['version']
-			: '';
-
-		wp_enqueue_style(
-			'newspack-lite-site-header',
-			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/admin-header.css',
-			[],
-			$header_version
-		);
-
-		// Shared admin page CSS.
+		// Admin page styles.
+		$style_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/style.css';
 		wp_enqueue_style(
 			'newspack-lite-site-style',
 			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/style.css',
 			[],
-			filemtime( NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/style.css' )
+			file_exists( $style_file ) ? filemtime( $style_file ) : ''
 		);
 
-		// Settings page CSS.
-		if ( $settings_hook === $hook_suffix ) {
-			$index_asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.asset.php';
-			$index_version    = file_exists( $index_asset_file )
-				? ( require $index_asset_file )['version']
-				: '';
+		// App bundle CSS extracted from the single JS bundle by webpack.
+		$asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.asset.php';
+		$version    = file_exists( $asset_file )
+			? ( require $asset_file )['version']
+			: '';
 
-			wp_enqueue_style(
-				'newspack-lite-site-app',
-				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/index.css',
-				[],
-				$index_version
-			);
-		}
+		wp_enqueue_style(
+			'newspack-lite-site',
+			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/index.css',
+			[],
+			$version
+		);
 	}
 
 	/**
-	 * Enqueue admin scripts for the plugin's pages.
+	 * Enqueue admin scripts for the plugin's admin pages.
 	 *
-	 * The admin-header bundle is shared across both pages; each page also receives
-	 * its own app bundle with bootstrap data.
+	 * A single JS bundle loads on both the Settings and RSS Feed Import pages.
+	 * Bootstrap data for both sections is passed in one wp_localize_script call.
+	 * Static config (e.g. interval labels) is defined in JS.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
 	public static function enqueue_admin_scripts( $hook_suffix ) {
-		$settings_hook = 'toplevel_page_newspack-lite-site';
-		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
+		$allowed = [
+			'toplevel_page_newspack-lite-site',
+			'lite-site_page_newspack-lite-site-rss-import',
+		];
 
-		if ( ! in_array( $hook_suffix, [ $settings_hook, $import_hook ], true ) ) {
+		if ( ! in_array( $hook_suffix, $allowed, true ) ) {
 			return;
 		}
 
-		// Admin header bundle, enqueued on the Settings and RSS Feed Import pages.
-		$header_asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/admin-header.asset.php';
-		$header_asset      = file_exists( $header_asset_file )
-			? require $header_asset_file
-			: [
-				'dependencies' => [ 'wp-element' ],
-				'version'      => '',
-			];
-
-		wp_enqueue_script(
-			'newspack-lite-site-header',
-			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/admin-header.js',
-			$header_asset['dependencies'],
-			$header_asset['version'],
-			true
-		);
-
-		$is_settings = ( $settings_hook === $hook_suffix );
-		$current_tab = sanitize_key( filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_SPECIAL_CHARS ) ?? 'general' );
-
-		$tabs = [];
-		if ( $is_settings ) {
-			$tabs = [
-				[
-					'id'       => 'general',
-					'label'    => __( 'General', 'newspack-lite-site' ),
-					'href'     => admin_url( 'admin.php?page=newspack-lite-site' ),
-					'isActive' => ( 'general' === $current_tab || '' === $current_tab ),
-				],
-				[
-					'id'       => 'appearance',
-					'label'    => __( 'Appearance', 'newspack-lite-site' ),
-					'href'     => admin_url( 'admin.php?page=newspack-lite-site&tab=appearance' ),
-					'isActive' => ( 'appearance' === $current_tab ),
-				],
-			];
-		}
-
-		$title = $is_settings
-			? __( 'Settings', 'newspack-lite-site' )
-			: __( 'RSS Feed Import', 'newspack-lite-site' );
-
-		wp_localize_script(
-			'newspack-lite-site-header',
-			'NewspackLiteSiteAdminHeader',
-			[
-				'title' => $title,
-				'tabs'  => $tabs,
-			]
-		);
-
-		// RSS Import app bundle, enqueued on the RSS Feed Import page only.
-		if ( ! $is_settings ) {
-			$interval_labels = RSS_Importer::get_interval_labels();
-			$rss_asset_file  = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/rss-feed-import.asset.php';
-			$rss_asset       = file_exists( $rss_asset_file )
-				? require $rss_asset_file
-				: [
-					'dependencies' => [],
-					'version'      => '',
-				];
-
-			wp_enqueue_script(
-				'newspack-lite-site-rss-import',
-				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/rss-feed-import.js',
-				$rss_asset['dependencies'],
-				$rss_asset['version'],
-				true
-			);
-
-			wp_enqueue_style(
-				'newspack-lite-site-rss-import',
-				plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/rss-feed-import.css',
-				[ 'wp-components' ],
-				$rss_asset['version']
-			);
-
-			wp_localize_script(
-				'newspack-lite-site-rss-import',
-				'NewspackLiteSiteRssImport',
-				[
-					'cronDisabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
-					'intervals'    => array_values(
-						array_map(
-							fn( $value, $label ) => compact( 'value', 'label' ),
-							array_keys( $interval_labels ),
-							$interval_labels
-						)
-					),
-					'authors'      => array_values(
-						array_map(
-							fn( $u ) => [
-								'value' => (string) $u->ID,
-								'label' => $u->display_name,
-							],
-							get_users(
-								[
-									'capability' => 'publish_posts',
-									'fields'     => [ 'ID', 'display_name' ],
-								]
-							)
-						)
-					),
-				]
-			);
-			return;
-		}
-
-		// Settings app bundle, enqueued on the Settings page only.
 		$asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.asset.php';
 		$asset      = file_exists( $asset_file )
 			? require $asset_file
@@ -294,15 +175,15 @@ class Lite_Site_Settings {
 		$all_categories     = get_categories( [ 'hide_empty' => false ] );
 		$ordered_categories = self::build_ordered_categories( $all_categories, 0, 0 );
 
-		$theme_color   = Lite_Site::get_theme_primary_color();
-		$default_color = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+		$theme_color     = Lite_Site::get_theme_primary_color();
+		$default_color   = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+		$interval_labels = RSS_Importer::get_interval_labels();
 
 		wp_localize_script(
 			'newspack-lite-site',
-			'NewspackLiteSiteSettings',
+			'newspackLiteSite',
 			[
 				'defaultColor' => $default_color,
-				'tab'          => $current_tab,
 				'categories'   => array_values(
 					array_map(
 						fn( $cat ) => [
@@ -311,6 +192,31 @@ class Lite_Site_Settings {
 							'depth' => $cat->depth,
 						],
 						$ordered_categories
+					)
+				),
+				'cronDisabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
+				'intervals'    => array_values(
+					array_map(
+						fn( $value, $label ) => [
+							'value' => $value,
+							'label' => $label,
+						],
+						array_keys( $interval_labels ),
+						$interval_labels
+					)
+				),
+				'authors'      => array_values(
+					array_map(
+						fn( $u ) => [
+							'value' => (string) $u->ID,
+							'label' => $u->display_name,
+						],
+						get_users(
+							[
+								'capability' => 'publish_posts',
+								'fields'     => [ 'ID', 'display_name' ],
+							]
+						)
 					)
 				),
 			]
@@ -382,7 +288,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Add body class for admin header pages (enables sticky positioning in CSS).
+	 * Add body class to scope Newspack admin styles to the plugin's admin pages.
 	 *
 	 * @param string $classes Existing body classes.
 	 * @return string Modified body classes.
@@ -406,74 +312,21 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render the Newspack-style admin header skeleton.
+	 * Render the RSS Feed Import page.
 	 *
-	 * Hooked to `in_admin_header` so it renders outside `.wrap`, giving the
-	 * header full viewport width. The React admin-header bundle mounts into
-	 * #newspack-lite-admin-header and replaces this loading skeleton.
-	 *
-	 * SVG path data matches the NewspackIcon React component (viewBox 0 0 24 24).
+	 * Mount point for the React RSS import app.
 	 */
-	public static function render_admin_header() {
-		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen ) {
-			return;
-		}
-
-		$settings_hook = 'toplevel_page_newspack-lite-site';
-		$import_hook   = 'lite-site_page_newspack-lite-site-rss-import';
-
-		if ( ! in_array( $screen->id, [ $settings_hook, $import_hook ], true ) ) {
-			return;
-		}
-
-		$is_settings = ( $settings_hook === $screen->id );
-		$title       = $is_settings
-			? __( 'Settings', 'newspack-lite-site' )
-			: __( 'RSS Feed Import', 'newspack-lite-site' );
-		?>
-		<div id="newspack-lite-admin-header">
-			<div class="newspack-lite-header">
-				<div class="newspack-lite-header__inner">
-					<div class="newspack-lite-title">
-						<svg xmlns="http://www.w3.org/2000/svg" height="36" width="36" viewBox="0 0 24 24" class="newspack-lite-icon" aria-hidden="true" focusable="false">
-							<path fill-rule="evenodd" clip-rule="evenodd" d="M24 12C24 18.6271 18.6271 24 12 24C5.37213 24 0 18.6271 0 12C0 5.3729 5.3729 0 12 0C18.6271 0 24 5.3729 24 12ZM17.4545 17.4546L6.54545 6.54545V17.4545H8.72727V11.8182L14.3636 17.4546H17.4545ZM11.2727 8.18182H17.4545V6.54545H9.63636L11.2727 8.18182ZM17.4545 11.2727H14.3636L12.7273 9.63636H17.4545V11.2727ZM17.4545 12.7273V14.3636L15.8182 12.7273H17.4545Z"/>
-						</svg>
-						<div><h2><?php echo esc_html( $title ); ?></h2></div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<?php if ( $is_settings ) : ?>
-		<div id="newspack-lite-tabs-nav"></div>
-		<?php endif; ?>
-		<?php
+	public static function render_import_page() {
+		echo '<div id="newspack-lite-app" data-page="rss-feed-import"></div>';
 	}
 
 	/**
 	 * Render the Settings page.
 	 *
-	 * Mount point for the React settings app. Title and tab nav are rendered by render_admin_header().
+	 * Mount point for the React settings app.
 	 */
 	public static function render_settings_page() {
-		?>
-		<div class="wrap">
-			<div id="newspack-lite-settings-app"></div>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Render the RSS Feed Import page.
-	 *
-	 * Mount point for the React RSS import app. Title is rendered by render_admin_header().
-	 */
-	public static function render_import_page() {
-		?>
-		<div class="wrap">
-			<div id="newspack-lite-rss-import-app"></div>
-		</div>
-		<?php
+		echo '<div id="newspack-lite-app" data-page="settings"></div>';
 	}
 
 	/**
@@ -529,7 +382,7 @@ class Lite_Site_Settings {
 		$old_settings = get_option( self::OPTION_NAME, [] );
 
 		// Only flush rewrite rules when settings that affect URL routing change.
-		$url_base_changed = ( $old_settings['url_base'] ?? '' ) !== sanitize_title( $settings['url_base'] );
+		$url_base_changed = ( $old_settings['url_base'] ?? '' ) !== sanitize_title( $settings['url_base'] ?? '' );
 		$enabled_changed  = ! empty( $old_settings['enabled'] ) !== ! empty( $settings['enabled'] );
 
 		if ( $url_base_changed || $enabled_changed ) {
