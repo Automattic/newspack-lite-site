@@ -108,16 +108,6 @@ class Lite_Site_Settings {
 			return;
 		}
 
-		// Admin page styles.
-		$style_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/style.css';
-		wp_enqueue_style(
-			'newspack-lite-site-style',
-			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/style.css',
-			[],
-			file_exists( $style_file ) ? filemtime( $style_file ) : ''
-		);
-
-		// App bundle CSS extracted from the single JS bundle by webpack.
 		$asset_file = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'dist/index.asset.php';
 		$version    = file_exists( $asset_file )
 			? ( require $asset_file )['version']

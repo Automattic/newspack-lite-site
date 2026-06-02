@@ -12,6 +12,7 @@ import { createRoot } from '@wordpress/element';
  */
 import { SettingsApp } from '../components/SettingsApp';
 import { RssImportApp } from '../components/RssImportApp';
+import '../style.scss';
 
 const el = document.getElementById( 'newspack-lite-app' );
 
