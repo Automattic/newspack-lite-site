@@ -7,6 +7,8 @@
 
 namespace Newspack_Lite_Site;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * RSS Importer class.
  *
@@ -42,26 +44,255 @@ class RSS_Importer {
 	const GUID_BATCH_SIZE = 20;
 
 	/**
-	 * The supported import interval keys.
-	 */
-	const INTERVALS = [
-		'every_5_minutes'  => null,
-		'every_10_minutes' => null,
-		'every_30_minutes' => null,
-		'hourly'           => null,
-		'twicedaily'       => null,
-		'daily'            => null,
-		'weekly'           => null,
-	];
-
-	/**
-	 * Initialize hooks.
+	 * Initialize the importer functionality.
 	 */
 	public static function init() {
 		add_action( self::CRON_HOOK, [ __CLASS__, 'run_scheduled_import' ] );
 		add_filter( 'cron_schedules', [ __CLASS__, 'register_cron_intervals' ] ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
-		add_action( 'admin_post_nls_rss_add_feed', [ __CLASS__, 'handle_add_feed' ] );
-		add_action( 'admin_post_nls_rss_feed_action', [ __CLASS__, 'handle_feed_action' ] );
+		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_routes' ] );
+	}
+
+	/**
+	 * Check whether the current user has permission to manage plugin options.
+	 *
+	 * @return bool True if the current user can manage options.
+	 */
+	public static function check_admin_permission(): bool {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Register REST API routes for the RSS Feed Import admin UI.
+	 */
+	public static function register_rest_routes() {
+		$namespace = 'newspack-lite-site/v1';
+
+		register_rest_route(
+			$namespace,
+			'/rss-feeds',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ __CLASS__, 'rest_get_feeds' ],
+					'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ __CLASS__, 'rest_add_feed' ],
+					'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
+					'args'                => [
+						'feed_url'  => [
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'esc_url_raw',
+						],
+						'interval'  => [
+							'type'              => 'string',
+							'default'           => 'daily',
+							'sanitize_callback' => 'sanitize_key',
+						],
+						'author_id' => [
+							'type'              => 'integer',
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			$namespace,
+			'/rss-feeds/(?P<id>[a-f0-9]{32})/action',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ __CLASS__, 'rest_feed_action' ],
+				'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
+				'args'                => [
+					'id'     => [
+						'type'              => 'string',
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_key',
+					],
+					'action' => [
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => [ 'pause', 'resume', 'delete' ],
+					],
+				],
+			]
+		);
+	}
+
+	/**
+	 * Build the REST-ready representation of a single feed.
+	 *
+	 * Adds server-computed fields (author_name, interval_label, next_run) so the
+	 * admin UI never needs to call WP functions directly.
+	 *
+	 * @param string $feed_id The feed ID (md5 hash).
+	 * @param array  $feed    The raw feed data from the option.
+	 * @return array REST-ready feed object.
+	 */
+	private static function build_rest_feed( $feed_id, $feed ) {
+		$interval_labels = self::get_interval_labels();
+		$next_run        = wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] );
+		$author          = get_userdata( (int) ( $feed['author_id'] ?? 0 ) );
+
+		return [
+			'id'             => $feed_id,
+			'feed_url'       => $feed['feed_url'],
+			'interval'       => $feed['interval'],
+			'interval_label' => $interval_labels[ $feed['interval'] ] ?? $feed['interval'],
+			'author_id'      => (int) ( $feed['author_id'] ?? 0 ),
+			'author_name'    => $author ? $author->display_name : '',
+			'status'         => $feed['status'],
+			'last_run'       => $feed['last_run'],
+			'last_result'    => $feed['last_result'],
+			'next_run'       => $next_run ? $next_run : null,
+		];
+	}
+
+	/**
+	 * List all RSS feeds.
+	 *
+	 * Returns every configured feed enriched with computed fields (next run time,
+	 * human-readable interval label, etc.) for consumption by the admin UI.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public static function rest_get_feeds() {
+		$feeds = self::get_feeds();
+		$data  = [];
+
+		foreach ( $feeds as $feed_id => $feed ) {
+			$data[] = self::build_rest_feed( $feed_id, $feed );
+		}
+
+		return rest_ensure_response( $data );
+	}
+
+	/**
+	 * Register and schedule a new RSS feed.
+	 *
+	 * Validates the feed URL, author, and import interval submitted by the admin UI,
+	 * persists the feed configuration, schedules the first WP-Cron import event, and
+	 * returns the full refreshed feeds list.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function rest_add_feed( $request ) {
+		$params    = $request->get_params();
+		$feed_url  = $params['feed_url'] ?? '';
+		$interval  = $params['interval'] ?? 'daily';
+		$author_id = $params['author_id'] ?? 0;
+
+		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
+			return new \WP_Error(
+				'invalid_url',
+				__( 'Please enter a valid feed URL.', 'newspack-lite-site' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! $author_id || ! get_userdata( $author_id ) ) {
+			return new \WP_Error(
+				'invalid_author',
+				__( 'Please select a valid author.', 'newspack-lite-site' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! array_key_exists( $interval, self::get_interval_labels() ) ) {
+			return new \WP_Error(
+				'invalid_interval',
+				__( 'Please select a valid interval.', 'newspack-lite-site' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$feed_id = self::get_feed_id( $feed_url );
+		$feeds   = self::get_feeds();
+
+		if ( isset( $feeds[ $feed_id ] ) ) {
+			return new \WP_Error(
+				'duplicate_feed',
+				__( 'This feed is already configured.', 'newspack-lite-site' ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		$feeds[ $feed_id ] = [
+			'feed_url'    => $feed_url,
+			'interval'    => $interval,
+			'author_id'   => $author_id,
+			'status'      => 'active',
+			'last_run'    => null,
+			'last_result' => null,
+		];
+
+		wp_schedule_event( time(), $interval, self::CRON_HOOK, [ $feed_id ] );
+		self::save_feeds( $feeds );
+
+		$data = [];
+		foreach ( $feeds as $id => $feed ) {
+			$data[] = self::build_rest_feed( $id, $feed );
+		}
+
+		return rest_ensure_response( $data );
+	}
+
+	/**
+	 * Pause, resume, or delete a feed.
+	 *
+	 * Applies the action requested by the admin UI to the feed identified by its ID.
+	 * Pausing unschedules the WP-Cron event; resuming reschedules it; deleting removes
+	 * the feed entirely.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function rest_feed_action( $request ) {
+		$params      = $request->get_params();
+		$feed_id     = $params['id'] ?? '';
+		$feed_action = $params['action'] ?? '';
+		$feeds       = self::get_feeds();
+
+		if ( empty( $feed_id ) || ! isset( $feeds[ $feed_id ] ) ) {
+			return new \WP_Error(
+				'feed_not_found',
+				__( 'Feed not found.', 'newspack-lite-site' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		switch ( $feed_action ) {
+			case 'pause':
+				$feeds[ $feed_id ]['status'] = 'paused';
+				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+				break;
+
+			case 'resume':
+				$feeds[ $feed_id ]['status'] = 'active';
+				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+				wp_schedule_event( time(), $feeds[ $feed_id ]['interval'], self::CRON_HOOK, [ $feed_id ] );
+				break;
+
+			case 'delete':
+				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+				unset( $feeds[ $feed_id ] );
+				break;
+		}
+
+		self::save_feeds( $feeds );
+
+		$data = [];
+		foreach ( $feeds as $id => $feed ) {
+			$data[] = self::build_rest_feed( $id, $feed );
+		}
+
+		return rest_ensure_response( $data );
 	}
 
 	/**
@@ -129,7 +360,7 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Get the human-readable label for an interval key.
+	 * Return all supported import intervals with their translated display labels.
 	 *
 	 * @return array Associative array of interval keys to translated labels.
 	 */
@@ -143,143 +374,6 @@ class RSS_Importer {
 			'daily'            => __( 'Daily', 'newspack-lite-site' ),
 			'weekly'           => __( 'Weekly', 'newspack-lite-site' ),
 		];
-	}
-
-	/**
-	 * Handle the "Add Feed" form submission.
-	 */
-	public static function handle_add_feed() {
-		check_admin_referer( 'nls_rss_add_feed' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'newspack-lite-site' ) );
-		}
-
-		$feed_url  = isset( $_POST['rss_importer_feed_url'] ) ? esc_url_raw( wp_unslash( $_POST['rss_importer_feed_url'] ) ) : '';
-		$interval  = isset( $_POST['rss_importer_interval'] ) ? sanitize_key( wp_unslash( $_POST['rss_importer_interval'] ) ) : 'daily';
-		$author_id = isset( $_POST['rss_importer_author_id'] ) ? absint( wp_unslash( $_POST['rss_importer_author_id'] ) ) : 0;
-		if ( ! $author_id || ! get_userdata( $author_id ) ) {
-			set_transient(
-				'nls_rss_importer_notice',
-				[
-					'type'    => 'error',
-					'message' => __( 'Please select a valid author.', 'newspack-lite-site' ),
-				],
-				60
-			);
-			wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
-			exit;
-		}
-
-		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
-			set_transient(
-				'nls_rss_importer_notice',
-				[
-					'type'    => 'error',
-					'message' => __( 'Please enter a valid feed URL.', 'newspack-lite-site' ),
-				],
-				60 
-			);
-			wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
-			exit;
-		}
-
-		if ( ! array_key_exists( $interval, self::INTERVALS ) ) {
-			$interval = 'daily';
-		}
-
-		$feed_id = self::get_feed_id( $feed_url );
-		$feeds   = self::get_feeds();
-
-		if ( isset( $feeds[ $feed_id ] ) ) {
-			set_transient(
-				'nls_rss_importer_notice',
-				[
-					'type'    => 'error',
-					'message' => __( 'This feed is already configured.', 'newspack-lite-site' ),
-				],
-				60 
-			);
-			wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
-			exit;
-		}
-
-		$feeds[ $feed_id ] = [
-			'feed_url'    => $feed_url,
-			'interval'    => $interval,
-			'author_id'   => $author_id,
-			'status'      => 'active',
-			'last_run'    => null,
-			'last_result' => null,
-		];
-
-		wp_schedule_event( time(), $interval, self::CRON_HOOK, [ $feed_id ] );
-
-		self::save_feeds( $feeds );
-		set_transient(
-			'nls_rss_importer_notice',
-			[
-				'type'    => 'success',
-				'message' => __( 'Feed added successfully.', 'newspack-lite-site' ),
-			],
-			60 
-		);
-
-		wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
-		exit;
-	}
-
-	/**
-	 * Handle feed table row actions: pause, resume, delete, update_interval.
-	 */
-	public static function handle_feed_action() {
-		check_admin_referer( 'nls_rss_feed_action' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'newspack-lite-site' ) );
-		}
-
-		$feed_id     = isset( $_POST['feed_id'] ) ? sanitize_key( wp_unslash( $_POST['feed_id'] ) ) : '';
-		$feed_action = isset( $_POST['feed_action'] ) ? sanitize_key( wp_unslash( $_POST['feed_action'] ) ) : '';
-		$feeds       = self::get_feeds();
-
-		if ( empty( $feed_id ) || ! isset( $feeds[ $feed_id ] ) ) {
-			wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
-			exit;
-		}
-
-		switch ( $feed_action ) {
-			case 'pause':
-				$feeds[ $feed_id ]['status'] = 'paused';
-				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
-				break;
-
-			case 'resume':
-				$feeds[ $feed_id ]['status'] = 'active';
-				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
-				wp_schedule_event( time(), $feeds[ $feed_id ]['interval'], self::CRON_HOOK, [ $feed_id ] );
-				break;
-
-			case 'delete':
-				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
-				delete_transient( self::LOCK_PREFIX . $feed_id );
-				unset( $feeds[ $feed_id ] );
-				break;
-
-		}
-
-		self::save_feeds( $feeds );
-		set_transient(
-			'nls_rss_importer_notice',
-			[
-				'type'    => 'success',
-				'message' => __( 'Feed updated.', 'newspack-lite-site' ),
-			],
-			60 
-		);
-
-		wp_safe_redirect( admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) );
-		exit;
 	}
 
 	/**
@@ -312,7 +406,14 @@ class RSS_Importer {
 		$result = self::run_import( $feed['feed_url'], (int) $feed['author_id'] );
 
 		wp_cache_delete( 'alloptions', 'options' );
-		$feeds                            = self::get_feeds();
+		$feeds = self::get_feeds();
+
+		// Feed deleted mid-run; skip write to avoid creating a ghost entry.
+		if ( ! isset( $feeds[ $feed_id ] ) ) {
+			delete_transient( $lock_key );
+			return;
+		}
+
 		$feeds[ $feed_id ]['last_run']    = time();
 		$feeds[ $feed_id ]['last_result'] = is_wp_error( $result )
 			? [ 'error' => $result->get_error_message() ]
@@ -327,7 +428,7 @@ class RSS_Importer {
 	 * Run the RSS import for a given feed URL.
 	 *
 	 * Iterates feed items newest-first, importing each as a WordPress post.
-	 * Stops on first duplicate. Also stops if approaching the PHP 
+	 * Stops on first duplicate. Also stops if approaching the PHP
 	 * max_execution_time to avoid a fatal timeout.
 	 *
 	 * @param string $feed_url  The RSS feed URL to import from.
