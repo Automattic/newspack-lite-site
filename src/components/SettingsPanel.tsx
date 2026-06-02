@@ -5,18 +5,14 @@
 /**
  * WordPress dependencies.
  */
-import {
-	ToggleControl,
-	TextControl,
-	TextareaControl,
-} from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
+import { DataForm } from '@wordpress/dataviews';
 
 /**
  * Internal dependencies.
  */
-import { type PanelProps } from '../types/settings';
-import { CategoriesField } from './CategoriesField';
+import { type PanelProps, type SiteSettings } from '../types/settings';
+import { SETTINGS_FIELDS } from '../utils/settings-dataform';
 
 /**
  * Renders all fields for the General settings section.
@@ -39,81 +35,23 @@ export const SettingsPanel = ( { settings, onChange }: PanelProps ) => {
 			</div>
 
 			<div className="newspack-lite-section-fields">
-				<ToggleControl
-					label={ __(
-						'Enable lite site feature',
-						'newspack-lite-site'
-					) }
-					checked={ !! settings.enabled }
-					onChange={ ( val ) => onChange( 'enabled', val ) }
-				/>
-
-				<TextControl
-					label={ __( 'URL Base', 'newspack-lite-site' ) }
-					value={ settings.url_base ?? 'lite' }
-					onChange={ ( val ) => onChange( 'url_base', val ) }
-					help={ sprintf(
-						/* translators: %s: site URL without trailing slash, e.g. https://example.com */
-						__(
-							'The URL base for the lite site (e.g. "lite" for %s/lite/article-slug).',
-							'newspack-lite-site'
-						),
-						window.location.origin
-					) }
-				/>
-
-				<TextControl
-					label={ __(
-						'Posts per archive page',
-						'newspack-lite-site'
-					) }
-					type="number"
-					value={ String( settings.posts_per_page ?? 10 ) }
-					min={ 1 }
-					max={ 100 }
-					step={ 1 }
-					onChange={ ( val: string ) => {
-						const parsed = parseInt( val, 10 );
-						onChange(
+				<DataForm
+					data={ settings }
+					fields={ SETTINGS_FIELDS }
+					form={ {
+						layout: { type: 'regular' },
+						fields: [
+							'enabled',
+							'url_base',
 							'posts_per_page',
-							isNaN( parsed )
-								? 1
-								: Math.min( 100, Math.max( 1, parsed ) )
-						);
+							'categories',
+							'footer_html',
+							'ga4_measurement_id',
+						],
 					} }
-					help={ __(
-						'Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting.',
-						'newspack-lite-site'
-					) }
-				/>
-
-				<CategoriesField
-					value={ settings.categories ?? [] }
-					onChange={ ( val ) => onChange( 'categories', val ) }
-				/>
-
-				<TextareaControl
-					label={ __( 'Footer HTML', 'newspack-lite-site' ) }
-					value={ settings.footer_html ?? '' }
-					onChange={ ( val ) => onChange( 'footer_html', val ) }
-					rows={ 5 }
-					help={ __(
-						'HTML to be displayed in the footer of lite site pages.',
-						'newspack-lite-site'
-					) }
-				/>
-
-				<TextControl
-					label={ __( 'GA4 Measurement ID', 'newspack-lite-site' ) }
-					value={ settings.ga4_measurement_id ?? '' }
-					onChange={ ( val ) =>
-						onChange( 'ga4_measurement_id', val )
+					onChange={ ( partial ) =>
+						onChange( partial as Partial< SiteSettings > )
 					}
-					placeholder="G-XXXXXXXXXX"
-					help={ __(
-						'Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking.',
-						'newspack-lite-site'
-					) }
 				/>
 			</div>
 		</div>
