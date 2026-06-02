@@ -104,12 +104,7 @@ class Lite_Site_Settings {
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
 	public static function enqueue_admin_styles( $hook_suffix ) {
-		$allowed = [
-			'toplevel_page_newspack-lite-site',
-			'lite-site_page_newspack-lite-site-rss-import',
-		];
-
-		if ( ! in_array( $hook_suffix, $allowed, true ) ) {
+		if ( ! self::is_plugin_admin_page( $hook_suffix ) ) {
 			return;
 		}
 
@@ -131,7 +126,7 @@ class Lite_Site_Settings {
 		wp_enqueue_style(
 			'newspack-lite-site',
 			plugin_dir_url( NEWSPACK_LITE_SITE_PLUGIN_FILE ) . 'dist/index.css',
-			[],
+			[ 'wp-components' ],
 			$version
 		);
 	}
@@ -146,12 +141,7 @@ class Lite_Site_Settings {
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
 	public static function enqueue_admin_scripts( $hook_suffix ) {
-		$allowed = [
-			'toplevel_page_newspack-lite-site',
-			'lite-site_page_newspack-lite-site-rss-import',
-		];
-
-		if ( ! in_array( $hook_suffix, $allowed, true ) ) {
+		if ( ! self::is_plugin_admin_page( $hook_suffix ) ) {
 			return;
 		}
 
@@ -299,12 +289,7 @@ class Lite_Site_Settings {
 			return $classes;
 		}
 
-		$our_hooks = [
-			'toplevel_page_newspack-lite-site',
-			'lite-site_page_newspack-lite-site-rss-import',
-		];
-
-		if ( in_array( $screen->id, $our_hooks, true ) ) {
+		if ( self::is_plugin_admin_page( $screen->id ) ) {
 			$classes .= ' newspack-lite-admin-header';
 		}
 
@@ -327,6 +312,23 @@ class Lite_Site_Settings {
 	 */
 	public static function render_settings_page() {
 		echo '<div id="newspack-lite-app" data-page="settings"></div>';
+	}
+
+	/**
+	 * Check if the given hook belongs to a plugin admin page.
+	 *
+	 * @param string $hook Admin page hook suffix or screen ID.
+	 * @return bool True if the hook matches one of the plugin's admin pages.
+	 */
+	private static function is_plugin_admin_page( string $hook ): bool {
+		return in_array(
+			$hook,
+			[
+				'toplevel_page_newspack-lite-site',
+				'lite-site_page_newspack-lite-site-rss-import',
+			],
+			true 
+		);
 	}
 
 	/**
