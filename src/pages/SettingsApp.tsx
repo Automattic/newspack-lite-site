@@ -18,9 +18,9 @@ import { TabbedNavigation } from 'newspack-components';
  * Internal dependencies.
  */
 import { useSettings } from '../hooks/useSettings';
-import { AppHeader } from './AppHeader';
-import { SettingsPanel } from './SettingsPanel';
-import { AppearancePanel } from './AppearancePanel';
+import { AppHeader } from '../components/AppHeader';
+import { SettingsPanel } from '../components/SettingsPanel';
+import { AppearancePanel } from '../components/AppearancePanel';
 
 /**
  * Tab definitions for the Settings page.

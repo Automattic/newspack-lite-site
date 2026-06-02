@@ -12,9 +12,9 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies.
  */
 import { useFeeds } from '../hooks/useFeeds';
-import { AppHeader } from './AppHeader';
-import { FeedForm } from './FeedForm';
-import { FeedsList } from './FeedsList';
+import { AppHeader } from '../components/AppHeader';
+import { FeedForm } from '../components/FeedForm';
+import { FeedsList } from '../components/FeedsList';
 
 const cronDisabled = window.newspackLiteSite?.cronDisabled ?? false;
 
