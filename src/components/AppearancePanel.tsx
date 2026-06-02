@@ -44,7 +44,9 @@ export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
 				<div className="newspack-lite-section-fields">
 					<ColorPickerField
 						value={ settings.primary_color ?? '' }
-						onChange={ ( val ) => onChange( 'primary_color', val ) }
+						onChange={ ( val ) =>
+							onChange( { primary_color: val } )
+						}
 					/>
 				</div>
 			</div>
@@ -59,7 +61,7 @@ export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
 						label={ __( 'Font Import URL', 'newspack-lite-site' ) }
 						value={ settings.font_import_url ?? '' }
 						onChange={ ( val ) =>
-							onChange( 'font_import_url', val )
+							onChange( { font_import_url: val } )
 						}
 						placeholder="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
 						help={ __(
@@ -71,7 +73,7 @@ export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
 					<TextControl
 						label={ __( 'Body Font', 'newspack-lite-site' ) }
 						value={ settings.font_body ?? '' }
-						onChange={ ( val ) => onChange( 'font_body', val ) }
+						onChange={ ( val ) => onChange( { font_body: val } ) }
 						placeholder="Open Sans"
 						help={ __(
 							'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.',

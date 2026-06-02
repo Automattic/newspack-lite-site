@@ -83,13 +83,10 @@ export function useSettings() {
 		};
 	}, [] );
 
-	const updateSetting = useCallback(
-		< K extends keyof SiteSettings >(
-			key: K,
-			value: SiteSettings[ K ]
-		) => {
+	const updateSettings = useCallback(
+		( partial: Partial< SiteSettings > ) => {
 			setSettings( ( prev ) =>
-				prev ? { ...prev, [ key ]: value } : prev
+				prev ? { ...prev, ...partial } : prev
 			);
 			setSaveSuccess( false );
 		},
@@ -129,7 +126,7 @@ export function useSettings() {
 
 	return {
 		settings,
-		updateSetting,
+		updateSettings,
 		isLoading,
 		isSaving,
 		isDirty,

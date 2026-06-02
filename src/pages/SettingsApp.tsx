@@ -39,7 +39,7 @@ const SETTINGS_TABS = [
 export const SettingsApp = () => {
 	const {
 		settings,
-		updateSetting,
+		updateSettings,
 		isLoading,
 		isSaving,
 		isDirty,
@@ -83,7 +83,7 @@ export const SettingsApp = () => {
 							) : (
 								<SettingsPanel
 									settings={ settings }
-									onChange={ updateSetting }
+									onChange={ updateSettings }
 								/>
 							) }
 							{ saveButton }
@@ -96,7 +96,7 @@ export const SettingsApp = () => {
 							) : (
 								<AppearancePanel
 									settings={ settings }
-									onChange={ updateSetting }
+									onChange={ updateSettings }
 								/>
 							) }
 							{ saveButton }

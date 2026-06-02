@@ -55,8 +55,5 @@ export interface AppHeaderProps {
  */
 export interface PanelProps {
 	settings: SiteSettings | null;
-	onChange: < K extends keyof SiteSettings >(
-		key: K,
-		value: SiteSettings[ K ]
-	) => void;
+	onChange: ( partial: Partial< SiteSettings > ) => void;
 }
