@@ -1,21 +1,59 @@
 /**
- * Shared admin page styles.
- *
- * Styles shared across the Settings and RSS Feed Import admin pages,
- * including the page background, section headers, section fields, and snackbar.
+ * Admin styles for all plugin pages.
  */
 
+@import "@wordpress/dataviews/build-style/style.css";
+
 body.newspack-lite-admin-header {
+	background: #fff;
 
-	#wpwrap {
-		background: #fff;
+	/* Newspack blue — drives header icon background and tab active colour. */
+	--wp-components-color-accent: #003da5;
+	--wp-components-color-accent-darker-10: #00296e;
+	--wp-components-color-accent-darker-20: #001f53;
+	--wp-admin-theme-color: #003da5;
+
+	/* Counteract .wrap's default left margin so the header spans full width. */
+	.wrap {
+		margin: 0 0 0 -20px;
+		position: relative;
+		z-index: 1;
 	}
-}
 
-.newspack-lite-settings-wrap {
+	/* Header inner layout (base styles for .newspack-wizard__* structure). */
+	.newspack-wizard__header__inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-bottom: 1px solid #ddd;
+	}
 
-	.components-notice {
-		margin: 16px 24px 0;
+	/* Header logo background colour. */
+	.newspack-wizard__title svg {
+		background: var(--wp-components-color-accent) !important;
+	}
+
+	/* TabbedNavigation — sticky below the header, above page content. */
+	.newspack-tabbed-navigation {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+
+		li a {
+			box-sizing: border-box;
+		}
+	}
+
+	/* Offset sticky top for the WP admin bar height at each breakpoint. */
+	&.admin-bar .newspack-tabbed-navigation {
+
+		@media only screen and ( min-width: 601px ) {
+			top: 46px;
+		}
+
+		@media only screen and ( min-width: 782px ) {
+			top: 32px;
+		}
 	}
 }
 
@@ -40,7 +78,7 @@ body.newspack-lite-admin-header {
 	gap: 24px;
 }
 
-// Snackbar toast, pinned to the bottom center of the viewport.
+/* Snackbar toast, pinned to the bottom center of the viewport. */
 .newspack-lite-snackbar-container {
 	bottom: 24px;
 	left: 50%;
@@ -51,4 +89,67 @@ body.newspack-lite-admin-header {
 	&--error .components-snackbar {
 		background-color: #cc1818;
 	}
+}
+
+.newspack-lite-sections,
+.newspack-lite-rss-sections {
+
+	/* Container padding handles top spacing;
+	 * first section removes its top margin. */
+	> .newspack-lite-section:first-child {
+
+		.newspack-lite-section-header {
+			margin-top: 0;
+		}
+	}
+}
+
+.newspack-lite-sections {
+	margin: 0 auto;
+	max-width: 760px;
+	padding: 48px 24px 0;
+}
+
+.newspack-lite-buttons-card {
+	display: flex;
+	flex-direction: row-reverse;
+	margin: 64px 0 32px;
+}
+
+.newspack-lite-color-picker-wrap {
+
+	/* Reset ColorPicker's default max-width so it fills the section column. */
+	.components-color-picker {
+		max-width: none;
+	}
+}
+
+.newspack-lite-rss-sections {
+	padding: 48px 24px 64px;
+
+	.newspack-lite-section-fields {
+
+		@media ( min-width: 960px ) {
+			max-width: 50%;
+		}
+	}
+}
+
+.newspack-lite-feed-status--active {
+	color: #00a32a;
+}
+
+.newspack-lite-feed-status--paused {
+	color: #996800;
+}
+
+.newspack-lite-empty-message {
+	color: #757575;
+	margin: 8px 0 0;
+}
+
+.newspack-lite-modal-actions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
 }
