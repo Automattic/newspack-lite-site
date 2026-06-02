@@ -15,14 +15,7 @@ import {
 	type CategoryData,
 	type CategoriesFieldProps,
 } from '../types/settings';
-
-/**
- * Return a display label for a category, indented by depth.
- */
-function getCategoryLabel( cat: CategoryData ): string {
-	const prefix = '—'.repeat( cat.depth );
-	return prefix ? prefix + ' ' + cat.name : cat.name;
-}
+import { getCategoryLabel } from '../utils/formatters';
 
 /**
  * Multi-select category field backed by FormTokenField.

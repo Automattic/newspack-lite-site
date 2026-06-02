@@ -18,9 +18,15 @@ const el = document.getElementById( 'newspack-lite-app' );
 if ( el ) {
 	const { page } = el.dataset;
 
+	let App: typeof SettingsApp | typeof RssImportApp | null = null;
+
 	if ( page === 'settings' ) {
-		createRoot( el ).render( <SettingsApp /> );
+		App = SettingsApp;
 	} else if ( page === 'rss-feed-import' ) {
-		createRoot( el ).render( <RssImportApp /> );
+		App = RssImportApp;
+	}
+
+	if ( App ) {
+		createRoot( el ).render( <App /> );
 	}
 }
