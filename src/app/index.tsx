@@ -10,8 +10,8 @@ import { createRoot } from '@wordpress/element';
 /**
  * Internal dependencies.
  */
-import { SettingsApp } from '../components/SettingsApp';
-import { RssImportApp } from '../components/RssImportApp';
+import { SettingsApp } from '../pages/SettingsApp';
+import { RssImportApp } from '../pages/RssImportApp';
 import '../style.scss';
 
 const el = document.getElementById( 'newspack-lite-app' );
