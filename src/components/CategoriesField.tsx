@@ -26,6 +26,11 @@ import { getCategoryLabel } from '../utils/formatters';
 export const CategoriesField = ( {
 	value,
 	onChange,
+	label = __( 'Categories', 'newspack-lite-site' ),
+	help = __(
+		'Select categories to include in the lite site archive. Leave empty to include all categories.',
+		'newspack-lite-site'
+	),
 }: CategoriesFieldProps ) => {
 	const categories = window.newspackLiteSite?.categories ?? [];
 	const suggestions = categories.map( getCategoryLabel );
@@ -41,8 +46,10 @@ export const CategoriesField = ( {
 			.map( ( token ) =>
 				typeof token === 'string' ? token : token.value
 			)
-			.map( ( label ) =>
-				categories.find( ( cat ) => getCategoryLabel( cat ) === label )
+			.map( ( tokenLabel ) =>
+				categories.find(
+					( cat ) => getCategoryLabel( cat ) === tokenLabel
+				)
 			)
 			.filter( ( cat ): cat is CategoryData => cat !== undefined )
 			.map( ( cat ) => cat.id );
@@ -50,14 +57,9 @@ export const CategoriesField = ( {
 	};
 
 	return (
-		<BaseControl
-			help={ __(
-				'Select categories to include in the lite site archive. Leave empty to include all categories. Selecting a parent category does not automatically include its subcategories — add them individually if needed.',
-				'newspack-lite-site'
-			) }
-		>
+		<BaseControl help={ help }>
 			<FormTokenField
-				label={ __( 'Categories', 'newspack-lite-site' ) }
+				label={ label }
 				value={ tokenValue }
 				suggestions={ suggestions }
 				onChange={ handleChange }
