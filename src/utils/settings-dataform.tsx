@@ -14,6 +14,7 @@ import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
 import { type SiteSettings } from '../types/settings';
 import { CategoriesField } from '../components/CategoriesField';
 import { ColorPickerField } from '../components/ColorPickerField';
+import { TagsField } from '../components/TagsField';
 
 /**
  * Custom Edit component wrapping CategoriesField for use in DataForm.
@@ -25,6 +26,60 @@ const CategoriesFieldEdit = ( {
 	<CategoriesField
 		value={ data.categories ?? [] }
 		onChange={ ( ids ) => onChange( { categories: ids } ) }
+	/>
+);
+
+/**
+ * Custom Edit component wrapping TagsField for tag inclusion in DataForm.
+ */
+const TagsFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TagsField
+		label={ __( 'Tags', 'newspack-lite-site' ) }
+		value={ data.tags ?? [] }
+		onChange={ ( ids ) => onChange( { tags: ids } ) }
+		help={ __(
+			'Include posts with these tags in the lite site. Leave empty to include posts with any tag.',
+			'newspack-lite-site'
+		) }
+	/>
+);
+
+/**
+ * Custom Edit component wrapping CategoriesField for category exclusion in DataForm.
+ */
+const ExcludedCategoriesFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<CategoriesField
+		label={ __( 'Excluded Categories', 'newspack-lite-site' ) }
+		value={ data.excluded_categories ?? [] }
+		onChange={ ( ids ) => onChange( { excluded_categories: ids } ) }
+		help={ __(
+			'Posts in these categories will not appear on the lite site.',
+			'newspack-lite-site'
+		) }
+	/>
+);
+
+/**
+ * Custom Edit component wrapping TagsField for tag exclusion in DataForm.
+ */
+const ExcludedTagsFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TagsField
+		label={ __( 'Excluded Tags', 'newspack-lite-site' ) }
+		value={ data.excluded_tags ?? [] }
+		onChange={ ( ids ) => onChange( { excluded_tags: ids } ) }
+		help={ __(
+			'Posts with these tags will not appear on the lite site.',
+			'newspack-lite-site'
+		) }
 	/>
 );
 
@@ -76,6 +131,26 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		id: 'categories',
 		label: __( 'Categories', 'newspack-lite-site' ),
 		Edit: CategoriesFieldEdit,
+	},
+	{
+		id: 'include_subcategories',
+		label: __( 'Include subcategories', 'newspack-lite-site' ),
+		type: 'boolean',
+	},
+	{
+		id: 'tags',
+		label: __( 'Tags', 'newspack-lite-site' ),
+		Edit: TagsFieldEdit,
+	},
+	{
+		id: 'excluded_categories',
+		label: __( 'Excluded Categories', 'newspack-lite-site' ),
+		Edit: ExcludedCategoriesFieldEdit,
+	},
+	{
+		id: 'excluded_tags',
+		label: __( 'Excluded Tags', 'newspack-lite-site' ),
+		Edit: ExcludedTagsFieldEdit,
 	},
 	{
 		id: 'footer_html',
