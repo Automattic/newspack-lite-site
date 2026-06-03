@@ -7,9 +7,12 @@
 
 namespace Newspack_Lite_Site;
 
-$posts_per_page = Lite_Site::get_posts_per_page();
-$categories     = Lite_Site::get_categories();
-$current_page   = max( 1, absint( get_query_var( 'lite_page', 1 ) ) );
+$posts_per_page      = Lite_Site::get_posts_per_page();
+$categories          = Lite_Site::get_categories();
+$tags                = Lite_Site::get_tags();
+$excluded_categories = Lite_Site::get_excluded_categories();
+$excluded_tags       = Lite_Site::get_excluded_tags();
+$current_page        = max( 1, absint( get_query_var( 'lite_page', 1 ) ) );
 
 $query_args = [
 	'post_status'    => 'publish',
@@ -18,6 +21,15 @@ $query_args = [
 ];
 if ( ! empty( $categories ) ) {
 	$query_args['category__in'] = $categories;
+}
+if ( ! empty( $tags ) ) {
+	$query_args['tag__in'] = $tags;
+}
+if ( ! empty( $excluded_categories ) ) {
+	$query_args['category__not_in'] = $excluded_categories;
+}
+if ( ! empty( $excluded_tags ) ) {
+	$query_args['tag__not_in'] = $excluded_tags;
 }
 
 $query        = new \WP_Query( $query_args );

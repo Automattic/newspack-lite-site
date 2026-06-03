@@ -82,7 +82,11 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the selected categories and all their descendants.
+	 * Get the selected categories, optionally expanded to include all descendants.
+	 *
+	 * Returns an empty array when no categories are selected (meaning all categories).
+	 * When include_subcategories is true (the default), child categories of each
+	 * selected term are appended automatically.
 	 *
 	 * @return int[] Category IDs, or empty array for all categories.
 	 */
@@ -94,6 +98,11 @@ class Lite_Site {
 
 		$selected = array_map( 'intval', (array) $settings['categories'] );
 
+		$include_subcategories = $settings['include_subcategories'] ?? true;
+		if ( ! $include_subcategories ) {
+			return $selected;
+		}
+
 		$all_ids = $selected;
 		foreach ( $selected as $term_id ) {
 			$children = get_term_children( $term_id, 'category' );
@@ -103,6 +112,36 @@ class Lite_Site {
 		}
 
 		return array_unique( $all_ids );
+	}
+
+	/**
+	 * Get the selected tags for inclusion filtering.
+	 *
+	 * @return int[] Tag IDs, or empty array for no tag filter.
+	 */
+	public static function get_tags() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['tags'] ) ? array_map( 'intval', $settings['tags'] ) : [];
+	}
+
+	/**
+	 * Get the categories excluded from the lite site.
+	 *
+	 * @return int[] Category IDs to exclude, or empty array for none.
+	 */
+	public static function get_excluded_categories() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['excluded_categories'] ) ? array_map( 'intval', $settings['excluded_categories'] ) : [];
+	}
+
+	/**
+	 * Get the tags excluded from the lite site.
+	 *
+	 * @return int[] Tag IDs to exclude, or empty array for none.
+	 */
+	public static function get_excluded_tags() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['excluded_tags'] ) ? array_map( 'intval', $settings['excluded_tags'] ) : [];
 	}
 
 	/**
