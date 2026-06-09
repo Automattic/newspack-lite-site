@@ -30,19 +30,23 @@ if ( $is_liveblog ) {
 	<title><?php echo esc_html( $current_post->post_title ); ?> - <?php bloginfo( 'name' ); ?></title>
 	<link rel="canonical" href="<?php echo esc_url( get_permalink( $current_post ) ); ?>">
 	<meta name="robots" content="noindex, follow">
-	<?php $font_import_url = Lite_Site::get_font_import_url(); ?>
-	<?php if ( $font_import_url ) : ?>
-		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
-	<?php endif; ?>
-	<?php require __DIR__ . '/lite-site-styles.php'; ?>
-	<?php $custom_css = Lite_Site::get_custom_css(); ?>
-	<?php if ( $custom_css ) : ?>
-		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
-	<?php endif; ?>
-	<?php if ( $is_liveblog ) : ?>
-		<?php require __DIR__ . '/liveblog-styles.php'; ?>
-	<?php endif; ?>
 	<?php
+	$font_import_url = Lite_Site::get_font_import_url();
+	if ( $font_import_url ) :
+		?>
+		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
+		<?php
+	endif;
+	require __DIR__ . '/lite-site-styles.php';
+	$custom_css = Lite_Site::get_custom_css();
+	if ( $custom_css ) :
+		?>
+		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
+		<?php
+	endif;
+	if ( $is_liveblog ) :
+		require __DIR__ . '/liveblog-styles.php';
+	endif;
 	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
 	if ( $ga4_measurement_id ) :
 		?>
@@ -83,11 +87,13 @@ if ( $is_liveblog ) {
 
 	<?php if ( $is_liveblog ) : ?>
 		<div class="liveblog-status <?php echo esc_attr( $liveblog_state ); ?>">
-			<?php if ( 'enable' === $liveblog_state ) : ?>
-				<?php esc_html_e( 'Live', 'newspack-lite-site' ); ?>
-			<?php else : ?>
-				<?php esc_html_e( 'Archived', 'newspack-lite-site' ); ?>
-			<?php endif; ?>
+			<?php
+			if ( 'enable' === $liveblog_state ) :
+				esc_html_e( 'Live', 'newspack-lite-site' );
+			else :
+				esc_html_e( 'Archived', 'newspack-lite-site' );
+			endif;
+			?>
 		</div>
 
 		<?php if ( ! empty( $liveblog_entries ) ) : ?>
@@ -109,11 +115,7 @@ if ( $is_liveblog ) {
 				<?php endforeach; ?>
 			</div>
 		<?php else : ?>
-			<p>
-				<?php
-				esc_html_e( 'There are no entries on this page.', 'newspack-lite-site' );
-				?>
-			</p>
+			<p><?php esc_html_e( 'There are no entries on this page.', 'newspack-lite-site' ); ?></p>
 		<?php endif; ?>
 	<?php endif; ?>
 	

@@ -6,6 +6,7 @@
  * WordPress dependencies.
  */
 import { BaseControl, FormTokenField } from '@wordpress/components';
+import { useDebounce } from '@wordpress/compose';
 import apiFetch from '@wordpress/api-fetch';
 import { useState, useEffect, useCallback, useMemo } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
@@ -76,16 +77,7 @@ export const TagsField = ( {
 	}, [] );
 
 	// Debounced search to avoid firing on every keystroke.
-	const debouncedFetch = useMemo( () => {
-		let timeout: ReturnType< typeof setTimeout >;
-		return ( search: string ) => {
-			clearTimeout( timeout );
-			timeout = setTimeout(
-				() => fetchSuggestions( search ),
-				DEBOUNCE_DELAY
-			);
-		};
-	}, [ fetchSuggestions ] );
+	const debouncedFetch = useDebounce( fetchSuggestions, DEBOUNCE_DELAY );
 
 	// Merge saved items and suggestions into a single id→name map.
 	const allItems = useMemo( () => {
