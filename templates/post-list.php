@@ -11,8 +11,8 @@ if ( empty( $query ) || empty( $query->posts ) ) {
 	return;
 }
 
-$sticky_post_ids         = (array) get_option( 'sticky_posts', [] );
-$external_links_new_tab  = Lite_Site::get_external_links_new_tab();
+$sticky_post_ids        = (array) get_option( 'sticky_posts', [] );
+$external_links_new_tab = Lite_Site::get_external_links_new_tab();
 
 foreach ( $query->posts as $current_post ) :
 
@@ -21,23 +21,24 @@ foreach ( $query->posts as $current_post ) :
 	$post_url    = Lite_Site::get_lite_page_url( $current_post );
 	$is_external = Lite_Site::is_external_url( $post_url );
 
-	$link_attrs = '';
-	if ( $is_external ) {
-		$link_attrs = ' class="lite-site-external"';
-		if ( $external_links_new_tab ) {
-			$link_attrs .= ' target="_blank" rel="noopener noreferrer"';
-		}
+	if ( $is_external && $external_links_new_tab ) {
+		$anchor_template = '<a href="%s" class="lite-site-external" target="_blank" rel="noopener noreferrer">%s</a>';
+	} elseif ( $is_external ) {
+		$anchor_template = '<a href="%s" class="lite-site-external">%s</a>';
+	} else {
+		$anchor_template = '<a href="%s">%s</a>';
 	}
 	?>
 
 	<li>
 		<<?php echo esc_html( $title_tag ); ?>>
 			<?php
-			printf(
-				'<a href="%s"%s>%s</a>',
-				esc_url( $post_url ),
-				$link_attrs,    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hardcoded safe HTML attributes, never user input.
-				esc_html( get_the_title( $current_post ) )
+			echo wp_kses_post(
+				sprintf(
+					$anchor_template,
+					esc_url( $post_url ),
+					esc_html( get_the_title( $current_post ) )
+				)
 			);
 			?>
 		</<?php echo esc_html( $title_tag ); ?>>
