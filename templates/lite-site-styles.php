@@ -108,6 +108,12 @@ namespace Newspack_Lite_Site;
 		margin-top: 2rem;
 	}
 
+	.lite-site-external::after {
+		content: " ↗";
+		font-size: 0.8em;
+		opacity: 0.7;
+	}
+
 	<?php
 	/**
 	 * Fires at the end of the style tag in lite site templates.
