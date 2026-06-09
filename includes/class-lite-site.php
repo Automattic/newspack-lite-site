@@ -145,6 +145,26 @@ class Lite_Site {
 	}
 
 	/**
+	 * Get whether external links should open in a new tab.
+	 *
+	 * @return bool True if external links should open in a new tab (default), false otherwise.
+	 */
+	public static function get_external_links_new_tab(): bool {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return isset( $settings['external_links_new_tab'] ) ? (bool) $settings['external_links_new_tab'] : true;
+	}
+
+	/**
+	 * Get the custom CSS to inject into lite site pages.
+	 *
+	 * @return string Custom CSS, or empty string if not set.
+	 */
+	public static function get_custom_css() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['custom_css'] ) ? $settings['custom_css'] : '';
+	}
+
+	/**
 	 * Get the footer HTML.
 	 *
 	 * @return string Footer HTML, or empty string if not set.
@@ -239,12 +259,42 @@ class Lite_Site {
 	 * Get the lite version URL for a post.
 	 *
 	 * @param WP_Post $post The post object.
-	 * @return string The lite site URL for the post.
+	 * @return string The lite site URL for the post, or the original permalink if external.
 	 */
 	public static function get_lite_page_url( $post ) {
 		$permalink = untrailingslashit( get_permalink( $post ) );
-		$path      = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
+
+		if ( self::is_external_url( $permalink ) ) {
+			return $permalink;
+		}
+
+		$path = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
 		return home_url( self::get_url_base() . '/' . $path );
+	}
+
+	/**
+	 * Checks whether a URL points to a different domain than the current site.
+	 *
+	 * Returns false for relative URLs, anchors, and non-HTTP protocols so they
+	 * are never treated as external.
+	 *
+	 * @param string $url The URL to check.
+	 * @return bool True if the URL is external, false otherwise.
+	 */
+	public static function is_external_url( string $url ): bool {
+		$link_host = strtolower( wp_parse_url( $url, PHP_URL_HOST ) ?? '' );
+		$site_host = strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) ?? '' );
+
+		// If no host could be parsed (e.g. relative URL), treat as internal.
+		if ( ! $link_host ) {
+			return false;
+		}
+
+		// Normalize both hosts: strip 'www.' prefix for comparison.
+		$link_host = preg_replace( '/^www\./i', '', $link_host );
+		$site_host = preg_replace( '/^www\./i', '', $site_host );
+
+		return $link_host !== $site_host;
 	}
 
 	/**
