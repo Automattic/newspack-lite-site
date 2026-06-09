@@ -46,19 +46,21 @@ class Lite_Site_Settings {
 			[
 				'type'              => 'object',
 				'default'           => [
-					'enabled'               => false,
-					'url_base'              => 'lite',
-					'posts_per_page'        => 10,
-					'categories'            => [],
-					'include_subcategories' => true,
-					'tags'                  => [],
-					'excluded_categories'   => [],
-					'excluded_tags'         => [],
-					'footer_html'           => '',
-					'ga4_measurement_id'    => '',
-					'primary_color'         => '',
-					'font_import_url'       => '',
-					'font_body'             => '',
+					'enabled'                => false,
+					'url_base'               => 'lite',
+					'posts_per_page'         => 10,
+					'categories'             => [],
+					'include_subcategories'  => true,
+					'tags'                   => [],
+					'excluded_categories'    => [],
+					'excluded_tags'          => [],
+					'footer_html'            => '',
+					'custom_css'             => '',
+					'external_links_new_tab' => true,
+					'ga4_measurement_id'     => '',
+					'primary_color'          => '',
+					'font_import_url'        => '',
+					'font_body'              => '',
 				],
 				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
 				'show_in_rest'      => [
@@ -66,61 +68,69 @@ class Lite_Site_Settings {
 						'type'                 => 'object',
 						'additionalProperties' => false,
 						'properties'           => [
-							'enabled'               => [
+							'enabled'                => [
 								'type'    => 'boolean',
 								'default' => false,
 							],
-							'url_base'              => [
+							'url_base'               => [
 								'type'    => 'string',
 								'default' => 'lite',
 							],
-							'posts_per_page'        => [
+							'posts_per_page'         => [
 								'type'    => 'integer',
 								'default' => 10,
 								'minimum' => 1,
 								'maximum' => 100,
 							],
-							'categories'            => [
+							'categories'             => [
 								'type'    => 'array',
 								'default' => [],
 								'items'   => [ 'type' => 'integer' ],
 							],
-							'include_subcategories' => [
+							'include_subcategories'  => [
 								'type'    => 'boolean',
 								'default' => true,
 							],
-							'tags'                  => [
+							'tags'                   => [
 								'type'    => 'array',
 								'default' => [],
 								'items'   => [ 'type' => 'integer' ],
 							],
-							'excluded_categories'   => [
+							'excluded_categories'    => [
 								'type'    => 'array',
 								'default' => [],
 								'items'   => [ 'type' => 'integer' ],
 							],
-							'excluded_tags'         => [
+							'excluded_tags'          => [
 								'type'    => 'array',
 								'default' => [],
 								'items'   => [ 'type' => 'integer' ],
 							],
-							'footer_html'           => [
+							'footer_html'            => [
 								'type'    => 'string',
 								'default' => '',
 							],
-							'ga4_measurement_id'    => [
+							'custom_css'             => [
 								'type'    => 'string',
 								'default' => '',
 							],
-							'primary_color'         => [
+							'external_links_new_tab' => [
+								'type'    => 'boolean',
+								'default' => true,
+							],
+							'ga4_measurement_id'     => [
 								'type'    => 'string',
 								'default' => '',
 							],
-							'font_import_url'       => [
+							'primary_color'          => [
 								'type'    => 'string',
 								'default' => '',
 							],
-							'font_body'             => [
+							'font_import_url'        => [
+								'type'    => 'string',
+								'default' => '',
+							],
+							'font_body'              => [
 								'type'    => 'string',
 								'default' => '',
 							],
@@ -420,19 +430,21 @@ class Lite_Site_Settings {
 		}
 
 		return [
-			'enabled'               => ! empty( $settings['enabled'] ),
-			'url_base'              => sanitize_title( $settings['url_base'] ),
-			'posts_per_page'        => min( 100, max( 1, intval( $settings['posts_per_page'] ?? get_option( 'posts_per_page', 10 ) ) ) ),
-			'categories'            => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
-			'include_subcategories' => isset( $settings['include_subcategories'] ) ? (bool) $settings['include_subcategories'] : true,
-			'tags'                  => ! empty( $settings['tags'] ) ? array_map( 'intval', $settings['tags'] ) : [],
-			'excluded_categories'   => ! empty( $settings['excluded_categories'] ) ? array_map( 'intval', $settings['excluded_categories'] ) : [],
-			'excluded_tags'         => ! empty( $settings['excluded_tags'] ) ? array_map( 'intval', $settings['excluded_tags'] ) : [],
-			'footer_html'           => wp_kses_post( trim( $settings['footer_html'] ) ),
-			'ga4_measurement_id'    => sanitize_text_field( $settings['ga4_measurement_id'] ),
-			'primary_color'         => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',
-			'font_import_url'       => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
-			'font_body'             => sanitize_text_field( $settings['font_body'] ?? '' ),
+			'enabled'                => ! empty( $settings['enabled'] ),
+			'url_base'               => sanitize_title( $settings['url_base'] ),
+			'posts_per_page'         => min( 100, max( 1, intval( $settings['posts_per_page'] ?? get_option( 'posts_per_page', 10 ) ) ) ),
+			'categories'             => ! empty( $settings['categories'] ) ? array_map( 'intval', $settings['categories'] ) : [],
+			'include_subcategories'  => isset( $settings['include_subcategories'] ) ? (bool) $settings['include_subcategories'] : true,
+			'tags'                   => ! empty( $settings['tags'] ) ? array_map( 'intval', $settings['tags'] ) : [],
+			'excluded_categories'    => ! empty( $settings['excluded_categories'] ) ? array_map( 'intval', $settings['excluded_categories'] ) : [],
+			'excluded_tags'          => ! empty( $settings['excluded_tags'] ) ? array_map( 'intval', $settings['excluded_tags'] ) : [],
+			'footer_html'            => wp_kses_post( trim( $settings['footer_html'] ) ),
+			'custom_css'             => wp_strip_all_tags( $settings['custom_css'] ?? '' ),
+			'external_links_new_tab' => isset( $settings['external_links_new_tab'] ) ? (bool) $settings['external_links_new_tab'] : true,
+			'ga4_measurement_id'     => sanitize_text_field( $settings['ga4_measurement_id'] ),
+			'primary_color'          => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',
+			'font_import_url'        => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
+			'font_body'              => sanitize_text_field( $settings['font_body'] ?? '' ),
 		];
 	}
 

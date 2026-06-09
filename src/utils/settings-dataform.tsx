@@ -6,6 +6,7 @@
  * WordPress dependencies.
  */
 import { __, sprintf } from '@wordpress/i18n';
+import { TextareaControl } from '@wordpress/components';
 import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
 
 /**
@@ -97,6 +98,41 @@ const ColorPickerFieldEdit = ( {
 );
 
 /**
+ * Custom Edit component for the Footer HTML field with code-style textarea.
+ */
+const FooterHtmlFieldEdit = ( {
+	data,
+	field,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TextareaControl
+		label={ field.label }
+		value={ data.footer_html ?? '' }
+		onChange={ ( val ) => onChange( { footer_html: val } ) }
+		rows={ 5 }
+		className="newspack-lite-code-textarea"
+	/>
+);
+
+/**
+ * Custom Edit component for the Custom CSS field with code-style textarea.
+ */
+const CustomCssFieldEdit = ( {
+	data,
+	field,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TextareaControl
+		label={ field.label }
+		help={ field.description }
+		value={ data.custom_css ?? '' }
+		onChange={ ( val ) => onChange( { custom_css: val } ) }
+		rows={ 10 }
+		className="newspack-lite-code-textarea"
+	/>
+);
+
+/**
  * Field definitions for the General settings DataForm.
  */
 export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
@@ -153,10 +189,18 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		Edit: ExcludedTagsFieldEdit,
 	},
 	{
+		id: 'external_links_new_tab',
+		label: __( 'Open external links in a new tab', 'newspack-lite-site' ),
+		type: 'boolean',
+		description: __(
+			'When enabled, links to external websites open in a new browser tab. Disable to open them in the same tab.',
+			'newspack-lite-site'
+		),
+	},
+	{
 		id: 'footer_html',
 		label: __( 'Footer HTML', 'newspack-lite-site' ),
-		type: 'text',
-		Edit: { control: 'textarea', rows: 5 },
+		Edit: FooterHtmlFieldEdit,
 		description: __(
 			'HTML to be displayed in the footer of lite site pages.',
 			'newspack-lite-site'
@@ -197,6 +241,15 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		type: 'text',
 		description: __(
 			'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.',
+			'newspack-lite-site'
+		),
+	},
+	{
+		id: 'custom_css',
+		label: __( 'Custom CSS', 'newspack-lite-site' ),
+		Edit: CustomCssFieldEdit,
+		description: __(
+			'CSS injected into the <head> of every lite site page, after the built-in stylesheet. Use this to override default styles or add custom rules.',
 			'newspack-lite-site'
 		),
 	},

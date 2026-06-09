@@ -15,6 +15,8 @@ export interface SiteSettings {
 	excluded_categories: number[];
 	excluded_tags: number[];
 	footer_html: string;
+	custom_css: string;
+	external_links_new_tab: boolean;
 	ga4_measurement_id: string;
 	primary_color: string;
 	font_import_url: string;
