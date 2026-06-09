@@ -49,6 +49,7 @@ export const SettingsPanel = ( { settings, onChange }: PanelProps ) => {
 							'tags',
 							'excluded_categories',
 							'excluded_tags',
+							'external_links_new_tab',
 							'footer_html',
 							'ga4_measurement_id',
 						],

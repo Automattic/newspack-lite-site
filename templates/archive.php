@@ -48,6 +48,10 @@ $current_page = min( $current_page, $total_pages );
 		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
 	<?php endif; ?>
 	<?php require __DIR__ . '/lite-site-styles.php'; ?>
+	<?php $custom_css = Lite_Site::get_custom_css(); ?>
+	<?php if ( $custom_css ) : ?>
+		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
+	<?php endif; ?>
 	<?php
 	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
 	if ( $ga4_measurement_id ) :

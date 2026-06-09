@@ -124,6 +124,14 @@ body.newspack-lite-admin-header {
 	margin: 64px 0 32px;
 }
 
+.newspack-lite-code-textarea {
+
+	textarea {
+		direction: ltr;
+		font-family: Menlo, Consolas, monaco, monospace;
+	}
+}
+
 .newspack-lite-color-picker-wrap {
 
 	/* Reset ColorPicker's default max-width so it fills the section column. */

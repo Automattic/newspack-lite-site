@@ -35,6 +35,10 @@ if ( $is_liveblog ) {
 		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
 	<?php endif; ?>
 	<?php require __DIR__ . '/lite-site-styles.php'; ?>
+	<?php $custom_css = Lite_Site::get_custom_css(); ?>
+	<?php if ( $custom_css ) : ?>
+		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
+	<?php endif; ?>
 	<?php if ( $is_liveblog ) : ?>
 		<?php require __DIR__ . '/liveblog-styles.php'; ?>
 	<?php endif; ?>
