@@ -6,6 +6,7 @@
  * WordPress dependencies.
  */
 import { __, sprintf } from '@wordpress/i18n';
+import { TextareaControl } from '@wordpress/components';
 import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
 
 /**
@@ -14,6 +15,7 @@ import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
 import { type SiteSettings } from '../types/settings';
 import { CategoriesField } from '../components/CategoriesField';
 import { ColorPickerField } from '../components/ColorPickerField';
+import { TagsField } from '../components/TagsField';
 
 /**
  * Custom Edit component wrapping CategoriesField for use in DataForm.
@@ -29,6 +31,60 @@ const CategoriesFieldEdit = ( {
 );
 
 /**
+ * Custom Edit component wrapping TagsField for tag inclusion in DataForm.
+ */
+const TagsFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TagsField
+		label={ __( 'Tags', 'newspack-lite-site' ) }
+		value={ data.tags ?? [] }
+		onChange={ ( ids ) => onChange( { tags: ids } ) }
+		help={ __(
+			'Include posts with these tags in the lite site. Leave empty to include posts with any tag.',
+			'newspack-lite-site'
+		) }
+	/>
+);
+
+/**
+ * Custom Edit component wrapping CategoriesField for category exclusion in DataForm.
+ */
+const ExcludedCategoriesFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<CategoriesField
+		label={ __( 'Excluded Categories', 'newspack-lite-site' ) }
+		value={ data.excluded_categories ?? [] }
+		onChange={ ( ids ) => onChange( { excluded_categories: ids } ) }
+		help={ __(
+			'Posts in these categories will not appear on the lite site.',
+			'newspack-lite-site'
+		) }
+	/>
+);
+
+/**
+ * Custom Edit component wrapping TagsField for tag exclusion in DataForm.
+ */
+const ExcludedTagsFieldEdit = ( {
+	data,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TagsField
+		label={ __( 'Excluded Tags', 'newspack-lite-site' ) }
+		value={ data.excluded_tags ?? [] }
+		onChange={ ( ids ) => onChange( { excluded_tags: ids } ) }
+		help={ __(
+			'Posts with these tags will not appear on the lite site.',
+			'newspack-lite-site'
+		) }
+	/>
+);
+
+/**
  * Custom Edit component wrapping ColorPickerField for use in DataForm.
  */
 const ColorPickerFieldEdit = ( {
@@ -38,6 +94,41 @@ const ColorPickerFieldEdit = ( {
 	<ColorPickerField
 		value={ data.primary_color ?? '' }
 		onChange={ ( val ) => onChange( { primary_color: val } ) }
+	/>
+);
+
+/**
+ * Custom Edit component for the Footer HTML field with code-style textarea.
+ */
+const FooterHtmlFieldEdit = ( {
+	data,
+	field,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TextareaControl
+		label={ field.label }
+		value={ data.footer_html ?? '' }
+		onChange={ ( val ) => onChange( { footer_html: val } ) }
+		rows={ 5 }
+		className="newspack-lite-code-textarea"
+	/>
+);
+
+/**
+ * Custom Edit component for the Custom CSS field with code-style textarea.
+ */
+const CustomCssFieldEdit = ( {
+	data,
+	field,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TextareaControl
+		label={ field.label }
+		help={ field.description }
+		value={ data.custom_css ?? '' }
+		onChange={ ( val ) => onChange( { custom_css: val } ) }
+		rows={ 10 }
+		className="newspack-lite-code-textarea"
 	/>
 );
 
@@ -78,10 +169,38 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		Edit: CategoriesFieldEdit,
 	},
 	{
+		id: 'include_subcategories',
+		label: __( 'Include subcategories', 'newspack-lite-site' ),
+		type: 'boolean',
+	},
+	{
+		id: 'tags',
+		label: __( 'Tags', 'newspack-lite-site' ),
+		Edit: TagsFieldEdit,
+	},
+	{
+		id: 'excluded_categories',
+		label: __( 'Excluded Categories', 'newspack-lite-site' ),
+		Edit: ExcludedCategoriesFieldEdit,
+	},
+	{
+		id: 'excluded_tags',
+		label: __( 'Excluded Tags', 'newspack-lite-site' ),
+		Edit: ExcludedTagsFieldEdit,
+	},
+	{
+		id: 'external_links_new_tab',
+		label: __( 'Open external links in a new tab', 'newspack-lite-site' ),
+		type: 'boolean',
+		description: __(
+			'When enabled, links to external websites open in a new browser tab. Disable to open them in the same tab.',
+			'newspack-lite-site'
+		),
+	},
+	{
 		id: 'footer_html',
 		label: __( 'Footer HTML', 'newspack-lite-site' ),
-		type: 'text',
-		Edit: { control: 'textarea', rows: 5 },
+		Edit: FooterHtmlFieldEdit,
 		description: __(
 			'HTML to be displayed in the footer of lite site pages.',
 			'newspack-lite-site'
@@ -122,6 +241,15 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		type: 'text',
 		description: __(
 			'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.',
+			'newspack-lite-site'
+		),
+	},
+	{
+		id: 'custom_css',
+		label: __( 'Custom CSS', 'newspack-lite-site' ),
+		Edit: CustomCssFieldEdit,
+		description: __(
+			'CSS injected into the <head> of every lite site page, after the built-in stylesheet. Use this to override default styles or add custom rules.',
 			'newspack-lite-site'
 		),
 	},

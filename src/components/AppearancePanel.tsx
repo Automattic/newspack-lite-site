@@ -60,6 +60,14 @@ export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
 										'font_body',
 									],
 								},
+								{
+									id: 'advanced',
+									label: __(
+										'Advanced',
+										'newspack-lite-site'
+									),
+									children: [ 'custom_css' ],
+								},
 							],
 						} }
 						onChange={ ( partial ) =>

@@ -82,7 +82,11 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the selected categories and all their descendants.
+	 * Get the selected categories, optionally expanded to include all descendants.
+	 *
+	 * Returns an empty array when no categories are selected (meaning all categories).
+	 * When include_subcategories is true (the default), child categories of each
+	 * selected term are appended automatically.
 	 *
 	 * @return int[] Category IDs, or empty array for all categories.
 	 */
@@ -94,6 +98,11 @@ class Lite_Site {
 
 		$selected = array_map( 'intval', (array) $settings['categories'] );
 
+		$include_subcategories = $settings['include_subcategories'] ?? true;
+		if ( ! $include_subcategories ) {
+			return $selected;
+		}
+
 		$all_ids = $selected;
 		foreach ( $selected as $term_id ) {
 			$children = get_term_children( $term_id, 'category' );
@@ -103,6 +112,56 @@ class Lite_Site {
 		}
 
 		return array_unique( $all_ids );
+	}
+
+	/**
+	 * Get the selected tags for inclusion filtering.
+	 *
+	 * @return int[] Tag IDs, or empty array for no tag filter.
+	 */
+	public static function get_tags() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['tags'] ) ? array_map( 'intval', $settings['tags'] ) : [];
+	}
+
+	/**
+	 * Get the categories excluded from the lite site.
+	 *
+	 * @return int[] Category IDs to exclude, or empty array for none.
+	 */
+	public static function get_excluded_categories() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['excluded_categories'] ) ? array_map( 'intval', $settings['excluded_categories'] ) : [];
+	}
+
+	/**
+	 * Get the tags excluded from the lite site.
+	 *
+	 * @return int[] Tag IDs to exclude, or empty array for none.
+	 */
+	public static function get_excluded_tags() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['excluded_tags'] ) ? array_map( 'intval', $settings['excluded_tags'] ) : [];
+	}
+
+	/**
+	 * Get whether external links should open in a new tab.
+	 *
+	 * @return bool True if external links should open in a new tab (default), false otherwise.
+	 */
+	public static function get_external_links_new_tab(): bool {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return isset( $settings['external_links_new_tab'] ) ? (bool) $settings['external_links_new_tab'] : true;
+	}
+
+	/**
+	 * Get the custom CSS to inject into lite site pages.
+	 *
+	 * @return string Custom CSS, or empty string if not set.
+	 */
+	public static function get_custom_css() {
+		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		return ! empty( $settings['custom_css'] ) ? $settings['custom_css'] : '';
 	}
 
 	/**
@@ -200,12 +259,42 @@ class Lite_Site {
 	 * Get the lite version URL for a post.
 	 *
 	 * @param WP_Post $post The post object.
-	 * @return string The lite site URL for the post.
+	 * @return string The lite site URL for the post, or the original permalink if external.
 	 */
 	public static function get_lite_page_url( $post ) {
 		$permalink = untrailingslashit( get_permalink( $post ) );
-		$path      = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
+
+		if ( self::is_external_url( $permalink ) ) {
+			return $permalink;
+		}
+
+		$path = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
 		return home_url( self::get_url_base() . '/' . $path );
+	}
+
+	/**
+	 * Checks whether a URL points to a different domain than the current site.
+	 *
+	 * Returns false for relative URLs, anchors, and non-HTTP protocols so they
+	 * are never treated as external.
+	 *
+	 * @param string $url The URL to check.
+	 * @return bool True if the URL is external, false otherwise.
+	 */
+	public static function is_external_url( string $url ): bool {
+		$link_host = strtolower( wp_parse_url( $url, PHP_URL_HOST ) ?? '' );
+		$site_host = strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) ?? '' );
+
+		// If no host could be parsed (e.g. relative URL), treat as internal.
+		if ( ! $link_host ) {
+			return false;
+		}
+
+		// Normalize both hosts: strip 'www.' prefix for comparison.
+		$link_host = preg_replace( '/^www\./i', '', $link_host );
+		$site_host = preg_replace( '/^www\./i', '', $site_host );
+
+		return $link_host !== $site_host;
 	}
 
 	/**

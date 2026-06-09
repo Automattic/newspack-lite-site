@@ -7,9 +7,12 @@
 
 namespace Newspack_Lite_Site;
 
-$posts_per_page = Lite_Site::get_posts_per_page();
-$categories     = Lite_Site::get_categories();
-$current_page   = max( 1, absint( get_query_var( 'lite_page', 1 ) ) );
+$posts_per_page      = Lite_Site::get_posts_per_page();
+$categories          = Lite_Site::get_categories();
+$tags                = Lite_Site::get_tags();
+$excluded_categories = Lite_Site::get_excluded_categories();
+$excluded_tags       = Lite_Site::get_excluded_tags();
+$current_page        = max( 1, absint( get_query_var( 'lite_page', 1 ) ) );
 
 $query_args = [
 	'post_status'    => 'publish',
@@ -18,6 +21,15 @@ $query_args = [
 ];
 if ( ! empty( $categories ) ) {
 	$query_args['category__in'] = $categories;
+}
+if ( ! empty( $tags ) ) {
+	$query_args['tag__in'] = $tags;
+}
+if ( ! empty( $excluded_categories ) ) {
+	$query_args['category__not_in'] = $excluded_categories;
+}
+if ( ! empty( $excluded_tags ) ) {
+	$query_args['tag__not_in'] = $excluded_tags;
 }
 
 $query        = new \WP_Query( $query_args );
@@ -31,12 +43,20 @@ $current_page = min( $current_page, $total_pages );
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php bloginfo( 'name' ); ?></title>
-	<?php $font_import_url = Lite_Site::get_font_import_url(); ?>
-	<?php if ( $font_import_url ) : ?>
-		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
-	<?php endif; ?>
-	<?php require __DIR__ . '/lite-site-styles.php'; ?>
 	<?php
+	$font_import_url = Lite_Site::get_font_import_url();
+	if ( $font_import_url ) :
+		?>
+		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
+		<?php
+	endif;
+	require __DIR__ . '/lite-site-styles.php';
+	$custom_css = Lite_Site::get_custom_css();
+	if ( $custom_css ) :
+		?>
+		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
+		<?php
+	endif;
 	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
 	if ( $ga4_measurement_id ) :
 		?>
