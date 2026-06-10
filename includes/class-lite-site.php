@@ -530,6 +530,38 @@ class Lite_Site {
 	}
 
 	/**
+	 * Add external link attributes to all external <a> tags in an HTML string.
+	 *
+	 * Adds class, target, and rel attributes to any link whose href points to
+	 * a different domain.
+	 *
+	 * @param string $html HTML content to process.
+	 * @return string Processed HTML with external link attributes added.
+	 */
+	public static function add_external_link_attrs( string $html ): string {
+		if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
+			return $html;
+		}
+
+		$processor    = new \WP_HTML_Tag_Processor( $html );
+		$open_new_tab = self::get_external_links_new_tab();
+
+		while ( $processor->next_tag( 'a' ) ) {
+			$href = $processor->get_attribute( 'href' );
+			if ( ! $href || ! self::is_external_url( $href ) ) {
+				continue;
+			}
+			$processor->set_attribute( 'class', 'lite-site-external' );
+			if ( $open_new_tab ) {
+				$processor->set_attribute( 'target', '_blank' );
+				$processor->set_attribute( 'rel', 'noopener noreferrer' );
+			}
+		}
+
+		return $processor->get_updated_html();
+	}
+
+	/**
 	 * Clean the post content for lite display.
 	 *
 	 * @param string $content The post content.
@@ -590,7 +622,7 @@ class Lite_Site {
 		// Clean up any empty paragraphs.
 		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
 
-		return $content;
+		return self::add_external_link_attrs( $content );
 	}
 
 	/**
