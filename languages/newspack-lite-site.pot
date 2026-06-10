@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-10T15:13:22+00:00\n"
+"POT-Creation-Date: 2026-06-10T15:39:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -36,605 +36,479 @@ msgstr ""
 
 #: includes/class-lite-site-settings.php:255
 #: includes/class-lite-site-settings.php:256
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:255
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:256
 msgid "Lite Site"
 msgstr ""
 
 #: includes/class-lite-site-settings.php:267
 #: includes/class-lite-site-settings.php:268
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:267
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:268
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Settings"
 msgstr ""
 
 #: includes/class-lite-site-settings.php:277
 #: includes/class-lite-site-settings.php:278
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:277
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:278
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "RSS Feed Import"
 msgstr ""
 
 #: includes/class-lite-site-settings.php:303
-#: release/newspack-lite-site/includes/class-lite-site-settings.php:303
 msgid "View Lite Site"
 msgstr ""
 
 #. translators: %1$s: a comma separated list of authors names with links and, after the "and" %2$s: one last author link
 #: includes/class-lite-site.php:448
-#: release/newspack-lite-site/includes/class-lite-site.php:448
 #, php-format
 msgid "%1$s and %2$s"
 msgstr ""
 
 #. translators: %s: author name(s)
 #: includes/class-lite-site.php:466
-#: release/newspack-lite-site/includes/class-lite-site.php:466
 #, php-format
 msgid "By %s"
 msgstr ""
 
 #. translators: %s: image alt text
 #: includes/class-lite-site.php:665
-#: release/newspack-lite-site/includes/class-lite-site.php:665
 #, php-format
 msgid "Image | %s"
 msgstr ""
 
 #: includes/class-lite-site.php:666
-#: release/newspack-lite-site/includes/class-lite-site.php:666
 msgid "Image"
 msgstr ""
 
 #. translators: %s: image caption text
 #: includes/class-lite-site.php:685
-#: release/newspack-lite-site/includes/class-lite-site.php:685
 #, php-format
 msgid "Caption: %s"
 msgstr ""
 
 #: includes/class-lite-site.php:697
-#: release/newspack-lite-site/includes/class-lite-site.php:697
 msgid "Load image"
 msgstr ""
 
 #: includes/class-rss-importer.php:194
-#: release/newspack-lite-site/includes/class-rss-importer.php:194
 msgid "Please enter a valid feed URL."
 msgstr ""
 
 #: includes/class-rss-importer.php:202
-#: release/newspack-lite-site/includes/class-rss-importer.php:202
 msgid "Please select a valid author."
 msgstr ""
 
 #: includes/class-rss-importer.php:210
-#: release/newspack-lite-site/includes/class-rss-importer.php:210
 msgid "Please select a valid interval."
 msgstr ""
 
 #: includes/class-rss-importer.php:221
-#: release/newspack-lite-site/includes/class-rss-importer.php:221
 msgid "This feed is already configured."
 msgstr ""
 
 #: includes/class-rss-importer.php:265
-#: release/newspack-lite-site/includes/class-rss-importer.php:265
 msgid "Feed not found."
 msgstr ""
 
 #: includes/class-rss-importer.php:308
 #: includes/class-rss-importer.php:369
-#: release/newspack-lite-site/includes/class-rss-importer.php:308
-#: release/newspack-lite-site/includes/class-rss-importer.php:369
 msgid "Every 5 Minutes"
 msgstr ""
 
 #: includes/class-rss-importer.php:312
 #: includes/class-rss-importer.php:370
-#: release/newspack-lite-site/includes/class-rss-importer.php:312
-#: release/newspack-lite-site/includes/class-rss-importer.php:370
 msgid "Every 10 Minutes"
 msgstr ""
 
 #: includes/class-rss-importer.php:316
 #: includes/class-rss-importer.php:371
-#: release/newspack-lite-site/includes/class-rss-importer.php:316
-#: release/newspack-lite-site/includes/class-rss-importer.php:371
 msgid "Every 30 Minutes"
 msgstr ""
 
 #: includes/class-rss-importer.php:320
-#: release/newspack-lite-site/includes/class-rss-importer.php:320
 msgid "Once Weekly"
 msgstr ""
 
 #: includes/class-rss-importer.php:372
-#: release/newspack-lite-site/includes/class-rss-importer.php:372
 msgid "Hourly"
 msgstr ""
 
 #: includes/class-rss-importer.php:373
-#: release/newspack-lite-site/includes/class-rss-importer.php:373
 msgid "Twice Daily"
 msgstr ""
 
 #: includes/class-rss-importer.php:374
-#: release/newspack-lite-site/includes/class-rss-importer.php:374
 msgid "Daily"
 msgstr ""
 
 #: includes/class-rss-importer.php:375
-#: release/newspack-lite-site/includes/class-rss-importer.php:375
 msgid "Weekly"
 msgstr ""
 
 #: includes/class-rss-importer.php:440
-#: release/newspack-lite-site/includes/class-rss-importer.php:440
 msgid "A valid feed URL is required."
 msgstr ""
 
 #: includes/class-rss-importer.php:444
-#: release/newspack-lite-site/includes/class-rss-importer.php:444
 msgid "A valid author ID is required."
 msgstr ""
 
 #. translators: %s: error message from the feed parser
 #: includes/class-rss-importer.php:456
-#: release/newspack-lite-site/includes/class-rss-importer.php:456
 #, php-format
 msgid "Could not retrieve feed: %s"
 msgstr ""
 
 #: includes/class-rss-importer.php:465
-#: release/newspack-lite-site/includes/class-rss-importer.php:465
 msgid "The feed contains no items."
 msgstr ""
 
-#: release/newspack-lite-site/templates/archive.php:75
 #: templates/archive.php:75
 msgid "View full site"
 msgstr ""
 
-#: release/newspack-lite-site/templates/archive.php:94
 #: templates/archive.php:94
 msgid "Archive pagination"
 msgstr ""
 
-#: release/newspack-lite-site/templates/offline.php:19
-#: release/newspack-lite-site/templates/offline.php:30
 #: templates/offline.php:19
 #: templates/offline.php:30
 msgid "You are offline"
 msgstr ""
 
-#: release/newspack-lite-site/templates/offline.php:28
-#: release/newspack-lite-site/templates/single.php:65
 #: templates/offline.php:28
 #: templates/single.php:65
 msgid "Back to posts"
 msgstr ""
 
-#: release/newspack-lite-site/templates/single.php:66
 #: templates/single.php:66
 msgid "View full article"
 msgstr ""
 
-#: release/newspack-lite-site/templates/single.php:92
 #: templates/single.php:92
 msgid "Live"
 msgstr ""
 
-#: release/newspack-lite-site/templates/single.php:94
 #: templates/single.php:94
 msgid "Archived"
 msgstr ""
 
-#: release/newspack-lite-site/templates/single.php:118
 #: templates/single.php:118
 msgid "There are no entries on this page."
 msgstr ""
 
 #. translators: %d: Number of fields that need attention
 #: dist/index.js:115
-#: release/newspack-lite-site/dist/index.js:115
 msgid "Error"
 msgstr ""
 
 #: dist/index.js:115
-#: release/newspack-lite-site/dist/index.js:115
 msgid "Up to date"
 msgstr ""
 
 #. translators: %d: number of posts imported
 #: dist/index.js:116
-#: release/newspack-lite-site/dist/index.js:116
 #, js-format
 msgid "— %d imported, up to date"
 msgstr ""
 
 #. translators: 1: number of posts imported, 2: number of posts failed
 #: dist/index.js:117
-#: release/newspack-lite-site/dist/index.js:117
 #, js-format
 msgid "— %1$d imported, %2$d failed"
 msgstr ""
 
 #. translators: %d: number of posts imported
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 #, js-format
 msgid "— %d imported"
 msgstr ""
 
 #: dist/index.js:118
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Categories"
 msgstr ""
 
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 msgid "Select categories to include in the lite site archive. Leave empty to include all categories."
 msgstr ""
 
 #: dist/index.js:118
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Primary Color"
 msgstr ""
 
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 msgid "Custom color override active."
 msgstr ""
 
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 msgid "Using theme default color."
 msgstr ""
 
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 msgid "Reset to theme default"
 msgstr ""
 
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 msgid "Enable lite site feature"
 msgstr ""
 
 #: dist/index.js:118
-#: release/newspack-lite-site/dist/index.js:118
 msgid "URL Base"
 msgstr ""
 
 #. translators: %s: site URL without trailing slash, e.g. https://example.com
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 #, js-format
 msgid "The URL base for the lite site (e.g. \"lite\" for %s/lite/article-slug)."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Posts per archive page"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Include subcategories"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Tags"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Include posts with these tags in the lite site. Leave empty to include posts with any tag."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Excluded Categories"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Posts in these categories will not appear on the lite site."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Excluded Tags"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Posts with these tags will not appear on the lite site."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Open external links in a new tab"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "When enabled, links to external websites open in a new browser tab. Disable to open them in the same tab."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Footer HTML"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "HTML to be displayed in the footer of lite site pages."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "GA4 Measurement ID"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Font Import URL"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "URL or <link> tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Body Font"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Font name to use for body text, must match the imported font (e.g. \"Open Sans\"). Leave empty to use the system font."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Custom CSS"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "CSS injected into the <head> of every lite site page, after the built-in stylesheet. Use this to override default styles or add custom rules."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "General"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Lite Site is a text-only version of this website that loads faster and uses less data. It's designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Appearance"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Colors"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Typography"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Advanced"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Failed to load settings."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Failed to save settings."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Saving…"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Save Settings"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Settings saved."
 msgstr ""
 
 #. translators: 1: Current page number, 2: Total number of pages.
 #: dist/index.js:119
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Feed URL"
 msgstr ""
 
 #: dist/index.js:119
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Frequency"
 msgstr ""
 
 #: dist/index.js:119
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Author"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Add Feed"
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Schedule an RSS feed to be imported as posts on a recurring basis."
 msgstr ""
 
 #: dist/index.js:119
-#: release/newspack-lite-site/dist/index.js:119
 msgid "Adding…"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Status"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Active"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Paused"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Last Run"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Never"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Next Run"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Pausing will prevent future imports. Any import currently in progress will finish."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Cancel"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Pause"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Are you sure you want to delete this feed? This action cannot be undone."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Delete"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Resume"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Scheduled Feeds"
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "No feeds configured. Add one above."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Failed to load feeds."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Feed added."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Failed to add feed."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Feed paused."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Feed resumed."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Feed deleted."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Feed updated."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "Failed to update feed."
 msgstr ""
 
 #: dist/index.js:164
-#: release/newspack-lite-site/dist/index.js:164
 msgid "WP-Cron is disabled. Automatic imports require a server cron job."
 msgstr ""
