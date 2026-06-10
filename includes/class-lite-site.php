@@ -539,6 +539,10 @@ class Lite_Site {
 	 * @return string Processed HTML with external link attributes added.
 	 */
 	public static function add_external_link_attrs( string $html ): string {
+		if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
+			return $html;
+		}
+
 		$processor    = new \WP_HTML_Tag_Processor( $html );
 		$open_new_tab = self::get_external_links_new_tab();
 
@@ -618,7 +622,7 @@ class Lite_Site {
 		// Clean up any empty paragraphs.
 		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
 
-		return $content;
+		return self::add_external_link_attrs( $content );
 	}
 
 	/**
