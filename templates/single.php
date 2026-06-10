@@ -15,7 +15,7 @@ if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_sup
 }
 
 $is_liveblog  = Lite_Site::is_liveblog( $current_post );
-$post_content = Lite_Site::clean_content( $current_post->post_content );
+$post_content = Lite_Site::add_external_link_attrs( Lite_Site::clean_content( $current_post->post_content ) );
 
 if ( $is_liveblog ) {
 	$liveblog_state   = Lite_Site::get_liveblog_state( $current_post );
@@ -109,7 +109,7 @@ if ( $is_liveblog ) {
 							<?php endif; ?>
 						</div>
 						<div class="liveblog-entry-content">
-							<?php echo wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ); ?>
+							<?php echo wp_kses_post( Lite_Site::add_external_link_attrs( Lite_Site::clean_content( $entry->comment_content ) ) ); ?>
 						</div>
 					</div>
 				<?php endforeach; ?>
