@@ -43,5 +43,12 @@
 	},
 	"devDependencies": {
 		"newspack-scripts": "^5.8.0"
-	}
+	},
+	"files": [
+		"newspack-lite-site.php",
+		"languages",
+		"includes",
+		"dist",
+		"vendor"
+	]
 }
