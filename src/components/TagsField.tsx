@@ -47,22 +47,24 @@ export const TagsField = ( {
 			.catch( () => {} );
 	}, [] );
 
+	const valueKey = value.join( ',' );
+
 	// Fetch labels for already-saved IDs so tokens display correctly on load.
 	useEffect( () => {
-		if ( ! value.length ) {
+		if ( ! valueKey ) {
 			setSavedItems( [] );
 			return;
 		}
 		apiFetch< TagItem[] >( {
 			path: addQueryArgs( '/wp/v2/tags', {
-				include: value.join( ',' ),
+				include: valueKey,
 				per_page: 100,
 				_fields: 'id,name',
 			} ),
 		} )
 			.then( setSavedItems )
 			.catch( () => {} );
-	}, [ value ] );
+	}, [ valueKey ] );
 
 	const fetchSuggestions = useCallback( ( search: string ) => {
 		apiFetch< TagItem[] >( {
