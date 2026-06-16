@@ -232,7 +232,20 @@ class RSS_Importer {
 			'last_result' => null,
 		];
 
-		wp_schedule_event( time(), $interval, self::CRON_HOOK, [ $feed_id ] );
+		if ( wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] ) ) {
+			$scheduled = true;
+		} else {
+			$scheduled = wp_schedule_event( time(), $interval, self::CRON_HOOK, [ $feed_id ] );
+		}
+
+		if ( false === $scheduled ) {
+			return new \WP_Error(
+				'schedule_failed',
+				__( 'Failed to schedule the feed.', 'newspack-lite-site' ),
+				[ 'status' => 500 ]
+			);
+		}
+
 		self::save_feeds( $feeds );
 
 		$data = [];
@@ -276,7 +289,17 @@ class RSS_Importer {
 			case 'resume':
 				$feeds[ $feed_id ]['status'] = 'active';
 				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
-				wp_schedule_event( time(), $feeds[ $feed_id ]['interval'], self::CRON_HOOK, [ $feed_id ] );
+				$scheduled = wp_schedule_event( time(), $feeds[ $feed_id ]['interval'], self::CRON_HOOK, [ $feed_id ] );
+
+				if ( false === $scheduled ) {
+					$feeds[ $feed_id ]['status'] = 'paused';
+					self::save_feeds( $feeds );
+					return new \WP_Error(
+						'schedule_failed',
+						__( 'Failed to resume the feed.', 'newspack-lite-site' ),
+						[ 'status' => 500 ]
+					);
+				}
 				break;
 
 			case 'delete':
