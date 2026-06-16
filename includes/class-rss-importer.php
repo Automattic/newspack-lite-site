@@ -44,6 +44,11 @@ class RSS_Importer {
 	const GUID_BATCH_SIZE = 20;
 
 	/**
+	 * Maximum number of new posts to import in a single run.
+	 */
+	const MAX_ITEMS_PER_RUN = 50;
+
+	/**
 	 * Initialize the importer functionality.
 	 */
 	public static function init() {
@@ -496,9 +501,17 @@ class RSS_Importer {
 		$batches    = array_chunk( $items, self::GUID_BATCH_SIZE );
 
 		foreach ( $batches as $batch ) {
+			if ( $imported >= self::MAX_ITEMS_PER_RUN ) {
+				break;
+			}
+
 			$existing_guids = self::get_existing_guids( $batch );
 
 			foreach ( $batch as $item ) {
+				if ( $imported >= self::MAX_ITEMS_PER_RUN ) {
+					break 2;
+				}
+
 				// Timeout protection: stop if within 15 seconds of the PHP time limit.
 				if ( $time_limit > 0 && ( time() - $start_time ) > ( $time_limit - 15 ) ) {
 					break 2;
@@ -509,9 +522,7 @@ class RSS_Importer {
 				if ( 'imported' === $result ) {
 					$imported++;
 				} elseif ( 'exists' === $result ) {
-					// Break on first duplicate.
 					$up_to_date = true;
-					break 2;
 				} else {
 					$failed++;
 				}
@@ -526,6 +537,31 @@ class RSS_Importer {
 	}
 
 	/**
+	 * Derive a stable GUID for a feed item.
+	 *
+	 * Falls back from RSS GUID → permalink → title+date hash so items without an
+	 * explicit <guid> element are still tracked across runs.
+	 *
+	 * @param \SimplePie_Item $item The feed item.
+	 * @return string Non-empty GUID.
+	 */
+	private static function get_item_guid( $item ): string {
+		$guid = $item->get_id();
+		if ( ! empty( $guid ) ) {
+			return $guid;
+		}
+
+		$permalink = $item->get_permalink();
+		if ( ! empty( $permalink ) ) {
+			return 'nls_url:' . md5( $permalink );
+		}
+
+		$title = $item->get_title() ?? '';
+		$date  = $item->get_date( 'c' ) ?? '';
+		return 'nls_hash:' . md5( $title . $date );
+	}
+
+	/**
 	 * Fetch the set of already-imported GUIDs for a batch of feed items.
 	 *
 	 * @param \SimplePie_Item[] $items Batch of feed items to check.
@@ -533,9 +569,7 @@ class RSS_Importer {
 	 */
 	private static function get_existing_guids( array $items ): array {
 		$guids = array_values(
-			array_filter(
-				array_map( fn( $item ) => $item->get_id(), $items )
-			)
+			array_map( fn( $item ) => self::get_item_guid( $item ), $items )
 		);
 
 		if ( empty( $guids ) ) {
@@ -580,9 +614,9 @@ class RSS_Importer {
 	 * @return string 'imported', 'exists', or 'failed'.
 	 */
 	private static function import_item( $item, $feed_url, $author_id = 0, array $existing_guids = [] ) {
-		$guid = $item->get_id();
+		$guid = self::get_item_guid( $item );
 
-		if ( ! empty( $guid ) && isset( $existing_guids[ $guid ] ) ) {
+		if ( isset( $existing_guids[ $guid ] ) ) {
 			return 'exists';
 		}
 
@@ -611,10 +645,7 @@ class RSS_Importer {
 			return 'failed';
 		}
 
-		// Store import metadata for duplicate detection and traceability.
-		if ( ! empty( $guid ) ) {
-			update_post_meta( $post_id, '_rss_import_guid', $guid );
-		}
+		update_post_meta( $post_id, '_rss_import_guid', $guid );
 
 		$source_url = $item->get_permalink();
 		if ( ! empty( $source_url ) ) {
