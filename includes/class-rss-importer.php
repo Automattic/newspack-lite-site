@@ -196,7 +196,7 @@ class RSS_Importer {
 			);
 		}
 
-		if ( ! $author_id || ! get_userdata( $author_id ) ) {
+		if ( ! $author_id || ! user_can( $author_id, 'publish_posts' ) ) {
 			return new \WP_Error(
 				'invalid_author',
 				__( 'Please select a valid author.', 'newspack-lite-site' ),
@@ -440,7 +440,7 @@ class RSS_Importer {
 			return new \WP_Error( 'invalid_url', __( 'A valid feed URL is required.', 'newspack-lite-site' ) );
 		}
 
-		if ( ! $author_id || ! get_userdata( $author_id ) ) {
+		if ( ! $author_id || ! user_can( $author_id, 'publish_posts' ) ) {
 			return new \WP_Error( 'invalid_author', __( 'A valid author ID is required.', 'newspack-lite-site' ) );
 		}
 
@@ -521,8 +521,8 @@ class RSS_Importer {
 
 		$existing_posts = get_posts(
 			[
-				'post_type'              => 'any',
-				'post_status'            => 'any',
+				'post_type'              => 'post',
+				'post_status'            => [ 'publish', 'draft', 'pending', 'future', 'private', 'trash' ],
 				'posts_per_page'         => count( $guids ),
 				'no_found_rows'          => true,
 				'update_post_term_cache' => false,
@@ -564,7 +564,7 @@ class RSS_Importer {
 		}
 
 		$title   = wp_strip_all_tags( $item->get_title() ?? '' );
-		$content = $item->get_content() ?? $item->get_description() ?? '';
+		$content = $item->get_content() ?? '';
 		$date    = $item->get_date( 'Y-m-d H:i:s' );
 
 		// Fall back to current time if the feed item has no date.
@@ -656,7 +656,7 @@ class RSS_Importer {
 		}
 
 		// Priority 3: first <img> src found in the post body.
-		$content = $item->get_content() ?? $item->get_description() ?? '';
+		$content = $item->get_content() ?? '';
 		if ( ! empty( $content ) ) {
 			preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $content, $matches );
 			if ( ! empty( $matches[1] ) ) {
