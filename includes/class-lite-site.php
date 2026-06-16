@@ -568,6 +568,10 @@ class Lite_Site {
 	 * @return string The cleaned content.
 	 */
 	public static function clean_content( $content ) {
+		// Render blocks and shortcodes before stripping so dynamic output is preserved.
+		$content = do_blocks( $content );
+		$content = do_shortcode( $content );
+
 		// Remove HTML comments.
 		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
 
