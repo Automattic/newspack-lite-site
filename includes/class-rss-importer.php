@@ -193,7 +193,7 @@ class RSS_Importer {
 		$interval  = $params['interval'] ?? 'daily';
 		$author_id = $params['author_id'] ?? 0;
 
-		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
+		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
 			return new \WP_Error(
 				'invalid_url',
 				__( 'Please enter a valid feed URL.', 'newspack-lite-site' ),
@@ -464,7 +464,7 @@ class RSS_Importer {
 	 * @return array|\WP_Error Array with 'imported', 'failed', and 'up_to_date' keys, or WP_Error on failure.
 	 */
 	public static function run_import( $feed_url, $author_id = 0 ) {
-		if ( empty( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
+		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
 			return new \WP_Error( 'invalid_url', __( 'A valid feed URL is required.', 'newspack-lite-site' ) );
 		}
 
@@ -472,68 +472,76 @@ class RSS_Importer {
 			return new \WP_Error( 'invalid_author', __( 'A valid author ID is required.', 'newspack-lite-site' ) );
 		}
 
-		include_once ABSPATH . WPINC . '/feed.php';
+		add_filter( 'pre_http_request', [ __CLASS__, 'block_ssrf_request' ], 10, 3 );
+		add_filter( 'http_request_args', [ __CLASS__, 'cap_import_request_args' ], 10, 2 ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.http_request_args -- not modifying timeout.
 
-		$feed = fetch_feed( $feed_url );
+		try {
+			include_once ABSPATH . WPINC . '/feed.php';
 
-		if ( is_wp_error( $feed ) ) {
-			return new \WP_Error(
-				'feed_error',
-				sprintf(
-					/* translators: %s: error message from the feed parser */
-					__( 'Could not retrieve feed: %s', 'newspack-lite-site' ),
-					$feed->get_error_message()
-				)
-			);
-		}
+			$feed = fetch_feed( $feed_url );
 
-		$items = $feed->get_items();
-
-		if ( empty( $items ) ) {
-			return new \WP_Error( 'feed_empty', __( 'The feed contains no items.', 'newspack-lite-site' ) );
-		}
-
-		$imported   = 0;
-		$failed     = 0;
-		$up_to_date = false;
-		$start_time = time();
-		$time_limit = (int) ini_get( 'max_execution_time' );
-		$batches    = array_chunk( $items, self::GUID_BATCH_SIZE );
-
-		foreach ( $batches as $batch ) {
-			if ( $imported >= self::MAX_ITEMS_PER_RUN ) {
-				break;
+			if ( is_wp_error( $feed ) ) {
+				return new \WP_Error(
+					'feed_error',
+					sprintf(
+						/* translators: %s: error message from the feed parser */
+						__( 'Could not retrieve feed: %s', 'newspack-lite-site' ),
+						$feed->get_error_message()
+					)
+				);
 			}
 
-			$existing_guids = self::get_existing_guids( $batch );
+			$items = $feed->get_items();
 
-			foreach ( $batch as $item ) {
+			if ( empty( $items ) ) {
+				return new \WP_Error( 'feed_empty', __( 'The feed contains no items.', 'newspack-lite-site' ) );
+			}
+
+			$imported   = 0;
+			$failed     = 0;
+			$up_to_date = false;
+			$start_time = time();
+			$time_limit = (int) ini_get( 'max_execution_time' );
+			$batches    = array_chunk( $items, self::GUID_BATCH_SIZE );
+
+			foreach ( $batches as $batch ) {
 				if ( $imported >= self::MAX_ITEMS_PER_RUN ) {
-					break 2;
+					break;
 				}
 
-				// Timeout protection: stop if within 15 seconds of the PHP time limit.
-				if ( $time_limit > 0 && ( time() - $start_time ) > ( $time_limit - 15 ) ) {
-					break 2;
-				}
+				$existing_guids = self::get_existing_guids( $batch );
 
-				$result = self::import_item( $item, $feed_url, $author_id, $existing_guids );
+				foreach ( $batch as $item ) {
+					if ( $imported >= self::MAX_ITEMS_PER_RUN ) {
+						break 2;
+					}
 
-				if ( 'imported' === $result ) {
-					$imported++;
-				} elseif ( 'exists' === $result ) {
-					$up_to_date = true;
-				} else {
-					$failed++;
+					// Timeout protection: stop if within 15 seconds of the PHP time limit.
+					if ( $time_limit > 0 && ( time() - $start_time ) > ( $time_limit - 15 ) ) {
+						break 2;
+					}
+
+					$result = self::import_item( $item, $feed_url, $author_id, $existing_guids );
+
+					if ( 'imported' === $result ) {
+						$imported++;
+					} elseif ( 'exists' === $result ) {
+						$up_to_date = true;
+					} else {
+						$failed++;
+					}
 				}
 			}
-		}
 
-		return [
-			'imported'   => $imported,
-			'failed'     => $failed,
-			'up_to_date' => $up_to_date,
-		];
+			return [
+				'imported'   => $imported,
+				'failed'     => $failed,
+				'up_to_date' => $up_to_date,
+			];
+		} finally {
+			remove_filter( 'pre_http_request', [ __CLASS__, 'block_ssrf_request' ], 10 );
+			remove_filter( 'http_request_args', [ __CLASS__, 'cap_import_request_args' ], 10 );
+		}
 	}
 
 	/**
@@ -656,7 +664,7 @@ class RSS_Importer {
 
 		// Detect and sideload the featured image.
 		$image_url = self::get_featured_image_url( $item );
-		if ( ! empty( $image_url ) && wp_http_validate_url( $image_url ) ) {
+		if ( ! empty( $image_url ) && self::is_safe_url( $image_url ) ) {
 			self::import_featured_image( $image_url, $post_id, $title );
 		}
 
@@ -680,14 +688,14 @@ class RSS_Importer {
 		if ( $enclosure ) {
 			// Priority 1: explicit media:thumbnail.
 			$thumbnail = $enclosure->get_thumbnail();
-			if ( ! empty( $thumbnail ) && wp_http_validate_url( $thumbnail ) ) {
+			if ( ! empty( $thumbnail ) && self::is_safe_url( $thumbnail ) ) {
 				return $thumbnail;
 			}
 
 			// Priority 2: enclosure or media:content with an image MIME type.
 			$link      = $enclosure->get_link();
 			$mime_type = $enclosure->get_type();
-			if ( ! empty( $link ) && wp_http_validate_url( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
+			if ( ! empty( $link ) && self::is_safe_url( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
 				return $link;
 			}
 		}
@@ -697,13 +705,13 @@ class RSS_Importer {
 		if ( ! empty( $enclosures ) ) {
 			foreach ( $enclosures as $enc ) {
 				$thumbnail = $enc->get_thumbnail();
-				if ( ! empty( $thumbnail ) && wp_http_validate_url( $thumbnail ) ) {
+				if ( ! empty( $thumbnail ) && self::is_safe_url( $thumbnail ) ) {
 					return $thumbnail;
 				}
 
 				$link      = $enc->get_link();
 				$mime_type = $enc->get_type();
-				if ( ! empty( $link ) && wp_http_validate_url( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
+				if ( ! empty( $link ) && self::is_safe_url( $link ) && ! empty( $mime_type ) && str_starts_with( $mime_type, 'image/' ) ) {
 					return $link;
 				}
 			}
@@ -738,5 +746,63 @@ class RSS_Importer {
 		if ( ! is_wp_error( $attachment_id ) && $attachment_id ) {
 			set_post_thumbnail( $post_id, $attachment_id );
 		}
+	}
+
+	/**
+	 * Check whether a URL resolves to a safe, publicly routable address.
+	 *
+	 * Unlike wp_http_validate_url(), this also blocks 169.254.x.x (cloud instance metadata).
+	 * This method resolves the hostname and rejects private, reserved, and link-local
+	 * ranges for both IPv4 and IPv6 to prevent SSRF via feed or image URLs.
+	 *
+	 * @param string $url URL to validate.
+	 * @return bool True if safe to fetch, false otherwise.
+	 */
+	private static function is_safe_url( string $url ): bool {
+		if ( ! wp_http_validate_url( $url ) ) {
+			return false;
+		}
+
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( empty( $host ) ) {
+			return false;
+		}
+
+		$ip = gethostbyname( $host );
+
+		$validated_ip = filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+
+		return (bool) $validated_ip;
+	}
+
+	/**
+	 * Cap redirect count and response size for all HTTP requests during an import run.
+	 *
+	 * @param array  $args Request arguments.
+	 * @param string $url  Request URL.
+	 * @return array
+	 */
+	public static function cap_import_request_args( $args, $url ) {
+		$args['redirection']         = min( (int) $args['redirection'], 2 );
+		$args['limit_response_size'] = 3 * 1024 * 1024; // 3MB.
+		return $args;
+	}
+
+	/**
+	 * Prevent requests to private or reserved addresses during import runs.
+	 *
+	 * Hooked to pre_http_request for the duration of each import so every outbound
+	 * fetch — feed and images alike — is validated before the request is made.
+	 *
+	 * @param false|array|\WP_Error $preempt Return value to short-circuit the request.
+	 * @param array                 $args    Request arguments.
+	 * @param string                $url     Request URL.
+	 * @return false|array|\WP_Error
+	 */
+	public static function block_ssrf_request( $preempt, $args, $url ) {
+		if ( ! self::is_safe_url( $url ) ) {
+			return new \WP_Error( 'ssrf_blocked', __( 'Request to a private or reserved address was blocked.', 'newspack-lite-site' ) );
+		}
+		return $preempt;
 	}
 }
