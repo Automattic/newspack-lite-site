@@ -751,9 +751,8 @@ class RSS_Importer {
 	/**
 	 * Check whether a URL resolves to a safe, publicly routable address.
 	 *
-	 * Unlike wp_http_validate_url(), this also blocks 169.254.x.x (cloud instance metadata).
-	 * This method resolves the hostname and rejects private, reserved, and link-local
-	 * ranges for both IPv4 and IPv6 to prevent SSRF via feed or image URLs.
+	 * Validates the URL structure, resolves the hostname, and rejects private,
+	 * reserved, and link-local ranges to prevent SSRF.
 	 *
 	 * @param string $url URL to validate.
 	 * @return bool True if safe to fetch, false otherwise.
