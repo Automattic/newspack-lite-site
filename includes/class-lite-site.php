@@ -15,17 +15,45 @@ defined( 'ABSPATH' ) || exit;
 class Lite_Site {
 
 	/**
+	 * In-memory cache for the plugin settings option.
+	 *
+	 * @var array|null
+	 */
+	private static $settings = null;
+
+	/**
 	 * Initialize the lite site functionality.
 	 */
 	public static function init() {
-		// Only register rewrite rules if the feature is enabled.
-		if ( self::is_enabled() ) {
-			add_action( 'init', [ __CLASS__, 'register_rewrite_rules' ] );
-			add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
-			add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
-		}
-
+		add_action( 'init', [ __CLASS__, 'register_rewrite_rules' ] );
+		add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
+		add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
+		add_action( 'save_post', [ __CLASS__, 'invalidate_page_cache' ] );
+
+		/** Add content filters to mimic 'the_content'. See 'wp-includes/default-filters.php' for reference. */
+		add_filter( 'newspack_lite_site_post_content', 'capital_P_dangit', 11 );
+		add_filter( 'newspack_lite_site_post_content', [ __CLASS__, 'do_blocks' ], 9 );
+		add_filter( 'newspack_lite_site_post_content', 'wptexturize' );
+		add_filter( 'newspack_lite_site_post_content', 'convert_smilies', 20 );
+		add_filter( 'newspack_lite_site_post_content', 'wpautop' );
+		add_filter( 'newspack_lite_site_post_content', 'shortcode_unautop' );
+		add_filter( 'newspack_lite_site_post_content', 'prepend_attachment' );
+		add_filter( 'newspack_lite_site_post_content', 'wp_filter_content_tags' );
+		add_filter( 'newspack_lite_site_post_content', 'wp_replace_insecure_home_url' );
+		add_filter( 'newspack_lite_site_post_content', 'do_shortcode', 11 );
+	}
+
+	/**
+	 * Return the plugin settings, reading the option once per request.
+	 *
+	 * @return array Plugin settings.
+	 */
+	private static function get_settings(): array {
+		if ( null === self::$settings ) {
+			self::$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		}
+		return self::$settings;
 	}
 
 	/**
@@ -43,7 +71,7 @@ class Lite_Site {
 	 * @return bool True if enabled, false otherwise.
 	 */
 	public static function is_enabled() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['enabled'] );
 	}
 
@@ -63,7 +91,7 @@ class Lite_Site {
 	 * @return string The URL base slug.
 	 */
 	public static function get_url_base() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['url_base'] ) ? $settings['url_base'] : 'lite';
 	}
 
@@ -75,7 +103,7 @@ class Lite_Site {
 	 * @return int Posts per page.
 	 */
 	public static function get_posts_per_page() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['posts_per_page'] )
 			? intval( $settings['posts_per_page'] )
 			: (int) get_option( 'posts_per_page', 10 );
@@ -91,7 +119,7 @@ class Lite_Site {
 	 * @return int[] Category IDs, or empty array for all categories.
 	 */
 	public static function get_categories() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		if ( empty( $settings['categories'] ) ) {
 			return [];
 		}
@@ -120,7 +148,7 @@ class Lite_Site {
 	 * @return int[] Tag IDs, or empty array for no tag filter.
 	 */
 	public static function get_tags() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['tags'] ) ? array_map( 'intval', $settings['tags'] ) : [];
 	}
 
@@ -130,7 +158,7 @@ class Lite_Site {
 	 * @return int[] Category IDs to exclude, or empty array for none.
 	 */
 	public static function get_excluded_categories() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['excluded_categories'] ) ? array_map( 'intval', $settings['excluded_categories'] ) : [];
 	}
 
@@ -140,7 +168,7 @@ class Lite_Site {
 	 * @return int[] Tag IDs to exclude, or empty array for none.
 	 */
 	public static function get_excluded_tags() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['excluded_tags'] ) ? array_map( 'intval', $settings['excluded_tags'] ) : [];
 	}
 
@@ -150,7 +178,7 @@ class Lite_Site {
 	 * @return bool True if external links should open in a new tab (default), false otherwise.
 	 */
 	public static function get_external_links_new_tab(): bool {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return isset( $settings['external_links_new_tab'] ) ? (bool) $settings['external_links_new_tab'] : true;
 	}
 
@@ -160,7 +188,7 @@ class Lite_Site {
 	 * @return string Custom CSS, or empty string if not set.
 	 */
 	public static function get_custom_css() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['custom_css'] ) ? $settings['custom_css'] : '';
 	}
 
@@ -170,7 +198,7 @@ class Lite_Site {
 	 * @return string Footer HTML, or empty string if not set.
 	 */
 	public static function get_footer_html() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['footer_html'] ) ? $settings['footer_html'] : '';
 	}
 
@@ -180,7 +208,7 @@ class Lite_Site {
 	 * @return string GA4 Measurement ID, or empty string if not set.
 	 */
 	public static function get_ga4_measurement_id() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['ga4_measurement_id'] ) ? $settings['ga4_measurement_id'] : '';
 	}
 
@@ -190,7 +218,7 @@ class Lite_Site {
 	 * @return string The primary color.
 	 */
 	public static function get_primary_color() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		if ( ! empty( $settings['primary_color'] ) ) {
 			return $settings['primary_color'];
 		}
@@ -236,7 +264,7 @@ class Lite_Site {
 	 * @return string Font provider URL, or empty string if not set.
 	 */
 	public static function get_font_import_url() {
-		$settings = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		return ! empty( $settings['font_import_url'] ) ? $settings['font_import_url'] : '';
 	}
 
@@ -246,7 +274,7 @@ class Lite_Site {
 	 * @return string CSS font-family value.
 	 */
 	public static function get_font_family() {
-		$settings  = get_option( Lite_Site_Settings::OPTION_NAME, [] );
+		$settings = self::get_settings();
 		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
 		if ( ! empty( $font_body ) ) {
 			return $font_body;
@@ -298,7 +326,7 @@ class Lite_Site {
 	}
 
 	/**
-	 * Register rewrite rules for lite site pages.
+	 * Register rewrite rules for lite site pages and flush if a settings change is pending.
 	 */
 	public static function register_rewrite_rules() {
 		$url_base = self::get_url_base();
@@ -323,6 +351,12 @@ class Lite_Site {
 			'index.php?is_lite=single&lite_path=$matches[1]',
 			'top'
 		);
+
+		// Deferred flush: triggered by a settings change, runs here so rules are already in $wp_rewrite.
+		if ( get_transient( 'nls_flush_rewrite_rules' ) ) {
+			delete_transient( 'nls_flush_rewrite_rules' );
+			flush_rewrite_rules(); // phpcs:ignore
+		}
 	}
 
 	/**
@@ -348,7 +382,7 @@ class Lite_Site {
 	public static function handle_lite_site_templates() {
 		$is_lite = get_query_var( 'is_lite' );
 
-		if ( ! $is_lite ) {
+		if ( ! $is_lite || ! self::is_enabled() ) {
 			return;
 		}
 
@@ -361,10 +395,41 @@ class Lite_Site {
 			exit;
 		}
 
-		if ( 'single' === $is_lite ) {
-			include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+		$request_uri = untrailingslashit( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
+		$cache_key   = 'nls_page_' . md5( $request_uri );
+		$cached      = get_transient( $cache_key );
+
+		if ( false !== $cached ) {
+			echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 			exit;
 		}
+
+		ob_start();
+		include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+		$output = ob_get_clean();
+
+		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
+		exit;
+	}
+
+	/**
+	 * Invalidate the cached lite single page for a post when it is saved.
+	 *
+	 * @param int $post_id The saved post ID.
+	 */
+	public static function invalidate_page_cache( int $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+
+		$url_base    = self::get_url_base();
+		$post_path   = ltrim( str_replace( trailingslashit( home_url() ), '', trailingslashit( get_permalink( $post ) ) ), '/' );
+		$request_uri = untrailingslashit( '/' . $url_base . '/' . $post_path );
+		$cache_key   = 'nls_page_' . md5( $request_uri );
+		delete_transient( $cache_key );
 	}
 
 	/**
@@ -583,15 +648,53 @@ class Lite_Site {
 	}
 
 	/**
+	 * Parses dynamic blocks and re-renders them.
+	 *
+	 * Copy of do_blocks() from wp-includes/blocks.php but targeting newspack_lite_site_post_content
+	 * instead of the_content for the wpautop filter handling.
+	 *
+	 * @param string $content Post content.
+	 * @return string Rendered content.
+	 */
+	public static function do_blocks( $content ) {
+		$blocks = parse_blocks( $content );
+		$output = '';
+
+		foreach ( $blocks as $block ) {
+			$output .= render_block( $block );
+		}
+
+		// Block content handles its own paragraph spacing, so suppress wpautop when blocks are present.
+		$priority = has_filter( 'newspack_lite_site_post_content', 'wpautop' );
+		if ( false !== $priority && doing_filter( 'newspack_lite_site_post_content' ) && has_blocks( $content ) ) {
+			remove_filter( 'newspack_lite_site_post_content', 'wpautop', $priority );
+			add_filter( 'newspack_lite_site_post_content', [ __CLASS__, 'restore_wpautop_hook' ], $priority + 1 );
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Restore the wpautop hook to newspack_lite_site_post_content after do_blocks() removed it.
+	 *
+	 * @param string $content Post content.
+	 * @return string Unchanged content.
+	 */
+	public static function restore_wpautop_hook( $content ) {
+		add_filter( 'newspack_lite_site_post_content', 'wpautop' );
+		remove_filter( 'newspack_lite_site_post_content', [ __CLASS__, 'restore_wpautop_hook' ] );
+		return $content;
+	}
+
+	/**
 	 * Clean the post content for lite display.
 	 *
 	 * @param string $content The post content.
 	 * @return string The cleaned content.
 	 */
 	public static function clean_content( $content ) {
-		// Render blocks and shortcodes before stripping so dynamic output is preserved.
-		$content = do_blocks( $content );
-		$content = do_shortcode( $content );
+		// Apply the full WP content pipeline without plugin callbacks from the_content.
+		$content = apply_filters( 'newspack_lite_site_post_content', $content );
 
 		// Remove HTML comments.
 		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
@@ -677,7 +780,7 @@ class Lite_Site {
 		}
 
 		if ( ! $src ) {
-			return '';
+			return $figure_html;
 		}
 
 		$caption = '';
