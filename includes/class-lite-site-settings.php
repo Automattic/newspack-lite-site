@@ -30,6 +30,8 @@ class Lite_Site_Settings {
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_link' ], 100 );
 		add_filter( 'admin_body_class', [ __CLASS__, 'admin_header_body_class' ] );
+		add_action( 'updated_option', [ __CLASS__, 'handle_updated_option' ], 10, 3 );
+		add_action( 'added_option', [ __CLASS__, 'handle_added_option' ], 10, 2 );
 	}
 
 	/**
@@ -405,25 +407,48 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Sanitize and validate settings before saving.
+	 * Schedule a rewrite rule flush when the lite site is enabled/disabled or the URL base changes.
 	 *
-	 * Flushes rewrite rules when url_base or enabled changes, since both affect
-	 * URL routing. Sanitizes each field with the appropriate WordPress function.
+	 * @param string $option    Option name.
+	 * @param mixed  $old_value Previous option value.
+	 * @param mixed  $new_value New option value.
+	 */
+	public static function handle_updated_option( $option, $old_value, $new_value ) {
+		if ( self::OPTION_NAME !== $option ) {
+			return;
+		}
+
+		$url_base_changed = ( $old_value['url_base'] ?? '' ) !== ( $new_value['url_base'] ?? '' );
+		$enabled_changed  = ! empty( $old_value['enabled'] ) !== ! empty( $new_value['enabled'] );
+
+		if ( $url_base_changed || $enabled_changed ) {
+			set_transient( 'nls_flush_rewrite_rules', true );
+		}
+	}
+
+	/**
+	 * Schedule a rewrite rule flush when the option is created for the first time.
+	 *
+	 * Covers the first-save case where update_option() falls back to add_option()
+	 * and updated_option does not fire.
+	 *
+	 * @param string $option Option name.
+	 * @param mixed  $value  Option value.
+	 */
+	public static function handle_added_option( $option, $value ) {
+		if ( self::OPTION_NAME !== $option ) {
+			return;
+		}
+		set_transient( 'nls_flush_rewrite_rules', true );
+	}
+
+	/**
+	 * Sanitize and validate settings before saving.
 	 *
 	 * @param array $settings Raw settings array from the REST API.
 	 * @return array Sanitized settings ready to be stored in the database.
 	 */
 	public static function sanitize_settings( $settings ) {
-		$old_settings = get_option( self::OPTION_NAME, [] );
-
-		// Only flush rewrite rules when settings that affect URL routing change.
-		$url_base_changed = ( $old_settings['url_base'] ?? '' ) !== sanitize_title( $settings['url_base'] ?? '' );
-		$enabled_changed  = ! empty( $old_settings['enabled'] ) !== ! empty( $settings['enabled'] );
-
-		if ( $url_base_changed || $enabled_changed ) {
-			flush_rewrite_rules(); // phpcs:ignore
-		}
-
 		// Handle "All categories" selection.
 		if ( ! empty( $settings['categories'] ) && in_array( '', $settings['categories'], true ) ) {
 			$settings['categories'] = [];
