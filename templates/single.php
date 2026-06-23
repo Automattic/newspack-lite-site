@@ -63,7 +63,7 @@ if ( $is_liveblog ) {
 <body>
 	<header class="back">
 		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to posts', 'newspack-lite-site' ); ?></a> |
-		<a href="<?php echo esc_url( get_permalink( $current_post ) ); ?>"><?php esc_html_e( 'View full article', 'newspack-lite-site' ); ?></a>
+		<a href="<?php echo esc_url( get_permalink( $current_post ) ); ?>"><?php esc_html_e( 'See original article', 'newspack-lite-site' ); ?></a>
 	</header>
 	<h1><?php echo esc_html( $current_post->post_title ); ?></h1>
 	<div class="meta">

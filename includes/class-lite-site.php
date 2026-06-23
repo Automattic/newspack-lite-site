@@ -443,7 +443,7 @@ class Lite_Site {
 		 *
 		 * @param string[] $types Array of post type slugs.
 		 */
-		return apply_filters( 'newspack_lite_site_supported_post_types', [ 'post', 'page' ] );
+		return apply_filters( 'newspack_lite_site_supported_post_types', [ 'post', 'page', Post_Type::POST_TYPE ] );
 	}
 
 	/**
@@ -476,27 +476,30 @@ class Lite_Site {
 			return null;
 		}
 
-		$post_categories = wp_get_post_categories( $post->ID );
-		$post_tag_ids    = wp_get_post_tags( $post->ID, [ 'fields' => 'ids' ] );
+		if ( is_object_in_taxonomy( $post->post_type, 'category' ) ) {
+			$post_categories     = wp_get_post_categories( $post->ID );
+			$included_categories = self::get_categories();
 
-		$included_categories = self::get_categories();
-		if ( ! empty( $included_categories ) && ! array_intersect( $included_categories, $post_categories ) ) {
-			return null;
+			if ( ! empty( $included_categories ) && ! array_intersect( $included_categories, $post_categories ) ) {
+				return null;
+			}
+			$excluded_categories = self::get_excluded_categories();
+			if ( ! empty( $excluded_categories ) && array_intersect( $excluded_categories, $post_categories ) ) {
+				return null;
+			}
 		}
 
-		$included_tags = self::get_tags();
-		if ( ! empty( $included_tags ) && ! array_intersect( $included_tags, $post_tag_ids ) ) {
-			return null;
-		}
+		if ( is_object_in_taxonomy( $post->post_type, 'post_tag' ) ) {
+			$post_tag_ids  = wp_get_post_tags( $post->ID, [ 'fields' => 'ids' ] );
+			$included_tags = self::get_tags();
 
-		$excluded_categories = self::get_excluded_categories();
-		if ( ! empty( $excluded_categories ) && array_intersect( $excluded_categories, $post_categories ) ) {
-			return null;
-		}
-
-		$excluded_tags = self::get_excluded_tags();
-		if ( ! empty( $excluded_tags ) && array_intersect( $excluded_tags, $post_tag_ids ) ) {
-			return null;
+			if ( ! empty( $included_tags ) && ! array_intersect( $included_tags, $post_tag_ids ) ) {
+				return null;
+			}
+			$excluded_tags = self::get_excluded_tags();
+			if ( ! empty( $excluded_tags ) && array_intersect( $excluded_tags, $post_tag_ids ) ) {
+				return null;
+			}
 		}
 
 		return $post;

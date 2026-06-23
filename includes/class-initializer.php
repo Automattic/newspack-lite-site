@@ -21,6 +21,7 @@ class Initializer {
 		Lite_Site::init();
 		Lite_Site_Settings::init();
 		RSS_Importer::init();
+		Post_Type::init();
 
 		register_activation_hook( NEWSPACK_LITE_SITE_PLUGIN_FILE, [ __CLASS__, 'activation_hook' ] );
 	}
@@ -29,6 +30,7 @@ class Initializer {
 	 * Runs on plugin activation.
 	 */
 	public static function activation_hook() {
+		Post_Type::register();
 		Lite_Site::register_rewrite_rules();
 		flush_rewrite_rules(); // phpcs:ignore
 	}

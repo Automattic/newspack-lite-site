@@ -586,7 +586,7 @@ class RSS_Importer {
 
 		$existing_posts = get_posts(
 			[
-				'post_type'              => 'post',
+				'post_type'              => Post_Type::POST_TYPE,
 				'post_status'            => [ 'publish', 'draft', 'pending', 'future', 'private', 'trash' ],
 				'posts_per_page'         => count( $guids ),
 				'no_found_rows'          => true,
@@ -643,7 +643,7 @@ class RSS_Importer {
 				'post_content' => wp_kses_post( $content ),
 				'post_date'    => $date,
 				'post_status'  => 'publish',
-				'post_type'    => 'post',
+				'post_type'    => Post_Type::POST_TYPE,
 				'post_author'  => $author_id,
 			],
 			true

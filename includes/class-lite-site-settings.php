@@ -263,16 +263,6 @@ class Lite_Site_Settings {
 			26
 		);
 
-		// Settings: general plugin settings and visual customisation.
-		add_submenu_page(
-			'newspack-lite-site',
-			__( 'Settings', 'newspack-lite-site' ),
-			__( 'Settings', 'newspack-lite-site' ),
-			'manage_options',
-			'newspack-lite-site',
-			[ __CLASS__, 'render_settings_page' ]
-		);
-
 		// RSS Feed Import: manage scheduled RSS feeds that pull external content.
 		add_submenu_page(
 			'newspack-lite-site',
@@ -281,6 +271,16 @@ class Lite_Site_Settings {
 			'manage_options',
 			'newspack-lite-site-rss-import',
 			[ __CLASS__, 'render_import_page' ]
+		);
+
+		// Settings: general plugin settings and visual customisation.
+		add_submenu_page(
+			'newspack-lite-site',
+			__( 'Settings', 'newspack-lite-site' ),
+			__( 'Settings', 'newspack-lite-site' ),
+			'manage_options',
+			'newspack-lite-site',
+			[ __CLASS__, 'render_settings_page' ]
 		);
 	}
 

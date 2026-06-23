@@ -15,6 +15,7 @@ $excluded_tags       = Lite_Site::get_excluded_tags();
 $current_page        = max( 1, absint( get_query_var( 'lite_page', 1 ) ) );
 
 $query_args = [
+	'post_type'      => [ 'post', Post_Type::POST_TYPE ],
 	'post_status'    => 'publish',
 	'posts_per_page' => $posts_per_page,
 	'paged'          => $current_page,
