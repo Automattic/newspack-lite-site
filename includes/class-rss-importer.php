@@ -18,17 +18,17 @@ defined( 'ABSPATH' ) || exit;
 class RSS_Importer {
 
 	/**
-	 * The WP-Cron hook name. Each feed passes its ID as an argument.
+	 * The WP-Cron hook name. Each RSS feed passes its ID as an argument.
 	 */
 	const CRON_HOOK = 'newspack_lite_site_rss_import';
 
 	/**
-	 * The option name for storing all feed configurations.
+	 * The option name for storing all RSS feed configurations.
 	 */
 	const FEEDS_OPTION_NAME = 'newspack_lite_site_rss_importer';
 
 	/**
-	 * Transient key prefix for per-feed import locks.
+	 * Transient key prefix for per-RSS-feed import locks.
 	 */
 	const LOCK_PREFIX = 'nls_rss_importing_';
 
@@ -39,7 +39,7 @@ class RSS_Importer {
 	const LOCK_TTL = 300;
 
 	/**
-	 * Number of feed items to check for duplicates in a single DB query.
+	 * Number of RSS feed items to check for duplicates in a single DB query.
 	 */
 	const GUID_BATCH_SIZE = 20;
 
@@ -130,14 +130,14 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Build the REST-ready representation of a single feed.
+	 * Build the REST-ready representation of a single RSS feed.
 	 *
 	 * Adds server-computed fields (author_name, interval_label, next_run) so the
 	 * admin UI never needs to call WP functions directly.
 	 *
-	 * @param string $feed_id The feed ID (md5 hash).
-	 * @param array  $feed    The raw feed data from the option.
-	 * @return array REST-ready feed object.
+	 * @param string $feed_id The RSS feed ID (md5 hash).
+	 * @param array  $feed    The raw RSS feed data from the option.
+	 * @return array REST-ready RSS feed object.
 	 */
 	private static function build_rest_feed( $feed_id, $feed ) {
 		$interval_labels = self::get_interval_labels();
@@ -180,9 +180,9 @@ class RSS_Importer {
 	/**
 	 * Register and schedule a new RSS feed.
 	 *
-	 * Validates the feed URL, author, and import interval submitted by the admin UI,
-	 * persists the feed configuration, schedules the first WP-Cron import event, and
-	 * returns the full refreshed feeds list.
+	 * Validates the RSS feed URL, author, and import interval submitted by the admin UI,
+	 * persists the RSS feed configuration, schedules the first WP-Cron import event, and
+	 * returns the full refreshed RSS feeds list.
 	 *
 	 * @param \WP_REST_Request $request The REST request.
 	 * @return \WP_REST_Response|\WP_Error
@@ -196,7 +196,7 @@ class RSS_Importer {
 		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
 			return new \WP_Error(
 				'invalid_url',
-				__( 'Please enter a valid feed URL.', 'newspack-lite-site' ),
+				__( 'Please enter a valid RSS feed URL.', 'newspack-lite-site' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -212,7 +212,7 @@ class RSS_Importer {
 		if ( ! array_key_exists( $interval, self::get_interval_labels() ) ) {
 			return new \WP_Error(
 				'invalid_interval',
-				__( 'Please select a valid interval.', 'newspack-lite-site' ),
+				__( 'Please select a valid polling interval for your RSS feed.', 'newspack-lite-site' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -223,7 +223,7 @@ class RSS_Importer {
 		if ( isset( $feeds[ $feed_id ] ) ) {
 			return new \WP_Error(
 				'duplicate_feed',
-				__( 'This feed is already configured.', 'newspack-lite-site' ),
+				__( 'This RSS feed is already configured.', 'newspack-lite-site' ),
 				[ 'status' => 409 ]
 			);
 		}
@@ -246,7 +246,7 @@ class RSS_Importer {
 		if ( false === $scheduled ) {
 			return new \WP_Error(
 				'schedule_failed',
-				__( 'Failed to schedule the feed.', 'newspack-lite-site' ),
+				__( 'Failed to schedule the RSS feed.', 'newspack-lite-site' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -301,7 +301,7 @@ class RSS_Importer {
 					self::save_feeds( $feeds );
 					return new \WP_Error(
 						'schedule_failed',
-						__( 'Failed to resume the feed.', 'newspack-lite-site' ),
+						__( 'Failed to resume the RSS feed.', 'newspack-lite-site' ),
 						[ 'status' => 500 ]
 					);
 				}
@@ -359,9 +359,9 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Get all configured feeds.
+	 * Get all configured RSS feeds.
 	 *
-	 * @return array Associative array of feeds keyed by feed ID.
+	 * @return array Associative array of RSS feeds keyed by feed ID.
 	 */
 	public static function get_feeds() {
 		$option = get_option( self::FEEDS_OPTION_NAME, [] );
@@ -369,9 +369,9 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Persist the feeds array to the database.
+	 * Persist the RSS feeds array to the database.
 	 *
-	 * @param array $feeds The feeds array to save.
+	 * @param array $feeds The RSS feeds array to save.
 	 */
 	private static function save_feeds( $feeds ) {
 		update_option( self::FEEDS_OPTION_NAME, [ 'feeds' => $feeds ] );
@@ -380,7 +380,7 @@ class RSS_Importer {
 	/**
 	 * Generate a feed ID from a URL.
 	 *
-	 * @param string $feed_url The feed URL.
+	 * @param string $feed_url The RSS feed URL.
 	 * @return string MD5 hash of the URL.
 	 */
 	public static function get_feed_id( $feed_url ) {
@@ -405,9 +405,9 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Run the scheduled import for a specific feed.
+	 * Run the scheduled import for a specific RSS feed.
 	 *
-	 * @param string $feed_id The feed ID to import.
+	 * @param string $feed_id The RSS feed ID to import.
 	 */
 	public static function run_scheduled_import( $feed_id = '' ) {
 		if ( empty( $feed_id ) ) {
@@ -416,7 +416,7 @@ class RSS_Importer {
 
 		$lock_key = self::LOCK_PREFIX . $feed_id;
 
-		// Prevent concurrent runs for this feed.
+		// Prevent concurrent runs for this RSS feed.
 		if ( get_transient( $lock_key ) ) {
 			return;
 		}
@@ -436,7 +436,7 @@ class RSS_Importer {
 		wp_cache_delete( 'alloptions', 'options' );
 		$feeds = self::get_feeds();
 
-		// Feed deleted mid-run; skip write to avoid creating a ghost entry.
+		// RSS feed deleted mid-run; skip write to avoid creating a ghost entry.
 		if ( ! isset( $feeds[ $feed_id ] ) ) {
 			delete_transient( $lock_key );
 			return;
@@ -453,7 +453,7 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Run the RSS import for a given feed URL.
+	 * Run the RSS import for a given RSS feed URL.
 	 *
 	 * Iterates feed items newest-first, importing each as a WordPress post.
 	 * Stops on first duplicate. Also stops if approaching the PHP
@@ -465,7 +465,7 @@ class RSS_Importer {
 	 */
 	public static function run_import( $feed_url, $author_id = 0 ) {
 		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
-			return new \WP_Error( 'invalid_url', __( 'A valid feed URL is required.', 'newspack-lite-site' ) );
+			return new \WP_Error( 'invalid_url', __( 'A valid RSS feed URL is required.', 'newspack-lite-site' ) );
 		}
 
 		if ( ! $author_id || ! user_can( $author_id, 'publish_posts' ) ) {
@@ -485,7 +485,7 @@ class RSS_Importer {
 					'feed_error',
 					sprintf(
 						/* translators: %s: error message from the feed parser */
-						__( 'Could not retrieve feed: %s', 'newspack-lite-site' ),
+						__( 'Could not retrieve RSS feed: %s', 'newspack-lite-site' ),
 						$feed->get_error_message()
 					)
 				);
@@ -494,7 +494,7 @@ class RSS_Importer {
 			$items = $feed->get_items();
 
 			if ( empty( $items ) ) {
-				return new \WP_Error( 'feed_empty', __( 'The feed contains no items.', 'newspack-lite-site' ) );
+				return new \WP_Error( 'feed_empty', __( 'The RSS feed contains no items.', 'newspack-lite-site' ) );
 			}
 
 			$imported   = 0;
@@ -545,12 +545,12 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Derive a stable GUID for a feed item.
+	 * Derive a stable GUID for a RSS feed item.
 	 *
 	 * Falls back from RSS GUID → permalink → title+date hash so items without an
 	 * explicit <guid> element are still tracked across runs.
 	 *
-	 * @param \SimplePie_Item $item The feed item.
+	 * @param \SimplePie_Item $item The RSS feed item.
 	 * @return string Non-empty GUID.
 	 */
 	private static function get_item_guid( $item ): string {
@@ -570,9 +570,9 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Fetch the set of already-imported GUIDs for a batch of feed items.
+	 * Fetch the set of already-imported GUIDs for a batch of RSS feed items.
 	 *
-	 * @param \SimplePie_Item[] $items Batch of feed items to check.
+	 * @param \SimplePie_Item[] $items Batch of RSS feed items to check.
 	 * @return array<string, true> Map of existing GUIDs.
 	 */
 	private static function get_existing_guids( array $items ): array {
@@ -613,10 +613,10 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Import a single feed item as a WordPress post.
+	 * Import a single RSS feed item as a WordPress post.
 	 *
-	 * @param \SimplePie_Item     $item           The feed item to import.
-	 * @param string              $feed_url       The feed URL this item came from.
+	 * @param \SimplePie_Item     $item           The RSS feed item to import.
+	 * @param string              $feed_url       The RSS feed URL this item came from.
 	 * @param int                 $author_id      WordPress user ID to assign as post author.
 	 * @param array<string, true> $existing_guids Pre-fetched map of already-imported GUIDs.
 	 * @return string 'imported', 'exists', or 'failed'.
@@ -632,7 +632,7 @@ class RSS_Importer {
 		$content = $item->get_content() ?? '';
 		$date    = $item->get_date( 'Y-m-d H:i:s' );
 
-		// Fall back to current time if the feed item has no date.
+		// Fall back to current time if the RSS feed item has no date.
 		if ( empty( $date ) ) {
 			$date = current_time( 'mysql' );
 		}
@@ -672,14 +672,14 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Detect the best featured image URL from a feed item.
+	 * Detect the best featured image URL from a RSS feed item.
 	 *
 	 * Priority order:
 	 * 1. <media:thumbnail> — most explicit declaration from publisher.
 	 * 2. <enclosure> or <media:content> with an image MIME type.
 	 * 3. First <img> tag found in the item body content.
 	 *
-	 * @param \SimplePie_Item $item The feed item.
+	 * @param \SimplePie_Item $item The RSS feed item.
 	 * @return string Image URL, or empty string if none found.
 	 */
 	private static function get_featured_image_url( $item ) {
@@ -717,7 +717,7 @@ class RSS_Importer {
 			}
 		}
 
-		// Priority 3: first <img> src found in the post body.
+		// Priority 3: first <img> src found in the RSS feed item body.
 		$content = $item->get_content() ?? '';
 		if ( ! empty( $content ) ) {
 			preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $content, $matches );

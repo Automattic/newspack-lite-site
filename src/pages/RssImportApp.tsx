@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { Notice, Snackbar, Spinner } from '@wordpress/components';
+import { Notice, Snackbar, Spinner, ExternalLink } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -43,9 +43,15 @@ export const RssImportApp = () => {
 				{ cronDisabled && (
 					<Notice status="warning" isDismissible={ false }>
 						{ __(
-							'WP-Cron is disabled. Automatic imports require a server cron job.',
+							'WP-Cron is disabled on this site. RSS feed imports will not run automatically unless a server-level cron job is configured to trigger WordPress scheduled events.',
 							'newspack-lite-site'
-						) }
+						) }{ ' ' }
+						<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
+							{ __(
+								'Learn more about WordPress Cron',
+								'newspack-lite-site'
+							) }
+						</ExternalLink>
 					</Notice>
 				) }
 				{ isLoading ? (

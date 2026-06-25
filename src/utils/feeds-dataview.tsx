@@ -34,12 +34,12 @@ export const DEFAULT_VIEW = {
 };
 
 /**
- * Field definitions for the DataViews feeds table.
+ * Field definitions for the DataViews RSS feeds table.
  */
 export const FEED_FIELDS = [
 	{
 		id: 'feed_url',
-		label: __( 'Feed URL', 'newspack-lite-site' ),
+		label: __( 'RSS Feed URL', 'newspack-lite-site' ),
 		enableSorting: true,
 		enableGlobalSearch: true,
 		render: ( { item }: { item: Feed } ) => (

@@ -8,7 +8,7 @@
 import { type RenderModalProps } from '@wordpress/dataviews';
 
 /**
- * The result object stored after each feed import attempt.
+ * The result object stored after each RSS feed import attempt.
  */
 export interface LastResult {
 	imported?: number;
@@ -34,7 +34,7 @@ export interface Feed {
 }
 
 /**
- * The actions that can be performed on a feed.
+ * The actions that can be performed on a RSS feed.
  */
 export type FeedAction = 'pause' | 'resume' | 'delete';
 

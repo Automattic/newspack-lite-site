@@ -407,7 +407,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Schedule a rewrite rule flush when the lite site is enabled/disabled or the URL base changes.
+	 * Schedule a rewrite rule flush when the lite site is enabled/disabled or the URL base (Lite Site Suffix) changes.
 	 *
 	 * @param string $option    Option name.
 	 * @param mixed  $old_value Previous option value.

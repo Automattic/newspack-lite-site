@@ -34,10 +34,13 @@ export const ColorPickerField = ( {
 			help={
 				value
 					? __(
-							'Custom color override active.',
+							'Primary Color override active.',
 							'newspack-lite-site'
 					  )
-					: __( 'Using theme default color.', 'newspack-lite-site' )
+					: __(
+							"Defaulting to your theme's Primary Color.",
+							'newspack-lite-site'
+					  )
 			}
 		>
 			<div className="newspack-lite-color-picker-wrap">
@@ -47,7 +50,10 @@ export const ColorPickerField = ( {
 					onClick={ () => onChange( '' ) }
 					disabled={ ! value }
 				>
-					{ __( 'Reset to theme default', 'newspack-lite-site' ) }
+					{ __(
+						"Reset to your theme's default Primary Color",
+						'newspack-lite-site'
+					) }
 				</Button>
 			</div>
 		</BaseControl>

@@ -6,7 +6,7 @@
  * WordPress dependencies.
  */
 import { __, sprintf } from '@wordpress/i18n';
-import { TextareaControl } from '@wordpress/components';
+import { TextareaControl, TextControl } from '@wordpress/components';
 import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
 
 /**
@@ -42,7 +42,7 @@ const TagsFieldEdit = ( {
 		value={ data.tags ?? [] }
 		onChange={ ( ids ) => onChange( { tags: ids } ) }
 		help={ __(
-			'Include posts with these tags in the lite site. Leave empty to include posts with any tag.',
+			'Include all content with this Tag in your Lite Site. Leave it empty to include posts with any Tag.',
 			'newspack-lite-site'
 		) }
 	/>
@@ -60,7 +60,7 @@ const ExcludedCategoriesFieldEdit = ( {
 		value={ data.excluded_categories ?? [] }
 		onChange={ ( ids ) => onChange( { excluded_categories: ids } ) }
 		help={ __(
-			'Posts in these categories will not appear on the lite site.',
+			'Content in these Categories will not appear on your Lite Site.',
 			'newspack-lite-site'
 		) }
 	/>
@@ -78,7 +78,7 @@ const ExcludedTagsFieldEdit = ( {
 		value={ data.excluded_tags ?? [] }
 		onChange={ ( ids ) => onChange( { excluded_tags: ids } ) }
 		help={ __(
-			'Posts with these tags will not appear on the lite site.',
+			'Content with these Tags will not appear on your Lite Site.',
 			'newspack-lite-site'
 		) }
 	/>
@@ -94,6 +94,29 @@ const ColorPickerFieldEdit = ( {
 	<ColorPickerField
 		value={ data.primary_color ?? '' }
 		onChange={ ( val ) => onChange( { primary_color: val } ) }
+	/>
+);
+
+/**
+ * Custom Edit component for the Font Import URL field with placeholder and caution help text.
+ */
+const FontImportUrlFieldEdit = ( {
+	data,
+	field,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => (
+	<TextControl
+		label={ field.label }
+		value={ data.font_import_url ?? '' }
+		placeholder={ __(
+			'<link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet"> or https://fonts.googleapis.com/css?family=Open+Sans',
+			'newspack-lite-site'
+		) }
+		onChange={ ( val ) => onChange( { font_import_url: val } ) }
+		help={ __(
+			'The font will be loaded on your Lite Site pages. Caution: Loading multiple fonts or font weights can slow down your Lite Site. Choose only the fonts and weights you need.',
+			'newspack-lite-site'
+		) }
 	/>
 );
 
@@ -138,17 +161,17 @@ const CustomCssFieldEdit = ( {
 export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	{
 		id: 'enabled',
-		label: __( 'Enable lite site feature', 'newspack-lite-site' ),
+		label: __( 'Enable Lite Sites for your content', 'newspack-lite-site' ),
 		type: 'boolean',
 	},
 	{
 		id: 'url_base',
-		label: __( 'URL Base', 'newspack-lite-site' ),
+		label: __( 'Lite Site Suffix', 'newspack-lite-site' ),
 		type: 'text',
 		description: sprintf(
 			/* translators: %s: site URL without trailing slash, e.g. https://example.com */
 			__(
-				'The URL base for the lite site (e.g. "lite" for %s/lite/article-slug).',
+				'The URL base for the Lite Site (e.g. "lite" for %s/lite/article-slug).',
 				'newspack-lite-site'
 			),
 			window.location.origin
@@ -156,10 +179,13 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'posts_per_page',
-		label: __( 'Posts per archive page', 'newspack-lite-site' ),
+		label: __(
+			'Amount of content visible on Lite Site homepage',
+			'newspack-lite-site'
+		),
 		type: 'integer',
 		description: __(
-			'Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting.',
+			'Amount of content shown before a Back/Next button appears. Defaults to your WordPress Reading setting value for pagination.',
 			'newspack-lite-site'
 		),
 	},
@@ -190,10 +216,13 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'external_links_new_tab',
-		label: __( 'Open external links in a new tab', 'newspack-lite-site' ),
+		label: __(
+			'Open any external links in a new tab',
+			'newspack-lite-site'
+		),
 		type: 'boolean',
 		description: __(
-			'When enabled, links to external websites open in a new browser tab. Disable to open them in the same tab.',
+			'When enabled, links to external websites open in a new browser tab. Disable to open them in place.',
 			'newspack-lite-site'
 		),
 	},
@@ -202,7 +231,7 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'Footer HTML', 'newspack-lite-site' ),
 		Edit: FooterHtmlFieldEdit,
 		description: __(
-			'HTML to be displayed in the footer of lite site pages.',
+			'HTML content shown in the footer across all Lite Site pages. Consider including Accessibility and Privacy policies and other essential content. Use the Lite Site Suffix set to provide low-bandwidth, text-only versions.',
 			'newspack-lite-site'
 		),
 	},
@@ -211,7 +240,7 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'GA4 Measurement ID', 'newspack-lite-site' ),
 		type: 'text',
 		description: __(
-			'Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking.',
+			'Google Analytics 4 Measurement ID. Lite Site strips all the usual WordPress script inclusions, so this will re-inject GA4 tracking (which is turned off by default, so Lite Sites load very quickly).',
 			'newspack-lite-site'
 		),
 	},
@@ -228,19 +257,15 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'font_import_url',
-		label: __( 'Font Import URL', 'newspack-lite-site' ),
-		type: 'text',
-		description: __(
-			'URL or <link> tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages.',
-			'newspack-lite-site'
-		),
+		label: __( 'Font Provider Import Code or URL', 'newspack-lite-site' ),
+		Edit: FontImportUrlFieldEdit,
 	},
 	{
 		id: 'font_body',
 		label: __( 'Body Font', 'newspack-lite-site' ),
 		type: 'text',
 		description: __(
-			'Font name to use for body text, must match the imported font (e.g. "Open Sans"). Leave empty to use the system font.',
+			'Font name for Body Font. This must match the Font Provider Import (e.g. "Open Sans"). Leave empty to use the user\'s device system font.',
 			'newspack-lite-site'
 		),
 	},
@@ -249,7 +274,7 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'Custom CSS', 'newspack-lite-site' ),
 		Edit: CustomCssFieldEdit,
 		description: __(
-			'CSS injected into the <head> of every lite site page, after the built-in stylesheet. Use this to override default styles or add custom rules.',
+			'CSS injected into the <head> of every Lite Site page, after built-in stylesheets. Use this to override default styles or add custom rules.',
 			'newspack-lite-site'
 		),
 	},

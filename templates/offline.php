@@ -25,13 +25,15 @@ namespace Newspack_Lite_Site;
 </head>
 <body>
 	<header class="back">
-		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to posts', 'newspack-lite-site' ); ?></a>
+		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to Lite Site homepage', 'newspack-lite-site' ); ?></a>
 	</header>
-	<h1><?php esc_html_e( 'You are offline', 'newspack-lite-site' ); ?></h1>
-	<hr class="separator">
-	<?php if ( function_exists( 'wp_service_worker_error_message_placeholder' ) ) : ?>
-		<?php wp_service_worker_error_message_placeholder(); ?>
-	<?php endif; ?>
+	<main>
+		<h1><?php esc_html_e( 'You are offline', 'newspack-lite-site' ); ?></h1>
+		<hr class="separator">
+		<?php if ( function_exists( 'wp_service_worker_error_message_placeholder' ) ) : ?>
+			<?php wp_service_worker_error_message_placeholder(); ?>
+		<?php endif; ?>
+	</main>
 	<?php
 	$footer_html = Lite_Site::get_footer_html();
 	if ( ! empty( $footer_html ) ) :

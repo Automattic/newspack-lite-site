@@ -17,7 +17,7 @@ const intervals = window.newspackLiteSite?.intervals ?? [];
 const authors = window.newspackLiteSite?.authors ?? [];
 
 /**
- * Default empty state for the Add Feed DataForm.
+ * Default empty state for the Add RSS Feed DataForm.
  */
 export const DEFAULT_FEED: FeedFormData = {
 	feed_url: '',
@@ -26,12 +26,12 @@ export const DEFAULT_FEED: FeedFormData = {
 };
 
 /**
- * Field definitions for the Add Feed DataForm.
+ * Field definitions for the Add RSS Feed DataForm.
  */
 export const FEED_FORM_FIELDS: Field< FeedFormData >[] = [
 	{
 		id: 'feed_url',
-		label: __( 'Feed URL', 'newspack-lite-site' ),
+		label: __( 'RSS Feed URL', 'newspack-lite-site' ),
 		type: 'url',
 	},
 	{

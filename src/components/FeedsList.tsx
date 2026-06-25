@@ -25,7 +25,7 @@ import { PauseFeedModal } from './PauseFeedModal';
 import { DeleteFeedModal } from './DeleteFeedModal';
 
 /**
- * Renders the scheduled feeds table with sortable columns and row actions.
+ * Renders the scheduled RSS feeds table with sortable columns and row actions.
  *
  * Pause and Delete show a confirmation modal before acting.
  * Resume fires immediately.
@@ -78,7 +78,7 @@ export const FeedsList = ( {
 	return (
 		<div className="newspack-lite-section">
 			<div className="newspack-lite-section-header">
-				<h3>{ __( 'Scheduled Feeds', 'newspack-lite-site' ) }</h3>
+				<h3>{ __( 'Scheduled RSS Feeds', 'newspack-lite-site' ) }</h3>
 			</div>
 
 			{ actionInProgress && <Spinner /> }
@@ -86,7 +86,7 @@ export const FeedsList = ( {
 			{ feeds.length === 0 && (
 				<p className="newspack-lite-empty-message">
 					{ __(
-						'No feeds configured. Add one above.',
+						'No RSS feeds configured. Add one above.',
 						'newspack-lite-site'
 					) }
 				</p>

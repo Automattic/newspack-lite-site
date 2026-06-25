@@ -73,7 +73,7 @@ $current_page = min( $current_page, $total_pages );
 </head>
 <body>
 	<header class="back">
-		<a href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'View full site', 'newspack-lite-site' ); ?></a>
+		<a href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'View Full-Featured Homepage', 'newspack-lite-site' ); ?></a>
 	</header>
 	<main>
 		<h1><?php bloginfo( 'name' ); ?></h1>

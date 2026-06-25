@@ -28,7 +28,7 @@ export const SettingsPanel = ( { settings, onChange }: PanelProps ) => {
 				<h3>{ __( 'General', 'newspack-lite-site' ) }</h3>
 				<p>
 					{ __(
-						"Lite Site is a text-only version of this website that loads faster and uses less data. It's designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies.",
+						'Lite Site is a text-only version of your WordPress site designed for fast, low-bandwidth access during connectivity interruptions, poor network coverage or emergencies.',
 						'newspack-lite-site'
 					) }
 				</p>

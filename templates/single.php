@@ -62,63 +62,65 @@ if ( $is_liveblog ) {
 </head>
 <body>
 	<header class="back">
-		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to posts', 'newspack-lite-site' ); ?></a> |
-		<a href="<?php echo esc_url( get_permalink( $current_post ) ); ?>"><?php esc_html_e( 'See original article', 'newspack-lite-site' ); ?></a>
+		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to Lite Site homepage', 'newspack-lite-site' ); ?></a> |
+		<a href="<?php echo esc_url( get_permalink( $current_post ) ); ?>"><?php esc_html_e( 'View Full-Featured Post', 'newspack-lite-site' ); ?></a>
 	</header>
 	<main>
-		<h1><?php echo esc_html( $current_post->post_title ); ?></h1>
-		<div class="meta">
-			<div class="authors">
-				<?php echo wp_kses_post( Lite_Site::get_authors( $current_post ) ); ?>
-			</div>
-			<div class="date">
-				<?php echo esc_html( get_the_date( '', $current_post ) ); ?>
-			</div>
-		</div>
-		<hr class="separator">
-
-		<?php if ( $post_content ) : ?>
-			<div class="content">
-				<?php echo wp_kses_post( $post_content ); ?>
-			</div>
-			<?php if ( $is_liveblog ) : ?>
-				<hr class="separator">
-			<?php endif; ?>
-		<?php endif; ?>
-
-		<?php if ( $is_liveblog ) : ?>
-			<div class="liveblog-status <?php echo esc_attr( $liveblog_state ); ?>">
-				<?php
-				if ( 'enable' === $liveblog_state ) :
-					esc_html_e( 'Live', 'newspack-lite-site' );
-				else :
-					esc_html_e( 'Archived', 'newspack-lite-site' );
-				endif;
-				?>
-			</div>
-
-			<?php if ( ! empty( $liveblog_entries ) ) : ?>
-				<div class="liveblog-entries">
-					<?php foreach ( $liveblog_entries as $entry ) : ?>
-						<div class="liveblog-entry">
-							<div class="liveblog-entry-meta">
-								<time><?php echo esc_html( get_comment_date( 'g:i a', $entry ) ); ?></time>
-								<?php if ( $entry->user_id ) : ?>
-									&mdash; <?php echo esc_html( get_the_author_meta( 'display_name', $entry->user_id ) ); ?>
-								<?php elseif ( $entry->comment_author ) : ?>
-									&mdash; <?php echo esc_html( $entry->comment_author ); ?>
-								<?php endif; ?>
-							</div>
-							<div class="liveblog-entry-content">
-								<?php echo wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ); ?>
-							</div>
-						</div>
-					<?php endforeach; ?>
+		<article>
+			<h1><?php echo esc_html( $current_post->post_title ); ?></h1>
+			<div class="meta">
+				<div class="authors">
+					<?php echo wp_kses_post( Lite_Site::get_authors( $current_post ) ); ?>
 				</div>
-			<?php else : ?>
-				<p><?php esc_html_e( 'There are no entries on this page.', 'newspack-lite-site' ); ?></p>
+				<div class="date">
+					<?php echo esc_html( get_the_date( '', $current_post ) ); ?>
+				</div>
+			</div>
+			<hr class="separator">
+
+			<?php if ( $post_content ) : ?>
+				<div class="content">
+					<?php echo wp_kses_post( $post_content ); ?>
+				</div>
+				<?php if ( $is_liveblog ) : ?>
+					<hr class="separator">
+				<?php endif; ?>
 			<?php endif; ?>
-		<?php endif; ?>
+
+			<?php if ( $is_liveblog ) : ?>
+				<div class="liveblog-status <?php echo esc_attr( $liveblog_state ); ?>">
+					<?php
+					if ( 'enable' === $liveblog_state ) :
+						esc_html_e( 'Live', 'newspack-lite-site' );
+					else :
+						esc_html_e( 'Archived', 'newspack-lite-site' );
+					endif;
+					?>
+				</div>
+
+				<?php if ( ! empty( $liveblog_entries ) ) : ?>
+					<div class="liveblog-entries">
+						<?php foreach ( $liveblog_entries as $entry ) : ?>
+							<div class="liveblog-entry">
+								<div class="liveblog-entry-meta">
+									<time><?php echo esc_html( get_comment_date( 'g:i a', $entry ) ); ?></time>
+									<?php if ( $entry->user_id ) : ?>
+										&mdash; <?php echo esc_html( get_the_author_meta( 'display_name', $entry->user_id ) ); ?>
+									<?php elseif ( $entry->comment_author ) : ?>
+										&mdash; <?php echo esc_html( $entry->comment_author ); ?>
+									<?php endif; ?>
+								</div>
+								<div class="liveblog-entry-content">
+									<?php echo wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ); ?>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				<?php else : ?>
+					<p><?php esc_html_e( 'There are no entries on this page.', 'newspack-lite-site' ); ?></p>
+				<?php endif; ?>
+			<?php endif; ?>
+		</article>
 	</main>
 
 	<?php

@@ -30,7 +30,7 @@ export const DeleteFeedModal = ( {
 		<>
 			<p>
 				{ __(
-					'Are you sure you want to delete this feed? This action cannot be undone.',
+					'Are you sure you want to delete this RSS feed? This action cannot be undone.',
 					'newspack-lite-site'
 				) }
 			</p>

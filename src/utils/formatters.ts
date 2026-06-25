@@ -24,9 +24,9 @@ export function formatUnixTimestamp( ts: number ): string {
 
 /**
  * Format a last_result object into a human-readable summary string.
- * Returns an empty string when result is null (no import has run yet).
+ * Returns an empty string when result is null (no RSS feed import has run yet).
  *
- * @param result The last_result object from the feed record, or null.
+ * @param result The last_result object from the RSS feed record, or null.
  */
 export function formatLastResult( result: LastResult | null ): string {
 	if ( ! result ) {

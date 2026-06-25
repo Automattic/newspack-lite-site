@@ -28,7 +28,7 @@ export const CategoriesField = ( {
 	onChange,
 	label = __( 'Categories', 'newspack-lite-site' ),
 	help = __(
-		'Select categories to include in the lite site archive. Leave empty to include all categories.',
+		'Select Categories to be included in your Lite Site homepage. Leave empty to include all Categories.',
 		'newspack-lite-site'
 	),
 }: CategoriesFieldProps ) => {

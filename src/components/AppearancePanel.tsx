@@ -29,7 +29,7 @@ export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
 					<h3>{ __( 'Appearance', 'newspack-lite-site' ) }</h3>
 					<p>
 						{ __(
-							'Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections.',
+							'Customize the visual appearance of your Lite Site. Please keep customization to a minimum, to avoid slowing down the experience for users with connectivity interruptions.',
 							'newspack-lite-site'
 						) }
 					</p>

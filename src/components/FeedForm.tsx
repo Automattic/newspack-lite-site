@@ -19,7 +19,7 @@ import { DEFAULT_FEED, FEED_FORM_FIELDS } from '../utils/feeds-dataform';
 /**
  * Form for adding a new RSS feed.
  *
- * Accepts a feed URL, import frequency, and author, then calls onAdd on submit.
+ * Accepts a RSS feed URL, import frequency, and author, then calls onAdd on submit.
  * Resets the form after a successful submission.
  */
 export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
@@ -40,10 +40,10 @@ export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
 	return (
 		<div className="newspack-lite-section">
 			<div className="newspack-lite-section-header">
-				<h3>{ __( 'Add Feed', 'newspack-lite-site' ) }</h3>
+				<h3>{ __( 'Add RSS Feed', 'newspack-lite-site' ) }</h3>
 				<p>
 					{ __(
-						'Schedule an RSS feed to be imported as posts on a recurring basis.',
+						'Schedule an RSS feed to be imported on a recurring basis.',
 						'newspack-lite-site'
 					) }
 				</p>
@@ -74,7 +74,7 @@ export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
 						>
 							{ isAdding
 								? __( 'Adding…', 'newspack-lite-site' )
-								: __( 'Add Feed', 'newspack-lite-site' ) }
+								: __( 'Add RSS Feed', 'newspack-lite-site' ) }
 						</Button>
 					</div>
 				</div>
