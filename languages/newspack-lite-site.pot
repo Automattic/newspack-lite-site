@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-10T15:39:12+00:00\n"
+"POT-Creation-Date: 2026-06-25T12:48:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #. Description of the plugin
 #: newspack-lite-site.php
-msgid "Lightweight Newspack site configuration."
+msgid "A lightweight, text-only version of your WordPress site for fast access in low-bandwidth or high-traffic conditions."
 msgstr ""
 
 #. Author of the plugin
@@ -34,163 +34,211 @@ msgstr ""
 msgid "https://newspack.com/"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:255
-#: includes/class-lite-site-settings.php:256
+#: includes/class-lite-site-settings.php:257
+#: includes/class-lite-site-settings.php:258
 msgid "Lite Site"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:267
-#: includes/class-lite-site-settings.php:268
-#: dist/index.js:119
-msgid "Settings"
-msgstr ""
-
-#: includes/class-lite-site-settings.php:277
-#: includes/class-lite-site-settings.php:278
+#: includes/class-lite-site-settings.php:269
+#: includes/class-lite-site-settings.php:270
 #: dist/index.js:164
 msgid "RSS Feed Import"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:303
+#: includes/class-lite-site-settings.php:279
+#: includes/class-lite-site-settings.php:280
+#: dist/index.js:119
+msgid "Settings"
+msgstr ""
+
+#: includes/class-lite-site-settings.php:305
 msgid "View Lite Site"
 msgstr ""
 
 #. translators: %1$s: a comma separated list of authors names with links and, after the "and" %2$s: one last author link
-#: includes/class-lite-site.php:448
+#: includes/class-lite-site.php:537
 #, php-format
 msgid "%1$s and %2$s"
 msgstr ""
 
 #. translators: %s: author name(s)
-#: includes/class-lite-site.php:466
+#: includes/class-lite-site.php:555
 #, php-format
 msgid "By %s"
 msgstr ""
 
 #. translators: %s: image alt text
-#: includes/class-lite-site.php:665
+#: includes/class-lite-site.php:796
 #, php-format
 msgid "Image | %s"
 msgstr ""
 
-#: includes/class-lite-site.php:666
+#: includes/class-lite-site.php:797
 msgid "Image"
 msgstr ""
 
 #. translators: %s: image caption text
-#: includes/class-lite-site.php:685
+#: includes/class-lite-site.php:816
 #, php-format
 msgid "Caption: %s"
 msgstr ""
 
-#: includes/class-lite-site.php:697
+#: includes/class-lite-site.php:828
 msgid "Load image"
 msgstr ""
 
-#: includes/class-rss-importer.php:194
-msgid "Please enter a valid feed URL."
+#: includes/class-post-type.php:34
+msgid "RSS Entries"
 msgstr ""
 
-#: includes/class-rss-importer.php:202
+#: includes/class-post-type.php:35
+msgid "RSS Entry"
+msgstr ""
+
+#: includes/class-post-type.php:36
+msgid "Add RSS Entry"
+msgstr ""
+
+#: includes/class-post-type.php:37
+msgid "Edit RSS Entry"
+msgstr ""
+
+#: includes/class-post-type.php:38
+msgid "New RSS Entry"
+msgstr ""
+
+#: includes/class-post-type.php:39
+msgid "View RSS Entry"
+msgstr ""
+
+#: includes/class-post-type.php:40
+msgid "Search RSS Entries"
+msgstr ""
+
+#: includes/class-post-type.php:41
+msgid "No RSS entries found."
+msgstr ""
+
+#: includes/class-post-type.php:43
+msgid "Posts imported from external RSS feeds by Newspack Lite Site."
+msgstr ""
+
+#: includes/class-rss-importer.php:199
+msgid "Please enter a valid RSS feed URL."
+msgstr ""
+
+#: includes/class-rss-importer.php:207
 msgid "Please select a valid author."
 msgstr ""
 
-#: includes/class-rss-importer.php:210
-msgid "Please select a valid interval."
+#: includes/class-rss-importer.php:215
+msgid "Please select a valid polling interval for your RSS feed."
 msgstr ""
 
-#: includes/class-rss-importer.php:221
-msgid "This feed is already configured."
+#: includes/class-rss-importer.php:226
+msgid "This RSS feed is already configured."
 msgstr ""
 
-#: includes/class-rss-importer.php:265
+#: includes/class-rss-importer.php:249
+msgid "Failed to schedule the RSS feed."
+msgstr ""
+
+#: includes/class-rss-importer.php:283
 msgid "Feed not found."
 msgstr ""
 
-#: includes/class-rss-importer.php:308
-#: includes/class-rss-importer.php:369
+#: includes/class-rss-importer.php:304
+msgid "Failed to resume the RSS feed."
+msgstr ""
+
+#: includes/class-rss-importer.php:336
+#: includes/class-rss-importer.php:397
 msgid "Every 5 Minutes"
 msgstr ""
 
-#: includes/class-rss-importer.php:312
-#: includes/class-rss-importer.php:370
+#: includes/class-rss-importer.php:340
+#: includes/class-rss-importer.php:398
 msgid "Every 10 Minutes"
 msgstr ""
 
-#: includes/class-rss-importer.php:316
-#: includes/class-rss-importer.php:371
+#: includes/class-rss-importer.php:344
+#: includes/class-rss-importer.php:399
 msgid "Every 30 Minutes"
 msgstr ""
 
-#: includes/class-rss-importer.php:320
+#: includes/class-rss-importer.php:348
 msgid "Once Weekly"
 msgstr ""
 
-#: includes/class-rss-importer.php:372
+#: includes/class-rss-importer.php:400
 msgid "Hourly"
 msgstr ""
 
-#: includes/class-rss-importer.php:373
+#: includes/class-rss-importer.php:401
 msgid "Twice Daily"
 msgstr ""
 
-#: includes/class-rss-importer.php:374
+#: includes/class-rss-importer.php:402
 msgid "Daily"
 msgstr ""
 
-#: includes/class-rss-importer.php:375
+#: includes/class-rss-importer.php:403
 msgid "Weekly"
 msgstr ""
 
-#: includes/class-rss-importer.php:440
-msgid "A valid feed URL is required."
+#: includes/class-rss-importer.php:468
+msgid "A valid RSS feed URL is required."
 msgstr ""
 
-#: includes/class-rss-importer.php:444
+#: includes/class-rss-importer.php:472
 msgid "A valid author ID is required."
 msgstr ""
 
 #. translators: %s: error message from the feed parser
-#: includes/class-rss-importer.php:456
+#: includes/class-rss-importer.php:488
 #, php-format
-msgid "Could not retrieve feed: %s"
+msgid "Could not retrieve RSS feed: %s"
 msgstr ""
 
-#: includes/class-rss-importer.php:465
-msgid "The feed contains no items."
+#: includes/class-rss-importer.php:497
+msgid "The RSS feed contains no items."
 msgstr ""
 
-#: templates/archive.php:75
-msgid "View full site"
+#: includes/class-rss-importer.php:803
+msgid "Request to a private or reserved address was blocked."
 msgstr ""
 
-#: templates/archive.php:94
+#: templates/archive.php:76
+msgid "View Full-Featured Homepage"
+msgstr ""
+
+#: templates/archive.php:96
 msgid "Archive pagination"
 msgstr ""
 
 #: templates/offline.php:19
-#: templates/offline.php:30
+#: templates/offline.php:31
 msgid "You are offline"
 msgstr ""
 
 #: templates/offline.php:28
 #: templates/single.php:65
-msgid "Back to posts"
+msgid "Back to Lite Site homepage"
 msgstr ""
 
 #: templates/single.php:66
-msgid "View full article"
-msgstr ""
-
-#: templates/single.php:92
-msgid "Live"
+msgid "View Full-Featured Post"
 msgstr ""
 
 #: templates/single.php:94
+msgid "Live"
+msgstr ""
+
+#: templates/single.php:96
 msgid "Archived"
 msgstr ""
 
-#: templates/single.php:118
+#: templates/single.php:120
 msgid "There are no entries on this page."
 msgstr ""
 
@@ -227,7 +275,7 @@ msgid "Categories"
 msgstr ""
 
 #: dist/index.js:118
-msgid "Select categories to include in the lite site archive. Leave empty to include all categories."
+msgid "Select Categories to be included in your Lite Site homepage. Leave empty to include all Categories."
 msgstr ""
 
 #: dist/index.js:118
@@ -236,37 +284,37 @@ msgid "Primary Color"
 msgstr ""
 
 #: dist/index.js:118
-msgid "Custom color override active."
+msgid "Primary Color override active."
 msgstr ""
 
 #: dist/index.js:118
-msgid "Using theme default color."
+msgid "Defaulting to your theme's Primary Color."
 msgstr ""
 
 #: dist/index.js:118
-msgid "Reset to theme default"
+msgid "Reset to your theme's default Primary Color"
 msgstr ""
 
 #: dist/index.js:118
-msgid "Enable lite site feature"
+msgid "Enable Lite Sites for your content"
 msgstr ""
 
 #: dist/index.js:118
-msgid "URL Base"
+msgid "Lite Site Suffix"
 msgstr ""
 
 #. translators: %s: site URL without trailing slash, e.g. https://example.com
 #: dist/index.js:119
 #, js-format
-msgid "The URL base for the lite site (e.g. \"lite\" for %s/lite/article-slug)."
+msgid "The URL base for the Lite Site (e.g. \"lite\" for %s/lite/article-slug)."
 msgstr ""
 
 #: dist/index.js:119
-msgid "Posts per archive page"
+msgid "Amount of content visible on Lite Site homepage"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Number of posts shown per page on the lite site archive. Defaults to the WordPress Reading setting."
+msgid "Amount of content shown before a Back/Next button appears. Defaults to your WordPress Reading setting value for pagination."
 msgstr ""
 
 #: dist/index.js:119
@@ -278,7 +326,7 @@ msgid "Tags"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Include posts with these tags in the lite site. Leave empty to include posts with any tag."
+msgid "Include all content with this Tag in your Lite Site. Leave it empty to include posts with any Tag."
 msgstr ""
 
 #: dist/index.js:119
@@ -286,7 +334,7 @@ msgid "Excluded Categories"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Posts in these categories will not appear on the lite site."
+msgid "Content in these Categories will not appear on your Lite Site."
 msgstr ""
 
 #: dist/index.js:119
@@ -294,15 +342,15 @@ msgid "Excluded Tags"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Posts with these tags will not appear on the lite site."
+msgid "Content with these Tags will not appear on your Lite Site."
 msgstr ""
 
 #: dist/index.js:119
-msgid "Open external links in a new tab"
+msgid "Open any external links in a new tab"
 msgstr ""
 
 #: dist/index.js:119
-msgid "When enabled, links to external websites open in a new browser tab. Disable to open them in the same tab."
+msgid "When enabled, links to external websites open in a new browser tab. Disable to open them in place."
 msgstr ""
 
 #: dist/index.js:119
@@ -310,7 +358,7 @@ msgid "Footer HTML"
 msgstr ""
 
 #: dist/index.js:119
-msgid "HTML to be displayed in the footer of lite site pages."
+msgid "HTML content shown in the footer across all Lite Site pages. Consider including Accessibility and Privacy policies and other essential content. Use the Lite Site Suffix set to provide low-bandwidth, text-only versions."
 msgstr ""
 
 #: dist/index.js:119
@@ -318,15 +366,19 @@ msgid "GA4 Measurement ID"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Google Analytics 4 Measurement ID. Since lite pages strip all scripts, this is used to re-inject GA4 tracking."
+msgid "Google Analytics 4 Measurement ID. Lite Site strips all the usual WordPress script inclusions, so this will re-inject GA4 tracking (which is turned off by default, so Lite Sites load very quickly)."
 msgstr ""
 
 #: dist/index.js:119
-msgid "Font Import URL"
+msgid "Font Provider Import Code or URL"
 msgstr ""
 
 #: dist/index.js:119
-msgid "URL or <link> tag from your font provider (Google Fonts, Adobe Fonts, etc.). The font will be loaded on lite site pages."
+msgid "<link href=\"https://fonts.googleapis.com/css?family=Open+Sans&display=swap\" rel=\"stylesheet\"> or https://fonts.googleapis.com/css?family=Open+Sans"
+msgstr ""
+
+#: dist/index.js:119
+msgid "The font will be loaded on your Lite Site pages. Caution: Loading multiple fonts or font weights can slow down your Lite Site. Choose only the fonts and weights you need."
 msgstr ""
 
 #: dist/index.js:119
@@ -334,7 +386,7 @@ msgid "Body Font"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Font name to use for body text, must match the imported font (e.g. \"Open Sans\"). Leave empty to use the system font."
+msgid "Font name for Body Font. This must match the Font Provider Import (e.g. \"Open Sans\"). Leave empty to use the user's device system font."
 msgstr ""
 
 #: dist/index.js:119
@@ -342,7 +394,7 @@ msgid "Custom CSS"
 msgstr ""
 
 #: dist/index.js:119
-msgid "CSS injected into the <head> of every lite site page, after the built-in stylesheet. Use this to override default styles or add custom rules."
+msgid "CSS injected into the <head> of every Lite Site page, after built-in stylesheets. Use this to override default styles or add custom rules."
 msgstr ""
 
 #: dist/index.js:119
@@ -350,7 +402,7 @@ msgid "General"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Lite Site is a text-only version of this website that loads faster and uses less data. It's designed to allow your readers to still be able to access your content despite connectivity issues, poor network coverage, or in the event of natural disasters and emergencies."
+msgid "Lite Site is a text-only version of your WordPress site designed for fast, low-bandwidth access during connectivity interruptions, poor network coverage or emergencies."
 msgstr ""
 
 #: dist/index.js:119
@@ -358,7 +410,7 @@ msgid "Appearance"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Customize the visual appearance of your lite site. Keep changes minimal, as adding custom fonts or styles increases page size and may slow down the experience for readers on limited connections."
+msgid "Customize the visual appearance of your Lite Site. Please keep customization to a minimum, to avoid slowing down the experience for users with connectivity interruptions."
 msgstr ""
 
 #: dist/index.js:119
@@ -396,7 +448,7 @@ msgstr ""
 #. translators: 1: Current page number, 2: Total number of pages.
 #: dist/index.js:119
 #: dist/index.js:164
-msgid "Feed URL"
+msgid "RSS Feed URL"
 msgstr ""
 
 #: dist/index.js:119
@@ -410,11 +462,11 @@ msgid "Author"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Add Feed"
+msgid "Add RSS Feed"
 msgstr ""
 
 #: dist/index.js:119
-msgid "Schedule an RSS feed to be imported as posts on a recurring basis."
+msgid "Schedule an RSS feed to be imported on a recurring basis."
 msgstr ""
 
 #: dist/index.js:119
@@ -458,7 +510,7 @@ msgid "Pause"
 msgstr ""
 
 #: dist/index.js:164
-msgid "Are you sure you want to delete this feed? This action cannot be undone."
+msgid "Are you sure you want to delete this RSS feed? This action cannot be undone."
 msgstr ""
 
 #: dist/index.js:164
@@ -470,45 +522,49 @@ msgid "Resume"
 msgstr ""
 
 #: dist/index.js:164
-msgid "Scheduled Feeds"
+msgid "Scheduled RSS Feeds"
 msgstr ""
 
 #: dist/index.js:164
-msgid "No feeds configured. Add one above."
+msgid "No RSS feeds configured. Add one above."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Failed to load feeds."
+msgid "Failed to load RSS feeds."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Feed added."
+msgid "RSS feed added."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Failed to add feed."
+msgid "Failed to add RSS feed."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Feed paused."
+msgid "RSS feed paused."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Feed resumed."
+msgid "RSS feed resumed."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Feed deleted."
+msgid "RSS feed deleted."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Feed updated."
+msgid "RSS feed updated."
 msgstr ""
 
 #: dist/index.js:164
-msgid "Failed to update feed."
+msgid "Failed to update RSS feed."
 msgstr ""
 
 #: dist/index.js:164
-msgid "WP-Cron is disabled. Automatic imports require a server cron job."
+msgid "WP-Cron is disabled on this site. RSS feed imports will not run automatically unless a server-level cron job is configured to trigger WordPress scheduled events."
+msgstr ""
+
+#: dist/index.js:164
+msgid "Learn more about WordPress Cron"
 msgstr ""
