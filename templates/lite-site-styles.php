@@ -107,6 +107,9 @@ namespace Newspack_Lite_Site;
 		justify-content: center;
 		margin-top: 2rem;
 	}
+	.pagination .page-numbers {
+		padding: 0 0.25rem;
+	}
 
 	.lite-site-external::after {
 		content: " ↗";

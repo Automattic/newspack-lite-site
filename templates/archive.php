@@ -75,27 +75,29 @@ $current_page = min( $current_page, $total_pages );
 	<header class="back">
 		<a href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'View full site', 'newspack-lite-site' ); ?></a>
 	</header>
-	<h1><?php bloginfo( 'name' ); ?></h1>
-	<hr class="separator">
-	<ul class="post-list">
-		<?php require __DIR__ . '/post-list.php'; ?>
-	</ul>
+	<main>
+		<h1><?php bloginfo( 'name' ); ?></h1>
+		<hr class="separator">
+		<ul class="post-list">
+			<?php require __DIR__ . '/post-list.php'; ?>
+		</ul>
 
-	<?php
-	$pagination = paginate_links(
-		[
-			'base'    => home_url( Lite_Site::get_url_base() . '/%_%' ),
-			'format'  => 'page/%#%/',
-			'current' => $current_page,
-			'total'   => $total_pages,
-		]
-	);
-	if ( $pagination ) :
-		?>
-		<nav class="pagination" aria-label="<?php esc_attr_e( 'Archive pagination', 'newspack-lite-site' ); ?>">
-			<?php echo wp_kses_post( $pagination ); ?>
-		</nav>
-	<?php endif; ?>
+		<?php
+		$pagination = paginate_links(
+			[
+				'base'    => home_url( Lite_Site::get_url_base() . '/%_%' ),
+				'format'  => 'page/%#%/',
+				'current' => $current_page,
+				'total'   => $total_pages,
+			]
+		);
+		if ( $pagination ) :
+			?>
+			<nav class="pagination" aria-label="<?php esc_attr_e( 'Archive pagination', 'newspack-lite-site' ); ?>">
+				<?php echo wp_kses_post( $pagination ); ?>
+			</nav>
+		<?php endif; ?>
+	</main>
 
 	<?php
 	$footer_html = Lite_Site::get_footer_html();
