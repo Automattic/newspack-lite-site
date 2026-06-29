@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { TextareaControl, TextControl } from '@wordpress/components';
 import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
 
@@ -83,6 +83,42 @@ const ExcludedTagsFieldEdit = ( {
 		) }
 	/>
 );
+
+/**
+ * Custom Edit component for the URL Base field with a conditional live-site link.
+ */
+const UrlBaseFieldEdit = ( {
+	data,
+	field,
+	onChange,
+}: DataFormControlProps< SiteSettings > ) => {
+	const archiveUrl = `${ window.location.origin }/${
+		data.url_base || 'lite'
+	}/`;
+	return (
+		<>
+			<TextControl
+				label={ field.label }
+				value={ data.url_base ?? '' }
+				onChange={ ( val ) => onChange( { url_base: val } ) }
+			/>
+			<p className="components-base-control__help">
+				{ __(
+					'The URL base for the Lite Site (e.g.',
+					'newspack-lite-site'
+				) }{ ' ' }
+				{ data.enabled ? (
+					<a href={ archiveUrl } target="_blank" rel="noreferrer">
+						{ archiveUrl }
+					</a>
+				) : (
+					archiveUrl
+				) }
+				{ __( 'article-slug).', 'newspack-lite-site' ) }
+			</p>
+		</>
+	);
+};
 
 /**
  * Custom Edit component wrapping ColorPickerField for use in DataForm.
@@ -167,15 +203,7 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	{
 		id: 'url_base',
 		label: __( 'Lite Site Suffix', 'newspack-lite-site' ),
-		type: 'text',
-		description: sprintf(
-			/* translators: %s: site URL without trailing slash, e.g. https://example.com */
-			__(
-				'The URL base for the Lite Site (e.g. "lite" for %s/lite/article-slug).',
-				'newspack-lite-site'
-			),
-			window.location.origin
-		),
+		Edit: UrlBaseFieldEdit,
 	},
 	{
 		id: 'posts_per_page',
