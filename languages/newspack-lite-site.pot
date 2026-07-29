@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-25T12:48:45+00:00\n"
+"POT-Creation-Date: 2026-07-29T15:10:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -41,13 +41,13 @@ msgstr ""
 
 #: includes/class-lite-site-settings.php:269
 #: includes/class-lite-site-settings.php:270
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "RSS Feed Import"
 msgstr ""
 
 #: includes/class-lite-site-settings.php:279
 #: includes/class-lite-site-settings.php:280
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Settings"
 msgstr ""
 
@@ -270,7 +270,6 @@ msgid "— %d imported"
 msgstr ""
 
 #: dist/index.js:118
-#: dist/index.js:119
 msgid "Categories"
 msgstr ""
 
@@ -279,7 +278,6 @@ msgid "Select Categories to be included in your Lite Site homepage. Leave empty 
 msgstr ""
 
 #: dist/index.js:118
-#: dist/index.js:119
 msgid "Primary Color"
 msgstr ""
 
@@ -303,268 +301,270 @@ msgstr ""
 msgid "Lite Site Suffix"
 msgstr ""
 
-#. translators: %s: site URL without trailing slash, e.g. https://example.com
-#: dist/index.js:119
-#, js-format
-msgid "The URL base for the Lite Site (e.g. \"lite\" for %s/lite/article-slug)."
+#: dist/index.js:118
+msgid "The URL base for the Lite Site (e.g."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
+msgid "article-slug)."
+msgstr ""
+
+#: dist/index.js:118
 msgid "Amount of content visible on Lite Site homepage"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Amount of content shown before a Back/Next button appears. Defaults to your WordPress Reading setting value for pagination."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Include subcategories"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Tags"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Include all content with this Tag in your Lite Site. Leave it empty to include posts with any Tag."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Excluded Categories"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Content in these Categories will not appear on your Lite Site."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Excluded Tags"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Content with these Tags will not appear on your Lite Site."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Open any external links in a new tab"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "When enabled, links to external websites open in a new browser tab. Disable to open them in place."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Footer HTML"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "HTML content shown in the footer across all Lite Site pages. Consider including Accessibility and Privacy policies and other essential content. Use the Lite Site Suffix set to provide low-bandwidth, text-only versions."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "GA4 Measurement ID"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Google Analytics 4 Measurement ID. Lite Site strips all the usual WordPress script inclusions, so this will re-inject GA4 tracking (which is turned off by default, so Lite Sites load very quickly)."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Font Provider Import Code or URL"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "<link href=\"https://fonts.googleapis.com/css?family=Open+Sans&display=swap\" rel=\"stylesheet\"> or https://fonts.googleapis.com/css?family=Open+Sans"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "The font will be loaded on your Lite Site pages. Caution: Loading multiple fonts or font weights can slow down your Lite Site. Choose only the fonts and weights you need."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Body Font"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Font name for Body Font. This must match the Font Provider Import (e.g. \"Open Sans\"). Leave empty to use the user's device system font."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Custom CSS"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "CSS injected into the <head> of every Lite Site page, after built-in stylesheets. Use this to override default styles or add custom rules."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "General"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Lite Site is a text-only version of your WordPress site designed for fast, low-bandwidth access during connectivity interruptions, poor network coverage or emergencies."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Appearance"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Customize the visual appearance of your Lite Site. Please keep customization to a minimum, to avoid slowing down the experience for users with connectivity interruptions."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Colors"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Typography"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Advanced"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Failed to load settings."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Failed to save settings."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Saving…"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Save Settings"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Settings saved."
 msgstr ""
 
 #. translators: 1: Current page number, 2: Total number of pages.
-#: dist/index.js:119
-#: dist/index.js:164
+#: dist/index.js:118
+#: dist/index.js:163
 msgid "RSS Feed URL"
 msgstr ""
 
-#: dist/index.js:119
-#: dist/index.js:164
+#: dist/index.js:118
+#: dist/index.js:163
 msgid "Frequency"
 msgstr ""
 
-#: dist/index.js:119
-#: dist/index.js:164
+#: dist/index.js:118
+#: dist/index.js:163
 msgid "Author"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Add RSS Feed"
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Schedule an RSS feed to be imported on a recurring basis."
 msgstr ""
 
-#: dist/index.js:119
+#: dist/index.js:118
 msgid "Adding…"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Status"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Active"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Paused"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Last Run"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Never"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Next Run"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Pausing will prevent future imports. Any import currently in progress will finish."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Cancel"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Pause"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Are you sure you want to delete this RSS feed? This action cannot be undone."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Delete"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Resume"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Scheduled RSS Feeds"
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "No RSS feeds configured. Add one above."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Failed to load RSS feeds."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "RSS feed added."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Failed to add RSS feed."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "RSS feed paused."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "RSS feed resumed."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "RSS feed deleted."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "RSS feed updated."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Failed to update RSS feed."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "WP-Cron is disabled on this site. RSS feed imports will not run automatically unless a server-level cron job is configured to trigger WordPress scheduled events."
 msgstr ""
 
-#: dist/index.js:164
+#: dist/index.js:163
 msgid "Learn more about WordPress Cron"
 msgstr ""
