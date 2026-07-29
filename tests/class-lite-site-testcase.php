@@ -48,7 +48,10 @@ abstract class Lite_Site_TestCase extends WP_UnitTestCase {
 	/**
 	 * Persist plugin settings and make them visible to `Lite_Site` immediately.
 	 *
-	 * @param array $settings Settings to store, merged over the defaults.
+	 * The option is replaced wholesale rather than merged, so any key left out
+	 * is simply absent and each getter falls back to its own default.
+	 *
+	 * @param array $settings Settings to store.
 	 */
 	protected static function set_settings( array $settings ) {
 		update_option( Lite_Site_Settings::OPTION_NAME, $settings );
