@@ -18,6 +18,18 @@
 		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found" />
 	</rule>
 
+	<!-- WPCS exempts test classes from several sniffs, but only recognises a
+	     class as a test when it extends a known base directly. The suite's
+	     shared base class sits between the test cases and WP_UnitTestCase, so
+	     declare it here rather than switching the sniffs off for tests/. -->
+	<rule ref="WordPress.Files.FileName">
+		<properties>
+			<property name="custom_test_classes" type="array">
+				<element value="Lite_Site_TestCase"/>
+			</property>
+		</properties>
+	</rule>
+
 	<rule ref="PHPCompatibilityWP"/>
 	<config name="testVersion" value="7.2-"/>
 
