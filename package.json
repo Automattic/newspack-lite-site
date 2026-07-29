@@ -19,6 +19,7 @@
 		"start": "npm ci && npm run watch",
 		"watch": "npm run clean && newspack-scripts wp-scripts start",
 		"test": "echo 'No JS unit tests in this repository.'",
+		"test:php": "./vendor/bin/phpunit",
 		"lint": "npm run lint:scss && npm run lint:js",
 		"lint:js": "newspack-scripts wp-scripts lint-js '**/{src,includes,assets}/**/*.{js,jsx,ts,tsx}'",
 		"lint:js:staged": "newspack-scripts wp-scripts lint-js --ext .js,.jsx,.ts,.tsx",
