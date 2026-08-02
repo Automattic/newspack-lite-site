@@ -4,8 +4,8 @@
 | --- | --- |
 | **Stable tag** | [(see package.json)](package.json#L3) |
 | **Requires at least** | 6.4 |
-| **Tested up to** | 7.0 |
-| **Requires PHP** | 7.4 |
+| **Tested up to** | [7.2](https://github.com/Automattic/newspack-plugin/blob/ef8dd95d7a4cbaa4c58cfad63798c8a85c24348d/phpcs.xml#L34) |
+| **Requires PHP** | [7.4](composer.lock#L308) |
 | **License** | [GPLv3 or later](LICENSE.md) |
 | **Tags** | 🚨, 📻, 📰, ⚡️, 📶, 📡, 🛜, text-only, lite-site, wordpress, newspack, bandwidth, accessibility, emergency, offline, rss, performance |
 | **Contributors** | @automattic, @rtcamp &amp; @R1shabh-Gupta, @miguelpeixe, @scottklein, @tiffehr |
@@ -75,32 +75,35 @@ Choose the categories and tags that appear on the Lite Site, with optional autom
 
 ### RSS Feed Import
 
-If you normally do not publish on WordPress and a parallel CMS to your own is a challenge, you can provide your own current RSS feed to the Lite Sites pulgin. If you do, WordPress will import the specified content and create WordPress parallel Posts, which can then power Lite Sites. You can continue to use your own CMS and know it is dual-publishing to a simple WordPress backup mechanism. 
+If you normally do not publish on WordPress and a parallel CMS to your own is a challenge, you can provide your own current RSS feed to the Lite Sites pulgin. If you do, WordPress will import the specified content and create WordPress parallel Posts, which can then power Lite Sites. You can continue to use your own CMS and know it is dual-publishing to a simple WordPress backup mechanism.
 
 #### Details
 
-* Add any number of RSS feeds, each with its own import interval (every 5 minutes through weekly) and assigned WordPress author
+* Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
 * Pause, resume and delete feeds from the admin — each feed shows its last run, last result and next scheduled run
-* Imported items become `nls_rss_entry` posts, de-duplicated by GUID so re-runs never create duplicates
-* Featured images are sideloaded from `media:thumbnail` or image enclosures
-* Hardened against SSRF: every outbound URL — feed and image alike — is validated against private, reserved, and link-local address ranges, with redirects capped at 2 and responses capped at 3 MB. Imports are limited to 50 new items per run and guarded by a per-feed lock
+* Feed reprocessing never create duplicates
+* Feed-defined images or similar assets are sideloaded
+* Secure:
+  * every outbound URL is validated against private, reserved and link-local address ranges
+  * Redirects and responses capped
+  * Imports are limited to 50 new items per run and guarded by a per-feed lock
 
-Feed imports run on WP-Cron. If your site defines `DISABLE_WP_CRON`, the admin will tell you, and you'll need a system cron calling `wp-cron.php`.
+Feed imports run on WP-Cron. If your site defines `DISABLE_WP_CRON`, the admin will tell you and you'll need a system cron calling `wp-cron.php`.
 
-### Appearance
+### Limited Brand Styling
 
-Brand color (or automatic detection from your theme), a font import URL (Google Fonts and similar), body font family, footer HTML, custom CSS, and a toggle for opening external links in a new tab. An optional GA4 Measurement ID is the only third-party script the plugin will ever add, and only if you supply one.
+Given the focus on low-bandwidth performance, brand styling is extremely limited. You are able to control:
 
-### Liveblogs and offline
-
-* Posts flagged as liveblogs render their entries in reverse-chronological order with a **Live** or **Archived** status badge
-* If the [PWA plugin](https://wordpress.org/plugins/pwa/) is active, the plugin supplies a matching text-only offline page through the `offline_template` filter
-
----
+* Primary and secondary colors (defaults to your curret Theme settings)
+* A font import URL (Google Fonts and similar)
+* Footer HTML, for your copyright and legalese
+* Limited custom CSS
+* Toggled behaviro changes for external links
+* An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included by default)
 
 ## Installation
 
-**Requirements:** WordPress 6.2 or later, PHP 7.4 or later (developed and tested against PHP 8.3). No other plugins or themes are required.
+**Requirements:** See the table above for the latest requirements. No other plugins or themes are required.
 
 ### Install from a ZIP — **not yet available**
 
@@ -112,7 +115,7 @@ Brand color (or automatic detection from your theme), a font import URL (Google 
 
 Until then, use the source install below.
 
-### Install from source
+### Install from source into local development
 
 ```bash
 git clone https://github.com/Automattic/newspack-lite-site.git
@@ -129,40 +132,22 @@ To produce an installable ZIP yourself:
 npm run release:archive     # writes release/newspack-lite-site.zip
 ```
 
-### Set it up
+### Admin Setup
 
-1. Go to **Lite Site → Settings** in the WordPress admin
-1. Turn on **Enable Lite Site** and save
-   * (Saving flushes rewrite rules automatically; if `/lite` 404s, re-save your permalinks under **Settings → Permalinks**)
-1. Optionally set the URL base, category and tag filters, posts per page, and appearance options
-1. Visit `https://yoursite.com/lite` — or use the **View Lite Site** link in the admin toolbar
+1. Activating Lite Sites will add a new entry to your Admin Toolbar called Lite Site
+1. Go to **Lite Site → Settings**
+1. Turn on **Enable Lite Site** and Save
+1. Options
+
+    * Edit the URL base
+    * Add category and tag filters to find the content mix you want
+    * Configure pagination you prefer to see
+    * Set appearance/branding options
+
+1. Visit `https://yoursite.com/lite` or your revised URL
 1. Optionally, add feeds under **Lite Site → RSS Feed Import**
 
 Link to `/lite` from your main site's header or footer so readers can find it before they need it.
-
----
-
-## For developers
-
-### Extension points
-
-| Hook | Type | Purpose |
-| --- | --- | --- |
-| `newspack_lite_site_supported_post_types` | filter | Post types eligible for lite rendering. Defaults to `post`, `page`, `nls_rss_entry`. |
-| `newspack_lite_site_post_content` | filter | The lite content pipeline, mirroring `the_content` without third-party callbacks. |
-| `newspack_lite_site_single_after_footer` | action | Fires after the footer on a lite single page. Receives the `WP_Post`. |
-| `newspack_lite_site_offline_after_footer` | action | Fires after the footer on the offline page. |
-
-Settings live in the `newspack_lite_site_settings` option and are exposed through `/wp/v2/settings`. Feeds are managed through `newspack-lite-site/v1/rss-feeds`.
-
-### Local development
-
-```bash
-npm run watch       # rebuild the admin UI on change
-npm run lint        # JS + SCSS
-npm run lint:php    # PHPCS (WordPress + VIP standards)
-npm run test:php    # PHPUnit — see bin/install-wp-tests.sh for the test DB setup
-```
 
 ---
 
