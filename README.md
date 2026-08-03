@@ -54,10 +54,10 @@ This alternate Lite Site provides a stripped-down, basic HTML document with inli
 
 With some planning, it can also help address:
 
-* breaking-news traffic spikes that overwhelm hosting
-* satellite or dial-up connections
-* readers on a metered plan
-* low-vision-optimized renderings and other accessibilty improvements
+- breaking-news traffic spikes that overwhelm hosting
+- satellite or dial-up connections
+- readers on a metered plan
+- low-vision-optimized renderings and other accessibilty improvements
 
 Lite Sites publishes via a domain suffix like `<your-site.com>/lite/`, `<your-site.com>/text/` or other domain variations you configure. On WordPress the domain path you choose will be added automatically. However, you could mask that pattern via any subdomain or other pattern you prefer via your hosting provider's records.
 
@@ -75,25 +75,25 @@ The [Emergency Mode for News](https://emergencymode.news/) program provides free
 
 **What changed with this new version:**
 
-* Packaged as a standalone WordPress plugin
-* A new **RSS Feed Import** system, so a Lite Site can aggregate and republish coverage from partner newsrooms during an emergency
-* A React-based admin (built on `@wordpress/dataviews`) replacing the original settings screen
-* Appearance controls (brand color, fonts, footer, custom CSS) so a Lite Site still reads as yours
-* An **offline page** for sites running a service worker via the PWA plugin
+- Packaged as a standalone WordPress plugin
+- A new **RSS Feed Import** system, so a Lite Site can aggregate and republish coverage from partner newsrooms during an emergency
+- A React-based admin (built on `@wordpress/dataviews`) replacing the original settings screen
+- Appearance controls (brand color, fonts, footer, custom CSS) so a Lite Site still reads as yours
+- An **offline page** for sites running a service worker via the PWA plugin
 
 ## Lite Sites Features
 
 ### Text-only rendering
 
-* Serves every eligible Post and Page, and your reverse-cron full archive as a text-only site alternative
-* Simplifies standard WordPress content via a strict allowlist of elements — headings, paragraphs, lists, blockquotes, links and basic emphasis
-  * Strips `<script>` tags and HTML comments entirely
-  * Converts every `<figure>` into a **tap-to-load placeholder** showing the alt text and caption — images or interactivity downloads only on direct reader action  
+- Serves every eligible Post and Page, and your reverse-cron full archive as a text-only site alternative
+- Simplifies standard WordPress content via a strict allowlist of elements — headings, paragraphs, lists, blockquotes, links and basic emphasis
+  - Strips `<script>` tags and HTML comments entirely
+  - Converts every `<figure>` into a **tap-to-load placeholder** showing the alt text and caption — images or interactivity downloads only on direct reader action  
   > [!WARNING]
   > Tap-to-load screengrab goes here
-* Each Lite Site article links back to the full-featured version and declares it as `rel="canonical"`, with `noindex, follow` so the Lite Site version never competes with the original
-* Displays author bylines and publication dates on single posts, with support for co-authors
-* Sticky posts are visually highlighted in the archive with heading-level emphasis
+- Each Lite Site article links back to the full-featured version and declares it as `rel="canonical"`, with `noindex, follow` so the Lite Site version never competes with the original
+- Displays author bylines and publication dates on single posts, with support for co-authors
+- Sticky posts are visually highlighted in the archive with heading-level emphasis
 
 ### Content controls
 
@@ -101,13 +101,13 @@ Choose the categories and tags that appear on the Lite Site, with optional autom
 
 ![Lite Site > General Settings](.github/images/playground-lite-site_settings.png)
 
-* Configurable URL base, so `/lite` can become `/text`, `/fast` or anything else
-* Configurable Pagination, defaulting to your WordPress **Settings → Reading** value
-* Filter what appears within the Lite Site by including/excluding Categories and/or Tags
-* Footer HTML, for your copyright and legalese
-* Toggled behavior changes for external links
-  * Open in new tabs and/or style them to convey that link _away_ from a text-only opetion (a `.lite-site-external` class[^2])
-* An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included from your site's default settings)
+- Configurable URL base, so `/lite` can become `/text`, `/fast` or anything else
+- Configurable Pagination, defaulting to your WordPress **Settings → Reading** value
+- Filter what appears within the Lite Site by including/excluding Categories and/or Tags
+- Footer HTML, for your copyright and legalese
+- Toggled behavior changes for external links
+  - Open in new tabs and/or style them to convey that link _away_ from a text-only opetion (a `.lite-site-external` class[^2])
+- An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included from your site's default settings)
 
 The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved.
 
@@ -125,14 +125,14 @@ Using your RSS Feed, you can continue to use your own CMS and "dual-publish" to 
 
 ![Lite Site > RSS Feed Configure ](.github/images/playground-lite-site_RSS-configure.png)
 
-* Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
-* Pause, resume and delete feeds from the admin — each feed shows its last run, last result and next scheduled run
-* Feed reprocessing never create duplicates
-* Feed-defined images or similar assets are sideloaded
-* Secure:
-  * every outbound URL is validated against private, reserved and link-local address ranges
-  * Redirects and responses capped
-  * Imports are limited to 50 new items per run and guarded by a per-feed lock
+- Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
+- Pause, resume and delete feeds from the admin — each feed shows its last run, last result and next scheduled run
+- Feed reprocessing never create duplicates
+- Feed-defined images or similar assets are sideloaded
+- Secure:
+  - every outbound URL is validated against private, reserved and link-local address ranges
+  - Redirects and responses capped
+  - Imports are limited to 50 new items per run and guarded by a per-feed lock
 
 Feed imports run on WP-Cron. If your site defines `DISABLE_WP_CRON`, the admin will tell you and you'll need a system cron calling `wp-cron.php`.
 
@@ -144,9 +144,9 @@ Given the focus on low-bandwidth performance, brand styling is extremely limited
 
 You are able to control:
 
-* Primary color (defaults to your current Primary)
-* A Font Provider import URL and body font selection
-* Limited custom CSS
+- Primary color (defaults to your current Primary)
+- A Font Provider import URL and body font selection
+- Limited custom CSS
 
 ## Known Limitations
 
@@ -221,10 +221,10 @@ Then navigate to **Plugins** in your WordPress Admin and activate **Lite Sites**
 1. Turn on **Enable Lite Site** and Save
 1. Options
 
-    * Edit the URL base
-    * Add category and tag filters to find the content mix you want
-    * Configure pagination you prefer to see
-    * Set appearance/branding options
+    - Edit the URL base
+    - Add category and tag filters to find the content mix you want
+    - Configure pagination you prefer to see
+    - Set appearance/branding options
 
 1. Visit `https://<yoursite.com>/lite/` or your revised URL
 1. Optionally, add feeds under **Lite Site → RSS Feed Import**
@@ -237,10 +237,10 @@ Link to `/lite` from your main site's header or footer so readers can find it be
 
 No. Every Lite Site page includes a `rel="canonical"` link pointing back to your full-featured version and is marked with `noindex, follow` meta tags. This means:
 
-* Search engines will index only your main site, never the `/lite/` versions
-* The canonical tag tells search engines which version is authoritative
-* The `follow` directive ensures links from Lite Site pages still pass authority
-* Your `/lite/` URLs won't compete with or dilute your main site's rankings
+- Search engines will index only your main site, never the `/lite/` versions
+- The canonical tag tells search engines which version is authoritative
+- The `follow` directive ensures links from Lite Site pages still pass authority
+- Your `/lite/` URLs won't compete with or dilute your main site's rankings
 
 The Lite Site is invisible to search engines but fully accessible to readers who need it.
 
@@ -250,11 +250,11 @@ Typically 90-95% reduction compared to a full WordPress site. A standard article
 
 What gets stripped down:
 
-* **JavaScript**: No theme scripts, no block editor runtime, no analytics, no ads (~500KB-2MB saved)
-* **CSS**: No theme stylesheets, just minimal inline styles (~50-200KB saved)
-* **Images**: Deferred until reader taps to load (~500KB-5MB+ saved per page)
-* **Fonts**: Optional; only loads if you configure a font import (~50-200KB saved)
-* **Tracking & third-party scripts**: Completely stripped (~100KB-1MB saved)
+- **JavaScript**: No theme scripts, no block editor runtime, no analytics, no ads (~500KB-2MB saved)
+- **CSS**: No theme stylesheets, just minimal inline styles (~50-200KB saved)
+- **Images**: Deferred until reader taps to load (~500KB-5MB+ saved per page)
+- **Fonts**: Optional; only loads if you configure a font import (~50-200KB saved)
+- **Tracking & third-party scripts**: Completely stripped (~100KB-1MB saved)
 
 <details>
 <summary><strong>Savings example</strong></summary>
@@ -281,9 +281,9 @@ Lite Sites respects standard WordPress cache-busting hooks, so when you update c
 <details>
 <summary><strong>Compatible caching plugins</strong></summary>
 
-* **Full-page caching**: WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed Cache, Comet Cache, Cache Enabler
-* **Object caching**: Redis, Memcached (improves transient storage performance)
-* **CDN integration**: CloudFlare, Fastly or any CDN that works with your caching plugin choices
+- **Full-page caching**: WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed Cache, Comet Cache, Cache Enabler
+- **Object caching**: Redis, Memcached (improves transient storage performance)
+- **CDN integration**: CloudFlare, Fastly or any CDN that works with your caching plugin choices
 
 </details>
 
@@ -293,15 +293,15 @@ Your `/lite/` URLs will return 404 errors, but nothing else on your site is affe
 
 #### What stops working
 
-* All `/lite/` URLs become inaccessible (404 Not Found)
-* RSS feed imports stop (WP-Cron scheduled tasks are unscheduled)
-* The admin menu entry disappears
+- All `/lite/` URLs become inaccessible (404 Not Found)
+- RSS feed imports stop (WP-Cron scheduled tasks are unscheduled)
+- The admin menu entry disappears
 
 #### What stays intact
 
-* All plugin settings are preserved in your database
-* Posts imported via RSS Feed remain in your WordPress database as regular Posts
-* No data is deleted — if you reactivate, everything returns exactly as you left it
+- All plugin settings are preserved in your database
+- Posts imported via RSS Feed remain in your WordPress database as regular Posts
+- No data is deleted — if you reactivate, everything returns exactly as you left it
 
 #### To fully remove the plugin
 
@@ -321,18 +321,18 @@ Lite Sites generally improve accessibility, especially for users with assistive 
 
 #### Accessibility benefits
 
-* Faster for screen readers: Less DOM complexity means faster navigation
-* Cleaner semantic HTML: Stripped-down structure with proper heading hierarchy, lists and link text
-* Better for cognitive disabilities: No animations, popups or visual distractions
-* Keyboard navigation: Simplified layout with fewer interactive elements makes tab navigation more predictable
-* Low-bandwidth assistive tech: Users relying on assistive technology over slow connections get reliable access
-* High contrast by default: Minimal styling makes it easier to apply custom stylesheets or browser accessibility modes
+- Faster for screen readers: Less DOM complexity means faster navigation
+- Cleaner semantic HTML: Stripped-down structure with proper heading hierarchy, lists and link text
+- Better for cognitive disabilities: No animations, popups or visual distractions
+- Keyboard navigation: Simplified layout with fewer interactive elements makes tab navigation more predictable
+- Low-bandwidth assistive tech: Users relying on assistive technology over slow connections get reliable access
+- High contrast by default: Minimal styling makes it easier to apply custom stylesheets or browser accessibility modes
 
 #### Potential considerations
 
-* ARIA labels removed: Complex block editor ARIA attributes are stripped during simplification, which is generally not an issue since the underlying semantic HTML remains
-* Custom accessibility features lost: If your theme includes specialized accessibility enhancements like skip links, focus indicators, etc., those won't carry over to the Lite Site
-* Alt text preserved: Image alt text appears in tap-to-load placeholders, so descriptive alt text remains accessible even when images aren't loaded
+- ARIA labels removed: Complex block editor ARIA attributes are stripped during simplification, which is generally not an issue since the underlying semantic HTML remains
+- Custom accessibility features lost: If your theme includes specialized accessibility enhancements like skip links, focus indicators, etc., those won't carry over to the Lite Site
+- Alt text preserved: Image alt text appears in tap-to-load placeholders, so descriptive alt text remains accessible even when images aren't loaded
 
 </details>
 
@@ -371,9 +371,9 @@ If feeds aren't importing or show errors in **Lite Site → RSS Feed Import**:
 1. Check the feed URL is valid: Copy the feed URL and open it in a browser. You should see valid RSS/XML content. If it redirects, times out, or shows an error, the feed itself is broken.
 
 1. Review the "Last Result" in the admin: Under **Lite Site → RSS Feed Import**, each feed shows its last result. Common errors:
-   * "Invalid feed URL": The URL format is malformed or blocked by security validation
-   * "Feed fetch failed": The remote server is unreachable, blocking your WordPress site, or returned an error
-   * "No valid items found": The feed parsed successfully but contained no importable content
+   - "Invalid feed URL": The URL format is malformed or blocked by security validation
+   - "Feed fetch failed": The remote server is unreachable, blocking your WordPress site, or returned an error
+   - "No valid items found": The feed parsed successfully but contained no importable content
 
 1. Check for security restrictions: Lite Sites blocks feeds from private/reserved IP ranges (`localhost`, `192.168.x.x`, `10.x.x.x`, etc) to prevent Server-Side Request Forgery attacks. If you're testing with a local feed, this is expected behavior.
 
@@ -399,9 +399,9 @@ If accessing your Lite Site URL returns a 404 error:
 1. Flush rewrite rules: See the [Rewrite rules not flushing](#rewrite-rules-not-flushing) section above for detailed steps.
 
 1. Verify you have posts to display: The Lite Site archive won't appear if:
-   * You have no published posts
-   * Your category/tag filters exclude all content
-   * All your posts are in categories/tags you've explicitly excluded in settings
+   - You have no published posts
+   - Your category/tag filters exclude all content
+   - All your posts are in categories/tags you've explicitly excluded in settings
 
 1. Test with a specific post: Try accessing a single post's Lite Site version by adding your URL base to a post URL: `<yoursite.com>/lite/2024/01/your-post-slug/`. If single posts work but the archive doesn't, it's a content filtering issue.
 
@@ -421,9 +421,9 @@ We welcome contributions! If you have a patch or have found an issue with the Li
 
 #### Reporting Bugs
 
-* Check existing [GitHub Issues](https://github.com/Automattic/newspack-lite-site/issues) first
-* Create a new issue with clear reproduction steps, expected vs actual behavior
-* Include your WordPress version, PHP version, and any relevant error messages
+- Check existing [GitHub Issues](https://github.com/Automattic/newspack-lite-site/issues) first
+- Create a new issue with clear reproduction steps, expected vs actual behavior
+- Include your WordPress version, PHP version, and any relevant error messages
 
 #### Contributing Code
 
@@ -466,16 +466,16 @@ Start by forking this repository to your own GitHub account, then clone your for
 
 #### Code Standards
 
-* Follow [WordPress PHP Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/)
-* JavaScript follows WordPress coding standards
-* All code must pass PHPCS and PHPUnit tests before merge
+- Follow [WordPress PHP Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/)
+- JavaScript follows WordPress coding standards
+- All code must pass PHPCS and PHPUnit tests before merge
 
 #### What to Contribute
 
-* Bug fixes and feature improvements
-* Documentation updates and clarifications
-* Test coverage improvements
-* Translations (via [translate.wordpress.org](https://translate.wordpress.org/) once published)
+- Bug fixes and feature improvements
+- Documentation updates and clarifications
+- Test coverage improvements
+- Translations (via [translate.wordpress.org](https://translate.wordpress.org/) once published)
 
 For questions or discussion, [open a Discussion](https://github.com/Automattic/newspack-lite-site/discussions) or comment on relevant issues.
 
