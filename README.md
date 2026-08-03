@@ -57,7 +57,7 @@ With some planning, it can also help address:
 - breaking-news traffic spikes that overwhelm hosting
 - satellite or dial-up connections
 - readers on a metered plan
-- low-vision-optimized renderings and other accessibilty improvements
+- low-vision-optimized renderings and other accessibility improvements
 
 Lite Sites publishes via a domain suffix like `<your-site.com>/lite/`, `<your-site.com>/text/` or other domain variations you configure. On WordPress the domain path you choose will be added automatically. However, you could mask that pattern via any subdomain or other pattern you prefer via your hosting provider's records.
 
@@ -106,7 +106,7 @@ Choose the categories and tags that appear on the Lite Site, with optional autom
 - Filter what appears within the Lite Site by including/excluding Categories and/or Tags
 - Footer HTML, for your copyright and legalese
 - Toggled behavior changes for external links
-  - Open in new tabs and/or style them to convey that link _away_ from a text-only opetion (a `.lite-site-external` class[^2])
+  - Open in new tabs and/or style them to convey that link _away_ from a text-only option (a `.lite-site-external` class[^2])
 - An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included from your site's default settings)
 
 The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved.
@@ -127,7 +127,7 @@ Using your RSS Feed, you can continue to use your own CMS and "dual-publish" to 
 
 - Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
 - Pause, resume and delete feeds from the admin — each feed shows its last run, last result and next scheduled run
-- Feed reprocessing never create duplicates
+- Feed reprocessing never creates duplicates
 - Feed-defined images or similar assets are sideloaded
 - Secure:
   - every outbound URL is validated against private, reserved and link-local address ranges
@@ -485,6 +485,6 @@ Built by [Automattic](https://automattic.com/) for [Newspack](https://newspack.c
 
 ---
 
-[^1]: **Hosted vs. Self-Hosting** — Which version is right for you? The choice between WordPress.com hosting and self-hosting involves variables unique to your organization: budget, technical ability, existing hosting and backup-site priorities. Consider whether your staff can manage maintenance and updates, or if managed hosting's guaranteed uptime during crises outweighs the cost. [Instructions for setting up a WordPress.com site can be found here](https://wordpress.com/go/website-building/create-a-news-website/). Your hosting provider or Cloud platform of choice may proivde instructions about how to install your own self-hosted WordPress instance within your current hosting plan, as well. [Non-profits or other NGOs](https://wpvip.com/solutions/non-profit/) may have free or discounted options, too.
+[^1]: **Hosted vs. Self-Hosting** — Which version is right for you? The choice between WordPress.com hosting and self-hosting involves variables unique to your organization: budget, technical ability, existing hosting and backup-site priorities. Consider whether your staff can manage maintenance and updates, or if managed hosting's guaranteed uptime during crises outweighs the cost. [Instructions for setting up a WordPress.com site can be found here](https://wordpress.com/go/website-building/create-a-news-website/). Your hosting provider or Cloud platform of choice may provide instructions about how to install your own self-hosted WordPress instance within your current hosting plan, as well. [Non-profits or other NGOs](https://wpvip.com/solutions/non-profit/) may have free or discounted options, too.
 
 [^2] Use of [Page Link To](https://wordpress.org/plugins/page-links-to/) can help you mix text-only articles and full-featured articles within a Lite Site, if needed
