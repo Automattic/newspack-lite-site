@@ -17,6 +17,12 @@
       "password": "password"
     },
     {
+      "step": "setSiteOptions",
+      "options": {
+        "blogname": "Lite Site Playground"
+      }
+    },
+    {
       "step": "installPlugin",
       "pluginData": {
         "resource": "url",
