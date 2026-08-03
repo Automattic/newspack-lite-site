@@ -1,15 +1,17 @@
-# Lite Sites, from [Newspack](https://newspack.com/) and [Emergency Mode for News](https://emergencymode.news/)
+# Lite Sites
+
+ [![Try in WordPress Playground](https://img.shields.io/badge/TRY%20IN-WordPress%20Playground!-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
 
 | Detail | Value |
 | --- | --- |
-| **Try it!** | [![Try in Playground](https://img.shields.io/badge/Try%20in-WordPress%20Playground-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json) |
-| **Requires at least** | ![WordPress](https://img.shields.io/badge/wordpress-6.4%2B-blue.svg) |
-| **Tested up to** | ![WordPress](https://img.shields.io/badge/wordpress-7.2%2B-blue.svg) |
-| **Requires PHP** | ![PHP](https://img.shields.io/badge/php-7.4%2B-blue.svg) |
-| **License** | ![License](https://img.shields.io/badge/license-GPLv3-blue.svg) |
-| **Stable tag** | [(see package.json)](package.json#L3) |
-| **Changelog** | [Changelog](https://github.com/Automattic/newspack-lite-site/blob/trunk/CHANGELOG.md) |
-| **Contributors** | @automattic &amp; @miguelpeixe, @rtcamp &amp; @R1shabh-Gupta, @scottklein and @tiffehr |
+| From | [Newspack](https://newspack.com/) and [Emergency Mode for News](https://emergencymode.news/) |
+| Requires at least | ![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg) |
+| Tested up to | ![WordPress](https://img.shields.io/badge/WordPress-7.2%2B-blue.svg) |
+| Requires PHP | ![PHP](https://img.shields.io/badge/PHP-8.0%2B-blue.svg) |
+| License | ![License](https://img.shields.io/badge/License-GPLv3-blue.svg) |
+| Stable tag | [(see package.json)](package.json#L3) |
+| Changelog | [Changelog](https://github.com/Automattic/newspack-lite-site/blob/trunk/CHANGELOG.md) |
+| Contributors | @automattic &amp; @miguelpeixe, @rtcamp &amp; @R1shabh-Gupta, @scottklein and @tiffehr |
 
 ## Table of Contents
 
