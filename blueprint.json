@@ -1,7 +1,7 @@
 {
-  "landingPage": "/wp-admin/admin.php?page=newspack-lite-site-settings",
+  "landingPage": "/wp-admin/admin.php?page=newspack-lite-site",
   "preferredVersions": {
-    "php": "8.0",
+    "php": "8.3",
     "wp": "latest"
   },
   "phpExtensionBundles": [
@@ -36,7 +36,7 @@
     },
     {
       "step": "runPHP",
-      "code": "<?php require_once 'wordpress/wp-load.php'; define('DOING_CRON', true); wp_cron();"
+      "code": "<?php require_once 'wordpress/wp-load.php'; $feed_url = 'https://apnews.com/hub/apf-topnews?format=rss'; do_action('newspack_lite_site_rss_import', md5($feed_url));"
     }
   ]
 }
