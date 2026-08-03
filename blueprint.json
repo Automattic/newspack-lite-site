@@ -1,0 +1,42 @@
+{
+  "landingPage": "/wp-admin/admin.php?page=newspack-lite-site-settings",
+  "preferredVersions": {
+    "php": "8.0",
+    "wp": "latest"
+  },
+  "phpExtensionBundles": [
+    "kitchen-sink"
+  ],
+  "features": {
+    "networking": true
+  },
+  "steps": [
+    {
+      "step": "login",
+      "username": "admin",
+      "password": "password"
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "url",
+        "url": "https://github.com/tiffehr/newspack-lite-site/releases/download/v0.1.0/newspack-lite-site.zip"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once 'wordpress/wp-load.php'; update_option('newspack_lite_site_settings', array('enabled' => true, 'url_base' => 'lite')); flush_rewrite_rules();"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once 'wordpress/wp-load.php'; $feed_url = 'https://apnews.com/hub/apf-topnews?format=rss'; $feed_id = md5($feed_url); $feeds = array($feed_id => array('feed_url' => $feed_url, 'interval' => 'hourly', 'author_id' => 1, 'status' => 'active', 'last_run' => null, 'last_result' => null)); update_option('newspack_lite_site_rss_importer', array('feeds' => $feeds)); wp_schedule_event(time(), 'hourly', 'newspack_lite_site_rss_import', array($feed_id));"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once 'wordpress/wp-load.php'; define('DOING_CRON', true); wp_cron();"
+    }
+  ]
+}

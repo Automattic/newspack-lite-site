@@ -1,7 +1,8 @@
 {
 	"extends": "newspack-scripts/config/tsconfig.json",
 	"compilerOptions": {
-		"rootDir": "."
+		"rootDir": ".",
+		"ignoreDeprecations": "6.0"
 	},
 	"include": [ "./src/**/*" ],
 	"exclude": [ "node_modules", "dist" ]
