@@ -5,6 +5,9 @@
  * Version: 0.1.0
  * Author: Automattic
  * Author URI: https://newspack.com/
+ * Requires at least: 6.6
+ * Tested up to: 7.2
+ * Requires PHP: 8.0
  * License: GPL3
  * Text Domain: newspack-lite-site
  * Domain Path: /languages/
