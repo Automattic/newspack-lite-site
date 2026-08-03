@@ -1,6 +1,6 @@
 # Lite Sites
 
- [![Try in WordPress Playground](https://img.shields.io/badge/TRY%20IN-WordPress%20Playground!-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/tiffehr/newspack-lite-site/trunk/blueprint.json)
+[![Try in WordPress Playground](https://img.shields.io/badge/TRY%20IN-WordPress%20Playground!-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
 
 | Detail | Value |
 | --- | --- |
