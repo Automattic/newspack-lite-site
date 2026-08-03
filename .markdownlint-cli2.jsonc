@@ -1,0 +1,17 @@
+// FORK CUSTOM: Markdown linting for the Lite Sites fork.
+{
+	"globs": [ "**/*.md" ],
+	"config": {
+		"default": true,
+		// GitHub renders raw HTML in Markdown
+		"MD033": false,
+		// Sibling headings must be unique, but repeating a section name under a
+		// different parent ("Symptom", "Solutions") is intentional
+		"MD024": { "siblings_only": true },
+		// Documenting a command and its expected output in one block is the clearest
+		// form for the troubleshooting guides
+		"MD014": false,
+		// Ignore Table column style for `compact` tables
+		"MD060": false
+	}
+}
