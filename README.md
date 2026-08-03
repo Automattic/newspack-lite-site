@@ -14,34 +14,16 @@
 | Sponsor | [Press Forward](https://www.pressforward.news/infrastructure25/) |
 | Contributors | [@automattic](https://github.com/automattic), [@newspack](https://github.com/newspack) &amp; [@miguelpeixe](https://github.com/miguelpeixe), [@rtcamp](https://github.com/rtcamp), [@scottklein](https://github.com/scottklein), [@tiffehr](https://github.com/tiffehr) |
 
-## Table of Contents
+## README MENU
 
 - [Description](#description)
 - [Background](#background)
 - [Lite Sites Features](#lite-sites-features)
-  - [Text-only rendering](#text-only-rendering)
-  - [Content controls](#content-controls)
-  - [Alternative RSS Feed import](#alternative-rss-feed-import)
-  - [Simplified Appearance Options](#simplified-appearance-options)
 - [Known Limitations](#known-limitations)
 - [Installation](#installation)
-  - [Install from a ZIP](#install-from-a-zip--not-yet-available)
-  - [Install from source](#install-from-source-into-local-development)
-  - [Admin Setup](#admin-setup)
-- [FAQ (Frequently Asked Questions)](#faq-frequently-asked-questions)
-  - [Will this affect my SEO?](#will-this-affect-my-seo)
-  - [How much bandwidth does this actually save?](#how-much-bandwidth-does-this-actually-save)
-  - [Can I use this with caching plugins?](#can-i-use-this-with-caching-plugins)
-  - [What happens if I deactivate the plugin?](#what-happens-if-i-deactivate-the-plugin)
-  - [Accessibility impact?](#accessibility-impact)
+- [FAQ](#faq-frequently-asked-questions)
 - [Troubleshooting](#troubleshooting)
-  - [WP-Cron not running](#wp-cron-not-running)
-  - [Rewrite rules not flushing](#rewrite-rules-not-flushing)
-  - [RSS feeds not importing](#rss-feeds-not-importing)
-  - [/lite/ or equivalent showing 404](#lite-or-equivalent-showing-404)
 - [Reports or Contributions](#reports-or-contributions)
-  - [Reporting Security Issues](#reporting-security-issues)
-  - [Contributing to Lite Sites](#contributing-to-lite-sites)
 - [License](#license)
 
 ## Description
@@ -64,9 +46,7 @@ With some planning, it can also help address:
 
 Lite Sites publishes via a domain suffix like `<your-site.com>/lite/`, `<your-site.com>/text/` or other domain variations you configure. On WordPress the domain path you choose will be added automatically. However, you could mask that pattern via any subdomain or other pattern you prefer via your hosting provider's records.
 
-TK
-> [!WARNING]
-> Lite Site reader-facing screengrab goes here
+<img src=".github/images/playground-lite-site_homescreen.png" alt="Lite Site sample homepage" width="400" />
 
 ## Background
 
@@ -92,8 +72,8 @@ The [Emergency Mode for News](https://emergencymode.news/) program provides free
 - Simplifies standard WordPress content via a strict allowlist of elements — headings, paragraphs, lists, blockquotes, links and basic emphasis
   - Strips `<script>` tags and HTML comments entirely
   - Converts every `<figure>` into a **tap-to-load placeholder** showing the alt text and caption — images or interactivity downloads only on direct reader action  
-  > [!WARNING]
-  > Tap-to-load screengrab goes here
+  <img src=".github/images/playground-lite-site_article-pre-image.png" alt="A Lite Site article showing an unloaded tap-to-load image placeholder" width="250" align="top" />
+  <img src=".github/images/playground-lite-site_article_with_image.png" alt="The same article after the reader taps to load the image" width="250" align="top" />  
 - Each Lite Site article links back to the full-featured version and declares it as `rel="canonical"`, with `noindex, follow` so the Lite Site version never competes with the original
 - Displays author bylines and publication dates on single posts, with support for co-authors
 - Sticky posts are visually highlighted in the archive with heading-level emphasis
@@ -102,7 +82,7 @@ The [Emergency Mode for News](https://emergencymode.news/) program provides free
 
 Choose the categories and tags that appear on the Lite Site, with optional automatic inclusion of subcategories for complex taxonomies.
 
-![Lite Site > General Settings](.github/images/playground-lite-site_settings.png)
+<img src=".github/images/playground-lite-site_settings.png" alt="Lite Site settings" width="400" />
 
 - Configurable URL base, so `/lite` can become `/text`, `/fast` or anything else
 - Configurable Pagination, defaulting to your WordPress **Settings → Reading** value
@@ -116,7 +96,7 @@ The display defaults to a reverse-chronology feed of Posts or Pages, with config
 
 ### Alternative RSS Feed import
 
-![Lite Site > RSS Feed Import ](.github/images/playground-lite-site_RSS-add.png)
+<img src=".github/images/playground-lite-site_RSS-import.png" alt="Lite Site RSS import settings" width="400" />
 
 If your organization uses a different CMS than WordPress, you can provide any RSS Feed to the Lite Sites plugin. However, you will need to setup an alternative or "shadow" WordPress.com (`<your-site>.wordpress.com/text/`) or other WordPress instance (`alt.<your-site>.com/text/`) in order to run an RSS-driven Lite Site.[^1] Then you can install this plugin and configure it to populate with the contents of your external RSS Feed.
 
@@ -125,8 +105,6 @@ Once connected via Lite Sites, your alternative WordPress site will import the s
 Using your RSS Feed, you can continue to use your own CMS and "dual-publish" to a simple WordPress backup site.
 
 #### Details
-
-![Lite Site > RSS Feed Configure ](.github/images/playground-lite-site_RSS-configure.png)
 
 - Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
 - Pause, resume and delete feeds from the admin — each feed shows its last run, last result and next scheduled run
@@ -143,7 +121,7 @@ Feed imports run on WP-Cron. If your site defines `DISABLE_WP_CRON`, the admin w
 
 Given the focus on low-bandwidth performance, brand styling is extremely limited.
 
-![Lite Site > Appearance](.github/images/playground-lite-site_appearance.png)
+<img src=".github/images/playground-lite-site_appearance.png" alt="Lite Site Appearance settings" width="400" />
 
 You are able to control:
 
