@@ -24,6 +24,8 @@ phpcs.xml.dist
 README.md
 PULL_REQUEST_TEMPLATE.md
 webpack.config.js
+.markdownlint-cli2.jsonc
+blueprint.json
 *.sql
 *.tar.gz
 *.zip
@@ -31,3 +33,4 @@ node_modules
 /tests
 /bin
 /src
+/release
