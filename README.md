@@ -226,7 +226,7 @@ Then navigate to **Plugins** in your WordPress Admin and activate **Lite Sites**
     - Configure pagination you prefer to see
     - Set appearance/branding options
 
-1. Visit `https://<yoursite.com>/lite/` or your revised URL
+1. Visit `https://<your-site.com>/lite/` or your revised URL
 1. Optionally, add feeds under **Lite Site → RSS Feed Import**
 
 Link to `/lite` from your main site's header or footer so readers can find it before they need it.
@@ -394,7 +394,7 @@ If accessing your Lite Site URL returns a 404 error:
 
 1. Verify the plugin is enabled: Go to **Lite Site → Settings** and confirm **Enable Lite Site** is checked and saved.
 
-1. Check your URL base setting: Under **Lite Site → Settings**, verify the URL base matches what you're trying to access. If you changed it from `/lite` to `/text`, you need to use `<yoursite.com>/text/` not `<yoursite.com>/lite/`.
+1. Check your URL base setting: Under **Lite Site → Settings**, verify the URL base matches what you're trying to access. If you changed it from `/lite` to `/text`, you need to use `<your-site.com>/text/` not `<your-site.com>/lite/`.
 
 1. Flush rewrite rules: See the [Rewrite rules not flushing](#rewrite-rules-not-flushing) section above for detailed steps.
 
@@ -403,7 +403,7 @@ If accessing your Lite Site URL returns a 404 error:
    - Your category/tag filters exclude all content
    - All your posts are in categories/tags you've explicitly excluded in settings
 
-1. Test with a specific post: Try accessing a single post's Lite Site version by adding your URL base to a post URL: `<yoursite.com>/lite/2024/01/your-post-slug/`. If single posts work but the archive doesn't, it's a content filtering issue.
+1. Test with a specific post: Try accessing a single post's Lite Site version by adding your URL base to a post URL: `<your-site.com>/lite/2024/01/your-post-slug/`. If single posts work but the archive doesn't, it's a content filtering issue.
 
 1. Check for plugin conflicts: Temporarily deactivate other plugins (especially those affecting permalinks or redirects) to see if one is interfering.
 
