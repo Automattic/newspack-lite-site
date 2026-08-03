@@ -1,6 +1,6 @@
 # Lite Sites
 
- [![Try in WordPress Playground](https://img.shields.io/badge/TRY%20IN-WordPress%20Playground!-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
+ [![Try in WordPress Playground](https://img.shields.io/badge/TRY%20IN-WordPress%20Playground!-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/tiffehr/newspack-lite-site/trunk/blueprint.json)
 
 | Detail | Value |
 | --- | --- |
@@ -11,7 +11,8 @@
 | License | ![License](https://img.shields.io/badge/License-GPLv3-blue.svg) |
 | Stable tag | [(see package.json)](package.json#L3) |
 | Changelog | [Changelog](https://github.com/Automattic/newspack-lite-site/blob/trunk/CHANGELOG.md) |
-| Contributors | @automattic &amp; @miguelpeixe, @rtcamp &amp; @R1shabh-Gupta, @scottklein and @tiffehr |
+| Sponsor | [Press Forward](https://www.pressforward.news/infrastructure25/) |
+| Contributors | [@automattic](https://github.com/automattic), [@newspack](https://github.com/newspack) &amp; [@miguelpeixe](https://github.com/miguelpeixe), [@rtcamp](https://github.com/rtcamp), [@scottklein](https://github.com/scottklein), [@tiffehr](https://github.com/tiffehr) |
 
 ## Table of Contents
 
@@ -21,7 +22,7 @@
   - [Text-only rendering](#text-only-rendering)
   - [Content controls](#content-controls)
   - [Alternative RSS Feed import](#alternative-rss-feed-import)
-  - [Limited Appearance Options](#limited-appearance-options)
+  - [Simplified Appearance Options](#simplified-appearance-options)
 - [Known Limitations](#known-limitations)
 - [Installation](#installation)
   - [Install from a ZIP](#install-from-a-zip--not-yet-available)
@@ -47,8 +48,8 @@
 
 Lite Sites is a WordPress plugin developed by Newspack and released to all WordPress users through the Emergency Mode for News initiative. It creates a stripped-down, **text-only version of your website** that loads rapidly even when bandwidth is severely compromised—making critical information accessible during network failures, disasters and other emergencies.
 
-> [!TIP]
-> **Try it now:** [Launch Lite Sites in WordPress Playground →](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
+> [!IMPORTANT]
+> **Try it now!** [Launch Lite Sites in a temporary WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/tiffehr/newspack-lite-site/trunk/blueprint.json)
 
 Think of it as the digital equivalent of keeping a transistor radio for emergencies: 📻 **it works when everything else fails**.
 
@@ -138,7 +139,7 @@ Using your RSS Feed, you can continue to use your own CMS and "dual-publish" to 
 
 Feed imports run on WP-Cron. If your site defines `DISABLE_WP_CRON`, the admin will tell you and you'll need a system cron calling `wp-cron.php`.
 
-### Limited Appearance Options
+### Simplified Appearance Options
 
 Given the focus on low-bandwidth performance, brand styling is extremely limited.
 
