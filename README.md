@@ -489,5 +489,4 @@ Built by [Automattic](https://automattic.com/) for [Newspack](https://newspack.c
 ---
 
 [^1]: **Hosted vs. Self-Hosting** — Which version is right for you? The choice between WordPress.com hosting and self-hosting involves variables unique to your organization: budget, technical ability, existing hosting and backup-site priorities. Consider whether your staff can manage maintenance and updates, or if managed hosting's guaranteed uptime during crises outweighs the cost. [Instructions for setting up a WordPress.com site can be found here](https://wordpress.com/go/website-building/create-a-news-website/). Your hosting provider or Cloud platform of choice may provide instructions about how to install your own self-hosted WordPress instance within your current hosting plan, as well. [Non-profits or other NGOs](https://wpvip.com/solutions/non-profit/) may have free or discounted options, too.
-
-[^2] Use of [Page Link To](https://wordpress.org/plugins/page-links-to/) can help you mix text-only articles and full-featured articles within a Lite Site, if needed
+[^2]: Use of [Page Link To](https://wordpress.org/plugins/page-links-to/) can help you mix text-only articles and full-featured articles within a Lite Site, if needed
