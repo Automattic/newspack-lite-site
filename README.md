@@ -31,7 +31,7 @@
 Lite Sites is a WordPress plugin developed by Newspack and released to all WordPress users through the Emergency Mode for News initiative. It creates a stripped-down, **text-only version of your website** that loads rapidly even when bandwidth is severely compromised—making critical information accessible during network failures, disasters and other emergencies.
 
 > [!IMPORTANT]
-> **Try it now!** [Launch Lite Sites in a temporary WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/tiffehr/newspack-lite-site/trunk/blueprint.json)
+> **Try it now!** [Launch Lite Sites in a temporary WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
 
 Think of it as the digital equivalent of keeping a transistor radio for emergencies: 📻 **it works when everything else fails**.
 
