@@ -31,11 +31,7 @@
 	</rule>
 
 	<rule ref="PHPCompatibilityWP"/>
-	<!-- 7.4 is the floor the code actually sets: arrow functions in
-	     Lite_Site_Settings and RSS_Importer. str_contains()/str_starts_with()
-	     look like 8.0 but WordPress polyfills both in wp-includes/compat.php.
-	     Scaffolded as 7.2-; raised because 7.2 predates arrow functions. -->
-	<config name="testVersion" value="7.4-"/>
+	<config name="testVersion" value="7.2-"/>
 
 	<arg name="extensions" value="php"/>
 
