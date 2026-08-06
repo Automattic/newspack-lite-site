@@ -1,10 +1,49 @@
-node_modules/
-vendor/
-dist/
-release/
-*.sql
-*.tar.gz
-*.zip
+# Editors
+project.xml
+project.properties
+/nbproject/private/
+.buildpath
+.project
+.settings*
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+.sublimelinterrc
+
+# NPM
+.cache
+# No trailing slash, so a `node_modules` symlink is ignored as well as the directory.
+/node_modules
+
+# Sass
+.sass-cache/
+
+# OS X metadata
 .DS_Store
-coverage.xml
+.history
+
+# Windows junk
+Thumbs.db
+
+# Composer
+# No trailing slash, so a `vendor` symlink is ignored as well as the directory.
+/vendor
+
+# Built files
+/build
+/dist
+/packages/components/colors
+/packages/components/dist
+/packages/components/shared
+/packages/components/node_modules
+release
+
+# Tests
+codecov/
+coverage/
 .phpunit.result.cache
+
+# Misc
+tsconfig.tsbuildinfo
+.markdownlint*
