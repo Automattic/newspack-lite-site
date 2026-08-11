@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Newspack Lite Site
  * Description: A lightweight, text-only version of your WordPress site for fast access in low-bandwidth or high-traffic conditions.
- * Version: 0.1.0-alpha.1
+ * Version: 0.1.0
  * Author: Automattic
  * Author URI: https://newspack.com/
  * Requires at least: 6.6
