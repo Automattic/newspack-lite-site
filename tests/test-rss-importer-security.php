@@ -56,18 +56,19 @@ class Test_RSS_Importer_Security extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * The cloud metadata endpoint is blocked by the plugin's own IP filter.
+	 * The cloud metadata endpoint is rejected.
 	 *
-	 * `block_ssrf_request()` never consults `wp_http_validate_url()`, so this holds
-	 * whatever core does with the range. Core blocked only 127/10/172.16/192.168
-	 * until WordPress 7.0.3 widened its own list to cover link-local, which is why
-	 * this asserts the plugin's behaviour and not core's.
+	 * `is_safe_url()` gates on `wp_http_validate_url()` and then on `filter_var()`
+	 * with `FILTER_FLAG_NO_RES_RANGE`, so either layer is enough to reject this
+	 * address. Which one catches it depends on the core version — WordPress 7.0.3
+	 * added `169.254.0.0/16` to core's own list — so this asserts the outcome
+	 * rather than the layer.
 	 */
 	public function test_blocks_link_local_metadata_endpoint() {
 		$this->assertInstanceOf(
 			WP_Error::class,
 			RSS_Importer::block_ssrf_request( false, [], 'http://169.254.169.254/latest/meta-data/' ),
-			'The plugin should block the link-local range.'
+			'The cloud metadata endpoint should be blocked.'
 		);
 	}
 
