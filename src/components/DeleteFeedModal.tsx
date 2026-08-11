@@ -18,22 +18,12 @@ import { type FeedModalProps } from '../types/rss-feed-import';
  *
  * Warns that the deletion is irreversible, then offers Cancel and Delete buttons.
  */
-export const DeleteFeedModal = ( {
-	items,
-	closeModal,
-	onActionPerformed,
-	onAction,
-}: FeedModalProps ) => {
+export const DeleteFeedModal = ( { items, closeModal, onActionPerformed, onAction }: FeedModalProps ) => {
 	const item = items[ 0 ];
 
 	return (
 		<>
-			<p>
-				{ __(
-					'Are you sure you want to delete this RSS feed? This action cannot be undone.',
-					'newspack-lite-site'
-				) }
-			</p>
+			<p>{ __( 'Are you sure you want to delete this RSS feed? This action cannot be undone.', 'newspack-lite-site' ) }</p>
 			<p>
 				<strong>{ item.feed_url }</strong>
 			</p>

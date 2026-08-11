@@ -19,22 +19,12 @@ import { type FeedModalProps } from '../types/rss-feed-import';
  * Explains that pausing prevents future imports but will not interrupt any
  * import currently in progress, then offers Cancel and Pause buttons.
  */
-export const PauseFeedModal = ( {
-	items,
-	closeModal,
-	onActionPerformed,
-	onAction,
-}: FeedModalProps ) => {
+export const PauseFeedModal = ( { items, closeModal, onActionPerformed, onAction }: FeedModalProps ) => {
 	const item = items[ 0 ];
 
 	return (
 		<>
-			<p>
-				{ __(
-					'Pausing will prevent future imports. Any import currently in progress will finish.',
-					'newspack-lite-site'
-				) }
-			</p>
+			<p>{ __( 'Pausing will prevent future imports. Any import currently in progress will finish.', 'newspack-lite-site' ) }</p>
 			<p>
 				<strong>{ item.feed_url }</strong>
 			</p>

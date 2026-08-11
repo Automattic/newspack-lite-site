@@ -54,9 +54,7 @@ export const SettingsPanel = ( { settings, onChange }: PanelProps ) => {
 							'ga4_measurement_id',
 						],
 					} }
-					onChange={ ( partial ) =>
-						onChange( partial as Partial< SiteSettings > )
-					}
+					onChange={ partial => onChange( partial as Partial< SiteSettings > ) }
 				/>
 			</div>
 		</div>

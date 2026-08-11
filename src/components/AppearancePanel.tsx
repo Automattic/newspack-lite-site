@@ -51,28 +51,17 @@ export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
 								},
 								{
 									id: 'typography',
-									label: __(
-										'Typography',
-										'newspack-lite-site'
-									),
-									children: [
-										'font_import_url',
-										'font_body',
-									],
+									label: __( 'Typography', 'newspack-lite-site' ),
+									children: [ 'font_import_url', 'font_body' ],
 								},
 								{
 									id: 'advanced',
-									label: __(
-										'Advanced',
-										'newspack-lite-site'
-									),
+									label: __( 'Advanced', 'newspack-lite-site' ),
 									children: [ 'custom_css' ],
 								},
 							],
 						} }
-						onChange={ ( partial ) =>
-							onChange( partial as Partial< SiteSettings > )
-						}
+						onChange={ partial => onChange( partial as Partial< SiteSettings > ) }
 					/>
 				</div>
 			</div>

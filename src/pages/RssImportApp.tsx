@@ -24,21 +24,11 @@ const cronDisabled = window.newspackLiteSite?.cronDisabled ?? false;
  * Loads feeds on mount and coordinates the Add Feed form and feeds table.
  */
 export const RssImportApp = () => {
-	const {
-		feeds,
-		isLoading,
-		isAdding,
-		actionInProgress,
-		notice,
-		addFeed,
-		feedAction,
-	} = useFeeds();
+	const { feeds, isLoading, isAdding, actionInProgress, notice, addFeed, feedAction } = useFeeds();
 
 	return (
 		<div className="wrap">
-			<AppHeader
-				headerText={ __( 'RSS Feed Import', 'newspack-lite-site' ) }
-			/>
+			<AppHeader headerText={ __( 'RSS Feed Import', 'newspack-lite-site' ) } />
 			<div className="newspack-lite-rss-sections">
 				{ cronDisabled && (
 					<Notice status="warning" isDismissible={ false }>
@@ -47,10 +37,7 @@ export const RssImportApp = () => {
 							'newspack-lite-site'
 						) }{ ' ' }
 						<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
-							{ __(
-								'Learn more about WordPress Cron',
-								'newspack-lite-site'
-							) }
+							{ __( 'Learn more about WordPress Cron', 'newspack-lite-site' ) }
 						</ExternalLink>
 					</Notice>
 				) }
@@ -59,18 +46,12 @@ export const RssImportApp = () => {
 				) : (
 					<>
 						<FeedForm onAdd={ addFeed } isAdding={ isAdding } />
-						<FeedsList
-							feeds={ feeds }
-							actionInProgress={ actionInProgress }
-							onAction={ feedAction }
-						/>
+						<FeedsList feeds={ feeds } actionInProgress={ actionInProgress } onAction={ feedAction } />
 					</>
 				) }
 			</div>
 			{ notice && (
-				<div
-					className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }
-				>
+				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>
 					<Snackbar>{ notice.message }</Snackbar>
 				</div>
 			) }

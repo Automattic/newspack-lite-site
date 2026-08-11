@@ -48,23 +48,19 @@ function getDefaultSettings(): SiteSettings {
  */
 export function useSettings() {
 	const [ settings, setSettings ] = useState< SiteSettings | null >( null );
-	const [ savedSettings, setSavedSettings ] = useState< SiteSettings | null >(
-		null
-	);
+	const [ savedSettings, setSavedSettings ] = useState< SiteSettings | null >( null );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ saveSuccess, setSaveSuccess ] = useState( false );
 
-	const isDirty =
-		settings !== null &&
-		JSON.stringify( settings ) !== JSON.stringify( savedSettings );
+	const isDirty = settings !== null && JSON.stringify( settings ) !== JSON.stringify( savedSettings );
 
 	useEffect( () => {
 		let cancelled = false;
 
 		apiFetch< Record< string, SiteSettings > >( { path: SETTINGS_PATH } )
-			.then( ( response ) => {
+			.then( response => {
 				if ( cancelled ) {
 					return;
 				}
@@ -77,10 +73,7 @@ export function useSettings() {
 				if ( cancelled ) {
 					return;
 				}
-				setError(
-					err.message ??
-						__( 'Failed to load settings.', 'newspack-lite-site' )
-				);
+				setError( err.message ?? __( 'Failed to load settings.', 'newspack-lite-site' ) );
 				setIsLoading( false );
 			} );
 
@@ -89,15 +82,10 @@ export function useSettings() {
 		};
 	}, [] );
 
-	const updateSettings = useCallback(
-		( partial: Partial< SiteSettings > ) => {
-			setSettings( ( prev ) =>
-				prev ? { ...prev, ...partial } : prev
-			);
-			setSaveSuccess( false );
-		},
-		[]
-	);
+	const updateSettings = useCallback( ( partial: Partial< SiteSettings > ) => {
+		setSettings( prev => ( prev ? { ...prev, ...partial } : prev ) );
+		setSaveSuccess( false );
+	}, [] );
 
 	const saveSettings = useCallback( async () => {
 		if ( ! settings ) {
@@ -121,10 +109,7 @@ export function useSettings() {
 			setSaveSuccess( true );
 			setTimeout( () => setSaveSuccess( false ), 3000 );
 		} catch ( err ) {
-			setError(
-				( err as Error ).message ??
-					__( 'Failed to save settings.', 'newspack-lite-site' )
-			);
+			setError( ( err as Error ).message ?? __( 'Failed to save settings.', 'newspack-lite-site' ) );
 		} finally {
 			setIsSaving( false );
 		}
