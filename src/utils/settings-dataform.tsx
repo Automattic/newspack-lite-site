@@ -20,93 +20,56 @@ import { TagsField } from '../components/TagsField';
 /**
  * Custom Edit component wrapping CategoriesField for use in DataForm.
  */
-const CategoriesFieldEdit = ( {
-	data,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
-	<CategoriesField
-		value={ data.categories ?? [] }
-		onChange={ ( ids ) => onChange( { categories: ids } ) }
-	/>
+const CategoriesFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSettings > ) => (
+	<CategoriesField value={ data.categories ?? [] } onChange={ ids => onChange( { categories: ids } ) } />
 );
 
 /**
  * Custom Edit component wrapping TagsField for tag inclusion in DataForm.
  */
-const TagsFieldEdit = ( {
-	data,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
+const TagsFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSettings > ) => (
 	<TagsField
 		label={ __( 'Tags', 'newspack-lite-site' ) }
 		value={ data.tags ?? [] }
-		onChange={ ( ids ) => onChange( { tags: ids } ) }
-		help={ __(
-			'Include all content with this Tag in your Lite Site. Leave it empty to include posts with any Tag.',
-			'newspack-lite-site'
-		) }
+		onChange={ ids => onChange( { tags: ids } ) }
+		help={ __( 'Include all content with this Tag in your Lite Site. Leave it empty to include posts with any Tag.', 'newspack-lite-site' ) }
 	/>
 );
 
 /**
  * Custom Edit component wrapping CategoriesField for category exclusion in DataForm.
  */
-const ExcludedCategoriesFieldEdit = ( {
-	data,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
+const ExcludedCategoriesFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSettings > ) => (
 	<CategoriesField
 		label={ __( 'Excluded Categories', 'newspack-lite-site' ) }
 		value={ data.excluded_categories ?? [] }
-		onChange={ ( ids ) => onChange( { excluded_categories: ids } ) }
-		help={ __(
-			'Content in these Categories will not appear on your Lite Site.',
-			'newspack-lite-site'
-		) }
+		onChange={ ids => onChange( { excluded_categories: ids } ) }
+		help={ __( 'Content in these Categories will not appear on your Lite Site.', 'newspack-lite-site' ) }
 	/>
 );
 
 /**
  * Custom Edit component wrapping TagsField for tag exclusion in DataForm.
  */
-const ExcludedTagsFieldEdit = ( {
-	data,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
+const ExcludedTagsFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSettings > ) => (
 	<TagsField
 		label={ __( 'Excluded Tags', 'newspack-lite-site' ) }
 		value={ data.excluded_tags ?? [] }
-		onChange={ ( ids ) => onChange( { excluded_tags: ids } ) }
-		help={ __(
-			'Content with these Tags will not appear on your Lite Site.',
-			'newspack-lite-site'
-		) }
+		onChange={ ids => onChange( { excluded_tags: ids } ) }
+		help={ __( 'Content with these Tags will not appear on your Lite Site.', 'newspack-lite-site' ) }
 	/>
 );
 
 /**
  * Custom Edit component for the URL Base field with a conditional live-site link.
  */
-const UrlBaseFieldEdit = ( {
-	data,
-	field,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => {
-	const archiveUrl = `${ window.location.origin }/${
-		data.url_base || 'lite'
-	}/`;
+const UrlBaseFieldEdit = ( { data, field, onChange }: DataFormControlProps< SiteSettings > ) => {
+	const archiveUrl = `${ window.location.origin }/${ data.url_base || 'lite' }/`;
 	return (
 		<>
-			<TextControl
-				label={ field.label }
-				value={ data.url_base ?? '' }
-				onChange={ ( val ) => onChange( { url_base: val } ) }
-			/>
+			<TextControl label={ field.label } value={ data.url_base ?? '' } onChange={ val => onChange( { url_base: val } ) } />
 			<p className="components-base-control__help">
-				{ __(
-					'The URL base for the Lite Site (e.g.',
-					'newspack-lite-site'
-				) }{ ' ' }
+				{ __( 'The URL base for the Lite Site (e.g.', 'newspack-lite-site' ) }{ ' ' }
 				{ data.enabled ? (
 					<a href={ archiveUrl } target="_blank" rel="noreferrer">
 						{ archiveUrl }
@@ -123,24 +86,14 @@ const UrlBaseFieldEdit = ( {
 /**
  * Custom Edit component wrapping ColorPickerField for use in DataForm.
  */
-const ColorPickerFieldEdit = ( {
-	data,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
-	<ColorPickerField
-		value={ data.primary_color ?? '' }
-		onChange={ ( val ) => onChange( { primary_color: val } ) }
-	/>
+const ColorPickerFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSettings > ) => (
+	<ColorPickerField value={ data.primary_color ?? '' } onChange={ val => onChange( { primary_color: val } ) } />
 );
 
 /**
  * Custom Edit component for the Font Import URL field with placeholder and caution help text.
  */
-const FontImportUrlFieldEdit = ( {
-	data,
-	field,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
+const FontImportUrlFieldEdit = ( { data, field, onChange }: DataFormControlProps< SiteSettings > ) => (
 	<TextControl
 		label={ field.label }
 		value={ data.font_import_url ?? '' }
@@ -148,7 +101,7 @@ const FontImportUrlFieldEdit = ( {
 			'<link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet"> or https://fonts.googleapis.com/css?family=Open+Sans',
 			'newspack-lite-site'
 		) }
-		onChange={ ( val ) => onChange( { font_import_url: val } ) }
+		onChange={ val => onChange( { font_import_url: val } ) }
 		help={ __(
 			'The font will be loaded on your Lite Site pages. Caution: Loading multiple fonts or font weights can slow down your Lite Site. Choose only the fonts and weights you need.',
 			'newspack-lite-site'
@@ -159,15 +112,11 @@ const FontImportUrlFieldEdit = ( {
 /**
  * Custom Edit component for the Footer HTML field with code-style textarea.
  */
-const FooterHtmlFieldEdit = ( {
-	data,
-	field,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
+const FooterHtmlFieldEdit = ( { data, field, onChange }: DataFormControlProps< SiteSettings > ) => (
 	<TextareaControl
 		label={ field.label }
 		value={ data.footer_html ?? '' }
-		onChange={ ( val ) => onChange( { footer_html: val } ) }
+		onChange={ val => onChange( { footer_html: val } ) }
 		rows={ 5 }
 		className="newspack-lite-code-textarea"
 	/>
@@ -176,16 +125,12 @@ const FooterHtmlFieldEdit = ( {
 /**
  * Custom Edit component for the Custom CSS field with code-style textarea.
  */
-const CustomCssFieldEdit = ( {
-	data,
-	field,
-	onChange,
-}: DataFormControlProps< SiteSettings > ) => (
+const CustomCssFieldEdit = ( { data, field, onChange }: DataFormControlProps< SiteSettings > ) => (
 	<TextareaControl
 		label={ field.label }
 		help={ field.description }
 		value={ data.custom_css ?? '' }
-		onChange={ ( val ) => onChange( { custom_css: val } ) }
+		onChange={ val => onChange( { custom_css: val } ) }
 		rows={ 10 }
 		className="newspack-lite-code-textarea"
 	/>
@@ -207,10 +152,7 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'posts_per_page',
-		label: __(
-			'Amount of content visible on Lite Site homepage',
-			'newspack-lite-site'
-		),
+		label: __( 'Amount of content visible on Lite Site homepage', 'newspack-lite-site' ),
 		type: 'integer',
 		description: __(
 			'Amount of content shown before a Back/Next button appears. Defaults to your WordPress Reading setting value for pagination.',
@@ -244,15 +186,9 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'external_links_new_tab',
-		label: __(
-			'Open any external links in a new tab',
-			'newspack-lite-site'
-		),
+		label: __( 'Open any external links in a new tab', 'newspack-lite-site' ),
 		type: 'boolean',
-		description: __(
-			'When enabled, links to external websites open in a new browser tab. Disable to open them in place.',
-			'newspack-lite-site'
-		),
+		description: __( 'When enabled, links to external websites open in a new browser tab. Disable to open them in place.', 'newspack-lite-site' ),
 	},
 	{
 		id: 'footer_html',

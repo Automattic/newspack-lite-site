@@ -26,12 +26,7 @@ const DEBOUNCE_DELAY = 200;
  * IDs are resolved to names via a separate fetch so existing values display
  * correctly on load.
  */
-export const TagsField = ( {
-	value,
-	onChange,
-	label,
-	help,
-}: TagsFieldProps ) => {
+export const TagsField = ( { value, onChange, label, help }: TagsFieldProps ) => {
 	const [ suggestions, setSuggestions ] = useState< TagItem[] >( [] );
 	const [ savedItems, setSavedItems ] = useState< TagItem[] >( [] );
 
@@ -84,25 +79,19 @@ export const TagsField = ( {
 	// Merge saved items and suggestions into a single id→name map.
 	const allItems = useMemo( () => {
 		const map = new Map< number, string >();
-		[ ...suggestions, ...savedItems ].forEach( ( tag ) =>
-			map.set( tag.id, decodeEntities( tag.name ) )
-		);
+		[ ...suggestions, ...savedItems ].forEach( tag => map.set( tag.id, decodeEntities( tag.name ) ) );
 		return map;
 	}, [ suggestions, savedItems ] );
 
 	// Convert stored IDs to display labels for FormTokenField.
-	const tokenValue = value
-		.map( ( id ) => allItems.get( id ) )
-		.filter( ( name ): name is string => name !== undefined );
+	const tokenValue = value.map( id => allItems.get( id ) ).filter( ( name ): name is string => name !== undefined );
 
 	const suggestionLabels = Array.from( allItems.values() );
 
 	const handleChange = ( tokens: ( string | { value: string } )[] ) => {
-		const names = tokens.map( ( t ) =>
-			typeof t === 'string' ? t : t.value
-		);
+		const names = tokens.map( t => ( typeof t === 'string' ? t : t.value ) );
 		const ids = names
-			.map( ( name ) => {
+			.map( name => {
 				for ( const [ id, tagName ] of allItems ) {
 					if ( tagName === name ) {
 						return id;
