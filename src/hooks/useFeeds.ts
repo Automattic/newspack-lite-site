@@ -12,12 +12,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies.
  */
-import {
-	type Feed,
-	type FeedAction,
-	type NewFeedData,
-	type Notice,
-} from '../types/rss-feed-import';
+import { type Feed, type FeedAction, type NewFeedData, type Notice } from '../types/rss-feed-import';
 
 const FEEDS_PATH = '/newspack-lite-site/v1/rss-feeds';
 
@@ -31,25 +26,20 @@ export function useFeeds() {
 	const [ feeds, setFeeds ] = useState< Feed[] >( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isAdding, setIsAdding ] = useState( false );
-	const [ actionInProgress, setActionInProgress ] = useState< string | null >(
-		null
-	);
+	const [ actionInProgress, setActionInProgress ] = useState< string | null >( null );
 	const [ notice, setNotice ] = useState< Notice | null >( null );
 
-	const showNotice = useCallback(
-		( message: string, status: 'success' | 'error' = 'success' ) => {
-			setNotice( { message, status } );
-			const timeout = 'error' === status ? 6000 : 3000;
-			setTimeout( () => setNotice( null ), timeout );
-		},
-		[]
-	);
+	const showNotice = useCallback( ( message: string, status: 'success' | 'error' = 'success' ) => {
+		setNotice( { message, status } );
+		const timeout = 'error' === status ? 6000 : 3000;
+		setTimeout( () => setNotice( null ), timeout );
+	}, [] );
 
 	useEffect( () => {
 		let cancelled = false;
 
 		apiFetch< Feed[] >( { path: FEEDS_PATH } )
-			.then( ( data ) => {
+			.then( data => {
 				if ( ! cancelled ) {
 					setFeeds( data );
 					setIsLoading( false );
@@ -57,14 +47,7 @@ export function useFeeds() {
 			} )
 			.catch( ( err: Error ) => {
 				if ( ! cancelled ) {
-					showNotice(
-						err.message ??
-							__(
-								'Failed to load RSS feeds.',
-								'newspack-lite-site'
-							),
-						'error'
-					);
+					showNotice( err.message ?? __( 'Failed to load RSS feeds.', 'newspack-lite-site' ), 'error' );
 					setIsLoading( false );
 				}
 			} );
@@ -88,11 +71,7 @@ export function useFeeds() {
 				showNotice( __( 'RSS feed added.', 'newspack-lite-site' ) );
 				return true;
 			} catch ( err ) {
-				showNotice(
-					( err as Error ).message ??
-						__( 'Failed to add RSS feed.', 'newspack-lite-site' ),
-					'error'
-				);
+				showNotice( ( err as Error ).message ?? __( 'Failed to add RSS feed.', 'newspack-lite-site' ), 'error' );
 				return false;
 			} finally {
 				setIsAdding( false );
@@ -118,19 +97,9 @@ export function useFeeds() {
 					resume: __( 'RSS feed resumed.', 'newspack-lite-site' ),
 					delete: __( 'RSS feed deleted.', 'newspack-lite-site' ),
 				};
-				showNotice(
-					messages[ action ] ??
-						__( 'RSS feed updated.', 'newspack-lite-site' )
-				);
+				showNotice( messages[ action ] ?? __( 'RSS feed updated.', 'newspack-lite-site' ) );
 			} catch ( err ) {
-				showNotice(
-					( err as Error ).message ??
-						__(
-							'Failed to update RSS feed.',
-							'newspack-lite-site'
-						),
-					'error'
-				);
+				showNotice( ( err as Error ).message ?? __( 'Failed to update RSS feed.', 'newspack-lite-site' ), 'error' );
 			} finally {
 				setActionInProgress( null );
 			}

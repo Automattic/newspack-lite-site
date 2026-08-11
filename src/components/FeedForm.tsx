@@ -41,12 +41,7 @@ export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
 		<div className="newspack-lite-section">
 			<div className="newspack-lite-section-header">
 				<h3>{ __( 'Add RSS Feed', 'newspack-lite-site' ) }</h3>
-				<p>
-					{ __(
-						'Schedule an RSS feed to be imported on a recurring basis.',
-						'newspack-lite-site'
-					) }
-				</p>
+				<p>{ __( 'Schedule an RSS feed to be imported on a recurring basis.', 'newspack-lite-site' ) }</p>
 			</div>
 
 			<form onSubmit={ handleSubmit }>
@@ -58,23 +53,16 @@ export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
 							layout: { type: 'regular' },
 							fields: [ 'feed_url', 'interval', 'author_id' ],
 						} }
-						onChange={ ( partial ) =>
-							setFeedData( ( prev ) => ( {
+						onChange={ partial =>
+							setFeedData( prev => ( {
 								...prev,
 								...partial,
 							} ) )
 						}
 					/>
 					<div>
-						<Button
-							variant="secondary"
-							type="submit"
-							isBusy={ isAdding }
-							disabled={ isAdding || ! feedData.feed_url }
-						>
-							{ isAdding
-								? __( 'Adding…', 'newspack-lite-site' )
-								: __( 'Add RSS Feed', 'newspack-lite-site' ) }
+						<Button variant="secondary" type="submit" isBusy={ isAdding } disabled={ isAdding || ! feedData.feed_url }>
+							{ isAdding ? __( 'Adding…', 'newspack-lite-site' ) : __( 'Add RSS Feed', 'newspack-lite-site' ) }
 						</Button>
 					</div>
 				</div>

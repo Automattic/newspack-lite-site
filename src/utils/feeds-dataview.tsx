@@ -21,14 +21,7 @@ export const DEFAULT_VIEW = {
 	perPage: 10,
 	page: 1,
 	sort: { field: 'feed_url', direction: 'asc' as const },
-	fields: [
-		'feed_url',
-		'status',
-		'interval_label',
-		'author_name',
-		'last_run',
-		'next_run',
-	],
+	fields: [ 'feed_url', 'status', 'interval_label', 'author_name', 'last_run', 'next_run' ],
 	filters: [],
 	search: '',
 };
@@ -42,9 +35,7 @@ export const FEED_FIELDS = [
 		label: __( 'RSS Feed URL', 'newspack-lite-site' ),
 		enableSorting: true,
 		enableGlobalSearch: true,
-		render: ( { item }: { item: Feed } ) => (
-			<strong>{ item.feed_url }</strong>
-		),
+		render: ( { item }: { item: Feed } ) => <strong>{ item.feed_url }</strong>,
 	},
 	{
 		id: 'status',
@@ -52,9 +43,7 @@ export const FEED_FIELDS = [
 		enableSorting: true,
 		render: ( { item }: { item: Feed } ) => (
 			<span className={ `newspack-lite-feed-status--${ item.status }` }>
-				{ 'active' === item.status
-					? __( 'Active', 'newspack-lite-site' )
-					: __( 'Paused', 'newspack-lite-site' ) }
+				{ 'active' === item.status ? __( 'Active', 'newspack-lite-site' ) : __( 'Paused', 'newspack-lite-site' ) }
 			</span>
 		),
 	},
@@ -91,7 +80,6 @@ export const FEED_FIELDS = [
 		id: 'next_run',
 		label: __( 'Next Run', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) =>
-			item.next_run ? formatUnixTimestamp( item.next_run ) : '—',
+		render: ( { item }: { item: Feed } ) => ( item.next_run ? formatUnixTimestamp( item.next_run ) : '—' ),
 	},
 ];
