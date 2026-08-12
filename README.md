@@ -146,53 +146,101 @@ If you encounter a conflict, check the [Troubleshooting section](#troubleshootin
 
 ## Installation
 
-> [!IMPORTANT]  
-> **Requirements:** See the table above for the latest requirements. No other plugins or themes are required.
+### Install from a ZIP (recommended)
 
-### Install from a ZIP — **not yet available**
+1. Download [**newspack-lite-site.zip**](https://github.com/Automattic/newspack-lite-site/releases/latest/download/newspack-lite-site.zip), which always points to the most recent release
 
-> **Not yet supported.** Ready-to-upload release ZIPs are planned for this repository but are not published yet. The steps below are drafted for when they are
->
-> 1. Download the latest `newspack-lite-site.zip` from the [Releases](https://github.com/Automattic/newspack-lite-site/releases) page
-> 1. In WordPress, go to **Plugins → Add New → Upload Plugin**, choose the ZIP, and click **Install Now**
-> 1. Click **Activate**
+    1. To install an earlier version instead, grab its ZIP from the [Releases](https://github.com/Automattic/newspack-lite-site/releases) page
 
-Until then, use the source install below.
+1. In WordPress, go to **Plugins → Add New → Upload Plugin**, choose the ZIP and click **Install Now**
+1. After installation completes, click **Activate Plugin**
+1. Continue with [Admin Setup](#admin-setup)
 
-### Install from source into local development
+To update later, repeat the same steps with a newer ZIP — WordPress will replace the existing copy and your settings and imported Posts are preserved.
 
-```bash
-git clone https://github.com/Automattic/newspack-lite-site.git
-cd newspack-lite-site
-composer install --no-dev   # required: the plugin loads vendor/autoload.php
-npm ci && npm run build     # required: builds the admin UI into dist/
-```
+### Install from source
 
-**For local development:**
+You only need this method if you want to alter code or try something that has not been released yet. If you just want to run Lite Sites on a site, the ZIP instructions above are the better path.
 
-Copy or symlink the resulting directory into your WordPress installation's `wp-content/plugins/` directory:
+The source in this repository is **not** ready to install as-is, because the Admin components must be compiled first.
 
-```bash
-# Option 1: Symlink (recommended for active development)
-ln -s /path/to/newspack-lite-site /path/to/wordpress/wp-content/plugins/newspack-lite-site
+<details>
+<summary><strong>What you need first</strong></summary>
 
-# Option 2: Copy the directory
-cp -r newspack-lite-site /path/to/wordpress/wp-content/plugins/
-```
+These are the tools that do the compiling. Each links to its own install instructions:
 
-Then navigate to **Plugins** in your WordPress Admin and activate **Lite Sites**.
+- [**Node.js**](https://nodejs.org/) — use the current LTS release. This builds the admin screens
+- [**Composer**](https://getcomposer.org/download/) — a PHP dependency manager. This repository has no PHP libraries to download, but Composer still has to generate the file the plugin loads at startup
+- **A copy of the source code.** Either [**Git**](https://git-scm.com/downloads), or no extra tool at all — see the two options below
 
-**For uploading to a remote WordPress instance:**
+You will run a few commands in a terminal (Terminal on macOS/Linux, or PowerShell/Windows Terminal on Windows). Every command below is meant to be copied and pasted as written.
 
-1. Create a ZIP of the built plugin:
+</details>
+
+#### 1. Get the source code
+
+Pick which option is easier for you: GitHub download or `git clone`.
+
+<details>
+   <summary><strong>Option details</strong></summary>
+
+   **Option A — download it from GitHub, no Git required.** On the [repository page](https://github.com/Automattic/newspack-lite-site), click the green **Code** button, choose **Download ZIP** and unzip it wherever you keep projects. The unzipped folder will be named `newspack-lite-site-trunk`; rename it to `newspack-lite-site`, since WordPress expects that name.
+
+   **Option B — clone it with Git.** This makes it easier to pull in later updates:
 
    ```bash
-   npm run release:archive     # writes release/newspack-lite-site.zip
+   git clone https://github.com/Automattic/newspack-lite-site.git
+   ```
+
+</details>
+
+#### 2. Build the plugin
+
+In your terminal, move into the folder you just created and run both commands:
+
+```bash
+cd newspack-lite-site       # move to this directory
+composer install --no-dev   # creates vendor/autoload.php, which the plugin requires on load
+npm ci && npm run build     # compiles the React admin screens into dist/
+```
+
+If you plan to run the linters or tests described under [Contributing](#contributing-code), omit `--no-dev` so the developer tooling installs as well.
+
+#### 3. Point WordPress at it
+
+WordPress finds plugins by looking in the `wp-content/plugins/` folder inside your WordPress installation. The built folder has to end up there, under the name `newspack-lite-site`.
+
+**If your WordPress runs on this same computer** (Local, MAMP, Docker, `wp-env`, etc.), choose from copying over the directory or symlinking it.
+
+<details>
+<summary><strong>Option details</strong></summary>
+
+```bash
+# Option 1: Copy the folder -- simplest, but after you copy it,
+# you may not see your code changes
+cp -r newspack-lite-site /path/to/wordpress/wp-content/plugins/
+
+# Option 2: Symlink it, so WordPress reads your working
+# folder directly and every edit shows up immediately
+ln -s /path/to/newspack-lite-site /path/to/wordpress/wp-content/plugins/newspack-lite-site
+```
+
+Replace `/path/to/...` with the real locations on your machine. Then go to **Plugins** in your WordPress admin and activate **Lite Sites**.
+
+A symlink is a pointer rather than a second copy of the files. Some hosts and some Windows setups disallow them, in which case use Option 1.
+
+</details>
+
+If your WordPress runs on a server somewhere else, package the built folder into a ZIP and upload it the same way as a release:
+
+1. Build the ZIP:
+
+   ```bash
+   npm run release:archive # writes release/newspack-lite-site.zip
    ```
 
 1. In your WordPress admin, go to **Plugins → Add New → Upload Plugin**
-1. Choose the `release/newspack-lite-site.zip` file
-1. Click **Install Now**
+1. Choose the `release/newspack-lite-site.zip` file and click **Install Now**
 1. After installation completes, click **Activate Plugin**
 
 ### Admin Setup
