@@ -44,6 +44,7 @@ $current_page = min( $current_page, $total_pages );
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex, follow">
 	<title><?php bloginfo( 'name' ); ?></title>
 	<?php
 	$font_import_url = Lite_Site::get_font_import_url();
