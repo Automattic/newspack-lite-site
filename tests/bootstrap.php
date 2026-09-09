@@ -36,3 +36,4 @@ require $_tests_dir . '/includes/bootstrap.php';
 require_once __DIR__ . '/class-lite-site-testcase.php';
 require_once __DIR__ . '/class-lite-site-test-enclosure.php';
 require_once __DIR__ . '/class-lite-site-test-feed-item.php';
+require_once __DIR__ . '/class-lite-site-test-bylines.php';

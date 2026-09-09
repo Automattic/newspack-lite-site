@@ -518,6 +518,15 @@ class Lite_Site {
 	 * @return string The formatted author(s) string with links.
 	 */
 	public static function get_authors( $post ) {
+		// An active Newspack custom byline replaces the author-derived byline.
+		// Guarded because the plugin runs standalone, without the Newspack stack.
+		if ( class_exists( '\Newspack\Bylines' ) && method_exists( '\Newspack\Bylines', 'get_custom_byline_html' ) ) {
+			$custom_byline = \Newspack\Bylines::get_custom_byline_html( $post->ID );
+			if ( ! empty( $custom_byline ) ) {
+				return $custom_byline;
+			}
+		}
+
 		if ( function_exists( 'coauthors_posts_links' ) ) {
 			$authors      = get_coauthors( $post->ID );
 			$author_links = array_map(
