@@ -476,6 +476,12 @@ class Lite_Site {
 			return null;
 		}
 
+		// Lite pages render raw post content with no password form, so a
+		// protected post must not resolve at all.
+		if ( post_password_required( $post ) ) {
+			return null;
+		}
+
 		if ( is_object_in_taxonomy( $post->post_type, 'category' ) ) {
 			$post_categories     = wp_get_post_categories( $post->ID );
 			$included_categories = self::get_categories();
