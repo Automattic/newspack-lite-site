@@ -51,4 +51,16 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 
 		$this->assertNull( Lite_Site::resolve_post( 'locked-story' ), 'A password-protected post does not resolve.' );
 	}
+
+	/**
+	 * The page cache key ignores the query string, so cache-busting query
+	 * strings cannot mint unbounded transients.
+	 */
+	public function test_page_cache_key_ignores_query_string() {
+		$bare = Lite_Site::get_page_cache_key( '/lite/2024/07/01/a-story' );
+
+		$this->assertSame( $bare, Lite_Site::get_page_cache_key( '/lite/2024/07/01/a-story?utm_source=x' ), 'A query string does not change the key.' );
+		$this->assertSame( $bare, Lite_Site::get_page_cache_key( '/lite/2024/07/01/a-story/?utm_source=x' ), 'A trailing slash does not change the key.' );
+		$this->assertNotSame( $bare, Lite_Site::get_page_cache_key( '/lite/2024/07/01/another-story' ), 'Different paths get different keys.' );
+	}
 }

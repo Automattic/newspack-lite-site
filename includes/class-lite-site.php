@@ -395,8 +395,8 @@ class Lite_Site {
 			exit;
 		}
 
-		$request_uri = untrailingslashit( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
-		$cache_key   = 'nls_page_' . md5( $request_uri );
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$cache_key   = self::get_page_cache_key( $request_uri );
 		$cached      = get_transient( $cache_key );
 
 		if ( false !== $cached ) {
@@ -427,9 +427,23 @@ class Lite_Site {
 
 		$url_base    = self::get_url_base();
 		$post_path   = ltrim( str_replace( trailingslashit( home_url() ), '', trailingslashit( get_permalink( $post ) ) ), '/' );
-		$request_uri = untrailingslashit( '/' . $url_base . '/' . $post_path );
-		$cache_key   = 'nls_page_' . md5( $request_uri );
-		delete_transient( $cache_key );
+		$request_uri = '/' . $url_base . '/' . $post_path;
+		delete_transient( self::get_page_cache_key( $request_uri ) );
+	}
+
+	/**
+	 * Build the transient key that caches a lite single page.
+	 *
+	 * Keyed on the URL path alone: the query string never affects lite output,
+	 * and keying on it would let cache-busting query strings mint unbounded
+	 * transients.
+	 *
+	 * @param string $request_uri The request URI, with or without a query string.
+	 * @return string The transient key.
+	 */
+	public static function get_page_cache_key( string $request_uri ): string {
+		$path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		return 'nls_page_' . md5( untrailingslashit( $path ) );
 	}
 
 	/**
