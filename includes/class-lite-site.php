@@ -705,8 +705,10 @@ class Lite_Site {
 		// Apply the full WP content pipeline without plugin callbacks from the_content.
 		$content = apply_filters( 'newspack_lite_site_post_content', $content );
 
-		// Remove HTML comments.
-		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
+		// Remove HTML comments. The single-token `.` with the `s` modifier stays
+		// linear on an unclosed `<!--`, where alternation-based patterns
+		// backtrack catastrophically and preg_replace returns null.
+		$content = preg_replace( '/<!--.*?-->/s', '', $content );
 
 		// Replace figures with lazy-load placeholders before stripping.
 		$content = preg_replace_callback(

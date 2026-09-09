@@ -104,6 +104,17 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertStringNotContainsString( 'color: red', $content, 'CSS should not appear as text.' );
 	}
 
+	/**
+	 * An unclosed HTML comment does not blank the whole article.
+	 */
+	public function test_clean_content_survives_unclosed_comment() {
+		$content = Lite_Site::clean_content(
+			'<p>First paragraph.</p><!-- unclosed' . str_repeat( '<p>Filler to force backtracking.</p>', 50 )
+		);
+
+		$this->assertStringContainsString( 'First paragraph.', $content, 'Content before an unclosed comment should survive.' );
+	}
+
 
 	/**
 	 * Text-level markup on the allowlist survives cleaning.
