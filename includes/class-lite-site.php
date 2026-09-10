@@ -395,20 +395,37 @@ class Lite_Site {
 			exit;
 		}
 
+		// Resolved here as well as in the template: whether the page may be
+		// cached has to be known before the cache is consulted, and the URL
+		// lookup is memoized so the second resolution is cheap.
+		$post      = self::resolve_post( get_query_var( 'lite_path' ) );
+		$cacheable = $post && self::is_post_page_cacheable( $post->ID );
+
 		$request_uri = untrailingslashit( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
 		$cache_key   = 'nls_page_' . md5( $request_uri );
-		$cached      = get_transient( $cache_key );
 
-		if ( false !== $cached ) {
-			echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
-			exit;
+		if ( $cacheable ) {
+			$cached = get_transient( $cache_key );
+			if ( false !== $cached ) {
+				echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
+				exit;
+			}
+		} else {
+			// What keeps the page out of the transient has to keep it out of
+			// any page cache or CDN in front of the site as well.
+			if ( function_exists( 'batcache_cancel' ) ) {
+				batcache_cancel();
+			}
+			nocache_headers();
 		}
 
 		ob_start();
 		include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
 		$output = ob_get_clean();
 
-		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		if ( $cacheable ) {
+			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		}
 
 		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 		exit;
@@ -447,10 +464,10 @@ class Lite_Site {
 	}
 
 	/**
-	 * Resolve a URL path to a published WP_Post.
+	 * Resolve a URL path to a published WP_Post the current reader may see.
 	 *
 	 * @param string $path URL path without leading slash.
-	 * @return WP_Post|null The resolved post, or null if not found, not published, or excluded by term filters.
+	 * @return WP_Post|null The resolved post, or null if not found, not published, excluded by term filters, or restricted for the reader.
 	 */
 	public static function resolve_post( $path ) {
 		if ( empty( $path ) ) {
@@ -502,7 +519,61 @@ class Lite_Site {
 			}
 		}
 
+		if ( self::is_post_restricted( $post->ID ) ) {
+			return null;
+		}
+
 		return $post;
+	}
+
+	/**
+	 * Whether the current reader is kept from the post's content on the full site.
+	 *
+	 * Lite pages print post content with none of the full site's gating layer,
+	 * so this check is all that stands between a restricted post and the
+	 * reader. Newspack's content gates and its WooCommerce Memberships
+	 * integration answer it; without them the filter is unanswered and no
+	 * post is restricted.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	public static function is_post_restricted( $post_id ) {
+		/** This filter is documented in newspack-plugin, Content_Gate::is_post_restricted(). */
+		return (bool) apply_filters( 'newspack_is_post_restricted', false, (int) $post_id );
+	}
+
+	/**
+	 * Drop the posts the current reader cannot access from an archive listing.
+	 *
+	 * @param \WP_Post[] $posts Posts as queried.
+	 * @return \WP_Post[] The accessible posts, re-indexed from zero.
+	 */
+	public static function exclude_restricted_posts( array $posts ) {
+		return array_values(
+			array_filter(
+				$posts,
+				function ( $post ) {
+					return ! self::is_post_restricted( $post->ID );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Whether a rendered lite page for the post may be stored in the page cache.
+	 *
+	 * The cache is keyed by URL alone, so a page rendered for a reader who is
+	 * allowed past a restriction (a member, an editor, a reader carrying a
+	 * bypass cookie) would be served to every reader after them. A post that
+	 * any reader could be restricted from is rendered fresh on every request.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	public static function is_post_page_cacheable( $post_id ) {
+		/** This filter is documented in newspack-plugin, Content_Gate::post_has_restrictions(). */
+		return ! apply_filters( 'newspack_post_has_restrictions', false, (int) $post_id );
 	}
 
 	/**

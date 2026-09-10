@@ -37,6 +37,9 @@ $query        = new \WP_Query( $query_args );
 $total_pages  = max( 1, (int) $query->max_num_pages );
 $current_page = min( $current_page, $total_pages );
 
+// A page comes up short when it held restricted posts; pagination still counts them.
+$query->posts = Lite_Site::exclude_restricted_posts( $query->posts );
+
 ?>
 <!DOCTYPE html>
 <html lang="<?php bloginfo( 'language' ); ?>">
