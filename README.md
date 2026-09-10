@@ -91,8 +91,9 @@ Choose the categories and tags that appear on the Lite Site, with optional autom
 - Toggled behavior changes for external links
   - Open in new tabs and/or style them to convey that link _away_ from a text-only option (a `.lite-site-external` class[^2])
 - An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included from your site's default settings)
+- Content restrictions from the Newspack plugin are honored: a post the reader cannot access on the full site, whether through a Newspack content gate or WooCommerce Memberships, is left out of the Lite Site
 
-The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved.
+The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved. A Post that carries a content restriction is never cached, so a reader who is allowed past the restriction never fills the cache for readers who are not.
 
 ### Alternative RSS Feed import
 
@@ -138,7 +139,7 @@ Lite Sites works with most WordPress setups, but some configurations may cause c
 | **Custom post types** | Only standard Posts and Pages are supported. Custom post types won't appear unless filtered through categories or tags. |
 | **Advanced block types** | Complex blocks (embeds, interactive elements, custom blocks) are stripped to basic HTML. Only headings, paragraphs, lists, blockquotes, links and basic formatting survive. |
 | **Redirect plugins** | Plugins that aggressively redirect or rewrite URLs (Redirection, Simple 301 Redirects) may interfere with `/lite/` URLs. Test after activating redirect plugins. See [Troubleshooting](#lite-or-equivalent-showing-404). |
-| **Membership/paywall plugins** | Content restrictions may not carry over to Lite Site URLs. Test that protected content remains protected. |
+| **Membership/paywall plugins** | Newspack content gates and WooCommerce Memberships (through the Newspack plugin) are honored. Restrictions from other membership or paywall plugins may not carry over to Lite Site URLs; test that protected content remains protected. |
 | **Multilingual plugins** | WPML, Polylang and similar plugins are untested. Language-switching may not work correctly on Lite Site URLs. |
 | **Page builders** | Content created with page builders (Elementor, Divi, Beaver Builder) will be heavily simplified. The plugin extracts only text content. |
 
