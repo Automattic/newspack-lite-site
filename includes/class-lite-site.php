@@ -395,8 +395,8 @@ class Lite_Site {
 			exit;
 		}
 
-		$request_uri = untrailingslashit( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
-		$cache_key   = 'nls_page_' . md5( $request_uri );
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$cache_key   = self::get_page_cache_key( $request_uri );
 		$cached      = get_transient( $cache_key );
 
 		if ( false !== $cached ) {
@@ -427,9 +427,23 @@ class Lite_Site {
 
 		$url_base    = self::get_url_base();
 		$post_path   = ltrim( str_replace( trailingslashit( home_url() ), '', trailingslashit( get_permalink( $post ) ) ), '/' );
-		$request_uri = untrailingslashit( '/' . $url_base . '/' . $post_path );
-		$cache_key   = 'nls_page_' . md5( $request_uri );
-		delete_transient( $cache_key );
+		$request_uri = '/' . $url_base . '/' . $post_path;
+		delete_transient( self::get_page_cache_key( $request_uri ) );
+	}
+
+	/**
+	 * Build the transient key that caches a lite single page.
+	 *
+	 * Keyed on the URL path alone: the query string never affects lite output,
+	 * and keying on it would let cache-busting query strings mint unbounded
+	 * transients.
+	 *
+	 * @param string $request_uri The request URI, with or without a query string.
+	 * @return string The transient key.
+	 */
+	public static function get_page_cache_key( string $request_uri ): string {
+		$path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		return 'nls_page_' . md5( untrailingslashit( $path ) );
 	}
 
 	/**
@@ -476,6 +490,12 @@ class Lite_Site {
 			return null;
 		}
 
+		// Lite pages render raw post content with no password form, so a
+		// protected post must not resolve at all.
+		if ( post_password_required( $post ) ) {
+			return null;
+		}
+
 		if ( is_object_in_taxonomy( $post->post_type, 'category' ) ) {
 			$post_categories     = wp_get_post_categories( $post->ID );
 			$included_categories = self::get_categories();
@@ -512,6 +532,15 @@ class Lite_Site {
 	 * @return string The formatted author(s) string with links.
 	 */
 	public static function get_authors( $post ) {
+		// An active Newspack custom byline replaces the author-derived byline.
+		// Guarded because the plugin runs standalone, without the Newspack stack.
+		if ( class_exists( '\Newspack\Bylines' ) && method_exists( '\Newspack\Bylines', 'get_custom_byline_html' ) ) {
+			$custom_byline = \Newspack\Bylines::get_custom_byline_html( $post->ID );
+			if ( ! empty( $custom_byline ) ) {
+				return $custom_byline;
+			}
+		}
+
 		if ( function_exists( 'coauthors_posts_links' ) ) {
 			$authors      = get_coauthors( $post->ID );
 			$author_links = array_map(
@@ -699,8 +728,10 @@ class Lite_Site {
 		// Apply the full WP content pipeline without plugin callbacks from the_content.
 		$content = apply_filters( 'newspack_lite_site_post_content', $content );
 
-		// Remove HTML comments.
-		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
+		// Remove HTML comments. The single-token `.` with the `s` modifier stays
+		// linear on an unclosed `<!--`, where alternation-based patterns
+		// backtrack catastrophically and preg_replace returns null.
+		$content = preg_replace( '/<!--.*?-->/s', '', $content );
 
 		// Replace figures with lazy-load placeholders before stripping.
 		$content = preg_replace_callback(
@@ -709,8 +740,10 @@ class Lite_Site {
 			$content
 		);
 
-		// Remove script tags.
+		// Remove script and style tags along with their contents — wp_kses
+		// would strip the tags but leave raw CSS/JS behind as text.
 		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
+		$content = preg_replace( '/<style.*?>.*?<\/style>/is', '', $content );
 
 		// Define allowed HTML elements for text-only content.
 		$allowed_html = [

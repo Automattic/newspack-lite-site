@@ -93,6 +93,30 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Style tags are removed along with their CSS.
+	 */
+	public function test_clean_content_strips_style_tags_and_their_css() {
+		$content = Lite_Site::clean_content( '<p>Before</p><style>.my-class { color: red; }</style><p>After</p>' );
+
+		$this->assertStringContainsString( '<p>Before</p>', $content, 'Body copy should survive.' );
+		$this->assertStringContainsString( '<p>After</p>', $content, 'Body copy should survive.' );
+		$this->assertStringNotContainsString( '.my-class', $content, 'CSS should not appear as text.' );
+		$this->assertStringNotContainsString( 'color: red', $content, 'CSS should not appear as text.' );
+	}
+
+	/**
+	 * An unclosed HTML comment does not blank the whole article.
+	 */
+	public function test_clean_content_survives_unclosed_comment() {
+		$content = Lite_Site::clean_content(
+			'<p>First paragraph.</p><!-- unclosed' . str_repeat( '<p>Filler to force backtracking.</p>', 50 )
+		);
+
+		$this->assertStringContainsString( 'First paragraph.', $content, 'Content before an unclosed comment should survive.' );
+	}
+
+
+	/**
 	 * Text-level markup on the allowlist survives cleaning.
 	 */
 	public function test_clean_content_keeps_allowed_markup() {
