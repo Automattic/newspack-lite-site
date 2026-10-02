@@ -780,6 +780,16 @@ class Lite_Site {
 			],
 		];
 
+		/**
+		 * Filters the elements and attributes that lite page content keeps.
+		 *
+		 * Lets a plugin whose blocks render on lite pages keep the markup its
+		 * own script relies on, such as data attributes.
+		 *
+		 * @param array $allowed_html Allowed elements and their attributes, in wp_kses() form.
+		 */
+		$allowed_html = apply_filters( 'newspack_lite_site_allowed_html', $allowed_html );
+
 		// Strip all HTML except allowed elements.
 		$content = wp_kses( $content, $allowed_html );
 

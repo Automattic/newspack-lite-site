@@ -140,6 +140,32 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A plugin can keep more markup through the allowlist filter, and without
+	 * the filter that markup is stripped.
+	 */
+	public function test_clean_content_allowlist_is_filterable() {
+		$content = '<div class="feed" data-cursor="42"><time datetime="2026-01-01T12:00:00+00:00">Noon</time></div>';
+
+		$default = Lite_Site::clean_content( $content );
+
+		$this->assertStringNotContainsString( 'data-cursor', $default, 'Data attributes are stripped by default.' );
+		$this->assertStringNotContainsString( '<time', $default, 'Time elements are stripped by default.' );
+
+		$allow = function ( $allowed_html ) {
+			$allowed_html['div']['data-cursor'] = true;
+			$allowed_html['time']               = [ 'datetime' => true ];
+			return $allowed_html;
+		};
+
+		add_filter( 'newspack_lite_site_allowed_html', $allow );
+		$filtered = Lite_Site::clean_content( $content );
+		remove_filter( 'newspack_lite_site_allowed_html', $allow );
+
+		$this->assertStringContainsString( 'data-cursor="42"', $filtered, 'The filter keeps an added attribute.' );
+		$this->assertStringContainsString( '<time datetime="2026-01-01T12:00:00+00:00">Noon</time>', $filtered, 'The filter keeps an added element.' );
+	}
+
+	/**
 	 * Figures become lazy-load placeholders carrying the image metadata.
 	 */
 	public function test_clean_content_converts_figures_to_placeholders() {
