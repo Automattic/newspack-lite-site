@@ -784,7 +784,12 @@ class Lite_Site {
 		 * Filters the elements and attributes that lite page content keeps.
 		 *
 		 * Lets a plugin whose blocks render on lite pages keep the markup its
-		 * own script relies on, such as data attributes.
+		 * own script relies on, such as data attributes. It runs just before
+		 * wp_kses(), after scripts and styles are removed and figures turned
+		 * into image placeholders, so additions can't bring those back. The
+		 * single template still passes the result through wp_kses_post(),
+		 * which bounds what reaches a lite single page; other callers of
+		 * clean_content() get exactly this list.
 		 *
 		 * @param array $allowed_html Allowed elements and their attributes, in wp_kses() form.
 		 */
