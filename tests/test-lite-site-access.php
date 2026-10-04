@@ -53,6 +53,34 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A password-protected post does not resolve even for a reader who has
+	 * entered its password, because the rendered lite page is cached for
+	 * every reader.
+	 */
+	public function test_does_not_resolve_password_protected_post_with_valid_cookie() {
+		$post = self::factory()->post->create_and_get(
+			[
+				'post_status'   => 'publish',
+				'post_password' => 'secret',
+				'post_name'     => 'locked-story',
+			]
+		);
+
+		require_once ABSPATH . WPINC . '/class-phpass.php';
+		$hasher = new PasswordHash( 8, true );
+
+		$_COOKIE[ 'wp-postpass_' . COOKIEHASH ] = $hasher->HashPassword( 'secret' ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Simulates a reader who has entered the post's password.
+
+		$password_required = post_password_required( $post );
+		$resolved          = Lite_Site::resolve_post( 'locked-story' );
+
+		unset( $_COOKIE[ 'wp-postpass_' . COOKIEHASH ] ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Clears the simulated password cookie.
+
+		$this->assertFalse( $password_required, 'The cookie unlocks the post for this reader.' );
+		$this->assertNull( $resolved, 'A password-protected post does not resolve for a reader holding its password.' );
+	}
+
+	/**
 	 * The page cache key ignores the query string, so cache-busting query
 	 * strings cannot mint unbounded transients.
 	 */
