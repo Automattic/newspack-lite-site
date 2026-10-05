@@ -395,9 +395,8 @@ class Lite_Site {
 			exit;
 		}
 
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		$cache_key   = self::get_page_cache_key( $request_uri );
-		$cached      = get_transient( $cache_key );
+		$cache_key = self::get_request_page_cache_key();
+		$cached    = get_transient( $cache_key );
 
 		if ( false !== $cached ) {
 			echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
@@ -432,17 +431,33 @@ class Lite_Site {
 	}
 
 	/**
+	 * Build the transient key for the lite single page the current request is for.
+	 *
+	 * @return string The transient key.
+	 */
+	public static function get_request_page_cache_key(): string {
+		// Sanitized as a URL: sanitize_text_field() strips percent-encoded
+		// octets, so slugs that differ only in non-ASCII characters would
+		// share one key.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		return self::get_page_cache_key( $request_uri );
+	}
+
+	/**
 	 * Build the transient key that caches a lite single page.
 	 *
 	 * Keyed on the URL path alone: the query string never affects lite output,
 	 * and keying on it would let cache-busting query strings mint unbounded
-	 * transients.
+	 * transients. The path is decoded so a page has one key however its
+	 * non-ASCII characters were escaped: WordPress links slugs with lowercase
+	 * escapes, while a browser uses uppercase ones for a URL typed or pasted
+	 * in Unicode.
 	 *
 	 * @param string $request_uri The request URI, with or without a query string.
 	 * @return string The transient key.
 	 */
 	public static function get_page_cache_key( string $request_uri ): string {
-		$path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$path = rawurldecode( (string) wp_parse_url( $request_uri, PHP_URL_PATH ) );
 		return 'nls_page_' . md5( untrailingslashit( $path ) );
 	}
 
