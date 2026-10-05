@@ -135,6 +135,27 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Invalidating a post clears the page its lite request cached when the
+	 * site lives in a subdirectory, whose path every lite URL starts with.
+	 */
+	public function test_invalidation_clears_cached_page_on_subdirectory_install() {
+		update_option( 'home', home_url( '/news' ) );
+		$post = self::factory()->post->create_and_get(
+			[
+				'post_status' => 'publish',
+				'post_name'   => 'a-story',
+			]
+		);
+
+		$cache_key = $this->get_request_page_cache_key( '/news/lite/a-story/' );
+		set_transient( $cache_key, 'Cached lite page', MINUTE_IN_SECONDS );
+
+		Lite_Site::invalidate_page_cache( $post->ID );
+
+		$this->assertFalse( get_transient( $cache_key ), 'Invalidating the post clears its cached lite page.' );
+	}
+
+	/**
 	 * The page cache key the lite single handler builds for a request.
 	 *
 	 * @param string $request_uri Request URI, as the server reports it.

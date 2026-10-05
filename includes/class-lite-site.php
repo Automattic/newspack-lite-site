@@ -424,10 +424,9 @@ class Lite_Site {
 			return;
 		}
 
-		$url_base    = self::get_url_base();
-		$post_path   = ltrim( str_replace( trailingslashit( home_url() ), '', trailingslashit( get_permalink( $post ) ) ), '/' );
-		$request_uri = '/' . $url_base . '/' . $post_path;
-		delete_transient( self::get_page_cache_key( $request_uri ) );
+		// Keyed from the lite URL itself, so a site in a subdirectory keeps
+		// that path in the key, as the request does.
+		delete_transient( self::get_page_cache_key( self::get_lite_page_url( $post ) ) );
 	}
 
 	/**
