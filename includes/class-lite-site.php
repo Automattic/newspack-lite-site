@@ -435,10 +435,10 @@ class Lite_Site {
 	 * @return string The transient key.
 	 */
 	public static function get_request_page_cache_key(): string {
-		// Sanitized as a URL: sanitize_text_field() strips percent-encoded
-		// octets, so slugs that differ only in non-ASCII characters would
-		// share one key.
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		// Hashed as received, never sanitized: a sanitizer that drops
+		// characters can give two different pages one key. sanitize_text_field(),
+		// for one, strips the percent-encoded octets that spell a non-ASCII slug.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only hashed into a cache key, never output or stored.
 		return self::get_page_cache_key( $request_uri );
 	}
 
@@ -452,7 +452,7 @@ class Lite_Site {
 	 * escapes, while a browser uses uppercase ones for a URL typed or pasted
 	 * in Unicode.
 	 *
-	 * @param string $request_uri The request URI, with or without a query string.
+	 * @param string $request_uri The request URI or a full lite URL, with or without a query string.
 	 * @return string The transient key.
 	 */
 	public static function get_page_cache_key( string $request_uri ): string {

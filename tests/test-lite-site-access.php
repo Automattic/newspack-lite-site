@@ -91,6 +91,18 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The request key keeps characters a URL sanitizer would drop, so a path
+	 * holding one never shares the key of the same path without it.
+	 */
+	public function test_request_page_cache_key_keeps_characters_a_url_sanitizer_drops() {
+		$this->assertNotSame(
+			$this->get_request_page_cache_key( '/lite/a-story-update/' ),
+			$this->get_request_page_cache_key( '/lite/a-story<-update/' ),
+			'A path keeps its own key when it differs only by such a character.'
+		);
+	}
+
+	/**
 	 * Invalidating a post with a non-ASCII slug clears the page its lite
 	 * request cached, whichever case the request's percent-encoding used.
 	 *
