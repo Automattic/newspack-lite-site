@@ -396,7 +396,7 @@ class Lite_Site {
 		}
 
 		$cache_key = self::get_request_page_cache_key();
-		$cached    = get_transient( $cache_key );
+		$cached    = '' !== $cache_key ? get_transient( $cache_key ) : false;
 
 		if ( false !== $cached ) {
 			echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
@@ -407,7 +407,9 @@ class Lite_Site {
 		include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
 		$output = ob_get_clean();
 
-		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		if ( '' !== $cache_key ) {
+			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		}
 
 		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 		exit;
@@ -434,7 +436,7 @@ class Lite_Site {
 	/**
 	 * Build the transient key for the lite single page the current request is for.
 	 *
-	 * @return string The transient key.
+	 * @return string The transient key, or an empty string when WordPress routed no path for the request.
 	 */
 	public static function get_request_page_cache_key(): string {
 		global $wp;
@@ -443,7 +445,11 @@ class Lite_Site {
 		// string the lite rule reads `lite_path` from, so the key follows the
 		// page that renders. Sanitizing it would drop characters and could give
 		// two different pages one key.
-		return self::get_page_cache_key( isset( $wp->request ) ? (string) $wp->request : '' );
+		$routed_path = isset( $wp->request ) ? (string) $wp->request : '';
+
+		// With no routed path every such request would share one key, so they
+		// get none and their pages aren't cached.
+		return '' === $routed_path ? '' : self::get_page_cache_key( $routed_path );
 	}
 
 	/**

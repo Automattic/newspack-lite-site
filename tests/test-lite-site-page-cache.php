@@ -82,6 +82,17 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A request WordPress routed no path for, as when a plugin replaces its
+	 * request parsing, gets no page cache key, so such requests can't share
+	 * one cached page.
+	 */
+	public function test_request_page_cache_key_is_empty_when_no_path_was_routed() {
+		add_filter( 'do_parse_request', '__return_false' );
+
+		$this->assertSame( '', $this->get_request_page_cache_key( '/lite/a-story/' ), 'A request with no routed path gets no key.' );
+	}
+
+	/**
 	 * Invalidating a post with a non-ASCII slug clears the page its lite
 	 * request cached, whichever case the request's percent-encoding used.
 	 *
