@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for the lite single page cache.
+ * Tests for what the lite single page cache stores.
  *
  * @package newspack-lite-site
  */
@@ -10,7 +10,7 @@ use Newspack_Lite_Site\Lite_Site;
 /**
  * Covers what cache_single_page() stores in the page cache.
  */
-class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
+class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 
 	/**
 	 * Page cache key for the story's lite URL.
