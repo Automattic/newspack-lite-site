@@ -409,13 +409,15 @@ class Lite_Site {
 	}
 
 	/**
-	 * Render a lite single page and store it in the page cache.
+	 * Render a lite single page and, when the request allows, store it in the page cache.
 	 *
 	 * Every reader is served the cached copy, so the page renders as a
 	 * signed-out reader sees it, whoever's visit fills the cache. Otherwise
 	 * blocks that show or hide per reader, such as Newspack's block
 	 * visibility rules, would reach everyone as the visitor who filled the
-	 * cache saw them.
+	 * cache saw them. A request that could have shaped the page in other
+	 * ways, such as through its query string or cookies, is served the page
+	 * without storing it.
 	 *
 	 * @param string $cache_key Transient key from get_page_cache_key().
 	 * @return string The page HTML.
@@ -432,7 +434,9 @@ class Lite_Site {
 			wp_set_current_user( $reader_id );
 		}
 
-		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		if ( self::can_fill_page_cache() ) {
+			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		}
 
 		return $output;
 	}
@@ -445,6 +449,44 @@ class Lite_Site {
 	 */
 	private static function include_single_template() {
 		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+	}
+
+	/**
+	 * Whether the current request's render may be stored for every reader.
+	 *
+	 * The page cache keys on the path alone, so a render shaped by anything
+	 * else in the request would reach every reader after it. Only a request
+	 * a full-page cache such as Batcache would also store can fill it.
+	 *
+	 * @return bool
+	 */
+	private static function can_fill_page_cache(): bool {
+		// A form's posted fields reach the page through $_REQUEST, as query
+		// parameters do.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+		if ( ! in_array( $method, [ 'GET', 'HEAD' ], true ) ) {
+			return false;
+		}
+
+		// As sent rather than as parsed into $_GET: code that prints the
+		// requested URL carries a query even when it holds no parameters.
+		if ( isset( $_SERVER['QUERY_STRING'] ) && '' !== $_SERVER['QUERY_STRING'] ) {
+			return false;
+		}
+
+		// Batcache skips a request carrying a cookie with one of these
+		// prefixes: they mark a visitor whose pages can differ, such as a
+		// session or an access bypass. The cookie WordPress sets to test
+		// cookie support does not.
+		// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Reads cookie names only.
+		foreach ( array_keys( $_COOKIE ) as $name ) {
+			// phpcs:ignore WordPress.WP.CapitalPDangit.MisspelledInText -- A cookie name prefix.
+			if ( 'wordpress_test_cookie' !== $name && preg_match( '/^(?:wp|wordpress|comment_author)/', (string) $name ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -467,9 +509,9 @@ class Lite_Site {
 	/**
 	 * Build the transient key that caches a lite single page.
 	 *
-	 * Keyed on the URL path alone: the query string never affects lite output,
-	 * and keying on it would let cache-busting query strings mint unbounded
-	 * transients.
+	 * Keyed on the URL path alone, so cache-busting query strings can't mint
+	 * unbounded transients. A page can still read the query string, so a
+	 * request carrying one doesn't fill the cache; see can_fill_page_cache().
 	 *
 	 * @param string $request_uri The request URI, with or without a query string.
 	 * @return string The transient key.

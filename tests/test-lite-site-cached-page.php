@@ -20,12 +20,24 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	private $cache_key;
 
 	/**
+	 * The request globals from before the test, put back after it.
+	 *
+	 * @var array
+	 */
+	private $request_globals;
+
+	/**
 	 * A published story with blocks that render differently for signed-in
-	 * readers, requested at its lite URL.
+	 * readers, requested at its lite URL by a plain GET request. Its last
+	 * group stays empty unless a test renders into it from the request.
 	 */
 	public function set_up() {
 		parent::set_up();
 		$this->set_permalink_structure( '/%postname%/' );
+
+		// phpcs:ignore WordPress.Security.NonceVerification, WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Saved to restore after the test.
+		$this->request_globals = [ $_SERVER, $_GET, $_POST, $_REQUEST, $_COOKIE ];
+		$this->make_request( 'GET', '/lite/a-story' );
 
 		self::factory()->post->create(
 			[
@@ -33,7 +45,8 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 				'post_name'    => 'a-story',
 				'post_content' => '<!-- wp:paragraph --><p>Story copy.</p><!-- /wp:paragraph -->'
 					. '<!-- wp:group {"className":"members-only"} --><div class="wp-block-group members-only"><!-- wp:paragraph --><p>Members-only copy.</p><!-- /wp:paragraph --></div><!-- /wp:group -->'
-					. '<!-- wp:group {"className":"signed-out-only"} --><div class="wp-block-group signed-out-only"><!-- wp:paragraph --><p>Subscribe prompt.</p><!-- /wp:paragraph --></div><!-- /wp:group -->',
+					. '<!-- wp:group {"className":"signed-out-only"} --><div class="wp-block-group signed-out-only"><!-- wp:paragraph --><p>Subscribe prompt.</p><!-- /wp:paragraph --></div><!-- /wp:group -->'
+					. '<!-- wp:group {"className":"from-request"} --><div class="wp-block-group from-request"></div><!-- /wp:group -->',
 			]
 		);
 
@@ -45,6 +58,54 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 		$this->assertNotNull( Lite_Site::resolve_post( 'a-story' ), 'The story resolves at its lite path.' );
 
 		add_filter( 'render_block', [ __CLASS__, 'render_block_per_reader' ], 10, 2 );
+	}
+
+	/**
+	 * Put back the request globals the test changed.
+	 */
+	public function tear_down() {
+		// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Restores the globals saved in set_up().
+		list( $_SERVER, $_GET, $_POST, $_REQUEST, $_COOKIE ) = $this->request_globals;
+		parent::tear_down();
+	}
+
+	/**
+	 * Set the request globals as PHP and WordPress fill them for a request.
+	 *
+	 * @param string $method  Request method.
+	 * @param string $uri     Request URI, with any query string.
+	 * @param array  $fields  Form fields in the request body.
+	 * @param array  $cookies Cookies the request carries.
+	 */
+	private function make_request( $method, $uri, array $fields = [], array $cookies = [] ) {
+		$query = (string) wp_parse_url( $uri, PHP_URL_QUERY );
+
+		$_SERVER['REQUEST_METHOD'] = $method;
+		$_SERVER['REQUEST_URI']    = $uri;
+		$_SERVER['QUERY_STRING']   = $query;
+
+		parse_str( $query, $params );
+		$_GET     = $params;
+		$_POST    = $fields;
+		$_REQUEST = array_merge( $params, $fields ); // As wp_magic_quotes() rebuilds it.
+		$_COOKIE  = $cookies; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
+	}
+
+	/**
+	 * Render the story's from-request group with a callback, standing in for
+	 * a block whose output depends on the request.
+	 *
+	 * @param callable $render Returns the group's markup for the current request.
+	 */
+	private function render_from_request( callable $render ) {
+		add_filter(
+			'render_block',
+			function ( $block_content, $block ) use ( $render ) {
+				return 'from-request' === ( $block['attrs']['className'] ?? '' ) ? $render() : $block_content;
+			},
+			10,
+			2
+		);
 	}
 
 	/**
@@ -122,5 +183,119 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 
 		$this->assertSame( $render_error, $caught_error, 'The render error reaches the caller.' );
 		$this->assertSame( $member_id, get_current_user_id(), 'The member is the current user again.' );
+	}
+
+	/**
+	 * A request with a query string or posted fields is served the page
+	 * blocks built from them, but doesn't fill the cache: the cache key
+	 * leaves them out, so readers who never sent them would get them too.
+	 *
+	 * @dataProvider data_requests_with_parameters
+	 *
+	 * @param string $method    Request method.
+	 * @param string $uri       Request URI.
+	 * @param array  $fields    Form fields in the request body.
+	 * @param string $sent_text What the request sent, as the visitor's page shows it.
+	 */
+	public function test_request_with_parameters_does_not_fill_the_cache( $method, $uri, $fields, $sent_text ) {
+		// Stands in for a block that prints a parameter and one that links
+		// to the URL as requested.
+		$this->render_from_request(
+			function () {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$note          = isset( $_REQUEST['note'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['note'] ) ) : '';
+				$requested_url = isset( $_SERVER['REQUEST_URI'] ) ? home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) : '';
+				return '<p>' . esc_html( $note ) . '</p><p><a href="' . esc_url( $requested_url ) . '">Back</a></p>';
+			}
+		);
+		$this->make_request( $method, $uri, $fields );
+
+		$page = Lite_Site::cache_single_page( $this->cache_key );
+
+		$this->assertStringContainsString( $sent_text, $page, 'The visitor is served the page their request asked for.' );
+		$this->assertFalse( get_transient( $this->cache_key ), 'The page is not stored for later readers.' );
+	}
+
+	/**
+	 * Requests carrying text that blocks on the page can print.
+	 *
+	 * @return array[]
+	 */
+	public function data_requests_with_parameters() {
+		return [
+			'query string'                    => [ 'GET', '/lite/a-story?note=A+note+from+the+visitor.', [], 'A note from the visitor.' ],
+			'query string with no parameters' => [ 'GET', '/lite/a-story?=A+note+from+the+visitor.', [], '?=A+note+from+the+visitor.' ],
+			'form post'                       => [ 'POST', '/lite/a-story', [ 'note' => 'A note from the visitor.' ], 'A note from the visitor.' ],
+		];
+	}
+
+	/**
+	 * A request carrying a cookie that keeps full-page caches from storing
+	 * its page is served the page rendered for it, but doesn't fill the
+	 * cache: a block may have shown that visitor something other readers
+	 * shouldn't get.
+	 *
+	 * @dataProvider data_cache_bypass_cookies
+	 *
+	 * @param string $cookie Cookie name.
+	 */
+	public function test_request_with_a_cache_bypass_cookie_does_not_fill_the_cache( $cookie ) {
+		$this->render_from_request(
+			function () use ( $cookie ) {
+				return isset( $_COOKIE[ $cookie ] ) ? '<p>Shown to visitors with the cookie.</p>' : '';
+			}
+		);
+		$this->make_request( 'GET', '/lite/a-story', [], [ $cookie => '1' ] );
+
+		$page = Lite_Site::cache_single_page( $this->cache_key );
+
+		$this->assertStringContainsString( 'Shown to visitors with the cookie.', $page, 'The visitor is served the page rendered for them.' );
+		$this->assertFalse( get_transient( $this->cache_key ), 'The page is not stored for later readers.' );
+	}
+
+	/**
+	 * One cookie for each name prefix Batcache treats as marking a visitor
+	 * whose pages can differ.
+	 *
+	 * @return array[]
+	 */
+	public function data_cache_bypass_cookies() {
+		return [
+			'session'        => [ 'wordpress_logged_in_0123456789abcdef' ],
+			'access bypass'  => [ 'wp_access_bypass' ],
+			'comment author' => [ 'comment_author_0123456789abcdef' ],
+		];
+	}
+
+	/**
+	 * A request a full-page cache would store fills the cache, even when
+	 * it's a HEAD or carries cookies that don't mark a visitor whose pages
+	 * can differ, so ordinary visits keep the cache warm.
+	 *
+	 * @dataProvider data_requests_full_page_caches_store
+	 *
+	 * @param string $method  Request method.
+	 * @param array  $cookies Cookies the request carries.
+	 */
+	public function test_request_a_full_page_cache_would_store_fills_the_cache( $method, $cookies ) {
+		$this->make_request( $method, '/lite/a-story', [], $cookies );
+
+		$page = Lite_Site::cache_single_page( $this->cache_key );
+
+		$this->assertSame( $page, get_transient( $this->cache_key ), 'The page is stored for later readers.' );
+	}
+
+	/**
+	 * Requests that only differ from a plain GET in ways that can't shape
+	 * the page.
+	 *
+	 * @return array[]
+	 */
+	public function data_requests_full_page_caches_store() {
+		return [
+			'HEAD'              => [ 'HEAD', [] ],
+			'login test cookie' => [ 'GET', [ 'wordpress_test_cookie' => 'WP Cookie check' ] ],
+			'analytics cookie'  => [ 'GET', [ '_ga' => 'GA1.1.123.456' ] ],
+		];
 	}
 }
