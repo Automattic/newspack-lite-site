@@ -426,7 +426,7 @@ class Lite_Site {
 
 		ob_start();
 		try {
-			include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+			self::include_single_template();
 		} finally {
 			$output = ob_get_clean();
 			wp_set_current_user( $reader_id );
@@ -435,6 +435,16 @@ class Lite_Site {
 		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 
 		return $output;
+	}
+
+	/**
+	 * Include the lite single template.
+	 *
+	 * Kept out of cache_single_page() so the template's variables can't
+	 * overwrite that method's own, such as the reader it restores.
+	 */
+	private static function include_single_template() {
+		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
 	}
 
 	/**
