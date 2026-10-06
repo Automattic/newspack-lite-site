@@ -273,6 +273,18 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A page with no cache key, as for a request WordPress routed no path
+	 * for, is served but not stored: every such request would share the
+	 * empty key.
+	 */
+	public function test_page_without_a_cache_key_is_served_but_not_stored() {
+		$page = Lite_Site::cache_single_page( '' );
+
+		$this->assertStringContainsString( 'Story copy.', $page, 'The visitor is served the page.' );
+		$this->assertFalse( get_transient( '' ), 'Nothing is stored under the empty key.' );
+	}
+
+	/**
 	 * A request a full-page cache would store fills the cache, even when
 	 * it's a HEAD or carries cookies that don't mark a visitor whose pages
 	 * can differ, so ordinary visits keep the cache warm.
