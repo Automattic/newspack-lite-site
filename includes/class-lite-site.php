@@ -404,14 +404,37 @@ class Lite_Site {
 			exit;
 		}
 
+		echo self::cache_single_page( $cache_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
+		exit;
+	}
+
+	/**
+	 * Render a lite single page and store it in the page cache.
+	 *
+	 * Every reader is served the cached copy, so the page renders as a
+	 * signed-out reader sees it, whoever's visit fills the cache. Otherwise
+	 * blocks that show or hide per reader, such as Newspack's block
+	 * visibility rules, would reach everyone as the visitor who filled the
+	 * cache saw them.
+	 *
+	 * @param string $cache_key Transient key from get_page_cache_key().
+	 * @return string The page HTML.
+	 */
+	public static function cache_single_page( string $cache_key ): string {
+		$reader_id = get_current_user_id();
+		wp_set_current_user( 0 );
+
 		ob_start();
-		include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
-		$output = ob_get_clean();
+		try {
+			include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+		} finally {
+			$output = ob_get_clean();
+			wp_set_current_user( $reader_id );
+		}
 
 		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 
-		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
-		exit;
+		return $output;
 	}
 
 	/**
