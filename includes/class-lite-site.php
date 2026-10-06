@@ -395,9 +395,8 @@ class Lite_Site {
 			exit;
 		}
 
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		$cache_key   = self::get_page_cache_key( $request_uri );
-		$cached      = get_transient( $cache_key );
+		$cache_key = self::get_request_page_cache_key();
+		$cached    = '' !== $cache_key ? get_transient( $cache_key ) : false;
 
 		if ( false !== $cached ) {
 			echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
@@ -419,7 +418,7 @@ class Lite_Site {
 	 * ways, such as through its query string, cookies or host, is served the
 	 * page without storing it.
 	 *
-	 * @param string $cache_key Transient key from get_page_cache_key().
+	 * @param string $cache_key Transient key from get_page_cache_key(), or an empty string to store nothing.
 	 * @return string The page HTML.
 	 */
 	public static function cache_single_page( string $cache_key ): string {
@@ -434,7 +433,7 @@ class Lite_Site {
 			wp_set_current_user( $reader_id );
 		}
 
-		if ( self::can_fill_page_cache() ) {
+		if ( '' !== $cache_key && self::can_fill_page_cache() ) {
 			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 		}
 
@@ -510,25 +509,56 @@ class Lite_Site {
 			return;
 		}
 
-		$url_base    = self::get_url_base();
-		$post_path   = ltrim( str_replace( trailingslashit( home_url() ), '', trailingslashit( get_permalink( $post ) ) ), '/' );
-		$request_uri = '/' . $url_base . '/' . $post_path;
-		delete_transient( self::get_page_cache_key( $request_uri ) );
+		// Keyed from the lite URL's path below the home URL, the same shape as
+		// the path WordPress routes, so it matches whether or not the request
+		// URI carries a subdirectory's path.
+		$lite_path = str_replace( untrailingslashit( home_url() ), '', self::get_lite_page_url( $post ) );
+		delete_transient( self::get_page_cache_key( $lite_path ) );
+	}
+
+	/**
+	 * Build the transient key for the lite single page the current request is for.
+	 *
+	 * @return string The transient key, or an empty string when WordPress routed no path for the request.
+	 */
+	public static function get_request_page_cache_key(): string {
+		global $wp;
+
+		// The path WordPress routed, below the home URL and as received: the
+		// string the lite rule reads `lite_path` from, so the key follows the
+		// page that renders. Sanitizing it would drop characters and could give
+		// two different pages one key.
+		$routed_path = isset( $wp->request ) ? (string) $wp->request : '';
+
+		// With no routed path every such request would share one key, so they
+		// get none and their pages aren't cached.
+		return '' === $routed_path ? '' : self::get_page_cache_key( $routed_path );
 	}
 
 	/**
 	 * Build the transient key that caches a lite single page.
 	 *
-	 * Keyed on the URL path alone, so cache-busting query strings can't mint
+	 * Keyed on the path alone, so cache-busting query strings can't mint
 	 * unbounded transients. A page can still read the query string, so a
 	 * request carrying one doesn't fill the cache; see can_fill_page_cache().
+	 * The path otherwise stays as WordPress routes it, so two paths that can
+	 * render different pages never share a key: it's cut only at the first
+	 * `?`, and only the letter case of its percent-encoding is normalized,
+	 * because WordPress links slugs with lowercase escapes while a browser
+	 * sends uppercase ones for a URL typed or pasted in Unicode.
 	 *
-	 * @param string $request_uri The request URI, with or without a query string.
+	 * @param string $path A path below the home URL, with or without a query string.
 	 * @return string The transient key.
 	 */
-	public static function get_page_cache_key( string $request_uri ): string {
-		$path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
-		return 'nls_page_' . md5( untrailingslashit( $path ) );
+	public static function get_page_cache_key( string $path ): string {
+		$path = preg_replace_callback(
+			'/%[0-9a-f]{2}/i',
+			function ( $escape ) {
+				return strtolower( $escape[0] );
+			},
+			explode( '?', $path, 2 )[0]
+		);
+		return 'nls_page_' . md5( trim( $path, '/' ) );
 	}
 
 	/**
