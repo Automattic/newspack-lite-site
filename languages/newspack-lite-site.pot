@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T20:19:51+00:00\n"
+"POT-Creation-Date: 2026-10-06T20:29:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -56,34 +56,34 @@ msgid "View Lite Site"
 msgstr ""
 
 #. translators: %1$s: a comma separated list of authors names with links and, after the "and" %2$s: one last author link
-#: includes/class-lite-site.php:597
+#: includes/class-lite-site.php:599
 #, php-format
 msgid "%1$s and %2$s"
 msgstr ""
 
 #. translators: %s: author name(s)
-#: includes/class-lite-site.php:615
+#: includes/class-lite-site.php:617
 #, php-format
 msgid "By %s"
 msgstr ""
 
 #. translators: %s: image alt text
-#: includes/class-lite-site.php:875
+#: includes/class-lite-site.php:877
 #, php-format
 msgid "Image | %s"
 msgstr ""
 
-#: includes/class-lite-site.php:876
+#: includes/class-lite-site.php:878
 msgid "Image"
 msgstr ""
 
 #. translators: %s: image caption text
-#: includes/class-lite-site.php:895
+#: includes/class-lite-site.php:897
 #, php-format
 msgid "Caption: %s"
 msgstr ""
 
-#: includes/class-lite-site.php:907
+#: includes/class-lite-site.php:909
 msgid "Load image"
 msgstr ""
 
