@@ -522,8 +522,10 @@ class Lite_Site {
 		}
 
 		// Lite pages render raw post content with no password form, so a
-		// protected post must not resolve at all.
-		if ( post_password_required( $post ) ) {
+		// protected post must not resolve at all. The rendered page is cached
+		// for every reader, so this can't depend on the visitor's password
+		// cookie, as post_password_required() does.
+		if ( '' !== $post->post_password ) {
 			return null;
 		}
 
