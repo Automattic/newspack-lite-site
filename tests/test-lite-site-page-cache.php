@@ -40,6 +40,10 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 		set_query_var( 'lite_path', 'a-story' );
 		$this->cache_key = Lite_Site::get_page_cache_key( '/lite/a-story' );
 
+		// The single template exits when its post doesn't resolve, which would
+		// end the whole run with a passing status, so fail here instead.
+		$this->assertNotNull( Lite_Site::resolve_post( 'a-story' ), 'The story resolves at its lite path.' );
+
 		add_filter( 'render_block', [ __CLASS__, 'render_block_per_reader' ], 10, 2 );
 	}
 
