@@ -73,15 +73,17 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	 * Set the request globals as PHP and WordPress fill them for a request.
 	 *
 	 * @param string $method  Request method.
-	 * @param string $uri     Request URI, with any query string.
+	 * @param string $url     URL requested, with any query string. A path alone is requested at the site's host.
 	 * @param array  $fields  Form fields in the request body.
 	 * @param array  $cookies Cookies the request carries.
 	 */
-	private function make_request( $method, $uri, array $fields = [], array $cookies = [] ) {
-		$query = (string) wp_parse_url( $uri, PHP_URL_QUERY );
+	private function make_request( $method, $url, array $fields = [], array $cookies = [] ) {
+		$url   = wp_parse_url( $url );
+		$query = $url['query'] ?? '';
 
 		$_SERVER['REQUEST_METHOD'] = $method;
-		$_SERVER['REQUEST_URI']    = $uri;
+		$_SERVER['HTTP_HOST']      = isset( $url['host'] ) ? $url['host'] . ( isset( $url['port'] ) ? ':' . $url['port'] : '' ) : wp_parse_url( home_url(), PHP_URL_HOST );
+		$_SERVER['REQUEST_URI']    = $url['path'] . ( '' !== $query ? '?' . $query : '' );
 		$_SERVER['QUERY_STRING']   = $query;
 
 		parse_str( $query, $params );
@@ -186,29 +188,31 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A request with a query string or posted fields is served the page
-	 * blocks built from them, but doesn't fill the cache: the cache key
-	 * leaves them out, so readers who never sent them would get them too.
+	 * A request that sends text a block prints, in its query string, posted
+	 * fields or host, is served that page but doesn't fill the cache: the
+	 * cache key leaves all of them out, so readers who never sent the text
+	 * would get it too.
 	 *
-	 * @dataProvider data_requests_with_parameters
+	 * @dataProvider data_requests_sending_text
 	 *
 	 * @param string $method    Request method.
-	 * @param string $uri       Request URI.
+	 * @param string $url       URL requested.
 	 * @param array  $fields    Form fields in the request body.
 	 * @param string $sent_text What the request sent, as the visitor's page shows it.
 	 */
-	public function test_request_with_parameters_does_not_fill_the_cache( $method, $uri, $fields, $sent_text ) {
+	public function test_request_sending_text_a_block_prints_does_not_fill_the_cache( $method, $url, $fields, $sent_text ) {
 		// Stands in for a block that prints a parameter and one that links
 		// to the URL as requested.
 		$this->render_from_request(
 			function () {
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$note          = isset( $_REQUEST['note'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['note'] ) ) : '';
-				$requested_url = isset( $_SERVER['REQUEST_URI'] ) ? home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) : '';
-				return '<p>' . esc_html( $note ) . '</p><p><a href="' . esc_url( $requested_url ) . '">Back</a></p>';
+				$note = isset( $_REQUEST['note'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['note'] ) ) : '';
+				$host = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+				$path = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+				return '<p>' . esc_html( $note ) . '</p><p><a href="' . esc_url( 'http://' . $host . $path ) . '">Back</a></p>';
 			}
 		);
-		$this->make_request( $method, $uri, $fields );
+		$this->make_request( $method, $url, $fields );
 
 		$page = Lite_Site::cache_single_page( $this->cache_key );
 
@@ -217,15 +221,16 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * Requests carrying text that blocks on the page can print.
+	 * Requests sending text that blocks on the page can print.
 	 *
 	 * @return array[]
 	 */
-	public function data_requests_with_parameters() {
+	public function data_requests_sending_text() {
 		return [
 			'query string'                    => [ 'GET', '/lite/a-story?note=A+note+from+the+visitor.', [], 'A note from the visitor.' ],
 			'query string with no parameters' => [ 'GET', '/lite/a-story?=A+note+from+the+visitor.', [], '?=A+note+from+the+visitor.' ],
 			'form post'                       => [ 'POST', '/lite/a-story', [ 'note' => 'A note from the visitor.' ], 'A note from the visitor.' ],
+			'another host'                    => [ 'GET', 'http://another-host.example.test/lite/a-story', [], 'another-host.example.test' ],
 		];
 	}
 
@@ -297,5 +302,26 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 			'login test cookie' => [ 'GET', [ 'wordpress_test_cookie' => 'WP Cookie check' ] ],
 			'analytics cookie'  => [ 'GET', [ '_ga' => 'GA1.1.123.456' ] ],
 		];
+	}
+
+	/**
+	 * A browser's request to a site whose address has capitals and a port
+	 * fills the cache: it sends the host in lowercase, with the port.
+	 */
+	public function test_request_to_a_site_address_with_capitals_and_a_port_fills_the_cache() {
+		add_filter(
+			'pre_option_home',
+			function () {
+				return 'http://Lite-Site.example.test:8080';
+			}
+		);
+		// The single template exits when its post doesn't resolve, which would
+		// end the whole run with a passing status, so fail here instead.
+		$this->assertNotNull( Lite_Site::resolve_post( 'a-story' ), 'The story resolves at the site address.' );
+		$this->make_request( 'GET', 'http://lite-site.example.test:8080/lite/a-story' );
+
+		$page = Lite_Site::cache_single_page( $this->cache_key );
+
+		$this->assertSame( $page, get_transient( $this->cache_key ), 'The page is stored for later readers.' );
 	}
 }

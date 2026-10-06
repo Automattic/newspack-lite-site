@@ -416,8 +416,8 @@ class Lite_Site {
 	 * blocks that show or hide per reader, such as Newspack's block
 	 * visibility rules, would reach everyone as the visitor who filled the
 	 * cache saw them. A request that could have shaped the page in other
-	 * ways, such as through its query string or cookies, is served the page
-	 * without storing it.
+	 * ways, such as through its query string, cookies or host, is served the
+	 * page without storing it.
 	 *
 	 * @param string $cache_key Transient key from get_page_cache_key().
 	 * @return string The page HTML.
@@ -456,7 +456,8 @@ class Lite_Site {
 	 *
 	 * The page cache keys on the path alone, so a render shaped by anything
 	 * else in the request would reach every reader after it. Only a request
-	 * a full-page cache such as Batcache would also store can fill it.
+	 * a full-page cache such as Batcache would also store, sent to the
+	 * site's own host, can fill it.
 	 *
 	 * @return bool
 	 */
@@ -465,6 +466,15 @@ class Lite_Site {
 		// parameters do.
 		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
 		if ( ! in_array( $method, [ 'GET', 'HEAD' ], true ) ) {
+			return false;
+		}
+
+		// Code that prints the requested URL takes its host from the request,
+		// which WordPress doesn't check against the site's. Browsers send the
+		// host in lowercase, with any port the site's address has.
+		$home      = wp_parse_url( home_url() );
+		$home_host = strtolower( ( $home['host'] ?? '' ) . ( isset( $home['port'] ) ? ':' . $home['port'] : '' ) );
+		if ( ! isset( $_SERVER['HTTP_HOST'] ) || $home_host !== $_SERVER['HTTP_HOST'] ) {
 			return false;
 		}
 
