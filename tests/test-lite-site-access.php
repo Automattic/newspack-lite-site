@@ -91,15 +91,34 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * The request key keeps characters a URL sanitizer would drop, so a path
-	 * holding one never shares the key of the same path without it.
+	 * A request path keeps its own key when it differs from another only by
+	 * a character that sanitizing, URL parsing or decoding would lose, since
+	 * WordPress can resolve the two to different pages.
+	 *
+	 * @dataProvider data_paths_differing_by_a_lossy_character
+	 *
+	 * @param string $path       A lite request path.
+	 * @param string $other_path The same path, differing by one such character.
 	 */
-	public function test_request_page_cache_key_keeps_characters_a_url_sanitizer_drops() {
+	public function test_request_page_cache_key_keeps_every_character_of_the_path( $path, $other_path ) {
 		$this->assertNotSame(
-			$this->get_request_page_cache_key( '/lite/a-story-update/' ),
-			$this->get_request_page_cache_key( '/lite/a-story<-update/' ),
-			'A path keeps its own key when it differs only by such a character.'
+			$this->get_request_page_cache_key( $path ),
+			$this->get_request_page_cache_key( $other_path ),
+			'The two paths get different keys.'
 		);
+	}
+
+	/**
+	 * Pairs of paths that differ only by a character a normalization would lose.
+	 *
+	 * @return array[]
+	 */
+	public function data_paths_differing_by_a_lossy_character() {
+		return [
+			'a character esc_url_raw() drops'          => [ '/lite/a-story-update/', '/lite/a-story<-update/' ],
+			'a fragment marker wp_parse_url() cuts at' => [ '/lite/a-story/', '/lite/a-story/#update' ],
+			'an escape that decoding would merge'      => [ '/lite/a-story/', '/lite/%61-story/' ],
+		];
 	}
 
 	/**
@@ -148,9 +167,14 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 
 	/**
 	 * Invalidating a post clears the page its lite request cached when the
-	 * site lives in a subdirectory, whose path every lite URL starts with.
+	 * site lives in a subdirectory, whether the request URI carries that
+	 * directory or a proxy in front of WordPress has stripped it.
+	 *
+	 * @dataProvider data_subdirectory_request_uris
+	 *
+	 * @param string $request_uri The lite request URI, as the server reports it.
 	 */
-	public function test_invalidation_clears_cached_page_on_subdirectory_install() {
+	public function test_invalidation_clears_cached_page_on_subdirectory_install( $request_uri ) {
 		update_option( 'home', home_url( '/news' ) );
 		$post = self::factory()->post->create_and_get(
 			[
@@ -159,7 +183,7 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 			]
 		);
 
-		$cache_key = $this->get_request_page_cache_key( '/news/lite/a-story/' );
+		$cache_key = $this->get_request_page_cache_key( $request_uri );
 		set_transient( $cache_key, 'Cached lite page', MINUTE_IN_SECONDS );
 
 		Lite_Site::invalidate_page_cache( $post->ID );
@@ -168,14 +192,28 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * The page cache key the lite single handler builds for a request.
+	 * Request URIs a subdirectory install's lite page can arrive with.
+	 *
+	 * @return array[]
+	 */
+	public function data_subdirectory_request_uris() {
+		return [
+			'request carries the directory' => [ '/news/lite/a-story/' ],
+			'proxy strips the directory'    => [ '/lite/a-story/' ],
+		];
+	}
+
+	/**
+	 * The page cache key the lite single handler builds for a request, once
+	 * WordPress has routed it.
 	 *
 	 * @param string $request_uri Request URI, as the server reports it.
 	 * @return string The transient key.
 	 */
 	private function get_request_page_cache_key( $request_uri ) {
 		$_SERVER['REQUEST_URI'] = $request_uri;
-		$cache_key              = Lite_Site::get_request_page_cache_key();
+		$GLOBALS['wp']->parse_request();
+		$cache_key = Lite_Site::get_request_page_cache_key();
 		tests_reset__SERVER();
 		return $cache_key;
 	}

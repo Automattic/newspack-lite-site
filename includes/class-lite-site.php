@@ -424,9 +424,11 @@ class Lite_Site {
 			return;
 		}
 
-		// Keyed from the lite URL itself, so a site in a subdirectory keeps
-		// that path in the key, as the request does.
-		delete_transient( self::get_page_cache_key( self::get_lite_page_url( $post ) ) );
+		// Keyed from the lite URL's path below the home URL, the same shape as
+		// the path WordPress routes, so it matches whether or not the request
+		// URI carries a subdirectory's path.
+		$lite_path = str_replace( untrailingslashit( home_url() ), '', self::get_lite_page_url( $post ) );
+		delete_transient( self::get_page_cache_key( $lite_path ) );
 	}
 
 	/**
@@ -435,29 +437,38 @@ class Lite_Site {
 	 * @return string The transient key.
 	 */
 	public static function get_request_page_cache_key(): string {
-		// Hashed as received, never sanitized: a sanitizer that drops
-		// characters can give two different pages one key. sanitize_text_field(),
-		// for one, strips the percent-encoded octets that spell a non-ASCII slug.
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only hashed into a cache key, never output or stored.
-		return self::get_page_cache_key( $request_uri );
+		global $wp;
+
+		// The path WordPress routed, below the home URL and as received: the
+		// string the lite rule reads `lite_path` from, so the key follows the
+		// page that renders. Sanitizing it would drop characters and could give
+		// two different pages one key.
+		return self::get_page_cache_key( isset( $wp->request ) ? (string) $wp->request : '' );
 	}
 
 	/**
 	 * Build the transient key that caches a lite single page.
 	 *
-	 * Keyed on the URL path alone: the query string never affects lite output,
+	 * Keyed on the path alone: the query string never affects lite output,
 	 * and keying on it would let cache-busting query strings mint unbounded
-	 * transients. The path is decoded so a page has one key however its
-	 * non-ASCII characters were escaped: WordPress links slugs with lowercase
-	 * escapes, while a browser uses uppercase ones for a URL typed or pasted
-	 * in Unicode.
+	 * transients. The path otherwise stays as WordPress routes it, so two
+	 * paths that can render different pages never share a key: it's cut only
+	 * at the first `?`, and only the letter case of its percent-encoding is
+	 * normalized, because WordPress links slugs with lowercase escapes while
+	 * a browser sends uppercase ones for a URL typed or pasted in Unicode.
 	 *
-	 * @param string $request_uri The request URI or a full lite URL, with or without a query string.
+	 * @param string $path A path below the home URL, with or without a query string.
 	 * @return string The transient key.
 	 */
-	public static function get_page_cache_key( string $request_uri ): string {
-		$path = rawurldecode( (string) wp_parse_url( $request_uri, PHP_URL_PATH ) );
-		return 'nls_page_' . md5( untrailingslashit( $path ) );
+	public static function get_page_cache_key( string $path ): string {
+		$path = preg_replace_callback(
+			'/%[0-9a-f]{2}/i',
+			function ( $escape ) {
+				return strtolower( $escape[0] );
+			},
+			explode( '?', $path, 2 )[0]
+		);
+		return 'nls_page_' . md5( trim( $path, '/' ) );
 	}
 
 	/**
