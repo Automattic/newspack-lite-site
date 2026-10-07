@@ -92,7 +92,7 @@ Choose the categories and tags that appear on the Lite Site, with optional autom
   - Open in new tabs and/or style them to convey that link _away_ from a text-only option (a `.lite-site-external` class[^2])
 - An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included from your site's default settings)
 
-The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved.
+The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved. Every reader gets the version a signed-out visitor sees, so blocks shown only to signed-in readers are left out. Only plain visits to the site's own address fill the cache; visits with a query string or a sign-in cookie still get the page but don't fill the cache themselves.
 
 ### Alternative RSS Feed import
 
