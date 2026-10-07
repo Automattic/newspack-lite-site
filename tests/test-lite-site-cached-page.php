@@ -261,7 +261,8 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 
 	/**
 	 * One cookie for each name prefix Batcache treats as marking a visitor
-	 * whose pages can differ.
+	 * whose pages can differ, with `wp` followed by both of the separators
+	 * WordPress's own cookies use.
 	 *
 	 * @return array[]
 	 */
@@ -269,6 +270,7 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 		return [
 			'session'        => [ 'wordpress_logged_in_0123456789abcdef' ],
 			'access bypass'  => [ 'wp_access_bypass' ],
+			'user settings'  => [ 'wp-settings-1' ],
 			'comment author' => [ 'comment_author_0123456789abcdef' ],
 		];
 	}
