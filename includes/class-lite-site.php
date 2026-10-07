@@ -411,11 +411,10 @@ class Lite_Site {
 	 * Render a lite single page and, when the request allows, store it in the page cache.
 	 *
 	 * The page renders as a signed-out reader sees it whether or not this
-	 * visit stores it, so blocks that show or hide per reader, such as
-	 * Newspack's block visibility rules, give every reader the same page, and
-	 * a reader signed in without a session cookie can't store their own view.
-	 * The template's not-found exit ends the request without restoring the
-	 * reader.
+	 * visit stores it, so signing in can't change it, as Newspack's block
+	 * visibility rules otherwise would, and a reader signed in without a
+	 * session cookie can't store their own view. The template's not-found
+	 * exit ends the request without restoring the reader.
 	 *
 	 * @param string $cache_key Transient key from get_page_cache_key(), or an empty string to store nothing.
 	 * @return string The page HTML.
