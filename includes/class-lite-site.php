@@ -657,7 +657,14 @@ class Lite_Site {
 
 		if ( false === $post_id ) {
 			$post_id = url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
-			wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			if ( $post_id ) {
+				wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			} else {
+				// A miss is kept for minutes: saving the post can't clear a
+				// miss written after it, such as a lookup that read the post
+				// just before it was published, or one for a variant of its URL.
+				wp_cache_set( $cache_key, 0, 'newspack_lite_site', 5 * MINUTE_IN_SECONDS );
+			}
 		}
 
 		if ( ! $post_id ) {
