@@ -151,6 +151,21 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A signed-in reader whose visit doesn't fill the cache still gets the
+	 * page a signed-out visitor sees, so signing in never changes a lite page.
+	 */
+	public function test_signed_in_reader_whose_visit_does_not_fill_still_gets_the_signed_out_page() {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+		$this->make_request( 'GET', '/lite/a-story', [], [ 'wordpress_logged_in_0123456789abcdef' => '1' ] );
+
+		$page = Lite_Site::cache_single_page( $this->cache_key );
+
+		$this->assertFalse( get_transient( $this->cache_key ), 'The session cookie keeps this visit from filling the cache.' );
+		$this->assertStringContainsString( 'Subscribe prompt.', $page, 'The member gets the blocks shown to signed-out readers.' );
+		$this->assertStringNotContainsString( 'Members-only copy.', $page, 'The member does not get the blocks shown only to members.' );
+	}
+
+	/**
 	 * The rest of the request runs for the reader who made it, not as the
 	 * signed-out reader the page was rendered for.
 	 */
