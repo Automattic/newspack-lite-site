@@ -403,16 +403,104 @@ class Lite_Site {
 			exit;
 		}
 
-		ob_start();
-		include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
-		$output = ob_get_clean();
+		echo self::cache_single_page( $cache_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
+		exit;
+	}
 
-		if ( '' !== $cache_key ) {
+	/**
+	 * Render a lite single page and, when the request allows, store it in the page cache.
+	 *
+	 * The page renders as a signed-out reader sees it whether or not this
+	 * visit stores it, so signing in can't change it, as Newspack's block
+	 * visibility rules otherwise would, and a reader signed in without a
+	 * session cookie can't store their own view. The template's not-found
+	 * exit ends the request without restoring the reader.
+	 *
+	 * @param string $cache_key Transient key from get_page_cache_key(), or an empty string to store nothing.
+	 * @return string The page HTML.
+	 */
+	public static function cache_single_page( string $cache_key ): string {
+		$reader_id = get_current_user_id();
+		wp_set_current_user( 0 );
+
+		ob_start();
+		try {
+			self::include_single_template();
+		} finally {
+			$output = ob_get_clean();
+			wp_set_current_user( $reader_id );
+		}
+
+		if ( '' !== $cache_key && self::can_fill_page_cache() ) {
 			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 		}
 
-		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
-		exit;
+		return $output;
+	}
+
+	/**
+	 * Include the lite single template.
+	 *
+	 * Kept out of cache_single_page() so the template's variables can't
+	 * overwrite that method's own, such as the reader it restores.
+	 */
+	private static function include_single_template() {
+		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+	}
+
+	/**
+	 * Whether the current request's render may be stored for every reader.
+	 *
+	 * The page cache keys on the path alone, so a render shaped by anything
+	 * else in the request would reach every reader after it. A request fills
+	 * it only when it's a GET or HEAD sent to the site's own host, with no
+	 * query in the URL it requested and none of the cookies Batcache skips a
+	 * request for. Other cookies and request headers aren't read.
+	 *
+	 * @return bool
+	 */
+	private static function can_fill_page_cache(): bool {
+		// A form's posted fields reach the page through $_REQUEST, as query
+		// parameters do.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+		if ( ! in_array( $method, [ 'GET', 'HEAD' ], true ) ) {
+			return false;
+		}
+
+		// Code that prints the requested URL takes its host from the request,
+		// which WordPress doesn't check against the site's. Browsers send the
+		// host in lowercase, with the port only when it isn't the scheme's
+		// default.
+		$home         = wp_parse_url( home_url() );
+		$default_port = 'https' === ( $home['scheme'] ?? '' ) ? 443 : 80;
+		$home_port    = isset( $home['port'] ) && $default_port !== $home['port'] ? ':' . $home['port'] : '';
+		$home_host    = strtolower( ( $home['host'] ?? '' ) . $home_port );
+		if ( ! isset( $_SERVER['HTTP_HOST'] ) || $home_host !== $_SERVER['HTTP_HOST'] ) {
+			return false;
+		}
+
+		// The query the visitor sent, which code that prints the requested URL
+		// carries even when it holds no parameters. Read from the request URI,
+		// since a server rewrite can add a query string of its own.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only checked for a "?".
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		if ( false !== strpos( $request_uri, '?' ) ) {
+			return false;
+		}
+
+		// Batcache skips a request carrying a cookie with one of these
+		// prefixes: they mark a visitor whose pages can differ, such as a
+		// session or an access bypass. The cookie WordPress sets to test
+		// cookie support does not.
+		// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Reads cookie names only.
+		foreach ( array_keys( $_COOKIE ) as $name ) {
+			// phpcs:ignore WordPress.WP.CapitalPDangit.MisspelledInText -- A cookie name prefix.
+			if ( 'wordpress_test_cookie' !== $name && preg_match( '/^(?:wp|wordpress|comment_author)/', (string) $name ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -455,13 +543,14 @@ class Lite_Site {
 	/**
 	 * Build the transient key that caches a lite single page.
 	 *
-	 * Keyed on the path alone: the query string never affects lite output,
-	 * and keying on it would let cache-busting query strings mint unbounded
-	 * transients. The path otherwise stays as WordPress routes it, so two
-	 * paths that can render different pages never share a key: it's cut only
-	 * at the first `?`, and only the letter case of its percent-encoding is
-	 * normalized, because WordPress links slugs with lowercase escapes while
-	 * a browser sends uppercase ones for a URL typed or pasted in Unicode.
+	 * Keyed on the path alone, so cache-busting query strings can't mint
+	 * unbounded transients. A page can still read the query string, so a
+	 * request carrying one doesn't fill the cache; see can_fill_page_cache().
+	 * The path otherwise stays as WordPress routes it, so two paths that can
+	 * render different pages never share a key: it's cut only at the first
+	 * `?`, and only the letter case of its percent-encoding is normalized,
+	 * because WordPress links slugs with lowercase escapes while a browser
+	 * sends uppercase ones for a URL typed or pasted in Unicode.
 	 *
 	 * @param string $path A path below the home URL, with or without a query string.
 	 * @return string The transient key.
