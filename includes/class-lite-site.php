@@ -598,20 +598,18 @@ class Lite_Site {
 	 * @return string The cache key.
 	 */
 	private static function get_post_lookup_cache_key( string $path ): string {
-		// Lowercased so a lite URL a browser sends shares the entry that
-		// saving the post clears. Not decoded: misses are cached too, and a
-		// decoded key would let a variant that finds nothing, like
-		// `my%2Dpost`, cache a miss for `my-post`.
-		$path = self::lowercase_percent_escapes( ltrim( $path, '/' ) );
-		return 'nls_post_' . md5( home_url( '/' . $path ) );
+		// Keyed on the path, not the full URL: home_url() takes its scheme
+		// from the current request, so the request that saves the post and a
+		// reader's could otherwise hash different keys. The escapes are
+		// lowercased so a lite URL a browser sends shares the entry that
+		// saving clears, but not decoded: misses are cached too, and a decoded
+		// key would let a variant that finds nothing, like `my%2Dpost`, cache
+		// a miss for `my-post`.
+		return 'nls_post_' . md5( self::lowercase_percent_escapes( trim( $path, '/' ) ) );
 	}
 
 	/**
 	 * Lowercase the percent-escapes in a path.
-	 *
-	 * WordPress links slugs with lowercase escapes, while a browser sends
-	 * uppercase ones for a URL typed or pasted in Unicode, so this gives both
-	 * forms of a URL one cache key.
 	 *
 	 * @param string $path The path.
 	 * @return string The path with lowercase escapes.

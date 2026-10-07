@@ -33,13 +33,7 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	 * @param bool   $uppercase Whether the request sends the slug's escapes in uppercase.
 	 */
 	public function test_resolves_scheduled_post_once_published_after_an_early_lookup( $slug, $uppercase ) {
-		$post = self::factory()->post->create_and_get(
-			[
-				'post_status' => 'future',
-				'post_date'   => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
-				'post_name'   => $slug,
-			]
-		);
+		$post = $this->create_scheduled_post( $slug );
 		$path = $uppercase ? strtoupper( $post->post_name ) : $post->post_name;
 
 		$this->assertNull( Lite_Site::resolve_post( $path ), 'A scheduled post does not resolve.' );
@@ -90,5 +84,53 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 		$resolved = Lite_Site::resolve_post( 'second-slug' );
 		$this->assertInstanceOf( WP_Post::class, $resolved, 'The post resolves at its new slug.' );
 		$this->assertSame( $post_id, $resolved->ID, 'The resolved post is the renamed one.' );
+	}
+
+	/**
+	 * A scheduled post resolves for readers on HTTPS once published by a
+	 * request without TLS, as a cron run can be, on a site whose home URL is
+	 * http.
+	 */
+	public function test_resolves_for_https_readers_once_published_without_tls() {
+		$post = $this->create_scheduled_post( 'scheduled-story' );
+
+		$this->assertNull( $this->resolve_post_over_https( 'scheduled-story' ), 'A scheduled post does not resolve.' );
+
+		wp_publish_post( $post );
+
+		$resolved = $this->resolve_post_over_https( 'scheduled-story' );
+		$this->assertInstanceOf( WP_Post::class, $resolved, 'The post resolves once published.' );
+		$this->assertSame( $post->ID, $resolved->ID, 'The resolved post is the published one.' );
+	}
+
+	/**
+	 * Create a post scheduled for tomorrow.
+	 *
+	 * @param string $slug Post slug.
+	 * @return WP_Post
+	 */
+	private function create_scheduled_post( $slug ) {
+		return self::factory()->post->create_and_get(
+			[
+				'post_status' => 'future',
+				'post_date'   => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
+				'post_name'   => $slug,
+			]
+		);
+	}
+
+	/**
+	 * Resolve a lite path as a request that arrived over HTTPS.
+	 *
+	 * @param string $path Lite path.
+	 * @return WP_Post|null
+	 */
+	private function resolve_post_over_https( $path ) {
+		$_SERVER['HTTPS'] = 'on';
+		try {
+			return Lite_Site::resolve_post( $path );
+		} finally {
+			unset( $_SERVER['HTTPS'] );
+		}
 	}
 }
