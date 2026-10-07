@@ -104,6 +104,44 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A draft published from the block editor resolves at the lite URL the
+	 * category set in that same save gives it, though that URL was looked up
+	 * before the save.
+	 */
+	public function test_resolves_post_published_from_the_editor_at_its_category_path() {
+		// The test environment has no %category% rewrite tag until the
+		// taxonomies are registered again, so that comes before the rules are
+		// built for the structure.
+		create_initial_taxonomies();
+		$this->set_permalink_structure( '/%category%/%postname%/' );
+		$category_id = self::factory()->category->create( [ 'slug' => 'news' ] );
+		$post_id     = self::factory()->post->create(
+			[
+				'post_status' => 'draft',
+				'post_name'   => 'draft-story',
+			]
+		);
+
+		$this->assertNull( Lite_Site::resolve_post( 'news/draft-story' ), 'A draft does not resolve.' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/posts/' . $post_id );
+		$request->set_body_params(
+			[
+				'status'     => 'publish',
+				'categories' => [ $category_id ],
+			]
+		);
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'editor' ] ) );
+		$response = rest_do_request( $request );
+		wp_set_current_user( 0 );
+		$this->assertSame( 200, $response->get_status(), 'The editor publishes the post.' );
+
+		$resolved = Lite_Site::resolve_post( 'news/draft-story' );
+		$this->assertInstanceOf( WP_Post::class, $resolved, 'The post resolves at its category path once published.' );
+		$this->assertSame( $post_id, $resolved->ID, 'The resolved post is the published one.' );
+	}
+
+	/**
 	 * Create a post scheduled for tomorrow.
 	 *
 	 * @param string $slug Post slug.

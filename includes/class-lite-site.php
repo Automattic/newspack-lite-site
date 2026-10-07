@@ -30,7 +30,9 @@ class Lite_Site {
 		add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
 		add_action( 'save_post', [ __CLASS__, 'invalidate_page_cache' ] );
-		add_action( 'save_post', [ __CLASS__, 'invalidate_post_lookup_cache' ] );
+		// Not save_post: a block-editor save stores the post's terms after
+		// save_post fires, and a %category% permalink depends on them.
+		add_action( 'wp_after_insert_post', [ __CLASS__, 'invalidate_post_lookup_cache' ] );
 
 		/** Add content filters to mimic 'the_content'. See 'wp-includes/default-filters.php' for reference. */
 		add_filter( 'newspack_lite_site_post_content', 'capital_P_dangit', 11 );
