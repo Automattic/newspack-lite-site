@@ -132,8 +132,9 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A signed-in reader fills the cache with the page a signed-out visitor
-	 * gets, so every later reader is served the same copy whoever came first.
+	 * A reader signed in without a session cookie, which the request check
+	 * can't see, fills the cache with the page a signed-out visitor gets, so
+	 * every later reader is served the same copy whoever came first.
 	 */
 	public function test_cached_page_is_the_same_whoever_fills_it() {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );

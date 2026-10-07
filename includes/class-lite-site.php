@@ -410,13 +410,13 @@ class Lite_Site {
 	/**
 	 * Render a lite single page and, when the request allows, store it in the page cache.
 	 *
-	 * Every reader is served the cached copy, so the page renders as a
-	 * signed-out reader sees it, whoever's visit fills the cache. Otherwise
-	 * blocks that show or hide per reader, such as Newspack's block
-	 * visibility rules, would reach everyone as the visitor who filled the
-	 * cache saw them. A request that could have shaped the page in other
-	 * ways, such as through its query string, cookies or host, is served the
-	 * page without storing it.
+	 * The page renders as a signed-out reader sees it whether or not this
+	 * visit stores it, so blocks that show or hide per reader, such as
+	 * Newspack's block visibility rules, give every reader the same page, and
+	 * a reader signed in without a session cookie can't store their own view.
+	 * can_fill_page_cache() decides whether the render is stored. The
+	 * template's not-found exit ends the request without restoring the
+	 * reader.
 	 *
 	 * @param string $cache_key Transient key from get_page_cache_key(), or an empty string to store nothing.
 	 * @return string The page HTML.
@@ -454,9 +454,10 @@ class Lite_Site {
 	 * Whether the current request's render may be stored for every reader.
 	 *
 	 * The page cache keys on the path alone, so a render shaped by anything
-	 * else in the request would reach every reader after it. Only a request
-	 * a full-page cache such as Batcache would also store, sent to the
-	 * site's own host, can fill it.
+	 * else in the request would reach every reader after it. A request fills
+	 * it only when it was sent to the site's own host and its method, query
+	 * and cookies are ones Batcache would also store a page for. Cookies
+	 * outside Batcache's prefixes and other request headers aren't read.
 	 *
 	 * @return bool
 	 */
