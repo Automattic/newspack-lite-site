@@ -73,16 +73,17 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	 * Set the request globals as PHP and WordPress fill them for a request.
 	 *
 	 * @param string $method  Request method.
-	 * @param string $url     URL requested, with any query string. A path alone is requested at the site's host.
+	 * @param string $url     URL requested, with any query string. A path alone is requested at the site's address.
 	 * @param array  $fields  Form fields in the request body.
 	 * @param array  $cookies Cookies the request carries.
 	 */
 	private function make_request( $method, $url, array $fields = [], array $cookies = [] ) {
 		$url   = wp_parse_url( $url );
 		$query = $url['query'] ?? '';
+		$host  = isset( $url['host'] ) ? $url : wp_parse_url( home_url() );
 
 		$_SERVER['REQUEST_METHOD'] = $method;
-		$_SERVER['HTTP_HOST']      = isset( $url['host'] ) ? $url['host'] . ( isset( $url['port'] ) ? ':' . $url['port'] : '' ) : wp_parse_url( home_url(), PHP_URL_HOST );
+		$_SERVER['HTTP_HOST']      = $host['host'] . ( isset( $host['port'] ) ? ':' . $host['port'] : '' );
 		$_SERVER['REQUEST_URI']    = $url['path'] . ( '' !== $query ? '?' . $query : '' );
 		$_SERVER['QUERY_STRING']   = $query;
 
@@ -334,23 +335,41 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A browser's request to a site whose address has capitals and a port
-	 * fills the cache: it sends the host in lowercase, with the port.
+	 * A browser's request to the site's address fills the cache however the
+	 * address is written: browsers send the host in lowercase, with the port
+	 * only when it isn't the scheme's default.
+	 *
+	 * @dataProvider data_site_addresses_browsers_send_differently
+	 *
+	 * @param string $site_address The site address as stored.
+	 * @param string $url          URL a browser requests for the story.
 	 */
-	public function test_request_to_a_site_address_with_capitals_and_a_port_fills_the_cache() {
+	public function test_request_to_the_site_address_fills_the_cache( $site_address, $url ) {
 		add_filter(
 			'pre_option_home',
-			function () {
-				return 'http://Lite-Site.example.test:8080';
+			function () use ( $site_address ) {
+				return $site_address;
 			}
 		);
 		// The single template exits when its post doesn't resolve, which would
 		// end the whole run with a passing status, so fail here instead.
 		$this->assertNotNull( Lite_Site::resolve_post( 'a-story' ), 'The story resolves at the site address.' );
-		$this->make_request( 'GET', 'http://lite-site.example.test:8080/lite/a-story' );
+		$this->make_request( 'GET', $url );
 
 		$page = Lite_Site::cache_single_page( $this->cache_key );
 
 		$this->assertSame( $page, get_transient( $this->cache_key ), 'The page is stored for later readers.' );
+	}
+
+	/**
+	 * Site addresses a browser's Host header doesn't spell the same way.
+	 *
+	 * @return array[]
+	 */
+	public function data_site_addresses_browsers_send_differently() {
+		return [
+			'capitals and a port'      => [ 'http://Lite-Site.example.test:8080', 'http://lite-site.example.test:8080/lite/a-story' ],
+			'default port spelled out' => [ 'https://lite-site.example.test:443', 'https://lite-site.example.test/lite/a-story' ],
+		];
 	}
 }

@@ -470,9 +470,12 @@ class Lite_Site {
 
 		// Code that prints the requested URL takes its host from the request,
 		// which WordPress doesn't check against the site's. Browsers send the
-		// host in lowercase, with any port the site's address has.
-		$home      = wp_parse_url( home_url() );
-		$home_host = strtolower( ( $home['host'] ?? '' ) . ( isset( $home['port'] ) ? ':' . $home['port'] : '' ) );
+		// host in lowercase, with the port only when it isn't the scheme's
+		// default.
+		$home         = wp_parse_url( home_url() );
+		$default_port = 'https' === ( $home['scheme'] ?? '' ) ? 443 : 80;
+		$home_port    = isset( $home['port'] ) && $default_port !== $home['port'] ? ':' . $home['port'] : '';
+		$home_host    = strtolower( ( $home['host'] ?? '' ) . $home_port );
 		if ( ! isset( $_SERVER['HTTP_HOST'] ) || $home_host !== $_SERVER['HTTP_HOST'] ) {
 			return false;
 		}
