@@ -289,16 +289,16 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A request a full-page cache would store fills the cache, even when
-	 * it's a HEAD or carries cookies that don't mark a visitor whose pages
-	 * can differ, so ordinary visits keep the cache warm.
+	 * A plain request still fills the cache when it's a HEAD or carries
+	 * cookies that don't mark a visitor whose pages can differ, so ordinary
+	 * visits keep the cache warm.
 	 *
-	 * @dataProvider data_requests_full_page_caches_store
+	 * @dataProvider data_plain_requests_that_still_fill_the_cache
 	 *
 	 * @param string $method  Request method.
 	 * @param array  $cookies Cookies the request carries.
 	 */
-	public function test_request_a_full_page_cache_would_store_fills_the_cache( $method, $cookies ) {
+	public function test_head_or_an_unrelated_cookie_still_fills_the_cache( $method, $cookies ) {
 		$this->make_request( $method, '/lite/a-story', [], $cookies );
 
 		$page = Lite_Site::cache_single_page( $this->cache_key );
@@ -312,7 +312,7 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	 *
 	 * @return array[]
 	 */
-	public function data_requests_full_page_caches_store() {
+	public function data_plain_requests_that_still_fill_the_cache() {
 		return [
 			'HEAD'              => [ 'HEAD', [] ],
 			'login test cookie' => [ 'GET', [ 'wordpress_test_cookie' => 'WP Cookie check' ] ],
