@@ -477,9 +477,12 @@ class Lite_Site {
 			return false;
 		}
 
-		// As sent rather than as parsed into $_GET: code that prints the
-		// requested URL carries a query even when it holds no parameters.
-		if ( isset( $_SERVER['QUERY_STRING'] ) && '' !== $_SERVER['QUERY_STRING'] ) {
+		// The query the visitor sent, which code that prints the requested URL
+		// carries even when it holds no parameters. Read from the request URI,
+		// since a server rewrite can add a query string of its own.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only checked for a "?".
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		if ( false !== strpos( $request_uri, '?' ) ) {
 			return false;
 		}
 

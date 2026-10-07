@@ -317,6 +317,23 @@ class Test_Lite_Site_Cached_Page extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A query string the server's rewrite adds, with none in the URL the
+	 * visitor requested, fills the cache: it carries nothing the path
+	 * doesn't.
+	 */
+	public function test_query_string_a_server_rewrite_adds_fills_the_cache() {
+		$this->make_request( 'GET', '/lite/a-story' );
+		$rewrite_params          = [ 'q' => '/lite/a-story' ];
+		$_SERVER['QUERY_STRING'] = 'q=/lite/a-story&';
+		$_GET                    = $rewrite_params;
+		$_REQUEST                = $rewrite_params;
+
+		$page = Lite_Site::cache_single_page( $this->cache_key );
+
+		$this->assertSame( $page, get_transient( $this->cache_key ), 'The page is stored for later readers.' );
+	}
+
+	/**
 	 * A browser's request to a site whose address has capitals and a port
 	 * fills the cache: it sends the host in lowercase, with the port.
 	 */
