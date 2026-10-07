@@ -137,8 +137,8 @@ if ( $is_liveblog ) {
 	/**
 	 * Fires after the footer of the lite site single post page.
 	 *
-	 * Callbacks run as a signed-out reader, like the rest of the page, so
-	 * every reader gets the same page.
+	 * Callbacks run as a signed-out reader, like the rest of the page, since
+	 * what they print can be cached and served to every reader.
 	 *
 	 * @param \WP_Post $current_post The current post.
 	 */
