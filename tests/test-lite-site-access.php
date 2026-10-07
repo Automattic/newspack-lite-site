@@ -53,6 +53,21 @@ class Test_Lite_Site_Access extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A lite path that isn't a string, which a query string such as
+	 * `lite_path[]=x` can supply, resolves to nothing rather than throwing.
+	 */
+	public function test_does_not_resolve_a_path_that_is_not_a_string() {
+		self::factory()->post->create(
+			[
+				'post_status' => 'publish',
+				'post_name'   => 'public-story',
+			]
+		);
+
+		$this->assertNull( Lite_Site::resolve_post( [ 'public-story' ] ), 'An array path does not resolve.' );
+	}
+
+	/**
 	 * A password-protected post does not resolve even for a reader who has
 	 * entered its password, because the rendered lite page is cached for
 	 * every reader.

@@ -647,7 +647,7 @@ class Lite_Site {
 	 * @return WP_Post|null The resolved post, or null if not found, not published, or excluded by term filters.
 	 */
 	public static function resolve_post( $path ) {
-		if ( empty( $path ) ) {
+		if ( empty( $path ) || ! is_string( $path ) ) {
 			return null;
 		}
 
