@@ -168,4 +168,27 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 			'proxy strips the directory'    => [ '/lite/a-story/' ],
 		];
 	}
+
+	/**
+	 * Code outside the plugin that calls the page cache handler v0.1.0
+	 * shipped still clears the post's cached page, with a deprecation
+	 * notice rather than a fatal error.
+	 *
+	 * @expectedDeprecated Newspack_Lite_Site\Lite_Site::invalidate_page_cache
+	 */
+	public function test_deprecated_page_cache_handler_still_clears_cached_page() {
+		$post = self::factory()->post->create_and_get(
+			[
+				'post_status' => 'publish',
+				'post_name'   => 'a-story',
+			]
+		);
+
+		$cache_key = $this->get_request_page_cache_key( '/lite/a-story/' );
+		set_transient( $cache_key, 'Cached lite page', MINUTE_IN_SECONDS );
+
+		Lite_Site::invalidate_page_cache( $post->ID );
+
+		$this->assertFalse( get_transient( $cache_key ), 'The deprecated handler clears the cached lite page.' );
+	}
 }

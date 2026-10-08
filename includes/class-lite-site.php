@@ -578,6 +578,18 @@ class Lite_Site {
 	}
 
 	/**
+	 * Clear the lite caches for a post.
+	 *
+	 * @deprecated 0.1.1 Use invalidate_post_caches().
+	 *
+	 * @param int $post_id The post ID.
+	 */
+	public static function invalidate_page_cache( int $post_id ) {
+		_deprecated_function( __METHOD__, '0.1.1', __CLASS__ . '::invalidate_post_caches' );
+		self::invalidate_post_caches( $post_id );
+	}
+
+	/**
 	 * Build the transient key for the lite single page the current request is for.
 	 *
 	 * @return string The transient key, or an empty string when WordPress routed no path for the request.
