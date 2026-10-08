@@ -30,6 +30,9 @@ class Lite_Site {
 		add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
 		add_action( 'save_post', [ __CLASS__, 'invalidate_page_cache' ] );
+		// Not save_post: a block-editor save stores the post's terms after
+		// save_post fires, and a %category% permalink depends on them.
+		add_action( 'wp_after_insert_post', [ __CLASS__, 'invalidate_post_lookup_cache' ] );
 
 		/** Add content filters to mimic 'the_content'. See 'wp-includes/default-filters.php' for reference. */
 		add_filter( 'newspack_lite_site_post_content', 'capital_P_dangit', 11 );
@@ -296,8 +299,18 @@ class Lite_Site {
 			return $permalink;
 		}
 
-		$path = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
-		return home_url( self::get_url_base() . '/' . $path );
+		return home_url( self::get_url_base() . '/' . self::get_lite_path( $permalink ) );
+	}
+
+	/**
+	 * Get the part of a permalink's lite URL after the URL base, the path
+	 * resolve_post() receives when that URL is requested.
+	 *
+	 * @param string $permalink A permalink on this site.
+	 * @return string The lite path, without leading or trailing slashes.
+	 */
+	private static function get_lite_path( string $permalink ): string {
+		return ltrim( str_replace( untrailingslashit( home_url() ), '', untrailingslashit( $permalink ) ), '/' );
 	}
 
 	/**
@@ -556,14 +569,61 @@ class Lite_Site {
 	 * @return string The transient key.
 	 */
 	public static function get_page_cache_key( string $path ): string {
-		$path = preg_replace_callback(
+		$path = self::lowercase_percent_escapes( explode( '?', $path, 2 )[0] );
+		return 'nls_page_' . md5( trim( $path, '/' ) );
+	}
+
+	/**
+	 * Clear the cached post lookup for a published post's lite path when the
+	 * post is saved.
+	 *
+	 * A lookup made before the post was published at that path, such as a
+	 * signed-out visit while it was scheduled, caches that no post was found,
+	 * and the post would show as not found until that entry expired.
+	 *
+	 * @param int $post_id The saved post ID.
+	 */
+	public static function invalidate_post_lookup_cache( int $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post || 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		$path = self::get_lite_path( get_permalink( $post ) );
+		wp_cache_delete( self::get_post_lookup_cache_key( $path ), 'newspack_lite_site' );
+	}
+
+	/**
+	 * Build the object cache key for the post lookup of a lite path.
+	 *
+	 * @param string $path Lite path, as resolve_post() receives it.
+	 * @return string The cache key.
+	 */
+	private static function get_post_lookup_cache_key( string $path ): string {
+		// Keyed on the path, not the full URL: home_url() takes its scheme
+		// from the current request, so the request that saves the post and a
+		// reader's could otherwise hash different keys. The escapes are
+		// lowercased so a lite URL a browser sends shares the entry that
+		// saving clears, but not decoded: misses are cached too, and a decoded
+		// key would let a variant that finds nothing, like `my%2Dpost`, cache
+		// a miss for `my-post`.
+		return 'nls_post_' . md5( self::lowercase_percent_escapes( trim( $path, '/' ) ) );
+	}
+
+	/**
+	 * Lowercase the percent-escapes in a path.
+	 *
+	 * @param string $path The path.
+	 * @return string The path with lowercase escapes.
+	 */
+	private static function lowercase_percent_escapes( string $path ): string {
+		return preg_replace_callback(
 			'/%[0-9a-f]{2}/i',
 			function ( $escape ) {
 				return strtolower( $escape[0] );
 			},
-			explode( '?', $path, 2 )[0]
+			$path
 		);
-		return 'nls_page_' . md5( trim( $path, '/' ) );
 	}
 
 	/**
@@ -583,21 +643,28 @@ class Lite_Site {
 	/**
 	 * Resolve a URL path to a published WP_Post.
 	 *
-	 * @param string $path URL path without leading slash.
+	 * @param mixed $path URL path without leading slash. Anything but a non-empty string resolves to nothing.
 	 * @return WP_Post|null The resolved post, or null if not found, not published, or excluded by term filters.
 	 */
 	public static function resolve_post( $path ) {
-		if ( empty( $path ) ) {
+		if ( empty( $path ) || ! is_string( $path ) ) {
 			return null;
 		}
 
 		$url       = home_url( '/' . ltrim( $path, '/' ) );
-		$cache_key = 'nls_post_' . md5( $url );
+		$cache_key = self::get_post_lookup_cache_key( $path );
 		$post_id   = wp_cache_get( $cache_key, 'newspack_lite_site' );
 
 		if ( false === $post_id ) {
 			$post_id = url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
-			wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			if ( $post_id ) {
+				wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			} else {
+				// A miss is kept for minutes: saving the post can't clear a
+				// miss written after it, such as a lookup that read the post
+				// just before it was published, or one for a variant of its URL.
+				wp_cache_set( $cache_key, 0, 'newspack_lite_site', 5 * MINUTE_IN_SECONDS );
+			}
 		}
 
 		if ( ! $post_id ) {
