@@ -59,6 +59,20 @@ abstract class Lite_Site_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Switch to `/%category%/%postname%/` permalinks.
+	 *
+	 * Core adds the %category% rewrite tag only when the category taxonomy
+	 * is registered under a permalink structure, and the test bootstrap
+	 * registered it before any was set. So the structure is set, the
+	 * taxonomies are registered again, and the rules are rebuilt with the tag.
+	 */
+	protected function set_category_permalinks() {
+		$this->set_permalink_structure( '/%category%/%postname%/' );
+		create_initial_taxonomies();
+		$this->set_permalink_structure( '/%category%/%postname%/' );
+	}
+
+	/**
 	 * The page cache key the lite single handler builds for a request, once
 	 * WordPress has routed it.
 	 *

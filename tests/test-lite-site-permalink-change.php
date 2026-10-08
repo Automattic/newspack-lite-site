@@ -119,11 +119,7 @@ class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 	 * @param bool $from_editor Whether the block editor saves the change.
 	 */
 	public function test_category_change_clears_page_cached_at_old_category_path( $from_editor ) {
-		// Core adds the %category% rewrite tag only once a permalink structure
-		// is set, and the test bootstrap registered the taxonomies before that,
-		// so they are registered again before the rules are built.
-		create_initial_taxonomies();
-		$this->set_permalink_structure( '/%category%/%postname%/' );
+		$this->set_category_permalinks();
 		$old_category_id = self::factory()->category->create( [ 'slug' => 'news' ] );
 		$new_category_id = self::factory()->category->create( [ 'slug' => 'sports' ] );
 		$post_id         = self::factory()->post->create(
