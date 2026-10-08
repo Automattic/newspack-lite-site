@@ -22,6 +22,14 @@ class Lite_Site {
 	private static $settings = null;
 
 	/**
+	 * Lite paths that posts being updated in this request were published at
+	 * before the update, keyed by post ID.
+	 *
+	 * @var array<int, string[]>
+	 */
+	private static $lite_paths_before_update = [];
+
+	/**
 	 * Initialize the lite site functionality.
 	 */
 	public static function init() {
@@ -29,10 +37,10 @@ class Lite_Site {
 		add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
 		add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
-		add_action( 'save_post', [ __CLASS__, 'invalidate_page_cache' ] );
+		add_action( 'pre_post_update', [ __CLASS__, 'remember_lite_path' ] );
 		// Not save_post: a block-editor save stores the post's terms after
 		// save_post fires, and a %category% permalink depends on them.
-		add_action( 'wp_after_insert_post', [ __CLASS__, 'invalidate_post_lookup_cache' ] );
+		add_action( 'wp_after_insert_post', [ __CLASS__, 'invalidate_post_caches' ], 10, 4 );
 
 		/** Add content filters to mimic 'the_content'. See 'wp-includes/default-filters.php' for reference. */
 		add_filter( 'newspack_lite_site_post_content', 'capital_P_dangit', 11 );
@@ -517,21 +525,56 @@ class Lite_Site {
 	}
 
 	/**
-	 * Invalidate the cached lite single page for a post when it is saved.
+	 * Remember the lite path a published post has before an update changes it.
 	 *
-	 * @param int $post_id The saved post ID.
+	 * Read here, not from the post as it was that wp_after_insert_post
+	 * passes: a %category% permalink is built from the terms the post has
+	 * when it's read, and a save can change them before then.
+	 *
+	 * @param int $post_id The ID of the post about to be updated.
 	 */
-	public static function invalidate_page_cache( int $post_id ) {
+	public static function remember_lite_path( int $post_id ) {
 		$post = get_post( $post_id );
-		if ( ! $post ) {
-			return;
+		if ( $post && 'publish' === $post->post_status ) {
+			self::$lite_paths_before_update[ $post_id ][] = self::get_lite_path( get_permalink( $post ) );
+		}
+	}
+
+	/**
+	 * Clear the cached page and post lookup at each lite path a post was
+	 * published at, before or after a save.
+	 *
+	 * A path the post left, by moving or being unpublished, would otherwise
+	 * go on serving it from the page cache for minutes, and from the lookup
+	 * for hours after a move. A path it takes could hold a lookup that found
+	 * no post there, such as a signed-out visit while it was scheduled, and
+	 * the post would show as not found until that entry expired.
+	 *
+	 * @param int          $post_id     The saved post ID.
+	 * @param WP_Post|null $post        The saved post.
+	 * @param bool         $update      Whether the save updated an existing post.
+	 * @param WP_Post|null $post_before The post before the save, or null for a new post.
+	 */
+	public static function invalidate_post_caches( int $post_id, $post = null, $update = false, $post_before = null ) {
+		$paths = self::$lite_paths_before_update[ $post_id ] ?? [];
+		unset( self::$lite_paths_before_update[ $post_id ] );
+
+		// Trashing a post adds `__trashed` to its slug before pre_post_update
+		// fires, so the path it was published at is also read from the post
+		// as it was before the save.
+		foreach ( [ $post_before, get_post( $post_id ) ] as $version ) {
+			if ( $version instanceof \WP_Post && 'publish' === $version->post_status ) {
+				$paths[] = self::get_lite_path( get_permalink( $version ) );
+			}
 		}
 
-		// Keyed from the lite URL's path below the home URL, the same shape as
-		// the path WordPress routes, so it matches whether or not the request
-		// URI carries a subdirectory's path.
-		$lite_path = str_replace( untrailingslashit( home_url() ), '', self::get_lite_page_url( $post ) );
-		delete_transient( self::get_page_cache_key( $lite_path ) );
+		foreach ( array_unique( $paths ) as $path ) {
+			wp_cache_delete( self::get_post_lookup_cache_key( $path ), 'newspack_lite_site' );
+			// Keyed from the path below the home URL, the shape of the path
+			// WordPress routes, so it matches whether or not the request URI
+			// carries a subdirectory's path.
+			delete_transient( self::get_page_cache_key( self::get_url_base() . '/' . $path ) );
+		}
 	}
 
 	/**
@@ -571,26 +614,6 @@ class Lite_Site {
 	public static function get_page_cache_key( string $path ): string {
 		$path = self::lowercase_percent_escapes( explode( '?', $path, 2 )[0] );
 		return 'nls_page_' . md5( trim( $path, '/' ) );
-	}
-
-	/**
-	 * Clear the cached post lookup for a published post's lite path when the
-	 * post is saved.
-	 *
-	 * A lookup made before the post was published at that path, such as a
-	 * signed-out visit while it was scheduled, caches that no post was found,
-	 * and the post would show as not found until that entry expired.
-	 *
-	 * @param int $post_id The saved post ID.
-	 */
-	public static function invalidate_post_lookup_cache( int $post_id ) {
-		$post = get_post( $post_id );
-		if ( ! $post || 'publish' !== $post->post_status ) {
-			return;
-		}
-
-		$path = self::get_lite_path( get_permalink( $post ) );
-		wp_cache_delete( self::get_post_lookup_cache_key( $path ), 'newspack_lite_site' );
 	}
 
 	/**
