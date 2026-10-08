@@ -136,6 +136,25 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A missed lookup for an escaped variant of a slug, which finds nothing,
+	 * doesn't keep the post off the slug's own lite URL.
+	 */
+	public function test_missed_lookup_for_an_escaped_variant_does_not_hide_the_post() {
+		$post_id = self::factory()->post->create(
+			[
+				'post_status' => 'publish',
+				'post_name'   => 'my-post',
+			]
+		);
+
+		$this->assertNull( Lite_Site::resolve_post( 'my%2Dpost' ), 'The escaped variant finds nothing.' );
+
+		$resolved = Lite_Site::resolve_post( 'my-post' );
+		$this->assertInstanceOf( WP_Post::class, $resolved, 'The slug still resolves after the variant missed.' );
+		$this->assertSame( $post_id, $resolved->ID, 'The resolved post is the one at the slug.' );
+	}
+
+	/**
 	 * Resolve a lite path as a reader's request would, over HTTPS when asked.
 	 *
 	 * @param string $path       Lite path.
