@@ -30,6 +30,9 @@ class Lite_Site {
 		add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
 		add_action( 'save_post', [ __CLASS__, 'invalidate_page_cache' ] );
+		// Not save_post: a block-editor save stores the post's terms after
+		// save_post fires, and a %category% permalink depends on them.
+		add_action( 'wp_after_insert_post', [ __CLASS__, 'invalidate_post_lookup_cache' ] );
 
 		/** Add content filters to mimic 'the_content'. See 'wp-includes/default-filters.php' for reference. */
 		add_filter( 'newspack_lite_site_post_content', 'capital_P_dangit', 11 );
@@ -296,8 +299,18 @@ class Lite_Site {
 			return $permalink;
 		}
 
-		$path = ltrim( str_replace( untrailingslashit( home_url() ), '', $permalink ), '/' );
-		return home_url( self::get_url_base() . '/' . $path );
+		return home_url( self::get_url_base() . '/' . self::get_lite_path( $permalink ) );
+	}
+
+	/**
+	 * Get the part of a permalink's lite URL after the URL base, the path
+	 * resolve_post() receives when that URL is requested.
+	 *
+	 * @param string $permalink A permalink on this site.
+	 * @return string The lite path, without leading or trailing slashes.
+	 */
+	private static function get_lite_path( string $permalink ): string {
+		return ltrim( str_replace( untrailingslashit( home_url() ), '', untrailingslashit( $permalink ) ), '/' );
 	}
 
 	/**
@@ -395,23 +408,112 @@ class Lite_Site {
 			exit;
 		}
 
-		$request_uri = untrailingslashit( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' );
-		$cache_key   = 'nls_page_' . md5( $request_uri );
-		$cached      = get_transient( $cache_key );
+		$cache_key = self::get_request_page_cache_key();
+		$cached    = '' !== $cache_key ? get_transient( $cache_key ) : false;
 
 		if ( false !== $cached ) {
 			echo $cached; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 			exit;
 		}
 
-		ob_start();
-		include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
-		$output = ob_get_clean();
-
-		set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
-
-		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
+		echo self::cache_single_page( $cache_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 		exit;
+	}
+
+	/**
+	 * Render a lite single page and, when the request allows, store it in the page cache.
+	 *
+	 * The page renders as a signed-out reader sees it whether or not this
+	 * visit stores it, so signing in can't change it, as Newspack's block
+	 * visibility rules otherwise would, and a reader signed in without a
+	 * session cookie can't store their own view. The template's not-found
+	 * exit ends the request without restoring the reader.
+	 *
+	 * @param string $cache_key Transient key from get_page_cache_key(), or an empty string to store nothing.
+	 * @return string The page HTML.
+	 */
+	public static function cache_single_page( string $cache_key ): string {
+		$reader_id = get_current_user_id();
+		wp_set_current_user( 0 );
+
+		ob_start();
+		try {
+			self::include_single_template();
+		} finally {
+			$output = ob_get_clean();
+			wp_set_current_user( $reader_id );
+		}
+
+		if ( '' !== $cache_key && self::can_fill_page_cache() ) {
+			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Include the lite single template.
+	 *
+	 * Kept out of cache_single_page() so the template's variables can't
+	 * overwrite that method's own, such as the reader it restores.
+	 */
+	private static function include_single_template() {
+		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+	}
+
+	/**
+	 * Whether the current request's render may be stored for every reader.
+	 *
+	 * The page cache keys on the path alone, so a render shaped by anything
+	 * else in the request would reach every reader after it. A request fills
+	 * it only when it's a GET or HEAD sent to the site's own host, with no
+	 * query in the URL it requested and none of the cookies Batcache skips a
+	 * request for. Other cookies and request headers aren't read.
+	 *
+	 * @return bool
+	 */
+	private static function can_fill_page_cache(): bool {
+		// A form's posted fields reach the page through $_REQUEST, as query
+		// parameters do.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+		if ( ! in_array( $method, [ 'GET', 'HEAD' ], true ) ) {
+			return false;
+		}
+
+		// Code that prints the requested URL takes its host from the request,
+		// which WordPress doesn't check against the site's. Browsers send the
+		// host in lowercase, with the port only when it isn't the scheme's
+		// default.
+		$home         = wp_parse_url( home_url() );
+		$default_port = 'https' === ( $home['scheme'] ?? '' ) ? 443 : 80;
+		$home_port    = isset( $home['port'] ) && $default_port !== $home['port'] ? ':' . $home['port'] : '';
+		$home_host    = strtolower( ( $home['host'] ?? '' ) . $home_port );
+		if ( ! isset( $_SERVER['HTTP_HOST'] ) || $home_host !== $_SERVER['HTTP_HOST'] ) {
+			return false;
+		}
+
+		// The query the visitor sent, which code that prints the requested URL
+		// carries even when it holds no parameters. Read from the request URI,
+		// since a server rewrite can add a query string of its own.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only checked for a "?".
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		if ( false !== strpos( $request_uri, '?' ) ) {
+			return false;
+		}
+
+		// Batcache skips a request carrying a cookie with one of these
+		// prefixes: they mark a visitor whose pages can differ, such as a
+		// session or an access bypass. The cookie WordPress sets to test
+		// cookie support does not.
+		// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Reads cookie names only.
+		foreach ( array_keys( $_COOKIE ) as $name ) {
+			// phpcs:ignore WordPress.WP.CapitalPDangit.MisspelledInText -- A cookie name prefix.
+			if ( 'wordpress_test_cookie' !== $name && preg_match( '/^(?:wp|wordpress|comment_author)/', (string) $name ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -425,11 +527,103 @@ class Lite_Site {
 			return;
 		}
 
-		$url_base    = self::get_url_base();
-		$post_path   = ltrim( str_replace( trailingslashit( home_url() ), '', trailingslashit( get_permalink( $post ) ) ), '/' );
-		$request_uri = untrailingslashit( '/' . $url_base . '/' . $post_path );
-		$cache_key   = 'nls_page_' . md5( $request_uri );
-		delete_transient( $cache_key );
+		// Keyed from the lite URL's path below the home URL, the same shape as
+		// the path WordPress routes, so it matches whether or not the request
+		// URI carries a subdirectory's path.
+		$lite_path = str_replace( untrailingslashit( home_url() ), '', self::get_lite_page_url( $post ) );
+		delete_transient( self::get_page_cache_key( $lite_path ) );
+	}
+
+	/**
+	 * Build the transient key for the lite single page the current request is for.
+	 *
+	 * @return string The transient key, or an empty string when WordPress routed no path for the request.
+	 */
+	public static function get_request_page_cache_key(): string {
+		global $wp;
+
+		// The path WordPress routed, below the home URL and as received: the
+		// string the lite rule reads `lite_path` from, so the key follows the
+		// page that renders. Sanitizing it would drop characters and could give
+		// two different pages one key.
+		$routed_path = isset( $wp->request ) ? (string) $wp->request : '';
+
+		// With no routed path every such request would share one key, so they
+		// get none and their pages aren't cached.
+		return '' === $routed_path ? '' : self::get_page_cache_key( $routed_path );
+	}
+
+	/**
+	 * Build the transient key that caches a lite single page.
+	 *
+	 * Keyed on the path alone, so cache-busting query strings can't mint
+	 * unbounded transients. A page can still read the query string, so a
+	 * request carrying one doesn't fill the cache; see can_fill_page_cache().
+	 * The path otherwise stays as WordPress routes it, so two paths that can
+	 * render different pages never share a key: it's cut only at the first
+	 * `?`, and only the letter case of its percent-encoding is normalized,
+	 * because WordPress links slugs with lowercase escapes while a browser
+	 * sends uppercase ones for a URL typed or pasted in Unicode.
+	 *
+	 * @param string $path A path below the home URL, with or without a query string.
+	 * @return string The transient key.
+	 */
+	public static function get_page_cache_key( string $path ): string {
+		$path = self::lowercase_percent_escapes( explode( '?', $path, 2 )[0] );
+		return 'nls_page_' . md5( trim( $path, '/' ) );
+	}
+
+	/**
+	 * Clear the cached post lookup for a published post's lite path when the
+	 * post is saved.
+	 *
+	 * A lookup made before the post was published at that path, such as a
+	 * signed-out visit while it was scheduled, caches that no post was found,
+	 * and the post would show as not found until that entry expired.
+	 *
+	 * @param int $post_id The saved post ID.
+	 */
+	public static function invalidate_post_lookup_cache( int $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post || 'publish' !== $post->post_status ) {
+			return;
+		}
+
+		$path = self::get_lite_path( get_permalink( $post ) );
+		wp_cache_delete( self::get_post_lookup_cache_key( $path ), 'newspack_lite_site' );
+	}
+
+	/**
+	 * Build the object cache key for the post lookup of a lite path.
+	 *
+	 * @param string $path Lite path, as resolve_post() receives it.
+	 * @return string The cache key.
+	 */
+	private static function get_post_lookup_cache_key( string $path ): string {
+		// Keyed on the path, not the full URL: home_url() takes its scheme
+		// from the current request, so the request that saves the post and a
+		// reader's could otherwise hash different keys. The escapes are
+		// lowercased so a lite URL a browser sends shares the entry that
+		// saving clears, but not decoded: misses are cached too, and a decoded
+		// key would let a variant that finds nothing, like `my%2Dpost`, cache
+		// a miss for `my-post`.
+		return 'nls_post_' . md5( self::lowercase_percent_escapes( trim( $path, '/' ) ) );
+	}
+
+	/**
+	 * Lowercase the percent-escapes in a path.
+	 *
+	 * @param string $path The path.
+	 * @return string The path with lowercase escapes.
+	 */
+	private static function lowercase_percent_escapes( string $path ): string {
+		return preg_replace_callback(
+			'/%[0-9a-f]{2}/i',
+			function ( $escape ) {
+				return strtolower( $escape[0] );
+			},
+			$path
+		);
 	}
 
 	/**
@@ -449,21 +643,28 @@ class Lite_Site {
 	/**
 	 * Resolve a URL path to a published WP_Post.
 	 *
-	 * @param string $path URL path without leading slash.
+	 * @param mixed $path URL path without leading slash. Anything but a non-empty string resolves to nothing.
 	 * @return WP_Post|null The resolved post, or null if not found, not published, or excluded by term filters.
 	 */
 	public static function resolve_post( $path ) {
-		if ( empty( $path ) ) {
+		if ( empty( $path ) || ! is_string( $path ) ) {
 			return null;
 		}
 
 		$url       = home_url( '/' . ltrim( $path, '/' ) );
-		$cache_key = 'nls_post_' . md5( $url );
+		$cache_key = self::get_post_lookup_cache_key( $path );
 		$post_id   = wp_cache_get( $cache_key, 'newspack_lite_site' );
 
 		if ( false === $post_id ) {
 			$post_id = url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
-			wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			if ( $post_id ) {
+				wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			} else {
+				// A miss is kept for minutes: saving the post can't clear a
+				// miss written after it, such as a lookup that read the post
+				// just before it was published, or one for a variant of its URL.
+				wp_cache_set( $cache_key, 0, 'newspack_lite_site', 5 * MINUTE_IN_SECONDS );
+			}
 		}
 
 		if ( ! $post_id ) {
@@ -473,6 +674,14 @@ class Lite_Site {
 		$post = get_post( $post_id );
 
 		if ( ! $post || 'publish' !== $post->post_status ) {
+			return null;
+		}
+
+		// Lite pages render raw post content with no password form, so a
+		// protected post must not resolve at all. The rendered page is cached
+		// for every reader, so this can't depend on the visitor's password
+		// cookie, as post_password_required() does.
+		if ( '' !== $post->post_password ) {
 			return null;
 		}
 
@@ -512,6 +721,15 @@ class Lite_Site {
 	 * @return string The formatted author(s) string with links.
 	 */
 	public static function get_authors( $post ) {
+		// An active Newspack custom byline replaces the author-derived byline.
+		// Guarded because the plugin runs standalone, without the Newspack stack.
+		if ( class_exists( '\Newspack\Bylines' ) && method_exists( '\Newspack\Bylines', 'get_custom_byline_html' ) ) {
+			$custom_byline = \Newspack\Bylines::get_custom_byline_html( $post->ID );
+			if ( ! empty( $custom_byline ) ) {
+				return $custom_byline;
+			}
+		}
+
 		if ( function_exists( 'coauthors_posts_links' ) ) {
 			$authors      = get_coauthors( $post->ID );
 			$author_links = array_map(
@@ -699,8 +917,10 @@ class Lite_Site {
 		// Apply the full WP content pipeline without plugin callbacks from the_content.
 		$content = apply_filters( 'newspack_lite_site_post_content', $content );
 
-		// Remove HTML comments.
-		$content = preg_replace( '/<!--(.|\s)*?-->/', '', $content );
+		// Remove HTML comments. The single-token `.` with the `s` modifier stays
+		// linear on an unclosed `<!--`, where alternation-based patterns
+		// backtrack catastrophically and preg_replace returns null.
+		$content = preg_replace( '/<!--.*?-->/s', '', $content );
 
 		// Replace figures with lazy-load placeholders before stripping.
 		$content = preg_replace_callback(
@@ -709,8 +929,10 @@ class Lite_Site {
 			$content
 		);
 
-		// Remove script tags.
+		// Remove script and style tags along with their contents — wp_kses
+		// would strip the tags but leave raw CSS/JS behind as text.
 		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
+		$content = preg_replace( '/<style.*?>.*?<\/style>/is', '', $content );
 
 		// Define allowed HTML elements for text-only content.
 		$allowed_html = [
@@ -746,6 +968,21 @@ class Lite_Site {
 				'type'  => true,
 			],
 		];
+
+		/**
+		 * Filters the elements and attributes that lite page content keeps.
+		 *
+		 * Lets a plugin whose blocks render on lite pages keep the markup its
+		 * own script relies on, such as data attributes. It runs just before
+		 * wp_kses(), after scripts and styles are removed and figures holding
+		 * an image are turned into placeholders, so additions can't bring
+		 * those back. The single template still passes the result through
+		 * wp_kses_post(), which bounds what reaches a lite single page; other
+		 * callers of clean_content() get exactly this list.
+		 *
+		 * @param array $allowed_html Allowed elements and their attributes, in wp_kses() form.
+		 */
+		$allowed_html = apply_filters( 'newspack_lite_site_allowed_html', $allowed_html );
 
 		// Strip all HTML except allowed elements.
 		$content = wp_kses( $content, $allowed_html );
