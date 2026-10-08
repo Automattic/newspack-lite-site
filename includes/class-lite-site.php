@@ -527,9 +527,9 @@ class Lite_Site {
 	/**
 	 * Remember the lite path a published post has before an update changes it.
 	 *
-	 * Read here, not from the post as it was that wp_after_insert_post
-	 * passes: a %category% permalink is built from the terms the post has
-	 * when it's read, and a save can change them before then.
+	 * Read here rather than from the `$post_before` that wp_after_insert_post
+	 * passes: a %category% permalink is built from the terms the post has at
+	 * that moment, and by then the save may have changed them.
 	 *
 	 * @param int $post_id The ID of the post about to be updated.
 	 */
