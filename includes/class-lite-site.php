@@ -15,6 +15,14 @@ defined( 'ABSPATH' ) || exit;
 class Lite_Site {
 
 	/**
+	 * How many pages below a moved or deleted page, nearest first and of any
+	 * status, have their caches cleared by that change. It bounds the work
+	 * one save or delete takes on; pages past it keep serving from their
+	 * caches until those expire.
+	 */
+	const MAX_DESCENDANTS_CLEARED = 100;
+
+	/**
 	 * In-memory cache for the plugin settings option.
 	 *
 	 * @var array|null
@@ -41,6 +49,9 @@ class Lite_Site {
 		// Not save_post: a block-editor save stores the post's terms after
 		// save_post fires, and a %category% permalink depends on them.
 		add_action( 'wp_after_insert_post', [ __CLASS__, 'invalidate_post_caches' ], 10, 4 );
+		// Not delete_post: by then the pages below the post have moved up,
+		// and its terms, which a %category% permalink depends on, are gone.
+		add_action( 'before_delete_post', [ __CLASS__, 'invalidate_deleted_post_caches' ] );
 
 		/** Add content filters to mimic 'the_content'. See 'wp-includes/default-filters.php' for reference. */
 		add_filter( 'newspack_lite_site_post_content', 'capital_P_dangit', 11 );
@@ -542,13 +553,20 @@ class Lite_Site {
 
 	/**
 	 * Clear the cached page and post lookup at each lite path a post was
-	 * published at, before or after a save.
+	 * published at, before or after a save, and at those of the published
+	 * pages below it when the save moves it.
 	 *
 	 * A path the post left, by moving or being unpublished, would otherwise
 	 * go on serving it from the page cache for minutes, and from the lookup
 	 * for hours after a move. A path it takes could hold a lookup that found
 	 * no post there, such as a signed-out visit while it was scheduled, and
 	 * the post would show as not found until that entry expired.
+	 *
+	 * Where permalinks include %category%, renaming a category moves its
+	 * posts without saving them, and the pages cached at their old paths are
+	 * left to expire: clearing them would mean reading every post in the
+	 * category. The lookup there needs no clearing, since WordPress finds a
+	 * post by its slug whatever category the path names.
 	 *
 	 * @param int          $post_id     The saved post ID.
 	 * @param WP_Post|null $post        The saved post.
@@ -559,15 +577,133 @@ class Lite_Site {
 		$paths = self::$lite_paths_before_update[ $post_id ] ?? [];
 		unset( self::$lite_paths_before_update[ $post_id ] );
 
+		$saved_post = get_post( $post_id );
+
 		// Trashing a post adds `__trashed` to its slug before pre_post_update
 		// fires, so the path it was published at is also read from the post
 		// as it was before the save.
-		foreach ( [ $post_before, get_post( $post_id ) ] as $version ) {
+		foreach ( [ $post_before, $saved_post ] as $version ) {
 			if ( $version instanceof \WP_Post && 'publish' === $version->post_status ) {
 				$paths[] = self::get_lite_path( get_permalink( $version ) );
 			}
 		}
 
+		if ( $saved_post && $post_before instanceof \WP_Post && is_post_type_hierarchical( $saved_post->post_type ) ) {
+			$paths = array_merge( $paths, self::get_descendant_lite_paths( $saved_post, (string) get_page_uri( $post_before ) ) );
+		}
+
+		self::clear_lite_path_caches( $paths );
+	}
+
+	/**
+	 * Clear the cached page and post lookup at the lite path of a published
+	 * post about to be permanently deleted, and at those of the published
+	 * pages below it, which move up to its parent.
+	 *
+	 * Deleting saves nothing, so invalidate_post_caches() never runs, and
+	 * the page cache would go on serving the post for minutes.
+	 *
+	 * @param int $post_id The ID of the post about to be deleted.
+	 */
+	public static function invalidate_deleted_post_caches( int $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+
+		$paths = 'publish' === $post->post_status ? [ self::get_lite_path( get_permalink( $post ) ) ] : [];
+
+		if ( is_post_type_hierarchical( $post->post_type ) ) {
+			$parent_uri = $post->post_parent ? (string) get_page_uri( $post->post_parent ) : '';
+			$paths      = array_merge( $paths, self::get_descendant_lite_paths( $post, $parent_uri ) );
+		}
+
+		self::clear_lite_path_caches( $paths );
+	}
+
+	/**
+	 * Get the lite paths of the published pages below a post, both where
+	 * they are and where they are at the other end of a move of the post.
+	 *
+	 * A page's permalink is built from the slugs of the pages above it, so
+	 * renaming, re-parenting, trashing, or deleting a page moves every page
+	 * below it without saving them. Each one's path at the other end of the
+	 * move is its current path with the post's part swapped for $other_uri.
+	 *
+	 * @param \WP_Post $post      A post of a hierarchical type.
+	 * @param string   $other_uri The post's page URI at the other end of the move: before a save, or its parent's after a delete.
+	 * @return string[] Lite paths, as resolve_post() receives them.
+	 */
+	private static function get_descendant_lite_paths( \WP_Post $post, string $other_uri ): array {
+		$uri = (string) get_page_uri( $post );
+		if ( $uri === $other_uri ) {
+			return [];
+		}
+
+		$paths = [];
+		foreach ( self::get_descendants( $post ) as $descendant ) {
+			if ( 'publish' !== $descendant->post_status ) {
+				continue;
+			}
+
+			$path    = self::get_lite_path( get_permalink( $descendant ) );
+			$paths[] = $path;
+
+			// A permalink that doesn't end in the page URI, as a plugin could
+			// filter it to, gives no way to tell its path at the other end.
+			$descendant_uri = (string) get_page_uri( $descendant );
+			if ( 0 === strpos( $descendant_uri, $uri . '/' ) && substr( $path, -strlen( $descendant_uri ) ) === $descendant_uri ) {
+				$other_descendant_uri = ltrim( $other_uri . substr( $descendant_uri, strlen( $uri ) ), '/' );
+				$paths[]              = substr( $path, 0, -strlen( $descendant_uri ) ) . $other_descendant_uri;
+			}
+		}
+
+		return $paths;
+	}
+
+	/**
+	 * Get the posts below a post, of any status, nearest first, up to
+	 * MAX_DESCENDANTS_CLEARED of them.
+	 *
+	 * Any status, because a published page can sit below a draft. The limit
+	 * also ends the walk on a parent loop, which WordPress prevents on save
+	 * but not in the database.
+	 *
+	 * @param \WP_Post $post A post of a hierarchical type.
+	 * @return \WP_Post[]
+	 */
+	private static function get_descendants( \WP_Post $post ): array {
+		$descendants = [];
+		$parent_ids  = [ $post->ID ];
+		$remaining   = self::MAX_DESCENDANTS_CLEARED;
+
+		while ( $parent_ids && $remaining > 0 ) {
+			$children    = get_posts(
+				[
+					'post_type'              => $post->post_type,
+					'post_status'            => array_keys( get_post_stati() ),
+					'post_parent__in'        => $parent_ids,
+					'posts_per_page'         => $remaining,
+					'orderby'                => 'ID',
+					'order'                  => 'ASC',
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+				]
+			);
+			$descendants = array_merge( $descendants, $children );
+			$parent_ids  = wp_list_pluck( $children, 'ID' );
+			$remaining  -= count( $children );
+		}
+
+		return $descendants;
+	}
+
+	/**
+	 * Clear the cached page and post lookup at each of a set of lite paths.
+	 *
+	 * @param string[] $paths Lite paths, as resolve_post() receives them.
+	 */
+	private static function clear_lite_path_caches( array $paths ) {
 		foreach ( array_unique( $paths ) as $path ) {
 			wp_cache_delete( self::get_post_lookup_cache_key( $path ), 'newspack_lite_site' );
 			// Keyed from the path below the home URL, the shape of the path

@@ -85,6 +85,10 @@ class Test_Bootstrap extends Lite_Site_TestCase {
 			has_action( 'wp_after_insert_post', [ Lite_Site::class, 'invalidate_post_caches' ] ),
 			'The page cache and post lookup should be invalidated when a post is saved.'
 		);
+		$this->assertNotFalse(
+			has_action( 'before_delete_post', [ Lite_Site::class, 'invalidate_deleted_post_caches' ] ),
+			'The page cache and post lookup should be invalidated before a post is deleted.'
+		);
 	}
 
 	/**
