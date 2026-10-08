@@ -643,7 +643,7 @@ class Lite_Site {
 	/**
 	 * Resolve a URL path to a published WP_Post.
 	 *
-	 * @param string $path URL path without leading slash.
+	 * @param mixed $path URL path without leading slash. Anything but a non-empty string resolves to nothing.
 	 * @return WP_Post|null The resolved post, or null if not found, not published, or excluded by term filters.
 	 */
 	public static function resolve_post( $path ) {
