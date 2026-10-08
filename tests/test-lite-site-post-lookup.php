@@ -27,36 +27,47 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	 * A scheduled post resolves as soon as it is published, though its lite
 	 * URL was looked up while it was still scheduled.
 	 *
-	 * @dataProvider data_slugs_as_requested
+	 * @dataProvider data_reader_requests
 	 *
-	 * @param string $slug      Post slug.
-	 * @param bool   $uppercase Whether the request sends the slug's escapes in uppercase.
+	 * @param string $slug       Post slug.
+	 * @param bool   $uppercase  Whether the reader's request sends the slug's escapes in uppercase.
+	 * @param bool   $over_https Whether the reader's request arrives over HTTPS.
 	 */
-	public function test_resolves_scheduled_post_once_published_after_an_early_lookup( $slug, $uppercase ) {
-		$post = $this->create_scheduled_post( $slug );
+	public function test_resolves_scheduled_post_once_published_after_an_early_lookup( $slug, $uppercase, $over_https ) {
+		$post = self::factory()->post->create_and_get(
+			[
+				'post_status' => 'future',
+				'post_date'   => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
+				'post_name'   => $slug,
+			]
+		);
 		$path = $uppercase ? strtoupper( $post->post_name ) : $post->post_name;
 
-		$this->assertNull( Lite_Site::resolve_post( $path ), 'A scheduled post does not resolve.' );
+		$this->assertNull( $this->resolve_post_as_reader( $path, $over_https ), 'A scheduled post does not resolve.' );
 
 		wp_publish_post( $post );
 
-		$resolved = Lite_Site::resolve_post( $path );
+		$resolved = $this->resolve_post_as_reader( $path, $over_https );
 		$this->assertInstanceOf( WP_Post::class, $resolved, 'The post resolves once published.' );
 		$this->assertSame( $post->ID, $resolved->ID, 'The resolved post is the published one.' );
 	}
 
 	/**
-	 * Slugs, and whether a request sends their escapes in uppercase.
+	 * Slugs, and how a reader's request for them differs from the request
+	 * that publishes the post.
 	 *
 	 * WordPress stores and links a non-ASCII slug with lowercase escapes,
 	 * while a browser uses uppercase ones for a URL typed or pasted in Unicode.
+	 * The test site's home URL is http, and a cron run can publish without the
+	 * TLS a reader arrives over.
 	 *
 	 * @return array[]
 	 */
-	public function data_slugs_as_requested() {
+	public function data_reader_requests() {
 		return [
-			'ASCII slug'                         => [ 'scheduled-story', false ],
-			'non-ASCII slug, as a browser sends' => [ 'привет', true ],
+			'ASCII slug'                           => [ 'scheduled-story', false, false ],
+			'non-ASCII slug, as a browser sends'   => [ 'привет', true, false ],
+			'reader on HTTPS, publish without TLS' => [ 'scheduled-story', false, true ],
 		];
 	}
 
@@ -87,31 +98,14 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A scheduled post resolves for readers on HTTPS once published by a
-	 * request without TLS, as a cron run can be, on a site whose home URL is
-	 * http.
-	 */
-	public function test_resolves_for_https_readers_once_published_without_tls() {
-		$post = $this->create_scheduled_post( 'scheduled-story' );
-
-		$this->assertNull( $this->resolve_post_over_https( 'scheduled-story' ), 'A scheduled post does not resolve.' );
-
-		wp_publish_post( $post );
-
-		$resolved = $this->resolve_post_over_https( 'scheduled-story' );
-		$this->assertInstanceOf( WP_Post::class, $resolved, 'The post resolves once published.' );
-		$this->assertSame( $post->ID, $resolved->ID, 'The resolved post is the published one.' );
-	}
-
-	/**
 	 * A draft published from the block editor resolves at the lite URL the
 	 * category set in that same save gives it, though that URL was looked up
 	 * before the save.
 	 */
 	public function test_resolves_post_published_from_the_editor_at_its_category_path() {
-		// The test environment has no %category% rewrite tag until the
-		// taxonomies are registered again, so that comes before the rules are
-		// built for the structure.
+		// Core adds the %category% rewrite tag only once a permalink structure
+		// is set, and the test bootstrap registered the taxonomies before that,
+		// so they are registered again before the rules are built.
 		create_initial_taxonomies();
 		$this->set_permalink_structure( '/%category%/%postname%/' );
 		$category_id = self::factory()->category->create( [ 'slug' => 'news' ] );
@@ -142,28 +136,17 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * Create a post scheduled for tomorrow.
+	 * Resolve a lite path as a reader's request would, over HTTPS when asked.
 	 *
-	 * @param string $slug Post slug.
-	 * @return WP_Post
-	 */
-	private function create_scheduled_post( $slug ) {
-		return self::factory()->post->create_and_get(
-			[
-				'post_status' => 'future',
-				'post_date'   => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
-				'post_name'   => $slug,
-			]
-		);
-	}
-
-	/**
-	 * Resolve a lite path as a request that arrived over HTTPS.
-	 *
-	 * @param string $path Lite path.
+	 * @param string $path       Lite path.
+	 * @param bool   $over_https Whether the request arrives over HTTPS.
 	 * @return WP_Post|null
 	 */
-	private function resolve_post_over_https( $path ) {
+	private function resolve_post_as_reader( $path, $over_https ) {
+		if ( ! $over_https ) {
+			return Lite_Site::resolve_post( $path );
+		}
+
 		$_SERVER['HTTPS'] = 'on';
 		try {
 			return Lite_Site::resolve_post( $path );
