@@ -173,19 +173,4 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 			'proxy strips the directory'    => [ '/lite/a-story/' ],
 		];
 	}
-
-	/**
-	 * The page cache key the lite single handler builds for a request, once
-	 * WordPress has routed it.
-	 *
-	 * @param string $request_uri Request URI, as the server reports it.
-	 * @return string The transient key.
-	 */
-	private function get_request_page_cache_key( $request_uri ) {
-		$_SERVER['REQUEST_URI'] = $request_uri;
-		$GLOBALS['wp']->parse_request();
-		$cache_key = Lite_Site::get_request_page_cache_key();
-		tests_reset__SERVER();
-		return $cache_key;
-	}
 }
