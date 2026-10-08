@@ -580,12 +580,12 @@ class Lite_Site {
 	/**
 	 * Clear the lite caches for a post.
 	 *
-	 * @deprecated 0.1.1 Use invalidate_post_caches().
+	 * @deprecated 0.2.0 Use invalidate_post_caches().
 	 *
 	 * @param int $post_id The post ID.
 	 */
 	public static function invalidate_page_cache( int $post_id ) {
-		_deprecated_function( __METHOD__, '0.1.1', __CLASS__ . '::invalidate_post_caches' );
+		_deprecated_function( __METHOD__, '0.2.0', __CLASS__ . '::invalidate_post_caches' );
 		self::invalidate_post_caches( $post_id );
 	}
 
