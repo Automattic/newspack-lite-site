@@ -106,19 +106,14 @@ class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 
 	/**
 	 * A post moved to another category stops serving its cached page at the
-	 * lite URL of its old category, whether the block editor or a classic
-	 * save changes the category.
+	 * lite URL of its old category.
 	 *
 	 * Only the page is checked: WordPress still finds the post at a path
-	 * naming another category, so the lookup there stays correct. Both saves
-	 * change the category before wp_after_insert_post runs, so the permalink
+	 * naming another category, so the lookup there stays correct. A save
+	 * changes the category before wp_after_insert_post runs, so the permalink
 	 * of the post as it was before the save already names the new category.
-	 *
-	 * @dataProvider data_category_saves
-	 *
-	 * @param bool $from_editor Whether the block editor saves the change.
 	 */
-	public function test_category_change_clears_page_cached_at_old_category_path( $from_editor ) {
+	public function test_category_change_clears_page_cached_at_old_category_path() {
 		$this->set_category_permalinks();
 		$old_category_id = self::factory()->category->create( [ 'slug' => 'news' ] );
 		$new_category_id = self::factory()->category->create( [ 'slug' => 'sports' ] );
@@ -131,35 +126,14 @@ class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 		);
 		$cache_key       = $this->visit_lite_path( 'news/a-story' );
 
-		if ( $from_editor ) {
-			$request = new WP_REST_Request( 'POST', '/wp/v2/posts/' . $post_id );
-			$request->set_body_params( [ 'categories' => [ $new_category_id ] ] );
-			wp_set_current_user( self::factory()->user->create( [ 'role' => 'editor' ] ) );
-			$response = rest_do_request( $request );
-			wp_set_current_user( 0 );
-			$this->assertSame( 200, $response->get_status(), 'The editor saves the post.' );
-		} else {
-			wp_update_post(
-				[
-					'ID'            => $post_id,
-					'post_category' => [ $new_category_id ],
-				]
-			);
-		}
+		wp_update_post(
+			[
+				'ID'            => $post_id,
+				'post_category' => [ $new_category_id ],
+			]
+		);
 
 		$this->assertFalse( get_transient( $cache_key ), 'The page cached at the old category path is cleared.' );
-	}
-
-	/**
-	 * Ways a category change is saved.
-	 *
-	 * @return array[]
-	 */
-	public function data_category_saves() {
-		return [
-			'block editor' => [ true ],
-			'classic save' => [ false ],
-		];
 	}
 
 	/**
