@@ -78,8 +78,12 @@ class Test_Bootstrap extends Lite_Site_TestCase {
 			'Template routing should run on template_redirect.'
 		);
 		$this->assertNotFalse(
-			has_action( 'save_post', [ Lite_Site::class, 'invalidate_page_cache' ] ),
-			'The page cache should be invalidated when a post is saved.'
+			has_action( 'pre_post_update', [ Lite_Site::class, 'remember_lite_path' ] ),
+			'A post\'s lite path should be read before an update changes it.'
+		);
+		$this->assertNotFalse(
+			has_action( 'wp_after_insert_post', [ Lite_Site::class, 'invalidate_post_caches' ] ),
+			'The page cache and post lookup should be invalidated when a post is saved.'
 		);
 	}
 

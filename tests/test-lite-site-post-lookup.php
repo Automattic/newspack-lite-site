@@ -103,11 +103,7 @@ class Test_Lite_Site_Post_Lookup extends Lite_Site_TestCase {
 	 * before the save.
 	 */
 	public function test_resolves_post_published_from_the_editor_at_its_category_path() {
-		// Core adds the %category% rewrite tag only once a permalink structure
-		// is set, and the test bootstrap registered the taxonomies before that,
-		// so they are registered again before the rules are built.
-		create_initial_taxonomies();
-		$this->set_permalink_structure( '/%category%/%postname%/' );
+		$this->set_category_permalinks();
 		$category_id = self::factory()->category->create( [ 'slug' => 'news' ] );
 		$post_id     = self::factory()->post->create(
 			[

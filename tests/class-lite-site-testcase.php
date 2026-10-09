@@ -59,6 +59,35 @@ abstract class Lite_Site_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Switch to `/%category%/%postname%/` permalinks.
+	 *
+	 * Core adds the %category% rewrite tag only when the category taxonomy
+	 * is registered under a permalink structure, and the test bootstrap
+	 * registered it before any was set. So the structure is set, the
+	 * taxonomies are registered again, and the rules are rebuilt with the tag.
+	 */
+	protected function set_category_permalinks() {
+		$this->set_permalink_structure( '/%category%/%postname%/' );
+		create_initial_taxonomies();
+		$this->set_permalink_structure( '/%category%/%postname%/' );
+	}
+
+	/**
+	 * The page cache key the lite single handler builds for a request, once
+	 * WordPress has routed it.
+	 *
+	 * @param string $request_uri Request URI, as the server reports it.
+	 * @return string The transient key.
+	 */
+	protected function get_request_page_cache_key( $request_uri ) {
+		$_SERVER['REQUEST_URI'] = $request_uri;
+		$GLOBALS['wp']->parse_request();
+		$cache_key = Lite_Site::get_request_page_cache_key();
+		tests_reset__SERVER();
+		return $cache_key;
+	}
+
+	/**
 	 * Call a private or protected static method.
 	 *
 	 * Used only for pure helpers that have no public seam. Where a public
