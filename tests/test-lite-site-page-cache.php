@@ -96,11 +96,6 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 	 * Invalidating a post with a non-ASCII slug clears the page its lite
 	 * request cached, whichever case the request's percent-encoding used.
 	 *
-	 * Calls the save_post handler directly rather than saving the post: the
-	 * revision a save creates clears the key for the bare `/lite` path, the
-	 * key these requests collapse to when their octets are stripped, so the
-	 * test would pass against that bug.
-	 *
 	 * @dataProvider data_percent_encoding_cases
 	 *
 	 * @param bool $uppercase Whether the request sends uppercase escapes.
@@ -119,7 +114,7 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 		$cache_key = $this->get_request_page_cache_key( '/lite/' . $slug . '/' );
 		set_transient( $cache_key, 'Cached lite page', MINUTE_IN_SECONDS );
 
-		Lite_Site::invalidate_page_cache( $post->ID );
+		Lite_Site::invalidate_post_caches( $post->ID );
 
 		$this->assertFalse( get_transient( $cache_key ), 'Invalidating the post clears its cached lite page.' );
 	}
@@ -157,7 +152,7 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 		$cache_key = $this->get_request_page_cache_key( $request_uri );
 		set_transient( $cache_key, 'Cached lite page', MINUTE_IN_SECONDS );
 
-		Lite_Site::invalidate_page_cache( $post->ID );
+		Lite_Site::invalidate_post_caches( $post->ID );
 
 		$this->assertFalse( get_transient( $cache_key ), 'Invalidating the post clears its cached lite page.' );
 	}
@@ -175,17 +170,25 @@ class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * The page cache key the lite single handler builds for a request, once
-	 * WordPress has routed it.
+	 * Code outside the plugin that calls the page cache handler v0.1.0
+	 * shipped still clears the post's cached page, with a deprecation
+	 * notice rather than a fatal error.
 	 *
-	 * @param string $request_uri Request URI, as the server reports it.
-	 * @return string The transient key.
+	 * @expectedDeprecated Newspack_Lite_Site\Lite_Site::invalidate_page_cache
 	 */
-	private function get_request_page_cache_key( $request_uri ) {
-		$_SERVER['REQUEST_URI'] = $request_uri;
-		$GLOBALS['wp']->parse_request();
-		$cache_key = Lite_Site::get_request_page_cache_key();
-		tests_reset__SERVER();
-		return $cache_key;
+	public function test_deprecated_page_cache_handler_still_clears_cached_page() {
+		$post = self::factory()->post->create_and_get(
+			[
+				'post_status' => 'publish',
+				'post_name'   => 'a-story',
+			]
+		);
+
+		$cache_key = $this->get_request_page_cache_key( '/lite/a-story/' );
+		set_transient( $cache_key, 'Cached lite page', MINUTE_IN_SECONDS );
+
+		Lite_Site::invalidate_page_cache( $post->ID );
+
+		$this->assertFalse( get_transient( $cache_key ), 'The deprecated handler clears the cached lite page.' );
 	}
 }
