@@ -9,7 +9,8 @@ use Newspack_Lite_Site\Lite_Site;
 
 /**
  * Covers the caches kept for the lite path a post had before a save moved it
- * or unpublished it, which would otherwise go on serving the post there.
+ * or unpublished it, or a delete removed it, and for the paths of the pages
+ * below a page that moves, which would otherwise go on serving there.
  */
 class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 
@@ -105,6 +106,141 @@ class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The pages below a page stop resolving, and stop serving their cached
+	 * pages, at the lite URLs they had once a save moves that page.
+	 *
+	 * @dataProvider data_ancestor_moves
+	 *
+	 * @param array $changes Fields the save changes, with a new parent given by its slug.
+	 */
+	public function test_old_descendant_paths_stop_serving_after_ancestor_moves( $changes ) {
+		$pages      = $this->create_page_tree();
+		$cache_keys = [
+			'about/team'      => $this->visit_lite_path( 'about/team' ),
+			'about/team/lead' => $this->visit_lite_path( 'about/team/lead' ),
+		];
+
+		if ( isset( $changes['post_parent'] ) ) {
+			$changes['post_parent'] = $pages[ $changes['post_parent'] ];
+		}
+		wp_update_post( array_merge( [ 'ID' => $pages['about'] ], $changes ) );
+
+		foreach ( $cache_keys as $path => $cache_key ) {
+			$this->assertFalse( get_transient( $cache_key ), "The page cached at $path is cleared." );
+			$this->assertNull( Lite_Site::resolve_post( $path ), "$path no longer resolves." );
+		}
+	}
+
+	/**
+	 * Saves that move a page, and every page below it.
+	 *
+	 * @return array[]
+	 */
+	public function data_ancestor_moves() {
+		return [
+			'renamed'                  => [ [ 'post_name' => 'who-we-are' ] ],
+			'moved under another page' => [ [ 'post_parent' => 'company' ] ],
+			'trashed'                  => [ [ 'post_status' => 'trash' ] ],
+		];
+	}
+
+	/**
+	 * A published page below an unpublished one stops serving its cached
+	 * page at the lite URL it had once a save moves a page above both.
+	 */
+	public function test_old_path_below_unpublished_page_stops_serving_after_ancestor_moves() {
+		$pages = $this->create_page_tree();
+		wp_update_post(
+			[
+				'ID'          => $pages['team'],
+				'post_status' => 'draft',
+			]
+		);
+		$cache_key = $this->visit_lite_path( 'about/team/lead' );
+
+		wp_update_post(
+			[
+				'ID'        => $pages['about'],
+				'post_name' => 'who-we-are',
+			]
+		);
+
+		$this->assertFalse( get_transient( $cache_key ) );
+	}
+
+	/**
+	 * The pages below a renamed page resolve at their new lite URLs right
+	 * away, even where a visit before the rename found nothing.
+	 */
+	public function test_descendants_resolve_at_new_paths_after_ancestor_rename() {
+		$pages = $this->create_page_tree();
+		$this->assertNull( Lite_Site::resolve_post( 'who-we-are/team' ), 'Nothing resolves at the new path before the rename.' );
+
+		wp_update_post(
+			[
+				'ID'        => $pages['about'],
+				'post_name' => 'who-we-are',
+			]
+		);
+
+		$this->assertSame( $pages['team'], Lite_Site::resolve_post( 'who-we-are/team' )->ID ?? null );
+	}
+
+	/**
+	 * Saving a page without moving it leaves the pages below it cached, since
+	 * their lite URLs and content are unchanged.
+	 */
+	public function test_saving_page_in_place_keeps_descendant_pages_cached() {
+		$pages     = $this->create_page_tree();
+		$cache_key = $this->visit_lite_path( 'about/team' );
+
+		wp_update_post(
+			[
+				'ID'           => $pages['about'],
+				'post_content' => 'New content',
+			]
+		);
+
+		$this->assertSame( 'Cached lite page', get_transient( $cache_key ) );
+	}
+
+	/**
+	 * Moving a page with more pages below it than the clearing limit clears
+	 * the nearest ones and leaves the rest to expire, so one save can't take
+	 * on an unbounded amount of work.
+	 */
+	public function test_ancestor_move_clears_a_bounded_number_of_descendants() {
+		$limit    = Lite_Site::MAX_DESCENDANTS_CLEARED;
+		$about_id = self::factory()->post->create(
+			[
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_name'   => 'about',
+			]
+		);
+		$children = self::factory()->post->create_many(
+			$limit + 1,
+			[
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_parent' => $about_id,
+			]
+		);
+		$nearest  = $this->visit_lite_path( 'about/' . get_post( $children[0] )->post_name );
+		$past     = $this->visit_lite_path( 'about/' . get_post( $children[ $limit ] )->post_name );
+
+		wp_update_post(
+			[
+				'ID'        => $about_id,
+				'post_name' => 'who-we-are',
+			]
+		);
+
+		$this->assertFalse( get_transient( $nearest ), 'A page within the limit is cleared.' );
+		$this->assertSame( 'Cached lite page', get_transient( $past ), 'A page past the limit is left to expire.' );
+	}
+
+	/**
 	 * A post moved to another category stops serving its cached page at the
 	 * lite URL of its old category.
 	 *
@@ -178,6 +314,94 @@ class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 			'moved to drafts' => [ 'draft' ],
 			'trashed'         => [ 'trash' ],
 		];
+	}
+
+	/**
+	 * A permanently deleted post stops serving its cached page at the lite
+	 * URL it was published at, which the cache would otherwise serve without
+	 * looking the post up.
+	 *
+	 * @dataProvider data_deleted_post_paths
+	 *
+	 * @param bool   $category_permalinks Whether permalinks include the category.
+	 * @param string $path                The post's lite path.
+	 */
+	public function test_deleting_post_clears_page_cached_at_its_path( $category_permalinks, $path ) {
+		if ( $category_permalinks ) {
+			$this->set_category_permalinks();
+		}
+		$post_id   = self::factory()->post->create(
+			[
+				'post_status'   => 'publish',
+				'post_name'     => 'a-story',
+				'post_category' => [ self::factory()->category->create( [ 'slug' => 'news' ] ) ],
+			]
+		);
+		$cache_key = $this->visit_lite_path( $path );
+
+		wp_delete_post( $post_id, true );
+
+		$this->assertFalse( get_transient( $cache_key ), 'The page cached at the published path is cleared.' );
+	}
+
+	/**
+	 * Lite paths of a deleted post, including one built from the categories
+	 * that deleting removes from the post.
+	 *
+	 * @return array[]
+	 */
+	public function data_deleted_post_paths() {
+		return [
+			'post'                     => [ false, 'a-story' ],
+			'post filed in a category' => [ true, 'news/a-story' ],
+		];
+	}
+
+	/**
+	 * The pages below a permanently deleted page, which move up a level,
+	 * stop resolving and serving their cached pages at the lite URLs they
+	 * had under it, and resolve right away at the ones they move to.
+	 */
+	public function test_deleting_page_moves_descendants_to_new_paths() {
+		$pages      = $this->create_page_tree();
+		$cache_keys = [
+			'about/team'      => $this->visit_lite_path( 'about/team' ),
+			'about/team/lead' => $this->visit_lite_path( 'about/team/lead' ),
+		];
+		$this->assertNull( Lite_Site::resolve_post( 'team' ), 'Nothing resolves at the new path before the delete.' );
+
+		wp_delete_post( $pages['about'], true );
+
+		foreach ( $cache_keys as $path => $cache_key ) {
+			$this->assertFalse( get_transient( $cache_key ), "The page cached at $path is cleared." );
+			$this->assertNull( Lite_Site::resolve_post( $path ), "$path no longer resolves." );
+		}
+		$this->assertSame( $pages['team'], Lite_Site::resolve_post( 'team' )->ID ?? null, 'The page resolves at the path it moved up to.' );
+	}
+
+	/**
+	 * Create published pages `about/team/lead`, and `company` beside them.
+	 *
+	 * @return int[] Page IDs, keyed by slug.
+	 */
+	private function create_page_tree() {
+		$page_ids = [];
+		foreach ( [
+			'company' => '',
+			'about'   => '',
+			'team'    => 'about',
+			'lead'    => 'team',
+		] as $slug => $parent ) {
+			$page_ids[ $slug ] = self::factory()->post->create(
+				[
+					'post_type'   => 'page',
+					'post_status' => 'publish',
+					'post_name'   => $slug,
+					'post_parent' => $parent ? $page_ids[ $parent ] : 0,
+				]
+			);
+		}
+		return $page_ids;
 	}
 
 	/**
