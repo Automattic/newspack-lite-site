@@ -93,6 +93,30 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Style tags are removed along with their CSS.
+	 */
+	public function test_clean_content_strips_style_tags_and_their_css() {
+		$content = Lite_Site::clean_content( '<p>Before</p><style>.my-class { color: red; }</style><p>After</p>' );
+
+		$this->assertStringContainsString( '<p>Before</p>', $content, 'Body copy should survive.' );
+		$this->assertStringContainsString( '<p>After</p>', $content, 'Body copy should survive.' );
+		$this->assertStringNotContainsString( '.my-class', $content, 'CSS should not appear as text.' );
+		$this->assertStringNotContainsString( 'color: red', $content, 'CSS should not appear as text.' );
+	}
+
+	/**
+	 * An unclosed HTML comment does not blank the whole article.
+	 */
+	public function test_clean_content_survives_unclosed_comment() {
+		$content = Lite_Site::clean_content(
+			'<p>First paragraph.</p><!-- unclosed' . str_repeat( '<p>Filler to force backtracking.</p>', 50 )
+		);
+
+		$this->assertStringContainsString( 'First paragraph.', $content, 'Content before an unclosed comment should survive.' );
+	}
+
+
+	/**
 	 * Text-level markup on the allowlist survives cleaning.
 	 */
 	public function test_clean_content_keeps_allowed_markup() {
@@ -113,6 +137,32 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertStringNotContainsString( '<iframe', $content, 'Iframes should be stripped.' );
 		$this->assertStringNotContainsString( '<table', $content, 'Tables should be stripped.' );
 		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * A plugin can keep more markup through the allowlist filter, and without
+	 * the filter that markup is stripped.
+	 */
+	public function test_clean_content_allowlist_is_filterable() {
+		$content = '<div class="feed" data-cursor="42"><time datetime="2026-01-01T12:00:00+00:00">Noon</time></div>';
+
+		$default = Lite_Site::clean_content( $content );
+
+		$this->assertStringNotContainsString( 'data-cursor', $default, 'Data attributes are stripped by default.' );
+		$this->assertStringNotContainsString( '<time', $default, 'Time elements are stripped by default.' );
+
+		$allow = function ( $allowed_html ) {
+			$allowed_html['div']['data-cursor'] = true;
+			$allowed_html['time']               = [ 'datetime' => true ];
+			return $allowed_html;
+		};
+
+		add_filter( 'newspack_lite_site_allowed_html', $allow );
+		$filtered = Lite_Site::clean_content( $content );
+		remove_filter( 'newspack_lite_site_allowed_html', $allow );
+
+		$this->assertStringContainsString( 'data-cursor="42"', $filtered, 'The filter keeps an added attribute.' );
+		$this->assertStringContainsString( '<time datetime="2026-01-01T12:00:00+00:00">Noon</time>', $filtered, 'The filter keeps an added element.' );
 	}
 
 	/**
