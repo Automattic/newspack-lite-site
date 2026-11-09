@@ -11,6 +11,7 @@ import { __ } from '@wordpress/i18n';
  * External dependencies.
  */
 import StatusIndicator from 'newspack-components/dist/esm/status-indicator';
+import { pause } from '@wordpress/icons';
 
 /**
  * Internal dependencies.
@@ -51,7 +52,7 @@ export const FEED_FIELDS = [
 		label: __( 'Status', 'newspack-lite-site' ),
 		enableSorting: true,
 		render: ( { item }: { item: Feed } ) => (
-			<StatusIndicator status={ 'active' === item.status ? 'active' : 'pending' }>
+			<StatusIndicator { ...( 'active' === item.status ? { status: 'active' } : { icon: pause } ) }>
 				{ 'active' === item.status ? __( 'Active', 'newspack-lite-site' ) : __( 'Paused', 'newspack-lite-site' ) }
 			</StatusIndicator>
 		),
@@ -80,7 +81,11 @@ export const FEED_FIELDS = [
 			return (
 				<span className="newspack-lite-feed-run">
 					<span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.last_run ) }</span>
-					{ item.last_result && <span className="newspack-lite-feed-result">{ formatLastResult( item.last_result ) }</span> }
+					{ item.last_result && (
+						<span className={ `newspack-lite-feed-result${ item.last_result.error ? ' newspack-lite-feed-result--error' : '' }` }>
+							{ formatLastResult( item.last_result ) }
+						</span>
+					) }
 				</span>
 			);
 		},

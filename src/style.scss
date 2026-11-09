@@ -7,7 +7,6 @@
 body.newspack-lite-admin-header {
 	background: #fff;
 
-	/* Newspack blue — drives header icon background and tab active colour. */
 	--wp-components-color-accent: #003da5;
 	--wp-components-color-accent-darker-10: #00296e;
 	--wp-components-color-accent-darker-20: #001f53;
@@ -153,6 +152,11 @@ body.newspack-lite-admin-header {
 .newspack-lite-feed-result {
 	color: var(--wpds-color-foreground-content-neutral-weak, #757575);
 	font-size: var(--wpds-typography-font-size-sm, 12px);
+	line-height: var(--wpds-typography-line-height-xs, 16px);
+
+	&--error {
+		color: inherit;
+	}
 }
 
 .newspack-lite-empty-message {
