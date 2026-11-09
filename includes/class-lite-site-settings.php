@@ -313,7 +313,8 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Add body class to scope Newspack admin styles to the plugin's admin pages.
+	 * Add body class to scope Newspack admin styles to the plugin's admin pages,
+	 * and flag when they run alongside newspack-plugin, which brings the Newspack branding with it.
 	 *
 	 * @param string $classes Existing body classes.
 	 * @return string Modified body classes.
@@ -326,6 +327,9 @@ class Lite_Site_Settings {
 
 		if ( self::is_plugin_admin_page( $screen->id ) ) {
 			$classes .= ' newspack-lite-admin-header';
+			if ( class_exists( '\Newspack\Newspack' ) ) {
+				$classes .= ' newspack-lite-admin-header--bundled';
+			}
 		}
 
 		return $classes;

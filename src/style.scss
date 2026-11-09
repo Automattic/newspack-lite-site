@@ -18,6 +18,10 @@ body.newspack-lite-admin-header {
 		position: relative;
 		z-index: 1;
 	}
+
+	&:not(.newspack-lite-admin-header--bundled) .newspack-page__header-visual {
+		display: none;
+	}
 }
 
 .newspack-lite-section-header {
