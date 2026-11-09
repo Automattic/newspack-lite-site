@@ -3,6 +3,7 @@
  */
 
 @import "@wordpress/dataviews/build-style/style.css";
+@import "~@wordpress/base-styles/variables";
 
 body.newspack-lite-admin-header {
 	background: #fff;
@@ -108,7 +109,14 @@ body.newspack-lite-admin-header {
 }
 
 .newspack-lite-rss-sections {
-	padding: 48px 24px 64px;
+	padding:
+		calc(2 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}))
+		calc(2 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}))
+		calc(2 * var(--wpds-dimension-padding-3xl, #{$grid-unit-40}));
+
+	.dataviews-wrapper {
+		margin-inline: calc(-1 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}));
+	}
 
 	.newspack-lite-section-fields {
 
