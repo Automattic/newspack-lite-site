@@ -5,6 +5,7 @@
 /**
  * WordPress dependencies.
  */
+import { dateI18n, getSettings } from '@wordpress/date';
 import { __, sprintf } from '@wordpress/i18n';
 
 /**
@@ -14,12 +15,13 @@ import { type LastResult } from '../types/rss-feed-import';
 import { type CategoryData } from '../types/settings';
 
 /**
- * Convert a Unix timestamp to a locale-formatted date/time string.
+ * Convert a Unix timestamp to a date/time string in the site's date format, time format and timezone.
  *
  * @param ts Unix timestamp in seconds.
  */
 export function formatUnixTimestamp( ts: number ): string {
-	return new Date( ts * 1000 ).toLocaleString();
+	const { formats } = getSettings();
+	return dateI18n( `${ formats.date } ${ formats.time }`, ts * 1000 );
 }
 
 /**
