@@ -8,6 +8,11 @@
 import { __ } from '@wordpress/i18n';
 
 /**
+ * External dependencies.
+ */
+import StatusIndicator from 'newspack-components/dist/esm/status-indicator';
+
+/**
  * Internal dependencies.
  */
 import { type Feed } from '../types/rss-feed-import';
@@ -35,16 +40,20 @@ export const FEED_FIELDS = [
 		label: __( 'RSS Feed URL', 'newspack-lite-site' ),
 		enableSorting: true,
 		enableGlobalSearch: true,
-		render: ( { item }: { item: Feed } ) => <strong>{ item.feed_url }</strong>,
+		render: ( { item }: { item: Feed } ) => (
+			<strong className="newspack-lite-feed-url" title={ item.feed_url }>
+				{ item.feed_url }
+			</strong>
+		),
 	},
 	{
 		id: 'status',
 		label: __( 'Status', 'newspack-lite-site' ),
 		enableSorting: true,
 		render: ( { item }: { item: Feed } ) => (
-			<span className={ `newspack-lite-feed-status--${ item.status }` }>
+			<StatusIndicator status={ 'active' === item.status ? 'active' : 'pending' }>
 				{ 'active' === item.status ? __( 'Active', 'newspack-lite-site' ) : __( 'Paused', 'newspack-lite-site' ) }
-			</span>
+			</StatusIndicator>
 		),
 	},
 	{
@@ -69,9 +78,9 @@ export const FEED_FIELDS = [
 				return <em>{ __( 'Never', 'newspack-lite-site' ) }</em>;
 			}
 			return (
-				<span>
+				<span className="newspack-lite-feed-run">
 					<span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.last_run ) }</span>
-					{ formatLastResult( item.last_result ) }
+					{ item.last_result && <span className="newspack-lite-feed-result">{ formatLastResult( item.last_result ) }</span> }
 				</span>
 			);
 		},
