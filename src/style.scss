@@ -157,12 +157,23 @@ body.newspack-lite-admin-header {
 		max-width: none;
 		overflow-wrap: anywhere;
 		white-space: normal;
+	}
+
+	col.dataviews-view-table__col-feed_url {
 		width: auto;
 	}
 
 	tbody td:first-child .dataviews-view-table__cell-content-wrapper {
 		min-width: 16rem;
 	}
+
+	col.dataviews-view-table__col-next_run {
+		width: 1%;
+	}
+}
+
+.newspack-lite-feed-date {
+	white-space: nowrap;
 }
 
 .newspack-lite-feed-status--active {

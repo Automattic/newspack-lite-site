@@ -69,10 +69,10 @@ export const FEED_FIELDS = [
 				return <em>{ __( 'Never', 'newspack-lite-site' ) }</em>;
 			}
 			return (
-				<>
-					{ formatUnixTimestamp( item.last_run ) }
+				<span>
+					<span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.last_run ) }</span>
 					{ formatLastResult( item.last_result ) }
-				</>
+				</span>
 			);
 		},
 	},
@@ -80,6 +80,7 @@ export const FEED_FIELDS = [
 		id: 'next_run',
 		label: __( 'Next Run', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) => ( item.next_run ? formatUnixTimestamp( item.next_run ) : '—' ),
+		render: ( { item }: { item: Feed } ) =>
+			item.next_run ? <span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.next_run ) }</span> : '—',
 	},
 ];
