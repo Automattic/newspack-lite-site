@@ -44,7 +44,7 @@
 	},
 	"dependencies": {
 		"@wordpress/dataviews": "^22.0.0",
-		"newspack-components": "^4.3.0",
+		"newspack-components": "~4.11.0",
 		"react-router-dom": "^5.3.4"
 	},
 	"devDependencies": {
@@ -67,6 +67,22 @@
 	],
 	"overrides": {
 		"@types/react": "^19.0.0",
-		"@types/react-dom": "^19.0.0"
+		"@types/react-dom": "^19.0.0",
+		"newspack-components": {
+			"@wordpress/api-fetch": "$@wordpress/api-fetch",
+			"@wordpress/base-styles": "^6.20.0",
+			"@wordpress/components": "$@wordpress/components",
+			"@wordpress/compose": "^8.8.0",
+			"@wordpress/data": "$@wordpress/data",
+			"@wordpress/dataviews": "$@wordpress/dataviews",
+			"@wordpress/dom-ready": "^4.55.0",
+			"@wordpress/element": "$@wordpress/element",
+			"@wordpress/hooks": "^4.55.0",
+			"@wordpress/html-entities": "^4.55.0",
+			"@wordpress/i18n": "$@wordpress/i18n",
+			"@wordpress/icons": "$@wordpress/icons",
+			"@wordpress/keycodes": "^4.55.0",
+			"@wordpress/url": "^4.55.0"
+		}
 	}
 }

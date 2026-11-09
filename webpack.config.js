@@ -9,6 +9,17 @@ const config = getWebpackConfig( {
 	},
 } );
 
+config.module.rules.push( {
+	test: /\.js$/,
+	include: /node_modules[\\/]newspack-icons[\\/]/,
+	use: {
+		loader: 'babel-loader',
+		options: {
+			presets: [ [ '@babel/preset-react', { runtime: 'automatic' } ] ],
+		},
+	},
+} );
+
 config.plugins = config.plugins
 	.filter( plugin => plugin.constructor.name !== 'DependencyExtractionWebpackPlugin' )
 	.concat(

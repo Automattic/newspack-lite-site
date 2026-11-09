@@ -12,13 +12,13 @@ import { __ } from '@wordpress/i18n';
  * External dependencies.
  */
 import { HashRouter, Switch, Route, Redirect } from 'react-router-dom';
-import { TabbedNavigation } from 'newspack-components';
+import Page from 'newspack-components/dist/esm/page';
+import TabbedNavigation from 'newspack-components/dist/esm/tabbed-navigation';
 
 /**
  * Internal dependencies.
  */
 import { useSettings } from '../hooks/useSettings';
-import { AppHeader } from '../components/AppHeader';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { AppearancePanel } from '../components/AppearancePanel';
 
@@ -50,28 +50,31 @@ export const SettingsApp = () => {
 	return (
 		<HashRouter>
 			<div className="wrap">
-				<AppHeader headerText={ __( 'Settings', 'newspack-lite-site' ) } />
-				<TabbedNavigation items={ SETTINGS_TABS } />
-				{ error && (
-					<Notice status="error" isDismissible={ false }>
-						{ error }
-					</Notice>
-				) }
-				<Switch>
-					<Route path="/general">
-						<div className="newspack-lite-sections">
-							{ isLoading ? <Spinner /> : <SettingsPanel settings={ settings } onChange={ updateSettings } /> }
-							{ saveButton }
-						</div>
-					</Route>
-					<Route path="/appearance">
-						<div className="newspack-lite-sections">
-							{ isLoading ? <Spinner /> : <AppearancePanel settings={ settings } onChange={ updateSettings } /> }
-							{ saveButton }
-						</div>
-					</Route>
-					<Redirect to="/general" />
-				</Switch>
+				<Page
+					breadcrumbItems={ [ { label: __( 'Lite Site', 'newspack-lite-site' ) }, { label: __( 'Settings', 'newspack-lite-site' ) } ] }
+					tabbedNavigation={ <TabbedNavigation items={ SETTINGS_TABS } /> }
+				>
+					{ error && (
+						<Notice status="error" isDismissible={ false }>
+							{ error }
+						</Notice>
+					) }
+					<Switch>
+						<Route path="/general">
+							<div className="newspack-lite-sections">
+								{ isLoading ? <Spinner /> : <SettingsPanel settings={ settings } onChange={ updateSettings } /> }
+								{ saveButton }
+							</div>
+						</Route>
+						<Route path="/appearance">
+							<div className="newspack-lite-sections">
+								{ isLoading ? <Spinner /> : <AppearancePanel settings={ settings } onChange={ updateSettings } /> }
+								{ saveButton }
+							</div>
+						</Route>
+						<Redirect to="/general" />
+					</Switch>
+				</Page>
 				{ saveSuccess && (
 					<div className="newspack-lite-snackbar-container">
 						<Snackbar>{ __( 'Settings saved.', 'newspack-lite-site' ) }</Snackbar>

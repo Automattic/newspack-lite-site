@@ -69,14 +69,6 @@ export interface ColorPickerFieldProps {
 }
 
 /**
- * Props for the AppHeader component.
- */
-export interface AppHeaderProps {
-	headerText: string;
-	subHeaderText?: string;
-}
-
-/**
  * Props for a settings panel component.
  */
 export interface PanelProps {
