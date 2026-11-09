@@ -108,7 +108,11 @@ body.newspack-lite-admin-header {
 }
 
 .newspack-lite-rss-sections {
-	padding: 48px 24px 64px;
+	padding: 48px calc(2 * var(--wpds-dimension-padding-2xl, 24px)) 64px;
+
+	.dataviews-wrapper {
+		margin-inline: calc(-1 * var(--wpds-dimension-padding-2xl, 24px));
+	}
 
 	.newspack-lite-section-fields {
 
