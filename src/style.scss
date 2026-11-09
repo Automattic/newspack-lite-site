@@ -151,6 +151,27 @@ body.newspack-lite-admin-header {
 	}
 }
 
+.newspack-lite-section .dataviews-view-table {
+
+	tbody td .dataviews-view-table__cell-content-wrapper {
+		max-width: none;
+		overflow-wrap: anywhere;
+		white-space: normal;
+	}
+
+	tbody td:first-child .dataviews-view-table__cell-content-wrapper {
+		min-width: 16rem;
+	}
+
+	col.dataviews-view-table__col-next_run {
+		width: 1%;
+	}
+}
+
+.newspack-lite-feed-date {
+	white-space: nowrap;
+}
+
 .newspack-lite-feed-status--active {
 	color: #00a32a;
 }
