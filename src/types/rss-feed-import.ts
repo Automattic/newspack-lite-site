@@ -9,6 +9,7 @@ export interface LastResult {
 	imported?: number;
 	failed?: number;
 	up_to_date?: boolean;
+	note?: string;
 	error?: string;
 	detail?: string;
 }

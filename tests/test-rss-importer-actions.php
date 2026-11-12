@@ -172,6 +172,87 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Fake an empty feed document.
+	 */
+	private function fake_empty_feed() {
+		add_filter(
+			'pre_http_request',
+			static function () {
+				return [
+					'headers'  => [ 'content-type' => 'application/rss+xml' ],
+					'body'     => '<?xml version="1.0"?><rss version="2.0"><channel><title>Test</title><link>http://93.184.216.34/</link><description>Test</description></channel></rss>',
+					'response' => [
+						'code'    => 200,
+						'message' => 'OK',
+					],
+				];
+			}
+		);
+	}
+
+	/**
+	 * An empty feed is recorded as up to date, not as an error.
+	 */
+	public function test_import_records_an_empty_feed_as_a_note_not_an_error() {
+		$this->fake_empty_feed();
+		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
+
+		$data = $this->action( $feed_id, 'import' )->get_data();
+
+		$this->assertArrayNotHasKey( 'error', $data[0]['last_result'], 'An empty feed is not an error.' );
+		$this->assertSame( 0, $data[0]['last_result']['imported'], 'Nothing should be imported.' );
+		$this->assertTrue( $data[0]['last_result']['up_to_date'], 'The feed should count as up to date.' );
+		$this->assertSame( 'The RSS feed contains no items.', $data[0]['last_result']['note'], 'The empty-feed note should be recorded.' );
+	}
+
+	/**
+	 * The lock is released after a manual import.
+	 */
+	public function test_import_releases_the_lock() {
+		$this->fake_feed();
+		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
+
+		$this->action( $feed_id, 'import' );
+
+		$this->assertFalse( get_transient( RSS_Importer::LOCK_PREFIX . $feed_id ), 'The lock should be gone after the import.' );
+	}
+
+	/**
+	 * The scheduled runner reports whether it ran.
+	 */
+	public function test_run_scheduled_import_reports_whether_it_ran() {
+		$this->fake_feed();
+		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
+
+		$this->assertTrue( RSS_Importer::run_scheduled_import( $feed_id ), 'An active feed should run.' );
+		$this->assertFalse( RSS_Importer::run_scheduled_import( md5( 'missing' ) ), 'A missing feed should be skipped.' );
+
+		set_transient( RSS_Importer::LOCK_PREFIX . $feed_id, time(), RSS_Importer::LOCK_TTL );
+		$this->assertFalse( RSS_Importer::run_scheduled_import( $feed_id ), 'A locked feed should be skipped.' );
+	}
+
+	/**
+	 * A private-range feed URL is blocked on the REST path without any request.
+	 */
+	public function test_import_blocks_private_urls_without_a_request() {
+		$requests = 0;
+		add_filter(
+			'pre_http_request',
+			static function ( $pre ) use ( &$requests ) {
+				++$requests;
+				return $pre;
+			},
+			1
+		);
+		list( $feed_id ) = $this->seed( [ 'http://10.0.0.5/feed.xml' ] );
+
+		$data = $this->action( $feed_id, 'import' )->get_data();
+
+		$this->assertNotEmpty( $data[0]['last_result']['error'], 'The blocked URL should record an error.' );
+		$this->assertSame( 0, $requests, 'No outbound request should be made.' );
+	}
+
+	/**
 	 * An unknown feed is a 404.
 	 */
 	public function test_import_unknown_feed_returns_404() {
@@ -253,6 +334,32 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 
 		$this->assertSame( 200, $response->get_status(), 'Unknown IDs should not fail the request.' );
 		$this->assertSame( [], $response->get_data(), 'The known feed should be deleted.' );
+	}
+
+	/**
+	 * A comma-separated string of IDs is accepted.
+	 */
+	public function test_bulk_delete_accepts_a_comma_separated_string() {
+		$ids = $this->seed( [ self::PUBLIC_FEED, self::OTHER_FEED ] );
+
+		$request = new WP_REST_Request( 'POST', '/newspack-lite-site/v1/rss-feeds/delete' );
+		$request->set_body_params( [ 'ids' => implode( ',', $ids ) ] );
+		$response = rest_do_request( $request );
+
+		$this->assertSame( 200, $response->get_status(), 'A comma-separated list should be accepted.' );
+		$this->assertSame( [], $response->get_data(), 'Both feeds should be deleted.' );
+	}
+
+	/**
+	 * Duplicate IDs are handled once.
+	 */
+	public function test_bulk_delete_handles_duplicate_ids() {
+		$ids = $this->seed( [ self::PUBLIC_FEED, self::OTHER_FEED ] );
+
+		$response = $this->bulk_delete( [ $ids[0], $ids[0] ] );
+
+		$this->assertSame( 200, $response->get_status(), 'Duplicates should not fail the request.' );
+		$this->assertSame( [ $ids[1] ], wp_list_pluck( $response->get_data(), 'id' ), 'Only the duplicated feed should be removed.' );
 	}
 
 	/**
