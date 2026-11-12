@@ -143,7 +143,7 @@ class Post_Type {
 	 * Get a user's avatar URLs, keyed by size, or an empty array when there is no user or the site hides avatars.
 	 *
 	 * @param int $user_id User ID.
-	 * @return array
+	 * @return array<int, string>
 	 */
 	public static function get_user_avatar_urls( int $user_id ): array {
 		if ( ! $user_id || ! get_option( 'show_avatars' ) ) {

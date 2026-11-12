@@ -22,6 +22,7 @@ class Test_RSS_Importer_Feeds extends Lite_Site_TestCase {
 	 * Clear the feed registry between tests.
 	 */
 	public function tear_down() {
+		remove_all_filters( 'pre_schedule_event' );
 		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
 		parent::tear_down();
 	}
@@ -398,5 +399,98 @@ class Test_RSS_Importer_Feeds extends Lite_Site_TestCase {
 
 		$this->assertSame( 200, $response->get_status(), 'Changing the interval should succeed.' );
 		$this->assertFalse( wp_next_scheduled( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'A paused feed should stay unscheduled.' );
+	}
+
+	/**
+	 * Shortening the interval caps the next run at one new interval from now.
+	 */
+	public function test_update_feed_shortening_interval_caps_next_run() {
+		$feed_id = $this->seed_scheduled_feed( time() + 6 * DAY_IN_SECONDS );
+
+		$response = $this->update_feed( $feed_id, [ 'interval' => 'hourly' ] );
+		$event    = wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] );
+
+		$this->assertSame( 200, $response->get_status(), 'Shortening the interval should succeed.' );
+		$this->assertNotFalse( $event, 'The cron event should still be scheduled.' );
+		$this->assertLessThanOrEqual( time() + HOUR_IN_SECONDS, $event->timestamp, 'The next run should not exceed one new interval.' );
+		$this->assertGreaterThanOrEqual( time() - 5, $event->timestamp, 'The next run should not be in the past.' );
+		$this->assertSame( 'hourly', $event->schedule, 'The event should use the new interval.' );
+	}
+
+	/**
+	 * Force every cron scheduling attempt for the import hook to fail.
+	 *
+	 * @param string|null $only_schedule Fail only events with this schedule, or all when null.
+	 */
+	private function fail_scheduling( $only_schedule = null ) {
+		add_filter(
+			'pre_schedule_event',
+			function ( $pre, $event ) use ( $only_schedule ) {
+				if ( RSS_Importer::CRON_HOOK === $event->hook && ( null === $only_schedule || $event->schedule === $only_schedule ) ) {
+					return false;
+				}
+				return $pre;
+			},
+			10,
+			2
+		);
+	}
+
+	/**
+	 * A failed resume saves nothing and leaves the feed paused.
+	 */
+	public function test_update_feed_resume_failure_saves_nothing() {
+		$feed_id = RSS_Importer::get_feed_id( self::PUBLIC_FEED );
+		$this->seed_feeds( [ $feed_id => $this->make_feed( 'paused' ) ] );
+		$this->fail_scheduling();
+
+		$response = $this->update_feed(
+			$feed_id,
+			[
+				'status'   => 'active',
+				'interval' => 'hourly',
+			]
+		);
+		$feeds    = RSS_Importer::get_feeds();
+
+		$this->assertSame( 500, $response->get_status(), 'A failed resume should return a server error.' );
+		$this->assertSame( 'paused', $feeds[ $feed_id ]['status'], 'The stored feed should stay paused.' );
+		$this->assertSame( 'daily', $feeds[ $feed_id ]['interval'], 'The stored interval should not change.' );
+		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'Nothing should be scheduled.' );
+	}
+
+	/**
+	 * A failed interval change restores the old schedule and keeps the stored feed.
+	 */
+	public function test_update_feed_interval_change_failure_restores_old_schedule() {
+		$next_run = time() + 6 * HOUR_IN_SECONDS;
+		$feed_id  = $this->seed_scheduled_feed( $next_run );
+		$this->fail_scheduling( 'weekly' );
+
+		$response = $this->update_feed( $feed_id, [ 'interval' => 'weekly' ] );
+		$feeds    = RSS_Importer::get_feeds();
+		$event    = wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] );
+
+		$this->assertSame( 500, $response->get_status(), 'A failed interval change should return a server error.' );
+		$this->assertSame( 'daily', $feeds[ $feed_id ]['interval'], 'The stored interval should not change.' );
+		$this->assertSame( 'active', $feeds[ $feed_id ]['status'], 'The feed should stay active.' );
+		$this->assertNotFalse( $event, 'The old schedule should be restored.' );
+		$this->assertSame( 'daily', $event->schedule, 'The restored event should use the old interval.' );
+		$this->assertSame( $next_run, $event->timestamp, 'The restored event should keep its next run.' );
+	}
+
+	/**
+	 * When the rollback also fails, the feed is paused rather than left active without an event.
+	 */
+	public function test_update_feed_rollback_failure_pauses_feed() {
+		$feed_id = $this->seed_scheduled_feed( time() + 6 * HOUR_IN_SECONDS );
+		$this->fail_scheduling();
+
+		$response = $this->update_feed( $feed_id, [ 'interval' => 'weekly' ] );
+		$feeds    = RSS_Importer::get_feeds();
+
+		$this->assertSame( 500, $response->get_status(), 'A failed rollback should return a server error.' );
+		$this->assertSame( 'paused', $feeds[ $feed_id ]['status'], 'The feed should be paused.' );
+		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'No event should be scheduled.' );
 	}
 }

@@ -301,12 +301,13 @@ class RSS_Importer {
 	 * Only the fields present in the request are validated and changed. The URL is
 	 * the feed's identity and cannot be edited. Scheduling follows the change: pausing
 	 * clears the cron event, resuming schedules a fresh one, and changing the interval
-	 * of an active feed keeps its next run time so no import is triggered early.
+	 * of an active feed keeps its next run time, capped at one new interval from now, so no
+	 * import is triggered early and none is delayed past what the new interval allows.
 	 *
 	 * @param \WP_REST_Request $request The REST request.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public static function rest_update_feed( $request ) {
+	public static function rest_update_feed( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$params  = $request->get_params();
 		$feed_id = $params['id'] ?? '';
 		$feeds   = self::get_feeds();
@@ -361,10 +362,6 @@ class RSS_Importer {
 			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
 
 			if ( false === wp_schedule_event( time(), $feed['interval'], self::CRON_HOOK, [ $feed_id ] ) ) {
-				$feed['status']    = 'paused';
-				$feeds[ $feed_id ] = $feed;
-				self::save_feeds( $feeds );
-
 				return new \WP_Error(
 					'schedule_failed',
 					__( 'Failed to resume the RSS feed.', 'newspack-lite-site' ),
@@ -372,13 +369,21 @@ class RSS_Importer {
 				);
 			}
 		} elseif ( $is_active && $feed['interval'] !== $old_interval ) {
-			$next_run = wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] );
-			$next_run = $next_run ? $next_run : time();
+			$schedules = wp_get_schedules();
+			$next_run  = wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] );
+			$next_run  = $next_run ? $next_run : time();
+
+			if ( isset( $schedules[ $feed['interval'] ]['interval'] ) ) {
+				$next_run = min( $next_run, time() + (int) $schedules[ $feed['interval'] ]['interval'] );
+			}
 
 			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
 
 			if ( false === wp_schedule_event( $next_run, $feed['interval'], self::CRON_HOOK, [ $feed_id ] ) ) {
-				wp_schedule_event( $next_run, $old_interval, self::CRON_HOOK, [ $feed_id ] );
+				if ( false === wp_schedule_event( $next_run, $old_interval, self::CRON_HOOK, [ $feed_id ] ) ) {
+					$feeds[ $feed_id ]['status'] = 'paused';
+					self::save_feeds( $feeds );
+				}
 
 				return new \WP_Error(
 					'schedule_failed',
