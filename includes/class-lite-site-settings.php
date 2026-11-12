@@ -540,22 +540,13 @@ class Lite_Site_Settings {
 	private static function get_rss_entries_data(): array {
 		global $wpdb;
 
-		$urls = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = %s AND pm.meta_value <> '' AND p.post_type = %s",
-				'_rss_import_feed_url',
-				Post_Type::POST_TYPE
-			)
-		);
-
-		$feeds = array_map(
-			fn( $url ) => [
-				'value' => $url,
-				'label' => untrailingslashit( (string) wp_parse_url( $url, PHP_URL_HOST ) . (string) wp_parse_url( $url, PHP_URL_PATH ) ),
-			],
-			$urls
-		);
-		usort( $feeds, fn( $a, $b ) => strcasecmp( $a['label'], $b['label'] ) );
+		$feeds = [];
+		foreach ( Post_Type::get_entry_feeds() as $id => $label ) {
+			$feeds[] = [
+				'value' => $id,
+				'label' => $label,
+			];
+		}
 
 		$tags = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(

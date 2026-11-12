@@ -40,23 +40,106 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * The feed collection param filters entries by feed URL.
+	 * Dispatch a collection request for RSS entries.
+	 *
+	 * @param array $params Request params.
+	 * @return WP_REST_Response
 	 */
-	public function test_feed_param_filters_by_feed_url() {
+	private function get_entries( array $params = [] ): WP_REST_Response {
+		$request = new WP_REST_Request( 'GET', '/wp/v2/' . Post_Type::POST_TYPE );
+		foreach ( $params as $key => $value ) {
+			$request->set_param( $key, $value );
+		}
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * The feed collection param filters entries by feed ID, including entries from deleted feeds.
+	 */
+	public function test_feed_param_filters_by_feed_id() {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 		$a = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
 		$b = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
-		update_post_meta( $a, '_rss_import_feed_url', 'https://a.example/feed' );
+		update_post_meta( $a, '_rss_import_feed_url', 'https://a.example/feed?key=secret' );
 		update_post_meta( $b, '_rss_import_feed_url', 'https://b.example/feed' );
 
-		$request = new WP_REST_Request( 'GET', '/wp/v2/' . Post_Type::POST_TYPE );
-		$request->set_param( 'context', 'edit' );
-		$request->set_param( 'feed', 'https://a.example/feed' );
-		$data = rest_get_server()->dispatch( $request )->get_data();
+		$data = $this->get_entries(
+			[
+				'context' => 'edit',
+				'feed'    => md5( 'https://a.example/feed?key=secret' ),
+			]
+		)->get_data();
 
 		$this->assertCount( 1, $data );
 		$this->assertSame( $a, $data[0]['id'] );
-		$this->assertSame( 'https://a.example/feed', $data[0]['feed_url'] );
+		$this->assertSame( md5( 'https://a.example/feed?key=secret' ), $data[0]['feed_id'] );
+		$this->assertSame( 'a.example/feed', $data[0]['feed_label'] );
+		$this->assertArrayNotHasKey( 'feed_url', $data[0] );
+	}
+
+	/**
+	 * An unknown feed ID matches no entries rather than all of them.
+	 */
+	public function test_unknown_feed_id_returns_nothing() {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$a = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		update_post_meta( $a, '_rss_import_feed_url', 'https://a.example/feed' );
+
+		$response = $this->get_entries( [ 'feed' => md5( 'https://missing.example/feed' ) ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [], $response->get_data() );
+	}
+
+	/**
+	 * Malformed feed values are rejected.
+	 *
+	 * @dataProvider invalid_feed_values
+	 *
+	 * @param mixed $value Feed param value.
+	 */
+	public function test_invalid_feed_param_is_rejected( $value ) {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+
+		$response = $this->get_entries( [ 'feed' => $value ] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+	}
+
+	/**
+	 * Malformed feed param values.
+	 *
+	 * @return array
+	 */
+	public function invalid_feed_values(): array {
+		return [
+			'empty'  => [ '' ],
+			'array'  => [ [ md5( 'https://a.example/feed' ) ] ],
+			'url'    => [ 'https://a.example/feed' ],
+			'random' => [ 'not-an-id' ],
+		];
+	}
+
+	/**
+	 * Feeds that share a host and path get distinct labels.
+	 */
+	public function test_colliding_feed_labels_are_disambiguated() {
+		$a = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		$b = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		$c = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		update_post_meta( $a, '_rss_import_feed_url', 'https://a.example/feed?cat=1' );
+		update_post_meta( $b, '_rss_import_feed_url', 'https://a.example/feed?cat=2' );
+		update_post_meta( $c, '_rss_import_feed_url', 'https://b.example/feed/' );
+
+		$feeds = Post_Type::get_entry_feeds();
+		$id_a  = md5( 'https://a.example/feed?cat=1' );
+		$id_b  = md5( 'https://a.example/feed?cat=2' );
+
+		$this->assertSame( 'a.example/feed (' . substr( $id_a, 0, 7 ) . ')', $feeds[ $id_a ] );
+		$this->assertSame( 'a.example/feed (' . substr( $id_b, 0, 7 ) . ')', $feeds[ $id_b ] );
+		$this->assertSame( 'b.example/feed', $feeds[ md5( 'https://b.example/feed/' ) ] );
 	}
 
 	/**
@@ -71,7 +154,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		);
 		update_post_meta( $id, '_rss_import_feed_url', 'https://a.example/feed?key=secret' );
 		update_post_meta( $id, '_rss_import_source_url', 'https://a.example/story' );
-		$fields = [ 'feed_url', 'source_url', 'author_name', 'lite_url', 'author_avatar_urls' ];
+		$fields = [ 'feed_id', 'feed_label', 'source_url', 'author_name', 'lite_url', 'author_avatar_urls' ];
 
 		wp_set_current_user( 0 );
 		$data = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/' . Post_Type::POST_TYPE ) )->get_data();
@@ -87,7 +170,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		foreach ( $fields as $field ) {
 			$this->assertArrayHasKey( $field, $data[0] );
 		}
-		$this->assertSame( 'https://a.example/feed?key=secret', $data[0]['feed_url'] );
+		$this->assertSame( md5( 'https://a.example/feed?key=secret' ), $data[0]['feed_id'] );
 	}
 
 	/**
@@ -110,9 +193,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		update_post_meta( $b, '_rss_import_feed_url', 'https://b.example/feed' );
 
 		wp_set_current_user( 0 );
-		$request = new WP_REST_Request( 'GET', '/wp/v2/' . Post_Type::POST_TYPE );
-		$request->set_param( 'feed', 'https://a.example/feed' );
-		$data = rest_do_request( $request )->get_data();
+		$data = $this->get_entries( [ 'feed' => md5( 'https://a.example/feed' ) ] )->get_data();
 
 		$this->assertCount( 2, $data );
 	}

@@ -73,7 +73,8 @@ class Post_Type {
 	 */
 	public static function register_rest_fields() {
 		$fields = [
-			'feed_url'     => fn( $post ) => (string) get_post_meta( $post['id'], '_rss_import_feed_url', true ),
+			'feed_id'      => [ __CLASS__, 'get_entry_feed_id' ],
+			'feed_label'   => [ __CLASS__, 'get_entry_feed_label' ],
 			'source_url'   => fn( $post ) => (string) get_post_meta( $post['id'], '_rss_import_source_url', true ),
 			'author_name'  => [ __CLASS__, 'get_author_name' ],
 			'lite_url'     => [ __CLASS__, 'get_lite_url' ],
@@ -161,6 +162,91 @@ class Post_Type {
 	}
 
 	/**
+	 * Get the ID of the feed a post was imported from.
+	 *
+	 * @param array $post Prepared REST post data.
+	 * @return string
+	 */
+	public static function get_entry_feed_id( $post ): string {
+		$url = (string) get_post_meta( $post['id'], '_rss_import_feed_url', true );
+		return '' !== $url ? RSS_Importer::get_feed_id( $url ) : '';
+	}
+
+	/**
+	 * Get the label of the feed a post was imported from.
+	 *
+	 * @param array $post Prepared REST post data.
+	 * @return string
+	 */
+	public static function get_entry_feed_label( $post ): string {
+		$id = self::get_entry_feed_id( $post );
+		if ( '' === $id ) {
+			return '';
+		}
+		return self::get_entry_feeds()[ $id ] ?? self::get_feed_label( (string) get_post_meta( $post['id'], '_rss_import_feed_url', true ) );
+	}
+
+	/**
+	 * Get the distinct feed URLs RSS entries were imported from, including feeds that were since deleted.
+	 *
+	 * @return string[]
+	 */
+	public static function get_entry_feed_urls(): array {
+		global $wpdb;
+
+		$cache_key = 'entry_feed_urls:' . wp_cache_get_last_changed( 'posts' );
+		$urls      = wp_cache_get( $cache_key, 'newspack-lite-site' );
+		if ( is_array( $urls ) ) {
+			return $urls;
+		}
+
+		$urls = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->prepare(
+				"SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = %s AND pm.meta_value <> '' AND p.post_type = %s",
+				'_rss_import_feed_url',
+				self::POST_TYPE
+			)
+		);
+		wp_cache_set( $cache_key, $urls, 'newspack-lite-site' );
+		return $urls;
+	}
+
+	/**
+	 * Get the feeds RSS entries were imported from, as labels keyed by feed ID and sorted by label.
+	 *
+	 * Labels are the feed's host and path. Feeds that share a label get a short form of their ID appended.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_entry_feeds(): array {
+		$feeds = [];
+		foreach ( self::get_entry_feed_urls() as $url ) {
+			$feeds[ RSS_Importer::get_feed_id( $url ) ] = self::get_feed_label( $url );
+		}
+
+		$counts = array_count_values( $feeds );
+		foreach ( $feeds as $id => $label ) {
+			if ( $counts[ $label ] > 1 ) {
+				$feeds[ $id ] = sprintf( '%1$s (%2$s)', $label, substr( $id, 0, 7 ) );
+			}
+		}
+
+		uasort( $feeds, 'strcasecmp' );
+		return $feeds;
+	}
+
+	/**
+	 * Get the label of a feed URL: its host and path, without the scheme or query string.
+	 *
+	 * @param string $url Feed URL.
+	 * @return string
+	 */
+	public static function get_feed_label( string $url ): string {
+		$label = untrailingslashit( (string) wp_parse_url( $url, PHP_URL_HOST ) . (string) wp_parse_url( $url, PHP_URL_PATH ) );
+		return '' !== $label ? $label : strtok( $url, '?' );
+	}
+
+	/**
 	 * Adds the feed filter to the collection parameters.
 	 *
 	 * @param array $params Collection parameters.
@@ -168,15 +254,17 @@ class Post_Type {
 	 */
 	public static function add_feed_collection_param( $params ) {
 		$params['feed'] = [
-			'description'       => __( 'Limit results to entries imported from this feed URL.', 'newspack-lite-site' ),
-			'type'              => 'string',
-			'sanitize_callback' => 'esc_url_raw',
+			'description' => __( 'Limit results to entries imported from the feed with this ID.', 'newspack-lite-site' ),
+			'type'        => 'string',
+			'pattern'     => '^[a-f0-9]{32}$',
 		];
 		return $params;
 	}
 
 	/**
 	 * Restricts the REST query to the requested feed.
+	 *
+	 * The feed ID is the MD5 hash of the stored feed URL, so entries from deleted feeds stay filterable.
 	 *
 	 * @param array            $args    WP_Query arguments.
 	 * @param \WP_REST_Request $request The request.
@@ -187,12 +275,27 @@ class Post_Type {
 			return $args;
 		}
 		$feed = $request->get_param( 'feed' );
-		if ( is_string( $feed ) && '' !== $feed ) {
-			$args['meta_query'][] = [
-				'key'   => '_rss_import_feed_url',
-				'value' => $feed,
-			];
+		if ( ! is_string( $feed ) || '' === $feed ) {
+			return $args;
 		}
+
+		$url = '';
+		foreach ( self::get_entry_feed_urls() as $candidate ) {
+			if ( RSS_Importer::get_feed_id( $candidate ) === $feed ) {
+				$url = $candidate;
+				break;
+			}
+		}
+
+		if ( '' === $url ) {
+			$args['post__in'] = [ 0 ];
+			return $args;
+		}
+
+		$args['meta_query'][] = [
+			'key'   => '_rss_import_feed_url',
+			'value' => $url,
+		];
 		return $args;
 	}
 }

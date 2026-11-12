@@ -90,18 +90,8 @@ export function getEntryFields( editUrl: string ): Field< RssEntry >[] {
 			enableSorting: false,
 			elements: feeds,
 			filterBy: { operators: [ 'is' ], isPrimary: true },
-			getValue: ( { item } ) => item.feed_url,
-			render: ( { item } ) => {
-				const match = feeds.find( feed => feed.value === item.feed_url );
-				if ( match ) {
-					return match.label;
-				}
-				try {
-					return new URL( item.feed_url ).host;
-				} catch {
-					return item.feed_url || '—';
-				}
-			},
+			getValue: ( { item } ) => item.feed_id,
+			render: ( { item } ) => item.feed_label || '—',
 		},
 		{
 			id: 'author',

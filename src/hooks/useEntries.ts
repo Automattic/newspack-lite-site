@@ -17,7 +17,7 @@ import { type EntryMutation, type RssEntry } from '../types/rss-entries';
 import { type Notice } from '../types/rss-feed-import';
 
 const ENTRIES_PATH = '/wp/v2/nls_rss_entry';
-const FIELDS = 'id,title,date,status,author,categories,tags,link,feed_url,source_url,author_name,author_avatar_urls,lite_url,trash_status';
+const FIELDS = 'id,title,date,status,author,categories,tags,link,feed_id,feed_label,source_url,author_name,author_avatar_urls,lite_url,trash_status';
 const SEARCH_DEBOUNCE_MS = 300;
 const SORT_FIELDS = [ 'date', 'title', 'author' ];
 

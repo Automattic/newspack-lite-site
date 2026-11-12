@@ -24,7 +24,8 @@ export interface RssEntry {
 	categories: number[];
 	tags: number[];
 	link: string;
-	feed_url: string;
+	feed_id: string;
+	feed_label: string;
 	source_url: string;
 	author_name: string;
 	author_avatar_urls?: Record< string, string >;
