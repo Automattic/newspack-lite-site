@@ -1,20 +1,26 @@
 /**
- * Shows or hides the RSS Entries item in the Lite Site admin submenu.
+ * Reveals the RSS Entries item in the Lite Site admin submenu once a feed exists.
  *
- * Hidden only while there are no feeds and no entries, matching the server rule.
- * Revealing moves it back to the top of the submenu, where the server puts it.
+ * The server hides the item while there are no feeds and no entries. Core echoes the
+ * submenu class on both the list item and its link, so both are updated. The item moves
+ * back to the top of the submenu, where the server puts it when visible.
  */
-export function syncEntriesMenu( feedCount: number ) {
-	const item = document.querySelector( '#adminmenu .wp-submenu a[href*="edit.php?post_type=nls_rss_entry"]' )?.closest( 'li' );
+export function revealEntriesMenu() {
+	const link = document.querySelector< HTMLAnchorElement >( '#adminmenu .wp-submenu a[href*="edit.php?post_type=nls_rss_entry"]' );
+	const item = link?.closest( 'li' );
 	const list = item?.parentElement;
-	if ( ! item || ! list ) {
+	if ( ! link || ! item || ! list || ! item.classList.contains( 'hidden' ) ) {
 		return;
 	}
-	const shouldHide = 0 === feedCount && ! window.newspackLiteSite?.hasEntries;
-	item.classList.toggle( 'hidden', shouldHide );
-	if ( ! shouldHide && list.querySelector( 'li:not(.wp-submenu-head)' ) !== item ) {
-		list.querySelector( 'li:not(.wp-submenu-head)' )?.classList.remove( 'wp-first-item' );
+	item.classList.remove( 'hidden' );
+	link.classList.remove( 'hidden' );
+
+	const first = list.querySelector( 'li:not(.wp-submenu-head)' );
+	if ( first && first !== item ) {
+		first.classList.remove( 'wp-first-item' );
+		first.querySelector( 'a' )?.classList.remove( 'wp-first-item' );
 		item.classList.add( 'wp-first-item' );
-		list.insertBefore( item, list.querySelector( 'li:not(.wp-submenu-head)' ) );
+		link.classList.add( 'wp-first-item' );
+		list.insertBefore( item, first );
 	}
 }

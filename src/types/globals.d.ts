@@ -10,7 +10,6 @@ declare global {
 			cronDisabled: boolean;
 			intervals: Array< { value: string; label: string } >;
 			authors: Array< { value: string; label: string } >;
-			hasEntries: boolean;
 			rssEntries?: RssEntriesData;
 		};
 	}

@@ -397,8 +397,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	 */
 	public function test_entries_menu_item_is_marked_hidden() {
 		global $submenu;
-		$slug     = 'edit.php?post_type=' . Post_Type::POST_TYPE;
-		$previous = $submenu['newspack-lite-site'] ?? null;
+		$slug = 'edit.php?post_type=' . Post_Type::POST_TYPE;
 
 		$submenu['newspack-lite-site'] = [ // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			10 => [ 'RSS Entries', 'edit_posts', $slug ],
@@ -409,11 +408,85 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$this->assertSame( [ 11, 10 ], array_keys( $submenu['newspack-lite-site'] ) );
 		$this->assertSame( 'hidden', $submenu['newspack-lite-site'][10][4] );
 		$this->assertArrayNotHasKey( 4, $submenu['newspack-lite-site'][11] );
+	}
 
-		if ( null === $previous ) {
-			unset( $submenu['newspack-lite-site'] );
-		} else {
-			$submenu['newspack-lite-site'] = $previous; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	/**
+	 * Build the Lite Site menu the way WordPress does, then run the plugin's admin_menu callbacks in priority order.
+	 *
+	 * @param string $role User role to build the menu for.
+	 */
+	private function build_menu( string $role ) {
+		global $menu, $submenu, $_registered_pages;
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+		$menu              = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu           = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_registered_pages = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		wp_set_current_user( self::factory()->user->create( [ 'role' => $role ] ) );
+
+		_add_post_type_submenus();
+
+		global $wp_filter;
+		$callbacks = $wp_filter['admin_menu']->callbacks;
+		ksort( $callbacks );
+		foreach ( $callbacks as $priority_callbacks ) {
+			foreach ( $priority_callbacks as $callback ) {
+				$function = $callback['function'];
+				if ( is_array( $function ) && Lite_Site_Settings::class === $function[0] ) {
+					call_user_func( $function );
+				}
+			}
 		}
+	}
+
+	/**
+	 * Restore the admin menu globals so a failing assertion cannot leak them into other tests.
+	 */
+	public function tear_down() {
+		global $menu, $submenu, $_registered_pages;
+		$menu              = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu           = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_registered_pages = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		parent::tear_down();
+	}
+
+	/**
+	 * With no feeds or entries an administrator sees RSS Feeds first and Entries hidden.
+	 */
+	public function test_admin_menu_hides_entries_and_keeps_feeds_first() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$this->build_menu( 'administrator' );
+
+		global $submenu;
+		$items = array_values( $submenu['newspack-lite-site'] );
+		$this->assertSame( 'newspack-lite-site-rss-import', $items[0][2] );
+
+		$entries = array_values(
+			array_filter(
+				$items,
+				fn( $item ) => 'edit.php?post_type=' . Post_Type::POST_TYPE === $item[2]
+			)
+		);
+		$this->assertCount( 1, $entries );
+		$this->assertStringContainsString( 'hidden', $entries[0][4] ?? '' );
+	}
+
+	/**
+	 * A user without manage_options keeps seeing RSS Entries.
+	 */
+	public function test_admin_menu_keeps_entries_for_editors() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$this->build_menu( 'editor' );
+
+		global $submenu;
+		$entries = array_values(
+			array_filter(
+				$submenu['newspack-lite-site'] ?? [],
+				fn( $item ) => 'edit.php?post_type=' . Post_Type::POST_TYPE === $item[2]
+			)
+		);
+		$this->assertCount( 1, $entries );
+		$this->assertStringNotContainsString( 'hidden', $entries[0][4] ?? '' );
 	}
 }

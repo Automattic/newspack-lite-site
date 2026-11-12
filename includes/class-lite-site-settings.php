@@ -56,6 +56,7 @@ class Lite_Site_Settings {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'rest_api_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
+		add_action( 'admin_menu', [ __CLASS__, 'maybe_hide_entries_menu_item' ], PHP_INT_MAX );
 		add_filter( 'custom_menu_order', '__return_true' );
 		add_filter( 'menu_order', [ __CLASS__, 'menu_order' ], 12 );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
@@ -244,7 +245,6 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			'newspackLiteSite',
 			[
-				'hasEntries'   => self::has_entries(),
 				'rssEntries'   => self::ENTRIES_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
 				'defaultColor' => $default_color,
 				'homeUrl'      => home_url( '/' ),
@@ -322,8 +322,16 @@ class Lite_Site_Settings {
 		);
 
 		self::register_entries_page();
+	}
 
-		if ( ! self::should_show_entries_menu() ) {
+	/**
+	 * Hide the RSS Entries submenu item while there is nothing to show in it.
+	 *
+	 * Runs late so it does not depend on registration order. Only users who can reach the
+	 * RSS Feeds and Settings pages are affected; everyone else keeps the item.
+	 */
+	public static function maybe_hide_entries_menu_item() {
+		if ( current_user_can( 'manage_options' ) && ! self::should_show_entries_menu() ) {
 			self::hide_entries_menu_item();
 		}
 	}
@@ -331,8 +339,8 @@ class Lite_Site_Settings {
 	/**
 	 * Mark the RSS Entries submenu item hidden and move it to the end.
 	 *
-	 * The admin script reveals it once a feed is added. Moving it keeps the first visible
-	 * item, which the top-level Lite Site link points to, on RSS Feeds.
+	 * The admin script reveals it once a feed is added. Core points the top-level Lite Site
+	 * link at the first item whatever its visibility. Moving it keeps the first item on RSS Feeds.
 	 */
 	private static function hide_entries_menu_item() {
 		global $submenu;
@@ -375,6 +383,7 @@ class Lite_Site_Settings {
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
+				'orderby'        => 'none',
 			]
 		);
 		return ! empty( $query->posts );
