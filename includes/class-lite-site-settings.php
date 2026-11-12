@@ -310,6 +310,12 @@ class Lite_Site_Settings {
 			26
 		);
 
+		global $submenu;
+		if ( ! isset( $submenu['newspack-lite-site'] ) ) {
+			// Without this, core copies the top-level item into the submenu as a duplicate "Lite Site" link.
+			$submenu['newspack-lite-site'] = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		}
+
 		remove_submenu_page( 'newspack-lite-site', 'edit.php?post_type=' . Post_Type::POST_TYPE );
 
 		$post_type = get_post_type_object( Post_Type::POST_TYPE );

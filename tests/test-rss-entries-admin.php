@@ -530,9 +530,10 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	/**
 	 * Build the Lite Site menu the way WordPress does, then run the plugin's admin_menu callbacks in priority order.
 	 *
-	 * @param string $role User role to build the menu for.
+	 * @param string $role                   User role to build the menu for.
+	 * @param bool   $with_post_type_submenu Whether core adds the RSS entries submenu item first.
 	 */
-	private function build_menu( string $role ) {
+	private function build_menu( string $role, bool $with_post_type_submenu = true ) {
 		global $menu, $submenu, $_registered_pages;
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
@@ -541,7 +542,9 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$_registered_pages = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		wp_set_current_user( self::factory()->user->create( [ 'role' => $role ] ) );
 
-		_add_post_type_submenus();
+		if ( $with_post_type_submenu ) {
+			_add_post_type_submenus();
+		}
 
 		global $wp_filter;
 		$callbacks = $wp_filter['admin_menu']->callbacks;
@@ -608,6 +611,20 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$this->assertCount( 1, $rss );
 		$this->assertTrue( current_user_can( $rss[0][1] ) );
 		$this->assertFalse( current_user_can( 'manage_options' ) );
+	}
+
+	/**
+	 * Without the post type's own submenu item, the Lite Site submenu still has no duplicate top-level link.
+	 */
+	public function test_admin_menu_has_no_duplicate_parent_item() {
+		$this->build_menu( 'administrator', false );
+
+		global $submenu;
+		$this->assertSame(
+			[ Lite_Site_Settings::RSS_PAGE_SLUG, 'newspack-lite-site' ],
+			array_column( array_values( $submenu['newspack-lite-site'] ), 2 )
+		);
+		$this->assertNotContains( 'Lite Site', array_column( $submenu['newspack-lite-site'], 0 ) );
 	}
 
 	/**
