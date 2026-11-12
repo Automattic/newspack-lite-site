@@ -570,13 +570,18 @@ class Lite_Site_Settings {
 			];
 		}
 
-		$tags = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT DISTINCT t.term_id, t.name FROM {$wpdb->terms} t INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = t.term_id INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id WHERE tt.taxonomy = %s AND p.post_type = %s ORDER BY t.name ASC",
-				'post_tag',
-				Post_Type::POST_TYPE
-			)
-		);
+		$cache_key = 'entry_tags:' . wp_cache_get_last_changed( 'posts' ) . ':' . wp_cache_get_last_changed( 'terms' );
+		$tags      = wp_cache_get( $cache_key, 'newspack-lite-site' );
+		if ( ! is_array( $tags ) ) {
+			$tags = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$wpdb->prepare(
+					"SELECT DISTINCT t.term_id, t.name FROM {$wpdb->terms} t INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = t.term_id INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id WHERE tt.taxonomy = %s AND p.post_type = %s ORDER BY t.name ASC",
+					'post_tag',
+					Post_Type::POST_TYPE
+				)
+			);
+			wp_cache_set( $cache_key, $tags, 'newspack-lite-site' );
+		}
 
 		return [
 			'feeds'       => $feeds,
