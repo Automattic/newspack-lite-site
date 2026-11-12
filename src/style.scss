@@ -9,6 +9,8 @@
 
 $feeds-actions-width: 15em;
 $feeds-status-width: 9em;
+$feeds-url-min-width: 16em;
+$feeds-data-min-width: 9em;
 
 body.newspack-lite-admin-header {
 	background: #fff;
@@ -77,7 +79,13 @@ body.newspack-lite-admin-header {
 	}
 }
 
+.newspack-lite-feeds .dataviews-layout__container {
+	container-type: inline-size;
+	overflow-x: auto;
+}
+
 .newspack-lite-feeds table.dataviews-view-table {
+	min-width: calc(#{$feeds-url-min-width} + #{$feeds-status-width} + #{$feeds-actions-width} + 4 * #{$feeds-data-min-width});
 	table-layout: fixed;
 	width: 100%;
 
@@ -87,6 +95,10 @@ body.newspack-lite-admin-header {
 
 	col.dataviews-view-table__col-actions {
 		width: $feeds-actions-width !important;
+	}
+
+	col.dataviews-view-table__col-first-data {
+		width: max(#{$feeds-url-min-width}, calc((100cqi - #{$feeds-status-width} - #{$feeds-actions-width}) / 5)) !important;
 	}
 
 	col.dataviews-view-table__col-status {
