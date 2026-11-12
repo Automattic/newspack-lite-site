@@ -1,3 +1,11 @@
+# [0.3.0](https://github.com/Automattic/newspack-lite-site/compare/v0.2.0...v0.3.0) (2026-11-12)
+
+
+### Features
+
+* New release ([#39](https://github.com/Automattic/newspack-lite-site/issues/39)) ([586b27e](https://github.com/Automattic/newspack-lite-site/commit/586b27e6f237271fde9fbdfd886b8e237ad7e462)), closes [#34](https://github.com/Automattic/newspack-lite-site/issues/34) [#35](https://github.com/Automattic/newspack-lite-site/issues/35) [#36](https://github.com/Automattic/newspack-lite-site/issues/36) [#37](https://github.com/Automattic/newspack-lite-site/issues/37) [#38](https://github.com/Automattic/newspack-lite-site/issues/38) [#40](https://github.com/Automattic/newspack-lite-site/issues/40)
+* trigger release ([eedfd7e](https://github.com/Automattic/newspack-lite-site/commit/eedfd7e05964fdce787c977d539121192ca9d0f3))
+
 # [0.2.0](https://github.com/Automattic/newspack-lite-site/compare/v0.1.0...v0.2.0) (2026-10-14)
 
 
