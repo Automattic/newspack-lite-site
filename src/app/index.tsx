@@ -11,8 +11,7 @@ import { createRoot } from '@wordpress/element';
  * Internal dependencies.
  */
 import { SettingsApp } from '../pages/SettingsApp';
-import { RssImportApp } from '../pages/RssImportApp';
-import { RssEntriesApp } from '../pages/RssEntriesApp';
+import { RssApp } from '../pages/RssApp';
 import '../style.scss';
 
 const el = document.getElementById( 'newspack-lite-app' );
@@ -20,14 +19,12 @@ const el = document.getElementById( 'newspack-lite-app' );
 if ( el ) {
 	const { page } = el.dataset;
 
-	let App: typeof SettingsApp | typeof RssImportApp | typeof RssEntriesApp | null = null;
+	let App: typeof SettingsApp | typeof RssApp | null = null;
 
 	if ( page === 'settings' ) {
 		App = SettingsApp;
-	} else if ( page === 'rss-feed-import' ) {
-		App = RssImportApp;
-	} else if ( page === 'rss-entries' ) {
-		App = RssEntriesApp;
+	} else if ( page === 'rss' ) {
+		App = RssApp;
 	}
 
 	if ( App ) {

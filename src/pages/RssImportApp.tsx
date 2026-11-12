@@ -1,5 +1,5 @@
 /**
- * RSS Feeds page root component.
+ * RSS page's Feeds tab.
  */
 
 /**
@@ -26,6 +26,7 @@ import { FeedDrawer } from '../components/FeedDrawer';
 import { FeedsList } from '../components/FeedsList';
 import { formatCount } from '../utils/format-count';
 import { type Feed } from '../types/rss-feed-import';
+import { type RssTabProps } from '../types/rss';
 
 const cronDisabled = window.newspackLiteSite?.cronDisabled ?? false;
 
@@ -34,20 +35,17 @@ const countLabel = ( count: number, formatted: string ) =>
 	sprintf( _n( '%s RSS feed', '%s RSS feeds', count, 'newspack-lite-site' ), formatted );
 
 /**
- * Root component for the RSS Feeds page.
+ * The Feeds tab of the RSS page.
  *
  * Lists the scheduled feeds, filters them, and opens a drawer to add or edit one. Delete is a row action.
+ *
+ * @param props                  Component props.
+ * @param props.tabbedNavigation The RSS page tabs, when shown.
+ * @param props.isActive         Whether this tab is the one shown.
+ * @param props.onFeedsChange    Called with the number of feeds once they load and after each change.
  */
-export const RssImportApp = () => {
-	const [ isDrawerOpen, setIsDrawerOpen ] = useState( () => '1' === new URLSearchParams( window.location.search ).get( 'add' ) );
-
-	useEffect( () => {
-		const url = new URL( window.location.href );
-		if ( url.searchParams.has( 'add' ) ) {
-			url.searchParams.delete( 'add' );
-			window.history.replaceState( null, '', url.toString() );
-		}
-	}, [] );
+export const RssImportApp = ( { tabbedNavigation, isActive = true, onFeedsChange }: RssTabProps & { onFeedsChange?: ( count: number ) => void } ) => {
+	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
 	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeeds, importFeed, isImporting, clearSaveError } =
 		useFeeds( isDrawerOpen );
 	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
@@ -84,6 +82,18 @@ export const RssImportApp = () => {
 	);
 
 	const closeDrawer = useCallback( () => setIsDrawerOpen( false ), [] );
+
+	useEffect( () => {
+		if ( ! isActive ) {
+			setIsDrawerOpen( false );
+		}
+	}, [ isActive ] );
+
+	useEffect( () => {
+		if ( ! isLoading ) {
+			onFeedsChange?.( feeds.length );
+		}
+	}, [ isLoading, feeds.length, onFeedsChange ] );
 
 	const showCount = ! isLoading && feeds.length > 0;
 
@@ -123,10 +133,12 @@ export const RssImportApp = () => {
 		<div className="wrap">
 			<Page
 				subTitle={ __( 'Set which RSS feeds to import and how often each one runs.', 'newspack-lite-site' ) }
+				tabbedNavigation={ tabbedNavigation }
 				breadcrumbItems={ [
 					{ label: 'Lite Site' },
+					{ label: __( 'RSS', 'newspack-lite-site' ) },
 					{
-						label: __( 'RSS Feeds', 'newspack-lite-site' ),
+						label: __( 'Feeds', 'newspack-lite-site' ),
 						count: showCount ? feeds.length : undefined,
 						countLabel: showCount ? countLabel( feeds.length, formatCount( feeds.length ) ) : undefined,
 					},

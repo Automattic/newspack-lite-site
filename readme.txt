@@ -70,7 +70,7 @@ Lite Site connects to these services only when you set them up:
 
 * **Google Analytics.** When you add a GA4 Measurement ID in Lite Site > Settings, Lite Site pages load Google's analytics script, which sends page views to Google. Google's [terms of service](https://marketingplatform.google.com/about/analytics/terms/us/) and [privacy policy](https://policies.google.com/privacy) apply.
 * **Font provider.** When you add a font import URL, Lite Site pages load that stylesheet from the provider you chose, such as Google Fonts or Adobe Fonts, and that provider's terms apply.
-* **RSS feeds.** When you add a feed under Lite Site > RSS Feed Import, your site fetches that feed and its images on the schedule you set.
+* **RSS feeds.** When you add a feed under Lite Site > RSS, your site fetches that feed and its images on the schedule you set.
 
 == Changelog ==
 

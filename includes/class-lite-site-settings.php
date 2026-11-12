@@ -20,14 +20,22 @@ class Lite_Site_Settings {
 	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
-	 * Slug of the hidden RSS Entries admin page.
+	 * Slug of the RSS admin page, which holds the Entries and Feeds tabs.
 	 */
-	const ENTRIES_PAGE_SLUG = 'newspack-lite-site-rss-entries';
+	const RSS_PAGE_SLUG = 'newspack-lite-site-rss';
 
 	/**
-	 * Hook suffix of the hidden RSS Entries admin page.
+	 * Hook suffix of the RSS admin page.
 	 */
-	const ENTRIES_HOOK_SUFFIX = 'admin_page_newspack-lite-site-rss-entries';
+	const RSS_HOOK_SUFFIX = 'lite-site_page_newspack-lite-site-rss';
+
+	/**
+	 * Slugs of the former RSS Entries and RSS Feeds pages, mapped to the RSS tab that replaces each.
+	 */
+	const LEGACY_PAGE_TABS = [
+		'newspack-lite-site-rss-entries' => 'entries',
+		'newspack-lite-site-rss-import'  => 'feeds',
+	];
 
 	/**
 	 * Hook suffix of the top-level Lite Site page, which is the Settings page.
@@ -56,7 +64,7 @@ class Lite_Site_Settings {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'rest_api_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
-		add_action( 'admin_menu', [ __CLASS__, 'maybe_hide_entries_menu_item' ], PHP_INT_MAX );
+		add_action( 'admin_page_access_denied', [ __CLASS__, 'maybe_redirect_legacy_page' ] );
 		add_filter( 'custom_menu_order', '__return_true' );
 		add_filter( 'menu_order', [ __CLASS__, 'menu_order' ], 12 );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
@@ -64,8 +72,6 @@ class Lite_Site_Settings {
 		add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_link' ], 100 );
 		add_filter( 'admin_body_class', [ __CLASS__, 'admin_header_body_class' ] );
 		add_action( 'current_screen', [ __CLASS__, 'maybe_redirect_legacy_entries_list' ] );
-		add_action( 'current_screen', [ __CLASS__, 'set_title_for_entries_page' ] );
-		add_filter( 'parent_file', [ __CLASS__, 'filter_entries_parent_file' ] );
 		add_filter( 'submenu_file', [ __CLASS__, 'filter_entries_submenu_file' ] );
 		add_action( 'updated_option', [ __CLASS__, 'handle_updated_option' ], 10, 3 );
 		add_action( 'added_option', [ __CLASS__, 'handle_added_option' ], 10, 2 );
@@ -206,9 +212,8 @@ class Lite_Site_Settings {
 	/**
 	 * Enqueue admin scripts for the plugin's admin pages.
 	 *
-	 * A single JS bundle loads on the Settings, RSS Entries and RSS Feeds pages.
-	 * Bootstrap data for all three, including the interval labels, is passed in one
-	 * wp_localize_script call.
+	 * A single JS bundle loads on the Settings and RSS pages. Bootstrap data for both,
+	 * including the interval labels, is passed in one wp_localize_script call.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
@@ -245,7 +250,8 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			'newspackLiteSite',
 			[
-				'rssEntries'   => self::ENTRIES_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
+				'rss'          => self::RSS_HOOK_SUFFIX === $hook_suffix ? self::get_rss_data() : null,
+				'rssEntries'   => self::RSS_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
 				'defaultColor' => $default_color,
 				'homeUrl'      => home_url( '/' ),
 				'categories'   => array_values(
@@ -288,7 +294,10 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Register the top-level Lite Site menu and its Settings and RSS Feeds subpages.
+	 * Register the top-level Lite Site menu and its RSS and Settings subpages.
+	 *
+	 * RSS replaces the RSS Entries item core adds for the post type. Users who can edit
+	 * entries but not manage options see the RSS page with only its Entries tab.
 	 */
 	public static function add_menu_page() {
 		add_menu_page(
@@ -301,17 +310,18 @@ class Lite_Site_Settings {
 			26
 		);
 
-		// RSS Feeds: manage scheduled RSS feeds that pull external content.
+		remove_submenu_page( 'newspack-lite-site', 'edit.php?post_type=' . Post_Type::POST_TYPE );
+
+		$post_type = get_post_type_object( Post_Type::POST_TYPE );
 		add_submenu_page(
 			'newspack-lite-site',
-			__( 'RSS Feeds', 'newspack-lite-site' ),
-			__( 'RSS Feeds', 'newspack-lite-site' ),
-			'manage_options',
-			'newspack-lite-site-rss-import',
-			[ __CLASS__, 'render_import_page' ]
+			__( 'RSS', 'newspack-lite-site' ),
+			__( 'RSS', 'newspack-lite-site' ),
+			$post_type ? $post_type->cap->edit_posts : 'manage_options',
+			self::RSS_PAGE_SLUG,
+			[ __CLASS__, 'render_rss_page' ]
 		);
 
-		// Settings: general plugin settings and visual customisation.
 		add_submenu_page(
 			'newspack-lite-site',
 			__( 'Settings', 'newspack-lite-site' ),
@@ -320,54 +330,6 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
 		);
-
-		self::register_entries_page();
-	}
-
-	/**
-	 * Hide the RSS Entries submenu item while there is nothing to show in it.
-	 *
-	 * Runs late so it does not depend on registration order. Only users who can reach the
-	 * RSS Feeds and Settings pages are affected; everyone else keeps the item.
-	 */
-	public static function maybe_hide_entries_menu_item() {
-		if ( current_user_can( 'manage_options' ) && ! self::should_show_entries_menu() ) {
-			self::hide_entries_menu_item();
-		}
-	}
-
-	/**
-	 * Mark the RSS Entries submenu item hidden and move it to the end.
-	 *
-	 * The admin script reveals it once a feed is added. Core points the top-level Lite Site
-	 * link at the first item whatever its visibility. Moving it keeps the first item on RSS Feeds.
-	 */
-	private static function hide_entries_menu_item() {
-		global $submenu;
-
-		$entries_slug = 'edit.php?post_type=' . Post_Type::POST_TYPE;
-		$items        = $submenu['newspack-lite-site'] ?? [];
-		foreach ( $items as $index => $item ) {
-			if ( $entries_slug === $item[2] ) {
-				$item[4] = 'hidden';
-				unset( $items[ $index ] );
-				$items[ $index ] = $item;
-			}
-		}
-		$submenu['newspack-lite-site'] = $items; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-	}
-
-	/**
-	 * Whether the RSS Entries item belongs in the Lite Site submenu.
-	 *
-	 * It shows once a feed exists, or an entry exists in any status except trash and
-	 * auto-draft, so entries stay reachable after their feed is deleted. The page itself
-	 * stays registered either way.
-	 *
-	 * @return bool
-	 */
-	public static function should_show_entries_menu(): bool {
-		return ! empty( RSS_Importer::get_feeds() ) || self::has_entries();
 	}
 
 	/**
@@ -390,33 +352,34 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Register the hidden RSS Entries page.
+	 * Bootstrap data for the RSS page: who sees the Feeds tab, and which tab opens first.
 	 *
-	 * It is added under the Lite Site menu and then removed from it, rather than
-	 * registered with an empty parent, because core resets the parent file to an
-	 * empty string for pages that live under an empty parent, which stops the
-	 * Lite Site menu from highlighting.
+	 * The tabs show once a feed or an entry exists, so entries stay reachable after their feed
+	 * is deleted. Users who can't manage feeds only get the Entries tab. Without an explicit tab
+	 * in the URL, the page opens on Entries when there are entries, and on Feeds otherwise.
+	 *
+	 * @return array{canManageFeeds: bool, hasFeeds: bool, hasEntries: bool, defaultTab: string}
 	 */
-	private static function register_entries_page() {
-		global $_registered_pages;
+	public static function get_rss_data(): array {
+		$can_manage_feeds = current_user_can( 'manage_options' );
+		$has_entries      = self::has_entries();
+		return [
+			'canManageFeeds' => $can_manage_feeds,
+			'hasFeeds'       => $can_manage_feeds && ! empty( RSS_Importer::get_feeds() ),
+			'hasEntries'     => $has_entries,
+			'defaultTab'     => $can_manage_feeds && ! $has_entries ? 'feeds' : 'entries',
+		];
+	}
 
-		$post_type = get_post_type_object( Post_Type::POST_TYPE );
-		if ( ! $post_type ) {
-			return;
-		}
-
-		add_submenu_page(
-			'newspack-lite-site',
-			__( 'RSS Entries', 'newspack-lite-site' ),
-			__( 'RSS Entries', 'newspack-lite-site' ),
-			$post_type->cap->edit_posts,
-			self::ENTRIES_PAGE_SLUG,
-			[ __CLASS__, 'render_entries_page' ]
-		);
-		remove_submenu_page( 'newspack-lite-site', self::ENTRIES_PAGE_SLUG );
-
-		add_action( self::ENTRIES_HOOK_SUFFIX, [ __CLASS__, 'render_entries_page' ] );
-		$_registered_pages[ self::ENTRIES_HOOK_SUFFIX ] = true; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	/**
+	 * URL of a tab on the RSS page.
+	 *
+	 * @param string $tab  Tab to open: entries or feeds.
+	 * @param array  $args Query args to add.
+	 * @return string
+	 */
+	public static function get_rss_page_url( string $tab, array $args = [] ): string {
+		return add_query_arg( array_merge( [ 'page' => self::RSS_PAGE_SLUG ], $args ), admin_url( 'admin.php' ) ) . '#/' . $tab;
 	}
 
 	/**
@@ -489,62 +452,56 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render the RSS Feeds page.
+	 * Render the RSS page.
 	 *
-	 * Mount point for the React RSS import app.
+	 * Mount point for the React RSS app.
 	 */
-	public static function render_import_page() {
-		echo '<div id="newspack-lite-app" data-page="rss-feed-import"></div>';
+	public static function render_rss_page() {
+		echo '<div id="newspack-lite-app" data-page="rss"></div>';
 	}
 
 	/**
-	 * Render the RSS Entries page.
-	 *
-	 * Mount point for the React RSS entries app.
-	 */
-	public static function render_entries_page() {
-		echo '<div id="newspack-lite-app" data-page="rss-entries"></div>';
-	}
-
-	/**
-	 * Whether the current request is for the hidden RSS Entries page.
-	 *
-	 * @return bool
-	 */
-	private static function is_entries_page_request(): bool {
-		global $plugin_page;
-		return self::ENTRIES_PAGE_SLUG === $plugin_page;
-	}
-
-	/**
-	 * Highlight the Lite Site menu on the hidden RSS Entries page.
-	 *
-	 * @param string $parent_file The parent menu file.
-	 * @return string
-	 */
-	public static function filter_entries_parent_file( $parent_file ) {
-		return self::is_entries_page_request() ? 'newspack-lite-site' : $parent_file;
-	}
-
-	/**
-	 * Highlight the RSS Entries submenu item on the hidden RSS Entries page.
+	 * Highlight the RSS submenu item on the RSS entry editor screens.
 	 *
 	 * @param string|null $submenu_file The submenu file.
 	 * @return string|null
 	 */
 	public static function filter_entries_submenu_file( $submenu_file ) {
-		return self::is_entries_page_request() ? 'edit.php?post_type=' . Post_Type::POST_TYPE : $submenu_file;
+		return 'edit.php?post_type=' . Post_Type::POST_TYPE === $submenu_file ? self::RSS_PAGE_SLUG : $submenu_file;
 	}
 
 	/**
-	 * Restore the page title that WP drops for hidden admin pages.
+	 * Send the former RSS Entries and RSS Feeds pages to their tab on the RSS page.
 	 *
-	 * @param \WP_Screen $screen Current screen.
+	 * Runs when core denies access, which it does for any page slug that's no longer registered.
 	 */
-	public static function set_title_for_entries_page( $screen ) {
-		if ( $screen instanceof \WP_Screen && self::ENTRIES_HOOK_SUFFIX === $screen->id ) {
-			$GLOBALS['title'] = __( 'RSS Entries', 'newspack-lite-site' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	public static function maybe_redirect_legacy_page() {
+		global $plugin_page;
+
+		$target = is_string( $plugin_page ) ? self::get_legacy_page_redirect_target( $plugin_page, wp_unslash( $_GET ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only nav check.
+		if ( null === $target ) {
+			return;
 		}
+
+		wp_safe_redirect( $target );
+		exit;
+	}
+
+	/**
+	 * The RSS page URL that replaces a former page, or null when the slug isn't one of them.
+	 *
+	 * The former RSS Entries page keeps the list query and result args it was given.
+	 *
+	 * @param string $page  Requested page slug.
+	 * @param array  $query Request query args.
+	 * @return string|null
+	 */
+	public static function get_legacy_page_redirect_target( string $page, array $query ): ?string {
+		$tab = self::LEGACY_PAGE_TABS[ $page ] ?? null;
+		if ( 'entries' === $tab ) {
+			return self::get_entries_redirect_target( $query );
+		}
+		return 'feeds' === $tab ? self::get_rss_page_url( 'feeds' ) : null;
 	}
 
 	/**
@@ -594,13 +551,13 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Build the React page URL, forwarding the supported legacy query args.
+	 * Build the URL of the RSS page's Entries tab, forwarding the supported legacy query args.
 	 *
 	 * @param array $query Legacy query args.
 	 * @return string
 	 */
 	public static function get_entries_redirect_target( array $query ): string {
-		$args = [ 'page' => self::ENTRIES_PAGE_SLUG ];
+		$args = [];
 		foreach ( self::FORWARDED_LEGACY_ARGS as $key ) {
 			if ( isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) && '' !== (string) $query[ $key ] ) {
 				$args[ $key ] = rawurlencode( sanitize_text_field( (string) $query[ $key ] ) );
@@ -617,7 +574,7 @@ class Lite_Site_Settings {
 				$args['ids'] = implode( ',', $ids );
 			}
 		}
-		return add_query_arg( $args, admin_url( 'admin.php' ) );
+		return self::get_rss_page_url( 'entries', $args );
 	}
 
 	/**
@@ -714,8 +671,6 @@ class Lite_Site_Settings {
 			),
 			'editUrl'     => admin_url( 'post.php' ),
 			'addUrl'      => current_user_can( get_post_type_object( Post_Type::POST_TYPE )->cap->create_posts ) ? admin_url( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) : '',
-			'importUrl'   => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) : '',
-			'hasFeeds'    => ! empty( RSS_Importer::get_feeds() ),
 			'liteEnabled' => (bool) Lite_Site::is_enabled(),
 			'result'      => self::get_forwarded_result( wp_unslash( $_GET ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice data.
 		];
@@ -741,10 +696,9 @@ class Lite_Site_Settings {
 			$hook,
 			[
 				self::TOPLEVEL_HOOK_SUFFIX,
-				'lite-site_page_newspack-lite-site-rss-import',
-				self::ENTRIES_HOOK_SUFFIX,
+				self::RSS_HOOK_SUFFIX,
 			],
-			true 
+			true
 		);
 	}
 

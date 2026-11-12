@@ -12,7 +12,6 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 /**
  * Internal dependencies.
  */
-import { revealEntriesMenu } from '../utils/entries-menu';
 import { formatLastResult } from '../utils/formatters';
 import { type Feed, type FeedChanges, type NewFeedData, type Notice } from '../types/rss-feed-import';
 
@@ -87,9 +86,6 @@ export function useFeeds( isDrawerOpen = false ) {
 			try {
 				const updated = await apiFetch< Feed[] >( request );
 				applyFeeds( requestId, updated );
-				if ( updated.length > 0 ) {
-					revealEntriesMenu();
-				}
 				showNotice( successMessage );
 				return true;
 			} catch ( err ) {
@@ -168,9 +164,6 @@ export function useFeeds( isDrawerOpen = false ) {
 					failure = result.error;
 				} else {
 					succeeded = true;
-					if ( updated.length > 0 ) {
-						revealEntriesMenu();
-					}
 					showNotice( formatLastResult( result ) || __( 'RSS feed imported.', 'newspack-lite-site' ) );
 				}
 			} catch ( err ) {

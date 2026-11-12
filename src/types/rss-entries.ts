@@ -40,8 +40,6 @@ export interface RssEntriesData {
 	tags: Array< { value: string; label: string } >;
 	editUrl: string;
 	addUrl: string;
-	importUrl: string;
-	hasFeeds: boolean;
 	liteEnabled: boolean;
 	result: { action: EntryMutation; count: number; ids: number[] } | null;
 }
