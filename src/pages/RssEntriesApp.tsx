@@ -208,11 +208,13 @@ export const RssEntriesApp = () => {
 					title={ __( 'No RSS entries yet', 'newspack-lite-site' ) }
 					description={ __( 'Entries appear here after an RSS feed import runs.', 'newspack-lite-site' ) }
 				/>
-				<EmptyState.Actions>
-					<Button variant="primary" href={ importUrl }>
-						{ __( 'Go to RSS Feed Import', 'newspack-lite-site' ) }
-					</Button>
-				</EmptyState.Actions>
+				{ importUrl && (
+					<EmptyState.Actions>
+						<Button variant="primary" href={ importUrl }>
+							{ __( 'Go to RSS Feed Import', 'newspack-lite-site' ) }
+						</Button>
+					</EmptyState.Actions>
+				) }
 			</EmptyState.Root>
 		);
 	} else {

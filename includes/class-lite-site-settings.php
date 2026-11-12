@@ -589,7 +589,7 @@ class Lite_Site_Settings {
 			),
 			'editUrl'     => admin_url( 'post.php' ),
 			'addUrl'      => current_user_can( get_post_type_object( Post_Type::POST_TYPE )->cap->create_posts ) ? admin_url( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) : '',
-			'importUrl'   => admin_url( 'admin.php?page=newspack-lite-site-rss-import' ),
+			'importUrl'   => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) : '',
 			'liteEnabled' => (bool) Lite_Site::is_enabled(),
 		];
 	}
