@@ -29,18 +29,7 @@ const canManageFeeds = rss?.canManageFeeds ?? false;
 const hasEntries = ( rss?.hasEntries ?? false ) || !! window.newspackLiteSite?.rssEntries?.result;
 const defaultTab: RssTab = rss?.defaultTab ?? 'entries';
 
-function getTab( pathname: string, showTabs: boolean ): RssTab {
-	if ( ! canManageFeeds ) {
-		return 'entries';
-	}
-	if ( ! showTabs ) {
-		return 'feeds';
-	}
-	if ( '/entries' === pathname || '/feeds' === pathname ) {
-		return pathname.slice( 1 ) as RssTab;
-	}
-	return defaultTab;
-}
+const isRssTab = ( value: string ): value is RssTab => 'entries' === value || 'feeds' === value;
 
 function getTabText( tab: RssTab ) {
 	return 'entries' === tab
@@ -65,9 +54,30 @@ const RssScreen = () => {
 	const { pathname } = useLocation();
 	const wrapRef = useRef< HTMLDivElement >( null );
 	const [ hasFeeds, setHasFeeds ] = useState( rss?.hasFeeds ?? false );
-	const showTabs = canManageFeeds && ( hasFeeds || hasEntries );
-	const tab = getTab( pathname, showTabs );
+	const canShowTabs = canManageFeeds && ( hasFeeds || hasEntries );
+	const [ hasShownTabs, setHasShownTabs ] = useState( canShowTabs );
+	if ( canShowTabs && ! hasShownTabs ) {
+		setHasShownTabs( true );
+	}
+	const showTabs = canShowTabs || hasShownTabs;
+
+	const lastTab = useRef< RssTab | null >( null );
+	const requested = pathname.replace( /^\//, '' );
+	let tab: RssTab;
+	if ( ! canManageFeeds ) {
+		tab = 'entries';
+	} else if ( ! showTabs ) {
+		tab = 'feeds';
+	} else if ( isRssTab( requested ) ) {
+		tab = requested;
+	} else {
+		tab = lastTab.current ?? defaultTab;
+	}
+
 	const [ visited, setVisited ] = useState< RssTab[] >( () => [ tab ] );
+	if ( ! visited.includes( tab ) ) {
+		setVisited( [ ...visited, tab ] );
+	}
 
 	const [ headers, setHeaders ] = useState< Partial< Record< RssTab, RssTabHeader > > >( {} );
 	const onEntriesHeader = useCallback( ( header: RssTabHeader ) => setHeaders( current => ( { ...current, entries: header } ) ), [] );
@@ -80,10 +90,10 @@ const RssScreen = () => {
 	}, [] );
 
 	useEffect( () => {
+		lastTab.current = tab;
 		if ( `/${ tab }` !== pathname ) {
 			history.replace( `/${ tab }` );
 		}
-		setVisited( current => ( current.includes( tab ) ? current : [ ...current, tab ] ) );
 		if ( 'feeds' === tab && focusFeedsTab.current ) {
 			focusFeedsTab.current = false;
 			wrapRef.current?.querySelector< HTMLElement >( '.newspack-tabbed-navigation a[href="#/feeds"]' )?.focus();
