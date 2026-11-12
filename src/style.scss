@@ -236,7 +236,10 @@ body.newspack-lite-admin-header {
 	min-width: 0;
 }
 
-.newspack-lite-rss-sections .newspack-empty-state__icon svg {
-	color: var(--wp-admin-theme-color);
+.newspack-lite-feeds .newspack-empty-state__icon svg {
+	color: var(--wp-admin-theme-color, #003da5);
+}
+
+.newspack-lite-feeds .newspack-empty-state__header:not(.newspack-empty-state__header--small) .newspack-empty-state__icon svg {
 	stroke-width: 3;
 }
