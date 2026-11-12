@@ -127,11 +127,8 @@ body.newspack-lite-admin-header {
 
 	.newspack-lite-feed-error {
 		bottom: var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15}));
-		font-size: inherit;
 		inset-inline-end: calc(#{$feeds-actions-width} + var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})));
 		inset-inline-start: var(--wpds-dimension-padding-2xl, #{$grid-unit-30});
-		line-height: inherit;
-		min-width: 0;
 		position: absolute;
 	}
 

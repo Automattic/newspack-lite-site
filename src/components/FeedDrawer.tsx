@@ -20,6 +20,7 @@ import { Drawer } from 'newspack-components/dist/esm/drawer';
  * Internal dependencies.
  */
 import { type FeedChanges, type FeedDrawerProps, type FeedFormData } from '../types/rss-feed-import';
+import { formatLastResult } from '../utils/formatters';
 import { DEFAULT_FEED, getFeedFormFields, isKnownAuthor } from '../utils/feeds-dataform';
 
 const FORM_FIELDS = [ 'feed_url', 'status', 'interval', 'author_id' ];
@@ -119,6 +120,11 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 				<Drawer.CloseIcon />
 			</Drawer.Header>
 			<Drawer.Content>
+				{ feed?.last_result?.error && (
+					<Notice status="error" isDismissible={ false } spokenMessage="">
+						{ formatLastResult( feed.last_result ) }
+					</Notice>
+				) }
 				{ error && (
 					<Notice status="error" isDismissible={ false } politeness="assertive">
 						{ error }

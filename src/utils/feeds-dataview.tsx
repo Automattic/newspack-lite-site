@@ -121,7 +121,6 @@ export const FEED_FIELDS: Field< Feed >[] = [
 							align="flex-start"
 							gap="xs"
 							className="newspack-lite-feed-error newspack-lite-feed-result--error"
-							title={ formatLastResult( result ) }
 						>
 							<Icon className="newspack-lite-feed-result__icon" icon={ error } size={ 16 } aria-hidden="true" />
 							<span className="newspack-lite-feed-result newspack-lite-feed-result--error newspack-lite-feed-error__text">

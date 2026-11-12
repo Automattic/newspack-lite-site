@@ -95,7 +95,9 @@ export function getFeedFormFields( isEdit: boolean, needsAuthor = false ): Field
 		{
 			id: 'author_id',
 			label: __( 'Author', 'newspack-lite-site' ),
-			description: __( 'Imported entries are published under this author.', 'newspack-lite-site' ),
+			description: needsAuthor
+				? __( 'The previous author can no longer be assigned. Choose another author.', 'newspack-lite-site' )
+				: __( 'Imported entries are published under this author.', 'newspack-lite-site' ),
 			elements: needsAuthor ? [ AUTHOR_PLACEHOLDER, ...authors ] : authors,
 			...( needsAuthor ? { isValid: { required: true } } : {} ),
 		},
