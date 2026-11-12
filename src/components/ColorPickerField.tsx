@@ -5,8 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { BaseControl, Button } from '@wordpress/components';
-import { useInstanceId } from '@wordpress/compose';
+import { Button } from '@wordpress/components';
 import { Stack } from '@wordpress/ui';
 import { __ } from '@wordpress/i18n';
 
@@ -28,7 +27,6 @@ import { type ColorPickerFieldProps } from '../types/settings';
  * when no override is present, so a valid color is always displayed.
  */
 export const ColorPickerField = ( { value, onChange }: ColorPickerFieldProps ) => {
-	const id = useInstanceId( ColorPickerField, 'newspack-lite-color-picker-field' );
 	const displayColor = value || window.newspackLiteSite?.defaultColor || '#808080';
 
 	const handleChange = ( color: string ) => {
@@ -38,22 +36,13 @@ export const ColorPickerField = ( { value, onChange }: ColorPickerFieldProps ) =
 	};
 
 	return (
-		<BaseControl
-			id={ id }
-			help={ __(
-				"Colors links in articles and the separator lines. Uses your theme's primary color until you pick one.",
-				'newspack-lite-site'
-			) }
-			__nextHasNoMarginBottom
-		>
-			<Stack direction="row" gap="sm" align="flex-end">
-				<div className="newspack-lite-color-picker-field__picker">
-					<ColorPicker label={ __( 'Primary Color', 'newspack-lite-site' ) } color={ displayColor } onChange={ handleChange } />
-				</div>
-				<Button variant="secondary" onClick={ () => onChange( '' ) } disabled={ ! value } accessibleWhenDisabled __next40pxDefaultSize>
-					{ __( 'Reset', 'newspack-lite-site' ) }
-				</Button>
-			</Stack>
-		</BaseControl>
+		<Stack direction="row" gap="sm" align="flex-end">
+			<div className="newspack-lite-color-picker-field__picker">
+				<ColorPicker label={ __( 'Primary Color', 'newspack-lite-site' ) } color={ displayColor } onChange={ handleChange } />
+			</div>
+			<Button variant="secondary" onClick={ () => onChange( '' ) } disabled={ ! value } accessibleWhenDisabled __next40pxDefaultSize>
+				{ __( 'Reset', 'newspack-lite-site' ) }
+			</Button>
+		</Stack>
 	);
 };
