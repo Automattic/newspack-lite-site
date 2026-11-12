@@ -56,6 +56,7 @@ class Lite_Site_Settings {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'rest_api_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
+		add_action( 'admin_menu', [ __CLASS__, 'maybe_hide_entries_menu_item' ], PHP_INT_MAX );
 		add_filter( 'custom_menu_order', '__return_true' );
 		add_filter( 'menu_order', [ __CLASS__, 'menu_order' ], 12 );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
@@ -321,6 +322,71 @@ class Lite_Site_Settings {
 		);
 
 		self::register_entries_page();
+	}
+
+	/**
+	 * Hide the RSS Entries submenu item while there is nothing to show in it.
+	 *
+	 * Runs late so it does not depend on registration order. Only users who can reach the
+	 * RSS Feeds and Settings pages are affected; everyone else keeps the item.
+	 */
+	public static function maybe_hide_entries_menu_item() {
+		if ( current_user_can( 'manage_options' ) && ! self::should_show_entries_menu() ) {
+			self::hide_entries_menu_item();
+		}
+	}
+
+	/**
+	 * Mark the RSS Entries submenu item hidden and move it to the end.
+	 *
+	 * The admin script reveals it once a feed is added. Core points the top-level Lite Site
+	 * link at the first item whatever its visibility. Moving it keeps the first item on RSS Feeds.
+	 */
+	private static function hide_entries_menu_item() {
+		global $submenu;
+
+		$entries_slug = 'edit.php?post_type=' . Post_Type::POST_TYPE;
+		$items        = $submenu['newspack-lite-site'] ?? [];
+		foreach ( $items as $index => $item ) {
+			if ( $entries_slug === $item[2] ) {
+				$item[4] = 'hidden';
+				unset( $items[ $index ] );
+				$items[ $index ] = $item;
+			}
+		}
+		$submenu['newspack-lite-site'] = $items; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	}
+
+	/**
+	 * Whether the RSS Entries item belongs in the Lite Site submenu.
+	 *
+	 * It shows once a feed exists, or an entry exists in any status except trash and
+	 * auto-draft, so entries stay reachable after their feed is deleted. The page itself
+	 * stays registered either way.
+	 *
+	 * @return bool
+	 */
+	public static function should_show_entries_menu(): bool {
+		return ! empty( RSS_Importer::get_feeds() ) || self::has_entries();
+	}
+
+	/**
+	 * Whether any RSS entry exists in a status other than trash and auto-draft.
+	 *
+	 * @return bool
+	 */
+	public static function has_entries(): bool {
+		$query = new \WP_Query(
+			[
+				'post_type'      => Post_Type::POST_TYPE,
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'orderby'        => 'none',
+			]
+		);
+		return ! empty( $query->posts );
 	}
 
 	/**
@@ -649,6 +715,7 @@ class Lite_Site_Settings {
 			'editUrl'     => admin_url( 'post.php' ),
 			'addUrl'      => current_user_can( get_post_type_object( Post_Type::POST_TYPE )->cap->create_posts ) ? admin_url( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) : '',
 			'importUrl'   => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) : '',
+			'hasFeeds'    => ! empty( RSS_Importer::get_feeds() ),
 			'liteEnabled' => (bool) Lite_Site::is_enabled(),
 			'result'      => self::get_forwarded_result( wp_unslash( $_GET ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice data.
 		];

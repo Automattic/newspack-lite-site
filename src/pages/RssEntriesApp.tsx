@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { Button, Notice, Snackbar } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { rss } from '@wordpress/icons';
+import { postContent } from '@wordpress/icons';
 import { type Action, type RenderModalProps, type View } from '@wordpress/dataviews';
 import { Stack } from '@wordpress/ui';
 
@@ -94,6 +94,8 @@ export const RssEntriesApp = () => {
 	const editUrl = rssEntries?.editUrl ?? '';
 	const importUrl = rssEntries?.importUrl ?? '';
 	const addUrl = rssEntries?.addUrl ?? '';
+	const hasFeeds = rssEntries?.hasFeeds ?? true;
+	const addFeedUrl = importUrl ? `${ importUrl }&add=1` : '';
 	const showCount = ! isLoading && ! isEmpty && ! loadError;
 	const fields = useMemo( () => getEntryFields( editUrl ), [ editUrl ] );
 
@@ -176,17 +178,34 @@ export const RssEntriesApp = () => {
 				{ loadError }
 			</Notice>
 		);
+	} else if ( isEmpty && ! hasFeeds ) {
+		content = (
+			<EmptyState.Root>
+				<EmptyState.Header
+					icon={ postContent }
+					title={ __( 'No RSS feeds yet', 'newspack-lite-site' ) }
+					description={ __( 'Entries are imported from RSS feeds. Add a feed to start importing.', 'newspack-lite-site' ) }
+				/>
+				{ importUrl && (
+					<EmptyState.Actions>
+						<Button variant="primary" href={ addFeedUrl }>
+							{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
+						</Button>
+					</EmptyState.Actions>
+				) }
+			</EmptyState.Root>
+		);
 	} else if ( isEmpty ) {
 		content = (
 			<EmptyState.Root>
 				<EmptyState.Header
-					icon={ rss }
+					icon={ postContent }
 					title={ __( 'No RSS entries yet', 'newspack-lite-site' ) }
-					description={ __( 'Entries appear here after an RSS feed import runs.', 'newspack-lite-site' ) }
+					description={ __( 'Entries appear here after the next import.', 'newspack-lite-site' ) }
 				/>
 				{ importUrl && (
 					<EmptyState.Actions>
-						<Button variant="primary" href={ importUrl }>
+						<Button variant="secondary" href={ importUrl }>
 							{ __( 'Go to RSS Feeds', 'newspack-lite-site' ) }
 						</Button>
 					</EmptyState.Actions>

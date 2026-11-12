@@ -7,6 +7,7 @@
 
 use Newspack_Lite_Site\Lite_Site_Settings;
 use Newspack_Lite_Site\Post_Type;
+use Newspack_Lite_Site\RSS_Importer;
 
 /**
  * Covers the legacy list redirect target and the REST feed filter and fields.
@@ -340,5 +341,152 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$this->assertSame( 'draft', get_post_status( $id ) );
 		$this->assertSame( '', get_post_meta( $id, '_wp_trash_meta_status', true ) );
 		$this->assertSame( '', get_post_meta( $id, '_wp_trash_meta_time', true ) );
+	}
+
+	/**
+	 * The entries data reports whether any feeds exist.
+	 */
+	public function test_entries_data_reports_has_feeds() {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$data = self::invoke_private( Lite_Site_Settings::class, 'get_rss_entries_data' );
+		$this->assertFalse( $data['hasFeeds'] );
+
+		update_option( RSS_Importer::FEEDS_OPTION_NAME, [ 'feeds' => [ 'abc' => [ 'url' => 'https://example.org/feed' ] ] ] );
+		$data = self::invoke_private( Lite_Site_Settings::class, 'get_rss_entries_data' );
+		$this->assertTrue( $data['hasFeeds'] );
+	}
+
+	/**
+	 * The RSS Entries menu item stays hidden with no feeds and no entries.
+	 */
+	public function test_entries_menu_hidden_without_feeds_or_entries() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$this->assertFalse( Lite_Site_Settings::should_show_entries_menu() );
+
+		$id = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		wp_trash_post( $id );
+		$this->assertFalse( Lite_Site_Settings::should_show_entries_menu() );
+	}
+
+	/**
+	 * A feed shows the RSS Entries menu item.
+	 */
+	public function test_entries_menu_shown_with_a_feed() {
+		update_option( RSS_Importer::FEEDS_OPTION_NAME, [ 'feeds' => [ 'abc' => [ 'url' => 'https://example.org/feed' ] ] ] );
+		$this->assertTrue( Lite_Site_Settings::should_show_entries_menu() );
+	}
+
+	/**
+	 * An entry with no feeds shows the RSS Entries menu item.
+	 */
+	public function test_entries_menu_shown_with_an_entry_and_no_feeds() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		self::factory()->post->create(
+			[
+				'post_type'   => Post_Type::POST_TYPE,
+				'post_status' => 'draft',
+			] 
+		);
+		$this->assertTrue( Lite_Site_Settings::should_show_entries_menu() );
+	}
+
+	/**
+	 * The hidden menu item moves last and gains the hidden class, so the admin script can reveal it.
+	 */
+	public function test_entries_menu_item_is_marked_hidden() {
+		global $submenu;
+		$slug = 'edit.php?post_type=' . Post_Type::POST_TYPE;
+
+		$submenu['newspack-lite-site'] = [ // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			10 => [ 'RSS Entries', 'edit_posts', $slug ],
+			11 => [ 'RSS Feeds', 'manage_options', 'newspack-lite-site-rss-import' ],
+		];
+		self::invoke_private( Lite_Site_Settings::class, 'hide_entries_menu_item' );
+
+		$this->assertSame( [ 11, 10 ], array_keys( $submenu['newspack-lite-site'] ) );
+		$this->assertSame( 'hidden', $submenu['newspack-lite-site'][10][4] );
+		$this->assertArrayNotHasKey( 4, $submenu['newspack-lite-site'][11] );
+	}
+
+	/**
+	 * Build the Lite Site menu the way WordPress does, then run the plugin's admin_menu callbacks in priority order.
+	 *
+	 * @param string $role User role to build the menu for.
+	 */
+	private function build_menu( string $role ) {
+		global $menu, $submenu, $_registered_pages;
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+		$menu              = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu           = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_registered_pages = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		wp_set_current_user( self::factory()->user->create( [ 'role' => $role ] ) );
+
+		_add_post_type_submenus();
+
+		global $wp_filter;
+		$callbacks = $wp_filter['admin_menu']->callbacks;
+		ksort( $callbacks );
+		foreach ( $callbacks as $priority_callbacks ) {
+			foreach ( $priority_callbacks as $callback ) {
+				$function = $callback['function'];
+				if ( is_array( $function ) && Lite_Site_Settings::class === $function[0] ) {
+					call_user_func( $function );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Restore the admin menu globals so a failing assertion cannot leak them into other tests.
+	 */
+	public function tear_down() {
+		global $menu, $submenu, $_registered_pages;
+		$menu              = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu           = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_registered_pages = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		parent::tear_down();
+	}
+
+	/**
+	 * With no feeds or entries an administrator sees RSS Feeds first and Entries hidden.
+	 */
+	public function test_admin_menu_hides_entries_and_keeps_feeds_first() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$this->build_menu( 'administrator' );
+
+		global $submenu;
+		$items = array_values( $submenu['newspack-lite-site'] );
+		$this->assertSame( 'newspack-lite-site-rss-import', $items[0][2] );
+
+		$entries = array_values(
+			array_filter(
+				$items,
+				fn( $item ) => 'edit.php?post_type=' . Post_Type::POST_TYPE === $item[2]
+			)
+		);
+		$this->assertCount( 1, $entries );
+		$this->assertStringContainsString( 'hidden', $entries[0][4] ?? '' );
+	}
+
+	/**
+	 * A user without manage_options keeps seeing RSS Entries.
+	 */
+	public function test_admin_menu_keeps_entries_for_editors() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$this->build_menu( 'editor' );
+
+		global $submenu;
+		$entries = array_values(
+			array_filter(
+				$submenu['newspack-lite-site'] ?? [],
+				fn( $item ) => 'edit.php?post_type=' . Post_Type::POST_TYPE === $item[2]
+			)
+		);
+		$this->assertCount( 1, $entries );
+		$this->assertStringNotContainsString( 'hidden', $entries[0][4] ?? '' );
 	}
 }

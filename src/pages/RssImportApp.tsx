@@ -39,7 +39,15 @@ const countLabel = ( count: number, formatted: string ) =>
  * Lists the scheduled feeds, filters them, and opens a drawer to add or edit one. Delete is a row action.
  */
 export const RssImportApp = () => {
-	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
+	const [ isDrawerOpen, setIsDrawerOpen ] = useState( () => '1' === new URLSearchParams( window.location.search ).get( 'add' ) );
+
+	useEffect( () => {
+		const url = new URL( window.location.href );
+		if ( url.searchParams.has( 'add' ) ) {
+			url.searchParams.delete( 'add' );
+			window.history.replaceState( null, '', url.toString() );
+		}
+	}, [] );
 	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
 	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
 	const lastDrawerFeed = useRef< Feed | null >( null );
