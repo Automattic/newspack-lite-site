@@ -155,6 +155,7 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 
 	const requestId = useRef( 0 );
 	const isFirstLoad = useRef( true );
+	const noticeKey = useRef( 0 );
 	const noticeTimer = useRef< ReturnType< typeof setTimeout > | undefined >( undefined );
 
 	const dismissNotice = useCallback( () => {
@@ -164,7 +165,8 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 
 	const showNotice = useCallback( ( message: string, status: EntriesNotice[ 'status' ] = 'success', actions?: EntriesNotice[ 'actions' ] ) => {
 		clearTimeout( noticeTimer.current );
-		setNotice( { message, status, actions } );
+		noticeKey.current += 1;
+		setNotice( { key: noticeKey.current, message, status, actions } );
 		noticeTimer.current = setTimeout( () => setNotice( null ), 'error' === status || actions?.length ? 6000 : 3000 );
 	}, [] );
 
@@ -213,9 +215,14 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 				if ( 'rest_post_invalid_page_number' === body.code ) {
 					try {
 						const lastPage = await getLastPage( query );
-						if ( isCurrent() ) {
-							onPageChange( lastPage );
+						if ( ! isCurrent() ) {
+							return;
 						}
+						if ( lastPage !== view.page ) {
+							onPageChange( lastPage );
+							return;
+						}
+						setReloadKey( key => key + 1 );
 						return;
 					} catch ( lastPageErr ) {
 						if ( ! isCurrent() ) {
