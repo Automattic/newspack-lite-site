@@ -235,3 +235,8 @@ body.newspack-lite-admin-header {
 	flex: 1;
 	min-width: 0;
 }
+
+.newspack-lite-rss-sections .newspack-empty-state__icon svg {
+	color: var(--wp-admin-theme-color);
+	stroke-width: 3;
+}
