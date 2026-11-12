@@ -463,12 +463,12 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	 * The flags are nested in the localized data, so they reach the page as booleans.
 	 */
 	public function test_rss_data_is_localized_nested() {
+		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
-		wp_deregister_script( 'newspack-lite-site' );
 		Lite_Site_Settings::enqueue_admin_scripts( Lite_Site_Settings::RSS_HOOK_SUFFIX );
 
-		$script = wp_scripts()->get_data( 'newspack-lite-site', 'data' );
-		wp_deregister_script( 'newspack-lite-site' );
+		$script                = wp_scripts()->get_data( 'newspack-lite-site', 'data' );
+		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$this->assertStringContainsString( '"rss":{"canManageFeeds":true,"hasFeeds":false,"hasEntries":false,"defaultTab":"feeds"}', $script );
 		$this->assertStringNotContainsString( 'importUrl', $script );
 	}
@@ -480,6 +480,30 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$this->assertSame( Lite_Site_Settings::RSS_PAGE_SLUG, Lite_Site_Settings::filter_entries_submenu_file( 'edit.php?post_type=' . Post_Type::POST_TYPE ) );
 		$this->assertSame( 'edit.php', Lite_Site_Settings::filter_entries_submenu_file( 'edit.php' ) );
 		$this->assertNull( Lite_Site_Settings::filter_entries_submenu_file( null ) );
+	}
+
+	/**
+	 * The admin_page_access_denied hook sends a former page to its tab, and leaves other pages alone.
+	 */
+	public function test_legacy_page_redirects_through_the_hook() {
+		$redirect = static function ( $location ) {
+			throw new RuntimeException( $location ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		};
+		add_filter( 'wp_redirect', $redirect );
+
+		$GLOBALS['plugin_page'] = 'newspack-lite-site-rss-import'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		try {
+			do_action( 'admin_page_access_denied' );
+			$this->fail( 'The former RSS Feeds page should redirect.' );
+		} catch ( RuntimeException $e ) {
+			$this->assertSame( admin_url( 'admin.php?page=newspack-lite-site-rss#/feeds' ), $e->getMessage() );
+		}
+
+		$GLOBALS['plugin_page'] = 'some-other-page'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		do_action( 'admin_page_access_denied' );
+
+		remove_filter( 'wp_redirect', $redirect );
+		$this->assertTrue( true );
 	}
 
 	/**
@@ -515,10 +539,18 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	 * Restore the admin menu globals so a failing assertion cannot leak them into other tests.
 	 */
 	public function tear_down() {
-		global $menu, $submenu, $_registered_pages;
-		$menu              = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-		$submenu           = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-		$_registered_pages = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		global $menu, $submenu, $_registered_pages, $admin_page_hooks, $_parent_pages, $_wp_menu_nopriv, $_wp_submenu_nopriv, $pagenow, $plugin_page, $parent_file, $current_screen;
+		$menu               = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu            = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_registered_pages  = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$admin_page_hooks   = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_parent_pages      = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_wp_menu_nopriv    = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_wp_submenu_nopriv = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow            = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$plugin_page        = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$parent_file        = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$current_screen     = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
 		parent::tear_down();
 	}
@@ -555,5 +587,37 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$this->assertCount( 1, $rss );
 		$this->assertTrue( current_user_can( $rss[0][1] ) );
 		$this->assertFalse( current_user_can( 'manage_options' ) );
+	}
+
+	/**
+	 * An editor can open the RSS page, with core's access arrays built as wp-admin/includes/menu.php builds them.
+	 */
+	public function test_editor_can_access_rss_page() {
+		global $menu, $submenu, $_wp_menu_nopriv, $_wp_submenu_nopriv, $pagenow, $plugin_page;
+		$this->build_menu( 'editor' );
+
+		$_wp_submenu_nopriv = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$_wp_menu_nopriv    = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		foreach ( $menu as $id => $data ) {
+			if ( ! current_user_can( $data[1] ) ) {
+				$_wp_menu_nopriv[ $data[2] ] = true; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			}
+			if ( ! empty( $submenu[ $data[2] ] ) && 1 === count( $submenu[ $data[2] ] ) && reset( $submenu[ $data[2] ] )[2] === $data[2] ) {
+				unset( $submenu[ $data[2] ] );
+			}
+			if ( empty( $submenu[ $data[2] ] ) && isset( $_wp_menu_nopriv[ $data[2] ] ) ) {
+				unset( $menu[ $id ] );
+			}
+		}
+
+		$pagenow     = 'admin.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$plugin_page = Lite_Site_Settings::RSS_PAGE_SLUG; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+		$this->assertArrayHasKey( 'newspack-lite-site', $_wp_menu_nopriv );
+		$this->assertTrue( user_can_access_admin_page() );
+
+		$plugin_page = 'newspack-lite-site'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$GLOBALS['parent_file'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$this->assertFalse( user_can_access_admin_page() );
 	}
 }
