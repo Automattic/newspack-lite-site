@@ -338,7 +338,7 @@ Your `/lite/` URLs will return 404 errors, but nothing else on your site is affe
 
 Deactivation alone doesn't delete any data. If you want to completely remove Lite Site and its data, go to the Feeds tab under **Lite Site → RSS** and manually delete any RSS feeds you configured. Deactivate the plugin via **Plugins**. Click **Delete** on the deactivated plugin to remove files and settings.
 
-Alternatively, delete imported RSS Entries manually before uninstalling if you want to clean up those entries from your database.
+Alternatively, delete imported RSS entries from the Entries tab under **Lite Site → RSS** before uninstalling if you want to clean up those entries from your database.
 
 ### Accessibility impact?
 
