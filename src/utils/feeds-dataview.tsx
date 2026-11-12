@@ -6,9 +6,13 @@
  * WordPress dependencies.
  */
 import { __ } from '@wordpress/i18n';
-import { Icon, error } from '@wordpress/icons';
 import { Badge, Stack } from '@wordpress/ui';
 import { type Field } from '@wordpress/dataviews';
+
+/**
+ * External dependencies.
+ */
+import TooltipBadge from 'newspack-components/dist/esm/tooltip-badge';
 
 /**
  * Internal dependencies.
@@ -21,6 +25,15 @@ const intervals = window.newspackLiteSite?.intervals ?? [];
 const authors = window.newspackLiteSite?.authors ?? [];
 const authorLabels = new Map( authors.map( author => [ String( author.value ), author.label ] ) );
 const authorLabel = ( authorId: string ) => authorLabels.get( authorId ) ?? authorId;
+
+type DisplayStatus = 'active' | 'inactive' | 'error';
+
+const getDisplayStatus = ( feed: Feed ): DisplayStatus => {
+	if ( 'active' !== feed.status ) {
+		return 'inactive';
+	}
+	return feed.last_result?.error ? 'error' : 'active';
+};
 
 /**
  * Default view configuration for the DataViews feeds table.
@@ -57,12 +70,31 @@ export const FEED_FIELDS: Field< Feed >[] = [
 		enableSorting: true,
 		elements: [
 			{ value: 'active', label: __( 'Active', 'newspack-lite-site' ) },
-			{ value: 'paused', label: __( 'Inactive', 'newspack-lite-site' ) },
+			{ value: 'inactive', label: __( 'Inactive', 'newspack-lite-site' ) },
+			{ value: 'error', label: __( 'Error', 'newspack-lite-site' ) },
 		],
 		filterBy: { operators: [ 'isAny' ], isPrimary: true },
-		getValue: ( { item } ) => item.status,
-		render: ( { item } ) =>
-			'active' === item.status ? (
+		getValue: ( { item } ) => getDisplayStatus( item ),
+		render: ( { item } ) => {
+			const status = getDisplayStatus( item );
+			if ( 'error' === status ) {
+				return (
+					<span className="newspack-status-badge">
+						<TooltipBadge
+							label={ __( 'Error', 'newspack-lite-site' ) }
+							intent="high"
+							tooltip={
+								<>
+									{ item.last_result?.error }
+									<br />
+									{ __( 'Edit the feed for options.', 'newspack-lite-site' ) }
+								</>
+							}
+						/>
+					</span>
+				);
+			}
+			return 'active' === status ? (
 				<Badge className="newspack-status-badge" intent="stable">
 					{ __( 'Active', 'newspack-lite-site' ) }
 				</Badge>
@@ -70,7 +102,8 @@ export const FEED_FIELDS: Field< Feed >[] = [
 				<Badge className="newspack-status-badge" intent="draft">
 					{ __( 'Inactive', 'newspack-lite-site' ) }
 				</Badge>
-			),
+			);
+		},
 	},
 	{
 		id: 'interval',
@@ -109,26 +142,10 @@ export const FEED_FIELDS: Field< Feed >[] = [
 			}
 			const result = item.last_result;
 			return (
-				<>
-					<Stack render={ <span /> } direction="column" gap="xs">
-						<span>{ formatUnixTimestamp( item.last_run ) }</span>
-						{ result && ! result.error && <span className="newspack-lite-feed-result">{ formatLastResult( result ) }</span> }
-					</Stack>
-					{ result?.error && (
-						<Stack
-							render={ <span /> }
-							direction="row"
-							align="flex-start"
-							gap="xs"
-							className="newspack-lite-feed-error newspack-lite-feed-result--error"
-						>
-							<Icon className="newspack-lite-feed-result__icon" icon={ error } size={ 16 } aria-hidden="true" />
-							<span className="newspack-lite-feed-result newspack-lite-feed-result--error newspack-lite-feed-error__text">
-								{ formatLastResult( result ) }
-							</span>
-						</Stack>
-					) }
-				</>
+				<Stack render={ <span /> } direction="column" gap="xs">
+					<span>{ formatUnixTimestamp( item.last_run ) }</span>
+					{ result && ! result.error && <span className="newspack-lite-feed-result">{ formatLastResult( result ) }</span> }
+				</Stack>
 			);
 		},
 	},

@@ -40,7 +40,8 @@ const countLabel = ( count: number, formatted: string ) =>
  */
 export const RssImportApp = () => {
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
-	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
+	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeed, importFeed, isImporting, clearSaveError } =
+		useFeeds( isDrawerOpen );
 	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
 	const lastDrawerFeed = useRef< Feed | null >( null );
 	const found = drawerFeedId ? feeds.find( item => item.id === drawerFeedId ) : undefined;
@@ -154,6 +155,8 @@ export const RssImportApp = () => {
 				onAdd={ addFeed }
 				onUpdate={ updateFeed }
 				onClearError={ clearSaveError }
+				isImporting={ isImporting }
+				onImport={ importFeed }
 			/>
 			{ notice && (
 				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>

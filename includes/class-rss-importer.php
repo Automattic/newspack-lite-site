@@ -156,7 +156,7 @@ class RSS_Importer {
 					'action' => [
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'pause', 'resume', 'delete' ],
+						'enum'     => [ 'pause', 'resume', 'delete', 'import' ],
 					],
 				],
 			]
@@ -419,7 +419,7 @@ class RSS_Importer {
 	 * Pause, resume, or delete a feed.
 	 *
 	 * Applies the action requested by the admin UI to the feed identified by its ID.
-	 * Pausing unschedules the WP-Cron event; resuming reschedules it; deleting removes
+	 * Pausing unschedules the WP-Cron event; resuming reschedules it; importing runs the scheduled import now; deleting removes
 	 * the feed entirely.
 	 *
 	 * @param \WP_REST_Request $request The REST request.
@@ -437,6 +437,29 @@ class RSS_Importer {
 				__( 'Feed not found.', 'newspack-lite-site' ),
 				[ 'status' => 404 ]
 			);
+		}
+
+		if ( 'import' === $feed_action ) {
+			if ( 'active' !== $feeds[ $feed_id ]['status'] ) {
+				return new \WP_Error(
+					'feed_paused',
+					__( 'Resume the RSS feed to import it.', 'newspack-lite-site' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			if ( get_transient( self::LOCK_PREFIX . $feed_id ) ) {
+				return new \WP_Error(
+					'feed_busy',
+					__( 'This RSS feed is already importing. Try again in a minute.', 'newspack-lite-site' ),
+					[ 'status' => 409 ]
+				);
+			}
+
+			self::run_scheduled_import( $feed_id );
+			wp_cache_delete( 'alloptions', 'options' );
+
+			return self::rest_feeds_response( self::get_feeds() );
 		}
 
 		switch ( $feed_action ) {

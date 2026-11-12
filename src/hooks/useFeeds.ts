@@ -28,6 +28,7 @@ export function useFeeds( isDrawerOpen = false ) {
 	const [ feeds, setFeeds ] = useState< Feed[] >( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ isImporting, setIsImporting ] = useState( false );
 	const [ saveError, setSaveError ] = useState< string | null >( null );
 	const [ notice, setNotice ] = useState< Notice | null >( null );
 
@@ -135,6 +136,34 @@ export function useFeeds( isDrawerOpen = false ) {
 		[ mutate ]
 	);
 
+	const importFeed = useCallback(
+		async ( feedId: string ) => {
+			setIsImporting( true );
+			const requestId = ++requestCounter.current;
+			try {
+				const updated = await apiFetch< Feed[] >( {
+					path: `${ FEEDS_PATH }/${ feedId }/action`,
+					method: 'POST',
+					data: { action: 'import' },
+				} );
+				applyFeeds( requestId, updated );
+				const importError = updated.find( item => item.id === feedId )?.last_result?.error;
+				if ( importError ) {
+					showNotice( importError, 'error' );
+					return false;
+				}
+				showNotice( __( 'RSS feed imported.', 'newspack-lite-site' ) );
+				return true;
+			} catch ( err ) {
+				showNotice( ( err as Error ).message || __( "Couldn't import the RSS feed. Try again.", 'newspack-lite-site' ), 'error' );
+				return false;
+			} finally {
+				setIsImporting( false );
+			}
+		},
+		[ showNotice, applyFeeds ]
+	);
+
 	const clearSaveError = useCallback( () => setSaveError( null ), [] );
 
 	return {
@@ -147,6 +176,8 @@ export function useFeeds( isDrawerOpen = false ) {
 		addFeed,
 		updateFeed,
 		deleteFeed,
+		importFeed,
+		isImporting,
 		clearSaveError,
 	};
 }

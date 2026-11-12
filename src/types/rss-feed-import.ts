@@ -88,4 +88,6 @@ export interface FeedDrawerProps {
 	onAdd: ( data: NewFeedData ) => Promise< boolean >;
 	onUpdate: ( feedId: string, changes: FeedChanges ) => Promise< boolean >;
 	onClearError: () => void;
+	isImporting: boolean;
+	onImport: ( feedId: string ) => Promise< boolean >;
 }
