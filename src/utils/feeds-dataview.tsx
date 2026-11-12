@@ -98,26 +98,28 @@ export const FEED_FIELDS: Field< Feed >[] = [
 		enableSorting: true,
 		render: ( { item } ) => {
 			if ( ! item.last_run ) {
-				return <em>{ __( 'Never', 'newspack-lite-site' ) }</em>;
+				return __( 'Never', 'newspack-lite-site' );
 			}
+			const result = item.last_result;
 			return (
-				<span className="newspack-lite-feed-run">
-					<span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.last_run ) }</span>
-					{ item.last_result && (
+				<>
+					<Stack render={ <span /> } direction="column" gap="xs">
+						<span>{ formatUnixTimestamp( item.last_run ) }</span>
+						{ result && ! result.error && <span className="newspack-lite-feed-result">{ formatLastResult( result ) }</span> }
+					</Stack>
+					{ result?.error && (
 						<Stack
 							render={ <span /> }
 							direction="row"
 							align="flex-start"
 							gap="xs"
-							className={ `newspack-lite-feed-result${ item.last_result.error ? ' newspack-lite-feed-result--error' : '' }` }
+							className="newspack-lite-feed-result newspack-lite-feed-result--error newspack-lite-feed-error"
 						>
-							{ item.last_result.error && (
-								<Icon className="newspack-lite-feed-result__icon" icon={ error } size={ 20 } aria-hidden="true" />
-							) }
-							{ formatLastResult( item.last_result ) }
+							<Icon className="newspack-lite-feed-result__icon" icon={ error } size={ 16 } aria-hidden="true" />
+							{ formatLastResult( result ) }
 						</Stack>
 					) }
-				</span>
+				</>
 			);
 		},
 	},
@@ -125,6 +127,6 @@ export const FEED_FIELDS: Field< Feed >[] = [
 		id: 'next_run',
 		label: __( 'Next Run', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item } ) => ( item.next_run ? <span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.next_run ) }</span> : '—' ),
+		render: ( { item } ) => ( item.next_run ? formatUnixTimestamp( item.next_run ) : '—' ),
 	},
 ];

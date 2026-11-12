@@ -110,6 +110,20 @@ body.newspack-lite-admin-header {
 		overflow: hidden;
 	}
 
+	tbody tr {
+		position: relative;
+	}
+
+	tbody tr:has(.newspack-lite-feed-error) > td {
+		padding-bottom: calc(var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})) + var(--wpds-typography-line-height-xs, #{$grid-unit-20}) + var(--wpds-dimension-gap-sm, #{$grid-unit-10}));
+	}
+
+	.newspack-lite-feed-error {
+		bottom: var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15}));
+		inset-inline: var(--wpds-dimension-padding-2xl, #{$grid-unit-30});
+		position: absolute;
+	}
+
 	th.dataviews-view-table__actions-column .dataviews-view-table-header {
 		border: 0;
 		clip-path: inset(50%);
@@ -132,12 +146,6 @@ body.newspack-lite-admin-header {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.newspack-lite-feed-run {
-	display: flex;
-	flex-direction: column;
-	gap: var(--wpds-dimension-gap-xs, 4px);
 }
 
 .newspack-lite-feed-result {
