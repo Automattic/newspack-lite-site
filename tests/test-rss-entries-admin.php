@@ -357,4 +357,38 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$data = self::invoke_private( Lite_Site_Settings::class, 'get_rss_entries_data' );
 		$this->assertTrue( $data['hasFeeds'] );
 	}
+
+	/**
+	 * The RSS Entries menu item stays hidden with no feeds and no entries.
+	 */
+	public function test_entries_menu_hidden_without_feeds_or_entries() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$this->assertFalse( Lite_Site_Settings::should_show_entries_menu() );
+
+		$id = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		wp_trash_post( $id );
+		$this->assertFalse( Lite_Site_Settings::should_show_entries_menu() );
+	}
+
+	/**
+	 * A feed shows the RSS Entries menu item.
+	 */
+	public function test_entries_menu_shown_with_a_feed() {
+		update_option( RSS_Importer::FEEDS_OPTION_NAME, [ 'feeds' => [ 'abc' => [ 'url' => 'https://example.org/feed' ] ] ] );
+		$this->assertTrue( Lite_Site_Settings::should_show_entries_menu() );
+	}
+
+	/**
+	 * An entry with no feeds shows the RSS Entries menu item.
+	 */
+	public function test_entries_menu_shown_with_an_entry_and_no_feeds() {
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		self::factory()->post->create(
+			[
+				'post_type'   => Post_Type::POST_TYPE,
+				'post_status' => 'draft',
+			] 
+		);
+		$this->assertTrue( Lite_Site_Settings::should_show_entries_menu() );
+	}
 }

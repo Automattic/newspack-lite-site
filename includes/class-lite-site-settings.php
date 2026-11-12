@@ -321,6 +321,36 @@ class Lite_Site_Settings {
 		);
 
 		self::register_entries_page();
+
+		if ( ! self::should_show_entries_menu() ) {
+			remove_submenu_page( 'newspack-lite-site', 'edit.php?post_type=' . Post_Type::POST_TYPE );
+		}
+	}
+
+	/**
+	 * Whether the RSS Entries item belongs in the Lite Site submenu.
+	 *
+	 * It shows once a feed exists, or an entry exists in any status except trash and
+	 * auto-draft, so entries stay reachable after their feed is deleted. The page itself
+	 * stays registered either way.
+	 *
+	 * @return bool
+	 */
+	public static function should_show_entries_menu(): bool {
+		if ( ! empty( RSS_Importer::get_feeds() ) ) {
+			return true;
+		}
+
+		$query = new \WP_Query(
+			[
+				'post_type'      => Post_Type::POST_TYPE,
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+		return ! empty( $query->posts );
 	}
 
 	/**
