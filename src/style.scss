@@ -122,13 +122,24 @@ body.newspack-lite-admin-header {
 	}
 
 	tbody tr:has(.newspack-lite-feed-error) > td {
-		padding-bottom: calc(var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})) + var(--wpds-typography-line-height-xs, #{$grid-unit-20}) + var(--wpds-dimension-gap-sm, #{$grid-unit-10}));
+		padding-bottom: calc(var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})) + var(--wpds-typography-line-height-xs, #{$font-line-height-x-small}) + var(--wpds-dimension-gap-sm, #{$grid-unit-10}));
 	}
 
 	.newspack-lite-feed-error {
 		bottom: var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15}));
-		inset-inline: var(--wpds-dimension-padding-2xl, #{$grid-unit-30});
+		font-size: inherit;
+		inset-inline-end: calc(#{$feeds-actions-width} + var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})));
+		inset-inline-start: var(--wpds-dimension-padding-2xl, #{$grid-unit-30});
+		line-height: inherit;
+		min-width: 0;
 		position: absolute;
+	}
+
+	.newspack-lite-feed-error__text {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	th.dataviews-view-table__actions-column .dataviews-view-table-header {
@@ -166,8 +177,8 @@ body.newspack-lite-admin-header {
 
 .newspack-lite-feed-result {
 	color: var(--wpds-color-foreground-content-neutral-weak, #{$gray-700});
-	font-size: var(--wpds-typography-font-size-sm, 12px);
-	line-height: var(--wpds-typography-line-height-xs, 16px);
+	font-size: var(--wpds-typography-font-size-sm, #{$font-size-small});
+	line-height: var(--wpds-typography-line-height-xs, #{$font-line-height-x-small});
 
 	&--error {
 		color: var(--wpds-color-foreground-content-error-weak, #{$alert-red});
@@ -186,14 +197,14 @@ body.newspack-lite-admin-header {
 
 .newspack-lite-path-field__help {
 	color: var(--wpds-color-foreground-content-neutral-weak, #{$gray-700});
-	font-size: var(--wpds-typography-font-size-sm, 12px);
+	font-size: var(--wpds-typography-font-size-sm, #{$font-size-small});
 	inline-size: 0;
-	line-height: var(--wpds-typography-line-height-xs, #{$grid-unit-20});
+	line-height: var(--wpds-typography-line-height-xs, #{$font-line-height-x-small});
 	min-inline-size: 100%;
 }
 
 .newspack-lite-path-field__link {
-	padding-block-start: calc(var(--wpds-typography-line-height-xs, #{$grid-unit-20}) + var(--wpds-dimension-gap-sm, #{$grid-unit-10}));
+	padding-block-start: calc(var(--wpds-typography-line-height-xs, #{$font-line-height-x-small}) + var(--wpds-dimension-gap-sm, #{$grid-unit-10}));
 }
 
 .newspack-lite-modal-actions {

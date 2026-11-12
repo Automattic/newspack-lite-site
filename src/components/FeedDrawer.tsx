@@ -59,7 +59,11 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 			return;
 		}
 		const timer = setTimeout( () => {
-			formRef.current?.querySelector< HTMLElement >( 'textarea:not([disabled]), input:not([disabled]), select:not([disabled])' )?.focus();
+			formRef.current
+				?.querySelector< HTMLElement >(
+					'textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [role="radio"][aria-checked="true"]'
+				)
+				?.focus();
 		}, 50 );
 		return () => clearTimeout( timer );
 	}, [ isOpen ] );

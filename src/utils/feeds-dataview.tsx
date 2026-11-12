@@ -120,10 +120,13 @@ export const FEED_FIELDS: Field< Feed >[] = [
 							direction="row"
 							align="flex-start"
 							gap="xs"
-							className="newspack-lite-feed-result newspack-lite-feed-result--error newspack-lite-feed-error"
+							className="newspack-lite-feed-error newspack-lite-feed-result--error"
+							title={ formatLastResult( result ) }
 						>
 							<Icon className="newspack-lite-feed-result__icon" icon={ error } size={ 16 } aria-hidden="true" />
-							{ formatLastResult( result ) }
+							<span className="newspack-lite-feed-result newspack-lite-feed-result--error newspack-lite-feed-error__text">
+								{ formatLastResult( result ) }
+							</span>
 						</Stack>
 					) }
 				</>
