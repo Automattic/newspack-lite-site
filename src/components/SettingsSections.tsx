@@ -6,9 +6,9 @@
  * WordPress dependencies.
  */
 import { Fragment } from '@wordpress/element';
-import { Button, CheckboxControl, VisuallyHidden } from '@wordpress/components';
+import { Button, CheckboxControl } from '@wordpress/components';
 import { DataForm, type Field } from '@wordpress/dataviews';
-import { Stack } from '@wordpress/ui';
+import { Stack, VisuallyHidden } from '@wordpress/ui';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -100,7 +100,10 @@ export const SettingsSections = ( {
 											>
 												{ __( 'View Lite Site', 'newspack-lite-site' ) }
 												{ canView && (
-													<VisuallyHidden as="span"> { __( '(opens in a new tab)', 'newspack-lite-site' ) }</VisuallyHidden>
+													<VisuallyHidden render={ <span /> }>
+														{ ' ' }
+														{ __( '(opens in a new tab)', 'newspack-lite-site' ) }
+													</VisuallyHidden>
 												) }
 											</Button>
 											{ ! canView && (
