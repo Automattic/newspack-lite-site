@@ -7,6 +7,10 @@
 
 namespace Newspack_Lite_Site;
 
+defined( 'ABSPATH' ) || exit;
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from Lite_Site::include_single_template(), so these variables are local to that method.
+
 $current_post = Lite_Site::resolve_post( get_query_var( 'lite_path' ) );
 
 if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_supported_post_types(), true ) ) {
@@ -31,12 +35,7 @@ if ( $is_liveblog ) {
 	<link rel="canonical" href="<?php echo esc_url( get_permalink( $current_post ) ); ?>">
 	<meta name="robots" content="noindex, follow">
 	<?php
-	$font_import_url = Lite_Site::get_font_import_url();
-	if ( $font_import_url ) :
-		?>
-		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
-		<?php
-	endif;
+	Lite_Site::print_font_stylesheet();
 	require __DIR__ . '/lite-site-styles.php';
 	$custom_css = Lite_Site::get_custom_css();
 	if ( $custom_css ) :
@@ -47,18 +46,8 @@ if ( $is_liveblog ) {
 	if ( $is_liveblog ) :
 		require __DIR__ . '/liveblog-styles.php';
 	endif;
-	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
-	if ( $ga4_measurement_id ) :
-		?>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $ga4_measurement_id ); ?>"></script>
-		<script>
-			window.dataLayer = window.dataLayer || [];
-			function gtag(){dataLayer.push(arguments);}
-			gtag('js', new Date());
-			gtag('config', '<?php echo esc_attr( $ga4_measurement_id ); ?>');
-		</script>
-	<?php endif; ?>
+	Lite_Site::print_analytics_tag();
+	?>
 </head>
 <body>
 	<header class="back">

@@ -291,6 +291,54 @@ class Lite_Site {
 	}
 
 	/**
+	 * Print the font provider stylesheet, when one is set.
+	 *
+	 * Lite pages write their own <head> without wp_head(), so this prints
+	 * only this stylesheet, never the rest of what the site enqueues.
+	 */
+	public static function print_font_stylesheet() {
+		$font_import_url = self::get_font_import_url();
+		if ( ! $font_import_url ) {
+			return;
+		}
+
+		// No version: a ver argument would change the URL the font provider receives.
+		wp_enqueue_style( 'newspack-lite-site-fonts', $font_import_url, [], null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+		wp_print_styles( 'newspack-lite-site-fonts' );
+	}
+
+	/**
+	 * Print the GA4 tag, when a Measurement ID is set.
+	 *
+	 * Like print_font_stylesheet(), this prints only this script. The
+	 * config runs before the async loader, which picks up the queued calls
+	 * from dataLayer when it arrives.
+	 */
+	public static function print_analytics_tag() {
+		$measurement_id = self::get_ga4_measurement_id();
+		if ( ! $measurement_id ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'newspack-lite-site-gtag',
+			'https://www.googletagmanager.com/gtag/js?id=' . rawurlencode( $measurement_id ),
+			[],
+			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Served by Google, not versioned by the plugin.
+			[ 'strategy' => 'async' ]
+		);
+		wp_add_inline_script(
+			'newspack-lite-site-gtag',
+			sprintf(
+				"window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', %s);",
+				wp_json_encode( $measurement_id )
+			),
+			'before'
+		);
+		wp_print_scripts( 'newspack-lite-site-gtag' );
+	}
+
+	/**
 	 * Get the font family for the lite site body text.
 	 *
 	 * @return string CSS font-family value.

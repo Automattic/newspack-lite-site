@@ -7,6 +7,10 @@
 
 namespace Newspack_Lite_Site;
 
+defined( 'ABSPATH' ) || exit;
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from Lite_Site::handle_lite_site_templates(), so these variables are local to that method.
+
 $posts_per_page      = Lite_Site::get_posts_per_page();
 $categories          = Lite_Site::get_categories();
 $tags                = Lite_Site::get_tags();
@@ -47,12 +51,7 @@ $current_page = min( $current_page, $total_pages );
 	<meta name="robots" content="noindex, follow">
 	<title><?php bloginfo( 'name' ); ?></title>
 	<?php
-	$font_import_url = Lite_Site::get_font_import_url();
-	if ( $font_import_url ) :
-		?>
-		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
-		<?php
-	endif;
+	Lite_Site::print_font_stylesheet();
 	require __DIR__ . '/lite-site-styles.php';
 	$custom_css = Lite_Site::get_custom_css();
 	if ( $custom_css ) :
@@ -60,18 +59,8 @@ $current_page = min( $current_page, $total_pages );
 		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
 		<?php
 	endif;
-	$ga4_measurement_id = Lite_Site::get_ga4_measurement_id();
-	if ( $ga4_measurement_id ) :
-		?>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr( $ga4_measurement_id ); ?>"></script>
-		<script>
-			window.dataLayer = window.dataLayer || [];
-			function gtag(){dataLayer.push(arguments);}
-			gtag('js', new Date());
-			gtag('config', '<?php echo esc_attr( $ga4_measurement_id ); ?>');
-		</script>
-	<?php endif; ?>
+	Lite_Site::print_analytics_tag();
+	?>
 </head>
 <body>
 	<header class="back">

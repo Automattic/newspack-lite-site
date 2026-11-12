@@ -10,7 +10,7 @@ _.config.js
 .circleci
 .DS_Store
 Thumbs.db
-composer.json
+.phpunit.result.cache
 composer.lock
 package.json
 package-lock.json
