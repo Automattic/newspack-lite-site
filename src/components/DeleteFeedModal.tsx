@@ -48,7 +48,7 @@ export const DeleteFeedModal = ( {
 						) }
 			</p>
 			{ 1 === items.length && (
-				<p>
+				<p className="newspack-lite-delete-feed-url">
 					<strong>{ items[ 0 ].feed_url }</strong>
 				</p>
 			) }

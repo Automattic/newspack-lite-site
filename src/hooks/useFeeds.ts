@@ -181,7 +181,7 @@ export function useFeeds( isDrawerOpen = false ) {
 				showNotice( failure, 'error' );
 			}
 
-			if ( ! succeeded || requestCounter.current !== requestId || appliedRequest.current !== requestId ) {
+			if ( ! succeeded || appliedRequest.current !== requestId ) {
 				const refetchId = ++requestCounter.current;
 				apiFetch< Feed[] >( { path: FEEDS_PATH } )
 					.then( data => applyFeeds( refetchId, data ) )

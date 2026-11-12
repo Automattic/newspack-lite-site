@@ -59,10 +59,19 @@ export const FeedsList = ( { feeds, onEdit, onDelete, countLabel }: FeedsListPro
 
 	const { data: processedData, paginationInfo } = useMemo( () => filterSortAndPaginate( feeds, view, FEED_FIELDS ), [ feeds, view ] );
 
-	const autoColumns = 1 + ( view.fields ?? [] ).filter( id => 'status' !== id ).length;
+	const autoColumns = ( false === view.showTitle ? 0 : 1 ) + ( view.fields ?? [] ).filter( id => 'status' !== id ).length;
+	const hasStatus = ( view.fields ?? [] ).includes( 'status' );
 
 	return (
-		<div className="newspack-lite-feeds-table" style={ { '--newspack-lite-feeds-columns': autoColumns } as React.CSSProperties }>
+		<div
+			className="newspack-lite-feeds-table"
+			style={
+				{
+					'--newspack-lite-feeds-columns': autoColumns,
+					...( hasStatus ? {} : { '--newspack-lite-feeds-status-width': '0px' } ),
+				} as React.CSSProperties
+			}
+		>
 			<InlineFiltersDataViews
 				data={ processedData }
 				fields={ FEED_FIELDS }
