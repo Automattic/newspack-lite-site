@@ -6,6 +6,7 @@
  * WordPress dependencies.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { Button, Snackbar } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -19,7 +20,10 @@ import TabbedNavigation from 'newspack-components/dist/esm/tabbed-navigation';
  * Internal dependencies.
  */
 import { RssEntriesApp } from './RssEntriesApp';
-import { RssImportApp } from './RssImportApp';
+import { RssImportApp, feedsCountLabel } from './RssImportApp';
+import { FeedDrawer } from '../components/FeedDrawer';
+import { useFeedsTab } from '../hooks/useFeedsTab';
+import { formatCount } from '../utils/format-count';
 import { type RssTab, type RssTabHeader } from '../types/rss';
 
 const { HashRouter, useHistory, useLocation } = Router;
@@ -48,12 +52,15 @@ function getTabText( tab: RssTab ) {
  *
  * Each tab mounts the first time it opens and stays mounted, so switching back keeps its list as it was.
  * The tabs are links in one persistent bar, so the focused tab stays focused when it is activated.
+ * The Feeds state, drawer and notice sit outside the page header, which changes shape when the tabs first appear.
  */
 const RssScreen = () => {
 	const history = useHistory();
 	const { pathname } = useLocation();
 	const wrapRef = useRef< HTMLDivElement >( null );
-	const [ hasFeeds, setHasFeeds ] = useState( rss?.hasFeeds ?? false );
+	const feedsTab = useFeedsTab( canManageFeeds );
+	const { feeds, isLoading: isLoadingFeeds, isDrawerOpen, openAdd, closeDrawer } = feedsTab;
+	const hasFeeds = isLoadingFeeds ? ( rss?.hasFeeds ?? false ) : feeds.length > 0;
 	const canShowTabs = canManageFeeds && ( hasFeeds || hasEntries );
 	const [ hasShownTabs, setHasShownTabs ] = useState( canShowTabs );
 	if ( canShowTabs && ! hasShownTabs ) {
@@ -79,10 +86,25 @@ const RssScreen = () => {
 		setVisited( [ ...visited, tab ] );
 	}
 
-	const [ headers, setHeaders ] = useState< Partial< Record< RssTab, RssTabHeader > > >( {} );
-	const onEntriesHeader = useCallback( ( header: RssTabHeader ) => setHeaders( current => ( { ...current, entries: header } ) ), [] );
-	const onFeedsHeader = useCallback( ( header: RssTabHeader ) => setHeaders( current => ( { ...current, feeds: header } ) ), [] );
-	const onFeedsChange = useCallback( ( count: number ) => setHasFeeds( count > 0 ), [] );
+	const [ entriesHeader, setEntriesHeader ] = useState< RssTabHeader >( {} );
+	const showFeedsCount = ! isLoadingFeeds && feeds.length > 0;
+	const feedsActions = useMemo(
+		() =>
+			showFeedsCount ? (
+				<Button variant="primary" onClick={ openAdd }>
+					{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
+				</Button>
+			) : undefined,
+		[ showFeedsCount, openAdd ]
+	);
+	const feedsHeader: RssTabHeader = useMemo(
+		() => ( {
+			count: showFeedsCount ? feeds.length : undefined,
+			countLabel: showFeedsCount ? feedsCountLabel( feeds.length, formatCount( feeds.length ) ) : undefined,
+			actions: feedsActions,
+		} ),
+		[ showFeedsCount, feeds.length, feedsActions ]
+	);
 
 	const focusFeedsTab = useRef( false );
 	const onGoToFeeds = useCallback( () => {
@@ -90,7 +112,26 @@ const RssScreen = () => {
 	}, [] );
 
 	const [ feedsFocusRequest, setFeedsFocusRequest ] = useState( 0 );
-	const onFeedsFocusLost = useCallback( () => setFeedsFocusRequest( request => request + 1 ), [] );
+	const wasDrawerOpen = useRef( isDrawerOpen );
+	useEffect( () => {
+		const wasOpen = wasDrawerOpen.current;
+		wasDrawerOpen.current = isDrawerOpen;
+		const ownerDocument = wrapRef.current?.ownerDocument;
+		if ( ! wasOpen || isDrawerOpen || ! ownerDocument ) {
+			return;
+		}
+		// The drawer returns focus to its opener when it can; this catches an opener that is gone.
+		const active = ownerDocument.activeElement;
+		if ( ! active || active === ownerDocument.body || active.closest( '.newspack-drawer' ) ) {
+			setFeedsFocusRequest( request => request + 1 );
+		}
+	}, [ isDrawerOpen ] );
+
+	useEffect( () => {
+		if ( 'feeds' !== tab ) {
+			closeDrawer();
+		}
+	}, [ tab, closeDrawer ] );
 
 	useEffect( () => {
 		lastTab.current = tab;
@@ -117,7 +158,7 @@ const RssScreen = () => {
 	);
 
 	const { label, subTitle } = getTabText( tab );
-	const header = headers[ tab ] ?? {};
+	const header = 'feeds' === tab ? feedsHeader : entriesHeader;
 
 	const handledFeedsFocusRequest = useRef( 0 );
 	useEffect( () => {
@@ -155,7 +196,7 @@ const RssScreen = () => {
 						<RssEntriesApp
 							isActive={ 'entries' === tab }
 							canManageFeeds={ canManageFeeds }
-							onHeaderChange={ onEntriesHeader }
+							onHeaderChange={ setEntriesHeader }
 							onGoToFeeds={ onGoToFeeds }
 						/>
 					</div>
@@ -163,14 +204,34 @@ const RssScreen = () => {
 				{ canManageFeeds && visited.includes( 'feeds' ) && (
 					<div hidden={ 'feeds' !== tab }>
 						<RssImportApp
-							isActive={ 'feeds' === tab }
-							onHeaderChange={ onFeedsHeader }
-							onFeedsChange={ onFeedsChange }
-							onFocusLost={ onFeedsFocusLost }
+							feeds={ feeds }
+							isLoading={ isLoadingFeeds }
+							onAdd={ openAdd }
+							onEdit={ feedsTab.openEdit }
+							onDelete={ feedsTab.deleteFeeds }
 						/>
 					</div>
 				) }
 			</Page>
+			{ canManageFeeds && (
+				<FeedDrawer
+					isOpen={ isDrawerOpen }
+					feed={ feedsTab.drawerFeed }
+					isSaving={ feedsTab.isSaving }
+					error={ feedsTab.saveError }
+					onClose={ closeDrawer }
+					onAdd={ feedsTab.addFeed }
+					onUpdate={ feedsTab.updateFeed }
+					onClearError={ feedsTab.clearSaveError }
+					isImporting={ feedsTab.isImporting }
+					onImport={ feedsTab.importFeed }
+				/>
+			) }
+			{ feedsTab.notice && (
+				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ feedsTab.notice.status }` }>
+					<Snackbar>{ feedsTab.notice.message }</Snackbar>
+				</div>
+			) }
 		</div>
 	);
 };

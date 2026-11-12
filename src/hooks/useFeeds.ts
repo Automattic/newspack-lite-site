@@ -20,14 +20,14 @@ const FEEDS_PATH = '/newspack-lite-site/v1/rss-feeds';
 /**
  * Manages RSS feed state and all REST API interactions for the RSS Import page.
  *
- * Fetches the RSS feed list on mount. Each mutation (add, update, delete)
+ * Fetches the RSS feed list on mount, unless it is disabled for a user who can't manage feeds. Each mutation (add, update, delete)
  * updates local state from the server's response to stay in sync, and resolves
  * to whether it succeeded so the caller knows if it can close its drawer. A failure
  * is also shown as a notice when the drawer is no longer open to show it.
  */
-export function useFeeds( isDrawerOpen = false ) {
+export function useFeeds( isDrawerOpen = false, enabled = true ) {
 	const [ feeds, setFeeds ] = useState< Feed[] >( [] );
-	const [ isLoading, setIsLoading ] = useState( true );
+	const [ isLoading, setIsLoading ] = useState( enabled );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ isImporting, setIsImporting ] = useState( false );
 	const [ saveError, setSaveError ] = useState< string | null >( null );
@@ -53,6 +53,10 @@ export function useFeeds( isDrawerOpen = false ) {
 	}, [] );
 
 	useEffect( () => {
+		if ( ! enabled ) {
+			return;
+		}
+
 		let cancelled = false;
 
 		const requestId = ++requestCounter.current;
@@ -74,7 +78,7 @@ export function useFeeds( isDrawerOpen = false ) {
 		return () => {
 			cancelled = true;
 		};
-	}, [] );
+	}, [ enabled ] );
 
 	const mutate = useCallback(
 		async ( request: APIFetchOptions< true >, successMessage: string, fallbackError: string, notifyError = false ) => {

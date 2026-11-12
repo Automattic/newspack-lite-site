@@ -5,8 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
-import { Button, Notice, Snackbar, ExternalLink } from '@wordpress/components';
+import { Button, Notice, ExternalLink } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
 import { Stack } from '@wordpress/ui';
@@ -20,121 +19,40 @@ import Waiting from 'newspack-components/dist/esm/waiting';
 /**
  * Internal dependencies.
  */
-import { useFeeds } from '../hooks/useFeeds';
-import { FeedDrawer } from '../components/FeedDrawer';
 import { FeedsList } from '../components/FeedsList';
-import { formatCount } from '../utils/format-count';
 import { type Feed } from '../types/rss-feed-import';
-import { type RssTabProps } from '../types/rss';
 
 const cronDisabled = window.newspackLiteSite?.cronDisabled ?? false;
 
-const countLabel = ( count: number, formatted: string ) =>
+export const feedsCountLabel = ( count: number, formatted: string ) =>
 	/* translators: %s: number of RSS feeds. */
 	sprintf( _n( '%s RSS feed', '%s RSS feeds', count, 'newspack-lite-site' ), formatted );
 
 /**
  * The Feeds tab of the RSS page.
  *
- * Lists the scheduled feeds, filters them, and opens a drawer to add or edit one. Delete is a row action.
+ * Lists the scheduled feeds and filters them. The feed state and the add/edit drawer live on the RSS page.
  *
- * @param props                Component props.
- * @param props.isActive       Whether this tab is the one shown.
- * @param props.onHeaderChange Called with the page header parts this tab sets.
- * @param props.onFeedsChange  Called with the number of feeds once they load and after each change.
- * @param props.onFocusLost    Called when the drawer closes and the element that opened it is gone.
+ * @param props           Component props.
+ * @param props.feeds     The feeds.
+ * @param props.isLoading Whether the feeds are still loading.
+ * @param props.onAdd     Opens the drawer to add a feed.
+ * @param props.onEdit    Opens the drawer to edit a feed.
+ * @param props.onDelete  Deletes the given feeds.
  */
 export const RssImportApp = ( {
-	isActive = true,
-	onHeaderChange,
-	onFeedsChange,
-	onFocusLost,
-}: RssTabProps & { onFeedsChange?: ( count: number ) => void; onFocusLost?: () => void } ) => {
-	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
-	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeeds, importFeed, isImporting, clearSaveError } =
-		useFeeds( isDrawerOpen );
-	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
-	const lastDrawerFeed = useRef< Feed | null >( null );
-	const found = drawerFeedId ? feeds.find( item => item.id === drawerFeedId ) : undefined;
-	if ( found ) {
-		lastDrawerFeed.current = found;
-	} else if ( ! drawerFeedId ) {
-		lastDrawerFeed.current = null;
-	}
-	const drawerFeed = drawerFeedId ? lastDrawerFeed.current : null;
-	const isFeedMissing = isDrawerOpen && null !== drawerFeedId && ! isLoading && ! found;
-
-	useEffect( () => {
-		if ( isFeedMissing ) {
-			setIsDrawerOpen( false );
-			showNotice( __( 'This RSS feed no longer exists.', 'newspack-lite-site' ), 'error' );
-		}
-	}, [ isFeedMissing, showNotice ] );
-
-	const openAdd = useCallback( () => {
-		clearSaveError();
-		setDrawerFeedId( null );
-		setIsDrawerOpen( true );
-	}, [ clearSaveError ] );
-
-	const openEdit = useCallback(
-		( feed: Feed ) => {
-			clearSaveError();
-			setDrawerFeedId( feed.id );
-			setIsDrawerOpen( true );
-		},
-		[ clearSaveError ]
-	);
-
-	const closeDrawer = useCallback( () => setIsDrawerOpen( false ), [] );
-
-	const sectionsRef = useRef< HTMLDivElement >( null );
-	const wasDrawerOpen = useRef( isDrawerOpen );
-	useEffect( () => {
-		const wasOpen = wasDrawerOpen.current;
-		wasDrawerOpen.current = isDrawerOpen;
-		const ownerDocument = sectionsRef.current?.ownerDocument;
-		if ( ! wasOpen || isDrawerOpen || ! ownerDocument ) {
-			return;
-		}
-		const active = ownerDocument.activeElement;
-		if ( ! active || active === ownerDocument.body || active.closest( '.newspack-drawer' ) ) {
-			onFocusLost?.();
-		}
-	}, [ isDrawerOpen, onFocusLost ] );
-
-	useEffect( () => {
-		if ( ! isActive ) {
-			setIsDrawerOpen( false );
-		}
-	}, [ isActive ] );
-
-	useEffect( () => {
-		if ( ! isLoading ) {
-			onFeedsChange?.( feeds.length );
-		}
-	}, [ isLoading, feeds.length, onFeedsChange ] );
-
-	const showCount = ! isLoading && feeds.length > 0;
-
-	const headerActions = useMemo(
-		() =>
-			showCount ? (
-				<Button variant="primary" onClick={ openAdd }>
-					{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
-				</Button>
-			) : undefined,
-		[ showCount, openAdd ]
-	);
-
-	useEffect( () => {
-		onHeaderChange?.( {
-			count: showCount ? feeds.length : undefined,
-			countLabel: showCount ? countLabel( feeds.length, formatCount( feeds.length ) ) : undefined,
-			actions: headerActions,
-		} );
-	}, [ showCount, feeds.length, headerActions, onHeaderChange ] );
-
+	feeds,
+	isLoading,
+	onAdd,
+	onEdit,
+	onDelete,
+}: {
+	feeds: Feed[];
+	isLoading: boolean;
+	onAdd: () => void;
+	onEdit: ( feed: Feed ) => void;
+	onDelete: ( feedIds: string[] ) => Promise< boolean >;
+} ) => {
 	let content;
 	if ( isLoading ) {
 		content = (
@@ -157,49 +75,30 @@ export const RssImportApp = ( {
 					) }
 				/>
 				<EmptyState.Actions>
-					<Button variant="primary" onClick={ openAdd }>
+					<Button variant="primary" onClick={ onAdd }>
 						{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
 					</Button>
 				</EmptyState.Actions>
 			</EmptyState.Root>
 		);
 	} else {
-		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeeds } countLabel={ countLabel } />;
+		content = <FeedsList feeds={ feeds } onEdit={ onEdit } onDelete={ onDelete } countLabel={ feedsCountLabel } />;
 	}
 
 	return (
-		<>
-			<div className="newspack-lite-rss-sections newspack-lite-feeds" ref={ sectionsRef }>
-				{ cronDisabled && (
-					<Notice status="warning" isDismissible={ false } spokenMessage="">
-						{ __(
-							"WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host.",
-							'newspack-lite-site'
-						) }{ ' ' }
-						<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
-							{ __( 'Learn more about WP-Cron', 'newspack-lite-site' ) }
-						</ExternalLink>
-					</Notice>
-				) }
-				{ content }
-			</div>
-			<FeedDrawer
-				isOpen={ isDrawerOpen }
-				feed={ drawerFeed }
-				isSaving={ isSaving }
-				error={ saveError }
-				onClose={ closeDrawer }
-				onAdd={ addFeed }
-				onUpdate={ updateFeed }
-				onClearError={ clearSaveError }
-				isImporting={ isImporting }
-				onImport={ importFeed }
-			/>
-			{ notice && (
-				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>
-					<Snackbar>{ notice.message }</Snackbar>
-				</div>
+		<div className="newspack-lite-rss-sections newspack-lite-feeds">
+			{ cronDisabled && (
+				<Notice status="warning" isDismissible={ false } spokenMessage="">
+					{ __(
+						"WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host.",
+						'newspack-lite-site'
+					) }{ ' ' }
+					<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
+						{ __( 'Learn more about WP-Cron', 'newspack-lite-site' ) }
+					</ExternalLink>
+				</Notice>
 			) }
-		</>
+			{ content }
+		</div>
 	);
 };
