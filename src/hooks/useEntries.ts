@@ -110,6 +110,18 @@ function getHeaderNumber( response: Response, header: string ): number {
 	return parseInt( response.headers.get( header ) ?? '0', 10 ) || 0;
 }
 
+async function countTrashed(): Promise< number > {
+	try {
+		const response = await apiFetch< Response, false >( {
+			path: `${ ENTRIES_PATH }?status=trash&per_page=1&_fields=id`,
+			parse: false,
+		} );
+		return getHeaderNumber( response, 'X-WP-Total' );
+	} catch {
+		return 0;
+	}
+}
+
 async function getLastPage( query: string ): Promise< number > {
 	const params = new URLSearchParams( query );
 	params.set( 'page', '1' );
@@ -182,12 +194,16 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 					onPageChange( 1 );
 					return;
 				}
+				if ( isFirstLoad.current && isUnfiltered && 0 === total ) {
+					const trashed = await countTrashed();
+					if ( ! isCurrent() ) {
+						return;
+					}
+					setIsEmpty( 0 === trashed );
+				}
 				setEntries( data );
 				setTotalItems( total );
 				setTotalPages( getHeaderNumber( response, 'X-WP-TotalPages' ) );
-				if ( isFirstLoad.current ) {
-					setIsEmpty( isUnfiltered && 0 === total );
-				}
 			} catch ( err ) {
 				const body = await getErrorBody( err );
 				if ( ! isCurrent() ) {
