@@ -42,8 +42,14 @@ const countLabel = ( count: number, formatted: string ) =>
  * @param props.isActive       Whether this tab is the one shown.
  * @param props.onHeaderChange Called with the page header parts this tab sets.
  * @param props.onFeedsChange  Called with the number of feeds once they load and after each change.
+ * @param props.onFocusLost    Called when the drawer closes and the element that opened it is gone.
  */
-export const RssImportApp = ( { isActive = true, onHeaderChange, onFeedsChange }: RssTabProps & { onFeedsChange?: ( count: number ) => void } ) => {
+export const RssImportApp = ( {
+	isActive = true,
+	onHeaderChange,
+	onFeedsChange,
+	onFocusLost,
+}: RssTabProps & { onFeedsChange?: ( count: number ) => void; onFocusLost?: () => void } ) => {
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
 	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeeds, importFeed, isImporting, clearSaveError } =
 		useFeeds( isDrawerOpen );
@@ -81,6 +87,21 @@ export const RssImportApp = ( { isActive = true, onHeaderChange, onFeedsChange }
 	);
 
 	const closeDrawer = useCallback( () => setIsDrawerOpen( false ), [] );
+
+	const sectionsRef = useRef< HTMLDivElement >( null );
+	const wasDrawerOpen = useRef( isDrawerOpen );
+	useEffect( () => {
+		const wasOpen = wasDrawerOpen.current;
+		wasDrawerOpen.current = isDrawerOpen;
+		const ownerDocument = sectionsRef.current?.ownerDocument;
+		if ( ! wasOpen || isDrawerOpen || ! ownerDocument ) {
+			return;
+		}
+		const active = ownerDocument.activeElement;
+		if ( ! active || active === ownerDocument.body || active.closest( '.newspack-drawer' ) ) {
+			onFocusLost?.();
+		}
+	}, [ isDrawerOpen, onFocusLost ] );
 
 	useEffect( () => {
 		if ( ! isActive ) {
@@ -148,7 +169,7 @@ export const RssImportApp = ( { isActive = true, onHeaderChange, onFeedsChange }
 
 	return (
 		<>
-			<div className="newspack-lite-rss-sections newspack-lite-feeds">
+			<div className="newspack-lite-rss-sections newspack-lite-feeds" ref={ sectionsRef }>
 				{ cronDisabled && (
 					<Notice status="warning" isDismissible={ false } spokenMessage="">
 						{ __(

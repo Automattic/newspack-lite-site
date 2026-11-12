@@ -89,6 +89,9 @@ const RssScreen = () => {
 		focusFeedsTab.current = true;
 	}, [] );
 
+	const [ feedsFocusRequest, setFeedsFocusRequest ] = useState( 0 );
+	const onFeedsFocusLost = useCallback( () => setFeedsFocusRequest( request => request + 1 ), [] );
+
 	useEffect( () => {
 		lastTab.current = tab;
 		if ( `/${ tab }` !== pathname ) {
@@ -116,6 +119,25 @@ const RssScreen = () => {
 	const { label, subTitle } = getTabText( tab );
 	const header = headers[ tab ] ?? {};
 
+	const handledFeedsFocusRequest = useRef( 0 );
+	useEffect( () => {
+		if ( handledFeedsFocusRequest.current === feedsFocusRequest ) {
+			return;
+		}
+		if ( 'feeds' !== tab ) {
+			handledFeedsFocusRequest.current = feedsFocusRequest;
+			return;
+		}
+		const wrap = wrapRef.current;
+		const target =
+			( showTabs && wrap?.querySelector< HTMLElement >( '.newspack-tabbed-navigation a[href="#/feeds"]' ) ) ||
+			wrap?.querySelector< HTMLElement >( '.newspack-page__header-actions button' );
+		if ( target ) {
+			handledFeedsFocusRequest.current = feedsFocusRequest;
+			target.focus();
+		}
+	}, [ feedsFocusRequest, tab, showTabs, header.actions ] );
+
 	return (
 		<div className="wrap" ref={ wrapRef }>
 			<Page
@@ -140,7 +162,12 @@ const RssScreen = () => {
 				) }
 				{ canManageFeeds && visited.includes( 'feeds' ) && (
 					<div hidden={ 'feeds' !== tab }>
-						<RssImportApp isActive={ 'feeds' === tab } onHeaderChange={ onFeedsHeader } onFeedsChange={ onFeedsChange } />
+						<RssImportApp
+							isActive={ 'feeds' === tab }
+							onHeaderChange={ onFeedsHeader }
+							onFeedsChange={ onFeedsChange }
+							onFocusLost={ onFeedsFocusLost }
+						/>
 					</div>
 				) }
 			</Page>
