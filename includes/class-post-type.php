@@ -88,7 +88,7 @@ class Post_Type {
 					'get_callback' => $callback,
 					'schema'       => [
 						'type'     => 'string',
-						'context'  => [ 'view', 'edit' ],
+						'context'  => [ 'edit' ],
 						'readonly' => true,
 					],
 				]
@@ -102,7 +102,7 @@ class Post_Type {
 				'get_callback' => [ __CLASS__, 'get_author_avatar_urls' ],
 				'schema'       => [
 					'type'     => 'object',
-					'context'  => [ 'view', 'edit' ],
+					'context'  => [ 'edit' ],
 					'readonly' => true,
 				],
 			]
@@ -183,6 +183,9 @@ class Post_Type {
 	 * @return array
 	 */
 	public static function filter_rest_query_by_feed( $args, $request ) {
+		if ( ! current_user_can( get_post_type_object( self::POST_TYPE )->cap->edit_posts ) ) {
+			return $args;
+		}
 		$feed = $request->get_param( 'feed' );
 		if ( is_string( $feed ) && '' !== $feed ) {
 			$args['meta_query'][] = [
