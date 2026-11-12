@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { Button, Notice, Snackbar, ExternalLink } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
@@ -14,7 +14,6 @@ import { Stack } from '@wordpress/ui';
 /**
  * External dependencies.
  */
-import Page from 'newspack-components/dist/esm/page';
 import { EmptyState } from 'newspack-components/dist/esm/empty-state';
 import Waiting from 'newspack-components/dist/esm/waiting';
 
@@ -39,12 +38,12 @@ const countLabel = ( count: number, formatted: string ) =>
  *
  * Lists the scheduled feeds, filters them, and opens a drawer to add or edit one. Delete is a row action.
  *
- * @param props                  Component props.
- * @param props.tabbedNavigation The RSS page tabs, when shown.
- * @param props.isActive         Whether this tab is the one shown.
- * @param props.onFeedsChange    Called with the number of feeds once they load and after each change.
+ * @param props                Component props.
+ * @param props.isActive       Whether this tab is the one shown.
+ * @param props.onHeaderChange Called with the page header parts this tab sets.
+ * @param props.onFeedsChange  Called with the number of feeds once they load and after each change.
  */
-export const RssImportApp = ( { tabbedNavigation, isActive = true, onFeedsChange }: RssTabProps & { onFeedsChange?: ( count: number ) => void } ) => {
+export const RssImportApp = ( { isActive = true, onHeaderChange, onFeedsChange }: RssTabProps & { onFeedsChange?: ( count: number ) => void } ) => {
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
 	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeeds, importFeed, isImporting, clearSaveError } =
 		useFeeds( isDrawerOpen );
@@ -97,6 +96,24 @@ export const RssImportApp = ( { tabbedNavigation, isActive = true, onFeedsChange
 
 	const showCount = ! isLoading && feeds.length > 0;
 
+	const headerActions = useMemo(
+		() =>
+			showCount ? (
+				<Button variant="primary" onClick={ openAdd }>
+					{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
+				</Button>
+			) : undefined,
+		[ showCount, openAdd ]
+	);
+
+	useEffect( () => {
+		onHeaderChange?.( {
+			count: showCount ? feeds.length : undefined,
+			countLabel: showCount ? countLabel( feeds.length, formatCount( feeds.length ) ) : undefined,
+			actions: headerActions,
+		} );
+	}, [ showCount, feeds.length, headerActions, onHeaderChange ] );
+
 	let content;
 	if ( isLoading ) {
 		content = (
@@ -130,42 +147,21 @@ export const RssImportApp = ( { tabbedNavigation, isActive = true, onFeedsChange
 	}
 
 	return (
-		<div className="wrap">
-			<Page
-				subTitle={ __( 'Set which RSS feeds to import and how often each one runs.', 'newspack-lite-site' ) }
-				tabbedNavigation={ tabbedNavigation }
-				breadcrumbItems={ [
-					{ label: 'Lite Site' },
-					{ label: __( 'RSS', 'newspack-lite-site' ) },
-					{
-						label: __( 'Feeds', 'newspack-lite-site' ),
-						count: showCount ? feeds.length : undefined,
-						countLabel: showCount ? countLabel( feeds.length, formatCount( feeds.length ) ) : undefined,
-					},
-				] }
-				actions={
-					showCount && (
-						<Button variant="primary" onClick={ openAdd }>
-							{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
-						</Button>
-					)
-				}
-			>
-				<div className="newspack-lite-rss-sections newspack-lite-feeds">
-					{ cronDisabled && (
-						<Notice status="warning" isDismissible={ false } spokenMessage="">
-							{ __(
-								"WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host.",
-								'newspack-lite-site'
-							) }{ ' ' }
-							<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
-								{ __( 'Learn more about WP-Cron', 'newspack-lite-site' ) }
-							</ExternalLink>
-						</Notice>
-					) }
-					{ content }
-				</div>
-			</Page>
+		<>
+			<div className="newspack-lite-rss-sections newspack-lite-feeds">
+				{ cronDisabled && (
+					<Notice status="warning" isDismissible={ false } spokenMessage="">
+						{ __(
+							"WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host.",
+							'newspack-lite-site'
+						) }{ ' ' }
+						<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
+							{ __( 'Learn more about WP-Cron', 'newspack-lite-site' ) }
+						</ExternalLink>
+					</Notice>
+				) }
+				{ content }
+			</div>
 			<FeedDrawer
 				isOpen={ isDrawerOpen }
 				feed={ drawerFeed }
@@ -183,6 +179,6 @@ export const RssImportApp = ( { tabbedNavigation, isActive = true, onFeedsChange
 					<Snackbar>{ notice.message }</Snackbar>
 				</div>
 			) }
-		</div>
+		</>
 	);
 };

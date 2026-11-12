@@ -14,7 +14,7 @@ import { Link, Stack, Text } from '@wordpress/ui';
 /**
  * External dependencies.
  */
-import Page from 'newspack-components/dist/esm/page';
+import { type MouseEvent } from 'react';
 import Waiting from 'newspack-components/dist/esm/waiting';
 
 /**
@@ -57,12 +57,18 @@ function getInitialView(): View {
  * Lists imported RSS entries in a server-paginated table with filters and bulk actions.
  * The list loads again whenever the tab comes back into view, since imports run in the background.
  *
- * @param props                  Component props.
- * @param props.tabbedNavigation The RSS page tabs, when shown.
- * @param props.isActive         Whether this tab is the one shown.
- * @param props.canManageFeeds   Whether the current user can open the Feeds tab.
+ * @param props                Component props.
+ * @param props.isActive       Whether this tab is the one shown.
+ * @param props.canManageFeeds Whether the current user can open the Feeds tab.
+ * @param props.onHeaderChange Called with the page header parts this tab sets.
+ * @param props.onGoToFeeds    Called when the link to the Feeds tab is followed.
  */
-export const RssEntriesApp = ( { tabbedNavigation, isActive = true, canManageFeeds = false }: RssTabProps & { canManageFeeds?: boolean } ) => {
+export const RssEntriesApp = ( {
+	isActive = true,
+	canManageFeeds = false,
+	onHeaderChange,
+	onGoToFeeds,
+}: RssTabProps & { canManageFeeds?: boolean; onGoToFeeds?: () => void } ) => {
 	const [ view, setView ] = useState< View >( getInitialView );
 	const setPage = useCallback( ( page: number ) => setView( current => ( { ...current, page } ) ), [] );
 	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate, reload } =
@@ -106,6 +112,33 @@ export const RssEntriesApp = ( { tabbedNavigation, isActive = true, canManageFee
 	const addUrl = rssEntries?.addUrl ?? '';
 	const showCount = ! isLoading && ! isEmpty && ! loadError;
 	const fields = useMemo( () => getEntryFields( editUrl ), [ editUrl ] );
+
+	const headerActions = useMemo(
+		() =>
+			showCount && addUrl ? (
+				<Button variant="primary" href={ addUrl }>
+					{ __( 'Add RSS Entry', 'newspack-lite-site' ) }
+				</Button>
+			) : undefined,
+		[ showCount, addUrl ]
+	);
+
+	useEffect( () => {
+		onHeaderChange?.( {
+			count: showCount ? totalItems : undefined,
+			countLabel: showCount ? countLabel( totalItems, formatCount( totalItems ) ) : undefined,
+			actions: headerActions,
+		} );
+	}, [ showCount, totalItems, headerActions, onHeaderChange ] );
+
+	const goToFeeds = useCallback(
+		( event: MouseEvent< HTMLAnchorElement > ) => {
+			if ( ! event.metaKey && ! event.ctrlKey && ! event.shiftKey && ! event.altKey ) {
+				onGoToFeeds?.();
+			}
+		},
+		[ onGoToFeeds ]
+	);
 
 	const actions: Action< RssEntry >[] = useMemo(
 		() => [
@@ -193,7 +226,9 @@ export const RssEntriesApp = ( { tabbedNavigation, isActive = true, canManageFee
 				{ canManageFeeds && (
 					<>
 						{ ' ' }
-						<Link href="#/feeds">{ __( 'Go to Feeds', 'newspack-lite-site' ) }</Link>
+						<Link href="#/feeds" onClick={ goToFeeds }>
+							{ __( 'Go to Feeds', 'newspack-lite-site' ) }
+						</Link>
 					</>
 				) }
 			</Text>
@@ -216,30 +251,8 @@ export const RssEntriesApp = ( { tabbedNavigation, isActive = true, canManageFee
 	}
 
 	return (
-		<div className="wrap">
-			<Page
-				subTitle={ __( 'Review, edit and remove the posts imported from RSS feeds.', 'newspack-lite-site' ) }
-				tabbedNavigation={ tabbedNavigation }
-				breadcrumbItems={ [
-					{ label: 'Lite Site' },
-					{ label: __( 'RSS', 'newspack-lite-site' ) },
-					{
-						label: __( 'Entries', 'newspack-lite-site' ),
-						count: showCount ? totalItems : undefined,
-						countLabel: showCount ? countLabel( totalItems, formatCount( totalItems ) ) : undefined,
-					},
-				] }
-				actions={
-					showCount &&
-					addUrl && (
-						<Button variant="primary" href={ addUrl }>
-							{ __( 'Add RSS Entry', 'newspack-lite-site' ) }
-						</Button>
-					)
-				}
-			>
-				<div className="newspack-lite-rss-sections">{ content }</div>
-			</Page>
+		<>
+			<div className="newspack-lite-rss-sections">{ content }</div>
 			{ notice && (
 				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>
 					<Snackbar
@@ -252,6 +265,6 @@ export const RssEntriesApp = ( { tabbedNavigation, isActive = true, canManageFee
 					</Snackbar>
 				</div>
 			) }
-		</div>
+		</>
 	);
 };
