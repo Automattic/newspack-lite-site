@@ -555,6 +555,29 @@ class Lite_Site_Settings {
 	}
 
 	/**
+	 * Read the result of an action forwarded from another screen, such as trashing an entry in the editor.
+	 *
+	 * Core strips these args from the address bar before scripts run, so the page gets them from here.
+	 *
+	 * @param array $query Request query args.
+	 * @return array|null The action (trash, restore or delete), the number of entries, and their IDs.
+	 */
+	public static function get_forwarded_result( array $query ): ?array {
+		$ids = isset( $query['ids'] ) && is_scalar( $query['ids'] ) ? array_values( array_filter( array_map( 'absint', explode( ',', (string) $query['ids'] ) ) ) ) : [];
+		foreach ( array_combine( self::FORWARDED_LEGACY_COUNTS, [ 'trash', 'restore', 'delete' ] ) as $key => $action ) {
+			$count = isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) ? absint( $query[ $key ] ) : 0;
+			if ( $count > 0 ) {
+				return [
+					'action' => $action,
+					'count'  => $ids ? count( $ids ) : $count,
+					'ids'    => $ids,
+				];
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Bootstrap data for the RSS Entries page.
 	 *
 	 * @return array
@@ -596,6 +619,7 @@ class Lite_Site_Settings {
 			'addUrl'      => current_user_can( get_post_type_object( Post_Type::POST_TYPE )->cap->create_posts ) ? admin_url( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) : '',
 			'importUrl'   => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) : '',
 			'liteEnabled' => (bool) Lite_Site::is_enabled(),
+			'result'      => self::get_forwarded_result( wp_unslash( $_GET ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice data.
 		];
 	}
 

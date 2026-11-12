@@ -67,6 +67,35 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The forwarded result becomes the action, count and IDs the page confirms.
+	 */
+	public function test_get_forwarded_result() {
+		$this->assertSame(
+			[
+				'action' => 'trash',
+				'count'  => 2,
+				'ids'    => [ 12, 34 ],
+			],
+			Lite_Site_Settings::get_forwarded_result(
+				[
+					'trashed' => '1',
+					'ids'     => '12,abc,34',
+				]
+			)
+		);
+		$this->assertSame(
+			[
+				'action' => 'delete',
+				'count'  => 3,
+				'ids'    => [],
+			],
+			Lite_Site_Settings::get_forwarded_result( [ 'deleted' => '3' ] )
+		);
+		$this->assertNull( Lite_Site_Settings::get_forwarded_result( [ 'trashed' => [ '1' ] ] ) );
+		$this->assertNull( Lite_Site_Settings::get_forwarded_result( [ 'ids' => '12' ] ) );
+	}
+
+	/**
 	 * Plain GET requests are redirected; real actions and other methods are not.
 	 *
 	 * @dataProvider redirect_requests

@@ -27,46 +27,13 @@ import { InlineFiltersDataViews } from '../components/InlineFiltersDataViews';
 import { DeleteEntriesModal } from '../components/DeleteEntriesModal';
 import { DEFAULT_VIEW, getEntryFields } from '../utils/entries-dataview';
 import { formatCount } from '../utils/format-count';
-import { type EntryMutation, type RssEntry } from '../types/rss-entries';
+import { type RssEntry } from '../types/rss-entries';
 
 const countLabel = ( count: number, formatted: string ) =>
 	/* translators: %s: number of RSS entries. */
 	sprintf( _n( '%s RSS entry', '%s RSS entries', count, 'newspack-lite-site' ), formatted );
 
 const rssEntries = window.newspackLiteSite?.rssEntries;
-
-const RESULT_ARGS: Record< string, EntryMutation > = { trashed: 'trash', untrashed: 'restore', deleted: 'delete' };
-
-/**
- * Read the result of an action taken on another screen, such as trashing an entry in the editor.
- */
-function getForwardedResult(): { mutation: EntryMutation; count: number; ids: number[] } | null {
-	const params = new URLSearchParams( window.location.search );
-	const ids = ( params.get( 'ids' ) ?? '' )
-		.split( ',' )
-		.map( Number )
-		.filter( id => Number.isInteger( id ) && id > 0 );
-
-	for ( const [ key, mutation ] of Object.entries( RESULT_ARGS ) ) {
-		const count = parseInt( params.get( key ) ?? '', 10 );
-		if ( count > 0 ) {
-			return { mutation, count: ids.length || count, ids };
-		}
-	}
-	return null;
-}
-
-/**
- * Remove the forwarded result from the URL, so reloading the page doesn't repeat its notice.
- */
-function clearForwardedResult() {
-	const url = new URL( window.location.href );
-	const keys = [ ...Object.keys( RESULT_ARGS ), 'ids' ];
-	if ( keys.some( key => url.searchParams.has( key ) ) ) {
-		keys.forEach( key => url.searchParams.delete( key ) );
-		window.history.replaceState( window.history.state, '', url.toString() );
-	}
-}
 
 function getInitialView(): View {
 	const params = new URLSearchParams( window.location.search );
@@ -97,18 +64,17 @@ export const RssEntriesApp = () => {
 		view,
 		setPage
 	);
-	const forwardedResult = useRef( getForwardedResult() );
+	const forwardedResult = useRef( rssEntries?.result ?? null );
 
 	useEffect( () => {
 		const result = forwardedResult.current;
 		forwardedResult.current = null;
-		clearForwardedResult();
 		if ( ! result ) {
 			return;
 		}
-		const canUndo = 'trash' === result.mutation && result.ids.length > 0;
+		const canUndo = 'trash' === result.action && result.ids.length > 0;
 		showNotice(
-			getMutationMessage( result.mutation, result.count ),
+			getMutationMessage( result.action, result.count ),
 			'success',
 			canUndo
 				? [
