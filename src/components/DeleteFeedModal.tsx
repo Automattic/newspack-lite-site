@@ -1,41 +1,51 @@
 /**
- * Delete feed confirmation modal component.
+ * Delete RSS feed confirmation modal component.
  */
 
 /**
  * WordPress dependencies.
  */
+import { useState } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { type RenderModalProps } from '@wordpress/dataviews';
 
 /**
  * Internal dependencies.
  */
-import { type FeedModalProps } from '../types/rss-feed-import';
+import { type Feed } from '../types/rss-feed-import';
 
 /**
  * Confirmation modal shown before deleting an RSS feed.
  *
- * Warns that the deletion is irreversible, then offers Cancel and Delete buttons.
+ * Explains that imports stop and existing entries stay, then offers Cancel and Delete buttons.
  */
-export const DeleteFeedModal = ( { items, closeModal, onActionPerformed, onAction }: FeedModalProps ) => {
-	const item = items[ 0 ];
+export const DeleteFeedModal = ( {
+	items,
+	closeModal,
+	onActionPerformed,
+	onConfirm,
+}: RenderModalProps< Feed > & { onConfirm: ( items: Feed[] ) => Promise< boolean > } ) => {
+	const [ isDeleting, setIsDeleting ] = useState( false );
 
 	return (
 		<>
 			<p>{ __( 'Delete this RSS feed? It stops importing, and the entries it already imported stay on the site.', 'newspack-lite-site' ) }</p>
 			<p>
-				<strong>{ item.feed_url }</strong>
+				<strong>{ items[ 0 ].feed_url }</strong>
 			</p>
 			<div className="newspack-lite-modal-actions">
-				<Button variant="secondary" onClick={ () => closeModal?.() }>
+				<Button variant="secondary" onClick={ () => closeModal?.() } disabled={ isDeleting }>
 					{ __( 'Cancel', 'newspack-lite-site' ) }
 				</Button>
 				<Button
 					variant="primary"
 					isDestructive
-					onClick={ () => {
-						onAction( item.id, 'delete' );
+					isBusy={ isDeleting }
+					disabled={ isDeleting }
+					onClick={ async () => {
+						setIsDeleting( true );
+						await onConfirm( items );
 						onActionPerformed?.( items );
 						closeModal?.();
 					} }

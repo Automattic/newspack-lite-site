@@ -83,5 +83,6 @@ export interface SettingsSection {
  */
 export interface PanelProps {
 	settings: SiteSettings | null;
+	savedSettings: SiteSettings | null;
 	onChange: ( partial: Partial< SiteSettings > ) => void;
 }

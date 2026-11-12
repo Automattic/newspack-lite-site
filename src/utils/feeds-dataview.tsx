@@ -1,24 +1,24 @@
 /**
- * DataViews configuration for the RSS Feed Import feeds table.
+ * DataViews configuration for the RSS Feeds feeds table.
  */
 
 /**
  * WordPress dependencies.
  */
 import { __ } from '@wordpress/i18n';
-import { Stack } from '@wordpress/ui';
-
-/**
- * External dependencies.
- */
-import StatusIndicator from 'newspack-components/dist/esm/status-indicator';
-import InfoButton from 'newspack-components/dist/esm/info-button';
+import { Icon, error } from '@wordpress/icons';
+import { Badge, Stack } from '@wordpress/ui';
+import { type Field } from '@wordpress/dataviews';
 
 /**
  * Internal dependencies.
  */
 import { type Feed } from '../types/rss-feed-import';
 import { formatLastResult, formatUnixTimestamp } from './formatters';
+import { UserRow } from '../components/UserRow';
+
+const intervals = window.newspackLiteSite?.intervals ?? [];
+const authors = window.newspackLiteSite?.authors ?? [];
 
 /**
  * Default view configuration for the DataViews feeds table.
@@ -28,7 +28,8 @@ export const DEFAULT_VIEW = {
 	perPage: 10,
 	page: 1,
 	sort: { field: 'feed_url', direction: 'asc' as const },
-	fields: [ 'feed_url', 'status', 'interval_label', 'author_name', 'last_run', 'next_run' ],
+	titleField: 'feed_url',
+	fields: [ 'status', 'interval', 'author_id', 'last_run', 'next_run' ],
 	filters: [],
 	search: '',
 };
@@ -36,13 +37,13 @@ export const DEFAULT_VIEW = {
 /**
  * Field definitions for the DataViews RSS feeds table.
  */
-export const FEED_FIELDS = [
+export const FEED_FIELDS: Field< Feed >[] = [
 	{
 		id: 'feed_url',
-		label: __( 'RSS Feed URL', 'newspack-lite-site' ),
+		label: __( 'RSS Feed', 'newspack-lite-site' ),
 		enableSorting: true,
 		enableGlobalSearch: true,
-		render: ( { item }: { item: Feed } ) => (
+		render: ( { item } ) => (
 			<strong className="newspack-lite-feed-url" title={ item.feed_url }>
 				{ item.feed_url }
 			</strong>
@@ -52,30 +53,50 @@ export const FEED_FIELDS = [
 		id: 'status',
 		label: __( 'Status', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) => (
-			<StatusIndicator status={ 'active' === item.status ? 'active' : 'draft' }>
-				{ 'active' === item.status ? __( 'Active', 'newspack-lite-site' ) : __( 'Paused', 'newspack-lite-site' ) }
-			</StatusIndicator>
-		),
+		elements: [
+			{ value: 'active', label: __( 'Active', 'newspack-lite-site' ) },
+			{ value: 'paused', label: __( 'Inactive', 'newspack-lite-site' ) },
+		],
+		filterBy: { operators: [ 'isAny' ], isPrimary: true },
+		getValue: ( { item } ) => item.status,
+		render: ( { item } ) =>
+			'active' === item.status ? (
+				<Badge intent="stable">{ __( 'Active', 'newspack-lite-site' ) }</Badge>
+			) : (
+				<Badge intent="draft">{ __( 'Inactive', 'newspack-lite-site' ) }</Badge>
+			),
 	},
 	{
-		id: 'interval_label',
+		id: 'interval',
 		label: __( 'Frequency', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) => item.interval_label,
+		elements: intervals,
+		filterBy: { operators: [ 'isAny' ], isPrimary: true },
+		getValue: ( { item } ) => item.interval,
+		render: ( { item } ) => item.interval_label,
+	},
+	{
+		id: 'author_id',
+		label: __( 'Author', 'newspack-lite-site' ),
+		enableSorting: true,
+		elements: authors,
+		filterBy: { operators: [ 'isAny' ], isPrimary: true },
+		getValue: ( { item } ) => String( item.author_id ),
+		render: ( { item } ) => ( item.author_name ? <UserRow label={ item.author_name } avatarUrls={ item.author_avatar_urls } /> : '—' ),
 	},
 	{
 		id: 'author_name',
-		label: __( 'Author', 'newspack-lite-site' ),
-		enableSorting: true,
+		label: __( 'Author Name', 'newspack-lite-site' ),
+		enableSorting: false,
+		enableHiding: false,
 		enableGlobalSearch: true,
-		render: ( { item }: { item: Feed } ) => item.author_name || '—',
+		getValue: ( { item } ) => item.author_name,
 	},
 	{
 		id: 'last_run',
 		label: __( 'Last Run', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) => {
+		render: ( { item } ) => {
 			if ( ! item.last_run ) {
 				return <em>{ __( 'Never', 'newspack-lite-site' ) }</em>;
 			}
@@ -86,14 +107,14 @@ export const FEED_FIELDS = [
 						<Stack
 							render={ <span /> }
 							direction="row"
-							align="center"
+							align="flex-start"
 							gap="xs"
 							className={ `newspack-lite-feed-result${ item.last_result.error ? ' newspack-lite-feed-result--error' : '' }` }
 						>
-							{ formatLastResult( item.last_result ) }
-							{ item.last_result.detail && (
-								<InfoButton description={ item.last_result.detail } triggerLabel={ __( 'Error details', 'newspack-lite-site' ) } />
+							{ item.last_result.error && (
+								<Icon className="newspack-lite-feed-result__icon" icon={ error } size={ 20 } aria-hidden="true" />
 							) }
+							{ formatLastResult( item.last_result ) }
 						</Stack>
 					) }
 				</span>
@@ -104,7 +125,6 @@ export const FEED_FIELDS = [
 		id: 'next_run',
 		label: __( 'Next Run', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) =>
-			item.next_run ? <span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.next_run ) }</span> : '—',
+		render: ( { item } ) => ( item.next_run ? <span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.next_run ) }</span> : '—' ),
 	},
 ];

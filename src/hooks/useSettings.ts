@@ -119,6 +119,7 @@ export function useSettings() {
 
 	return {
 		settings,
+		savedSettings,
 		updateSettings,
 		isLoading,
 		isSaving,

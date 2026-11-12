@@ -6,9 +6,10 @@
  * WordPress dependencies.
  */
 import { Fragment } from '@wordpress/element';
-import { CheckboxControl } from '@wordpress/components';
+import { Button, CheckboxControl } from '@wordpress/components';
 import { DataForm, type Field } from '@wordpress/dataviews';
 import { Stack } from '@wordpress/ui';
+import { __ } from '@wordpress/i18n';
 
 /**
  * External dependencies.
@@ -30,21 +31,24 @@ import { type SettingsSection, type SiteSettings } from '../types/settings';
  * Boolean fields render as a bare CheckboxControl, since the DataForm field wrapper
  * adds a minimum height that leaves a gap below a checkbox.
  *
- * @param {Object}   props          Component props.
- * @param {Array}    props.sections Sections to render, in order.
- * @param {Array}    props.fields   DataForm field definitions the sections draw from.
- * @param {Object}   props.settings Current settings.
- * @param {Function} props.onChange Called with the changed settings.
+ * @param {Object}   props               Component props.
+ * @param {Array}    props.sections      Sections to render, in order.
+ * @param {Array}    props.fields        DataForm field definitions the sections draw from.
+ * @param {Object}   props.settings      Current settings.
+ * @param {Object}   props.savedSettings Last saved settings, used for the Lite Site preview link.
+ * @param {Function} props.onChange      Called with the changed settings.
  */
 export const SettingsSections = ( {
 	sections,
 	fields,
 	settings,
+	savedSettings,
 	onChange,
 }: {
 	sections: SettingsSection[];
 	fields: Field< SiteSettings >[];
 	settings: SiteSettings;
+	savedSettings?: SiteSettings | null;
 	onChange: ( partial: Partial< SiteSettings > ) => void;
 } ) => (
 	<div>
@@ -68,7 +72,7 @@ export const SettingsSections = ( {
 									/>
 								);
 							}
-							return (
+							const dataForm = (
 								<DataForm
 									key={ fieldId }
 									data={ settings }
@@ -77,6 +81,29 @@ export const SettingsSections = ( {
 									onChange={ partial => onChange( partial as Partial< SiteSettings > ) }
 								/>
 							);
+							if ( 'url_base' === fieldId ) {
+								const liteSiteUrl = `${ window.newspackLiteSite?.homeUrl ?? `${ window.location.origin }/` }${ savedSettings?.url_base || 'lite' }/`;
+								const canView = !! savedSettings?.enabled;
+								return (
+									<Stack key={ fieldId } direction="row" gap="sm" align="flex-start">
+										<div className="newspack-lite-path-field__input">{ dataForm }</div>
+										<div className="newspack-lite-path-field__link">
+											<Button
+												variant="secondary"
+												href={ canView ? liteSiteUrl : undefined }
+												target="_blank"
+												rel="noopener"
+												disabled={ ! canView }
+												accessibleWhenDisabled
+												__next40pxDefaultSize
+											>
+												{ __( 'View Lite Site', 'newspack-lite-site' ) }
+											</Button>
+										</div>
+									</Stack>
+								);
+							}
+							return dataForm;
 						} ) }
 					</Stack>
 				</Grid>

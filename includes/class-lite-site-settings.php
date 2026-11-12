@@ -205,7 +205,7 @@ class Lite_Site_Settings {
 	/**
 	 * Enqueue admin scripts for the plugin's admin pages.
 	 *
-	 * A single JS bundle loads on the Settings, RSS Entries and RSS Feed Import pages.
+	 * A single JS bundle loads on the Settings, RSS Entries and RSS Feeds pages.
 	 * Bootstrap data for all three, including the interval labels, is passed in one
 	 * wp_localize_script call.
 	 *
@@ -287,7 +287,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Register the top-level Lite Site menu and its Settings and RSS Feed Import subpages.
+	 * Register the top-level Lite Site menu and its Settings and RSS Feeds subpages.
 	 */
 	public static function add_menu_page() {
 		add_menu_page(
@@ -300,11 +300,11 @@ class Lite_Site_Settings {
 			26
 		);
 
-		// RSS Feed Import: manage scheduled RSS feeds that pull external content.
+		// RSS Feeds: manage scheduled RSS feeds that pull external content.
 		add_submenu_page(
 			'newspack-lite-site',
-			__( 'RSS Feed Import', 'newspack-lite-site' ),
-			__( 'RSS Feed Import', 'newspack-lite-site' ),
+			__( 'RSS Feeds', 'newspack-lite-site' ),
+			__( 'RSS Feeds', 'newspack-lite-site' ),
 			'manage_options',
 			'newspack-lite-site-rss-import',
 			[ __CLASS__, 'render_import_page' ]
@@ -423,7 +423,7 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Render the RSS Feed Import page.
+	 * Render the RSS Feeds page.
 	 *
 	 * Mount point for the React RSS import app.
 	 */

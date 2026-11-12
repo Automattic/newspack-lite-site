@@ -67,7 +67,7 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Register REST API routes for the RSS Feed Import admin UI.
+	 * Register REST API routes for the RSS Feeds admin UI.
 	 */
 	public static function register_rest_routes() {
 		$namespace = 'newspack-lite-site/v1';
@@ -101,6 +101,35 @@ class RSS_Importer {
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			$namespace,
+			'/rss-feeds/(?P<id>[a-f0-9]{32})',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ __CLASS__, 'rest_update_feed' ],
+				'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
+				'args'                => [
+					'id'        => [
+						'type'              => 'string',
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_key',
+					],
+					'interval'  => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_key',
+					],
+					'author_id' => [
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					],
+					'status'    => [
+						'type' => 'string',
+						'enum' => [ 'active', 'paused' ],
 					],
 				],
 			]
@@ -145,17 +174,34 @@ class RSS_Importer {
 		$author          = get_userdata( (int) ( $feed['author_id'] ?? 0 ) );
 
 		return [
-			'id'             => $feed_id,
-			'feed_url'       => $feed['feed_url'],
-			'interval'       => $feed['interval'],
-			'interval_label' => $interval_labels[ $feed['interval'] ] ?? $feed['interval'],
-			'author_id'      => (int) ( $feed['author_id'] ?? 0 ),
-			'author_name'    => $author ? $author->display_name : '',
-			'status'         => $feed['status'],
-			'last_run'       => $feed['last_run'],
-			'last_result'    => $feed['last_result'],
-			'next_run'       => $next_run ? $next_run : null,
+			'id'                 => $feed_id,
+			'feed_url'           => $feed['feed_url'],
+			'interval'           => $feed['interval'],
+			'interval_label'     => $interval_labels[ $feed['interval'] ] ?? $feed['interval'],
+			'author_id'          => (int) ( $feed['author_id'] ?? 0 ),
+			'author_name'        => $author ? $author->display_name : '',
+			'author_avatar_urls' => $author ? Post_Type::get_user_avatar_urls( $author->ID ) : [],
+			'status'             => $feed['status'],
+			'last_run'           => $feed['last_run'],
+			'last_result'        => $feed['last_result'],
+			'next_run'           => $next_run ? $next_run : null,
 		];
+	}
+
+	/**
+	 * Build the REST response containing the full list of RSS feeds.
+	 *
+	 * @param array $feeds RSS feeds keyed by feed ID.
+	 * @return \WP_REST_Response
+	 */
+	private static function rest_feeds_response( $feeds ) {
+		$data = [];
+
+		foreach ( $feeds as $feed_id => $feed ) {
+			$data[] = self::build_rest_feed( $feed_id, $feed );
+		}
+
+		return rest_ensure_response( $data );
 	}
 
 	/**
@@ -167,14 +213,7 @@ class RSS_Importer {
 	 * @return \WP_REST_Response
 	 */
 	public static function rest_get_feeds() {
-		$feeds = self::get_feeds();
-		$data  = [];
-
-		foreach ( $feeds as $feed_id => $feed ) {
-			$data[] = self::build_rest_feed( $feed_id, $feed );
-		}
-
-		return rest_ensure_response( $data );
+		return self::rest_feeds_response( self::get_feeds() );
 	}
 
 	/**
@@ -253,12 +292,106 @@ class RSS_Importer {
 
 		self::save_feeds( $feeds );
 
-		$data = [];
-		foreach ( $feeds as $id => $feed ) {
-			$data[] = self::build_rest_feed( $id, $feed );
+		return self::rest_feeds_response( $feeds );
+	}
+
+	/**
+	 * Update a feed's interval, author and status.
+	 *
+	 * Only the fields present in the request are validated and changed. The URL is
+	 * the feed's identity and cannot be edited. Scheduling follows the change: pausing
+	 * clears the cron event, resuming schedules a fresh one, and changing the interval
+	 * of an active feed keeps its next run time so no import is triggered early.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function rest_update_feed( $request ) {
+		$params  = $request->get_params();
+		$feed_id = $params['id'] ?? '';
+		$feeds   = self::get_feeds();
+
+		if ( empty( $feed_id ) || ! isset( $feeds[ $feed_id ] ) ) {
+			return new \WP_Error(
+				'feed_not_found',
+				__( 'Feed not found.', 'newspack-lite-site' ),
+				[ 'status' => 404 ]
+			);
 		}
 
-		return rest_ensure_response( $data );
+		$feed         = $feeds[ $feed_id ];
+		$was_active   = 'active' === $feed['status'];
+		$old_interval = $feed['interval'];
+
+		if ( isset( $params['author_id'] ) ) {
+			$author_id = $params['author_id'];
+
+			if ( ! $author_id || ! user_can( $author_id, 'publish_posts' ) ) {
+				return new \WP_Error(
+					'invalid_author',
+					__( 'Please select a valid author.', 'newspack-lite-site' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			$feed['author_id'] = $author_id;
+		}
+
+		if ( isset( $params['interval'] ) ) {
+			if ( ! array_key_exists( $params['interval'], self::get_interval_labels() ) ) {
+				return new \WP_Error(
+					'invalid_interval',
+					__( 'Choose how often to import this RSS feed.', 'newspack-lite-site' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			$feed['interval'] = $params['interval'];
+		}
+
+		if ( isset( $params['status'] ) ) {
+			$feed['status'] = $params['status'];
+		}
+
+		$is_active = 'active' === $feed['status'];
+
+		if ( $was_active && ! $is_active ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+		} elseif ( ! $was_active && $is_active ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+
+			if ( false === wp_schedule_event( time(), $feed['interval'], self::CRON_HOOK, [ $feed_id ] ) ) {
+				$feed['status']    = 'paused';
+				$feeds[ $feed_id ] = $feed;
+				self::save_feeds( $feeds );
+
+				return new \WP_Error(
+					'schedule_failed',
+					__( 'Failed to resume the RSS feed.', 'newspack-lite-site' ),
+					[ 'status' => 500 ]
+				);
+			}
+		} elseif ( $is_active && $feed['interval'] !== $old_interval ) {
+			$next_run = wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] );
+			$next_run = $next_run ? $next_run : time();
+
+			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+
+			if ( false === wp_schedule_event( $next_run, $feed['interval'], self::CRON_HOOK, [ $feed_id ] ) ) {
+				wp_schedule_event( $next_run, $old_interval, self::CRON_HOOK, [ $feed_id ] );
+
+				return new \WP_Error(
+					'schedule_failed',
+					__( 'Failed to update the RSS feed.', 'newspack-lite-site' ),
+					[ 'status' => 500 ]
+				);
+			}
+		}
+
+		$feeds[ $feed_id ] = $feed;
+		self::save_feeds( $feeds );
+
+		return self::rest_feeds_response( $feeds );
 	}
 
 	/**
@@ -315,12 +448,7 @@ class RSS_Importer {
 
 		self::save_feeds( $feeds );
 
-		$data = [];
-		foreach ( $feeds as $id => $feed ) {
-			$data[] = self::build_rest_feed( $id, $feed );
-		}
-
-		return rest_ensure_response( $data );
+		return self::rest_feeds_response( $feeds );
 	}
 
 	/**
@@ -474,7 +602,7 @@ class RSS_Importer {
 		}
 
 		if ( ! $author_id || ! user_can( $author_id, 'publish_posts' ) ) {
-			return new \WP_Error( 'invalid_author', __( 'The author set for this feed can no longer publish posts. Delete the feed and add it again with another author.', 'newspack-lite-site' ) );
+			return new \WP_Error( 'invalid_author', __( 'The author set for this feed can no longer publish posts. Edit the feed to choose another author.', 'newspack-lite-site' ) );
 		}
 
 		add_filter( 'pre_http_request', [ __CLASS__, 'block_ssrf_request' ], 10, 3 );
@@ -488,7 +616,7 @@ class RSS_Importer {
 			if ( is_wp_error( $feed ) ) {
 				return new \WP_Error(
 					'feed_error',
-					__( "Couldn't reach this RSS feed. Check that the URL opens in a browser, then wait for the next run.", 'newspack-lite-site' ),
+					__( "Couldn't reach this RSS feed.", 'newspack-lite-site' ),
 					$feed->get_error_message()
 				);
 			}
