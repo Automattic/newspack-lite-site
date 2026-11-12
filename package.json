@@ -44,7 +44,8 @@
 	},
 	"dependencies": {
 		"@wordpress/dataviews": "^22.0.0",
-		"newspack-components": "~4.11.0",
+		"@wordpress/ui": "^0.26.0",
+		"newspack-components": "~4.12.1",
 		"react-router-dom": "^5.3.4"
 	},
 	"devDependencies": {
@@ -54,6 +55,7 @@
 		"@wordpress/data": "^10.57.0",
 		"@wordpress/date": "^5.57.0",
 		"@wordpress/element": "^8.7.0",
+		"@wordpress/html-entities": "^4.55.0",
 		"@wordpress/i18n": "^6.30.0",
 		"@wordpress/icons": "^16.0.0",
 		"newspack-scripts": "^5.12.0"
@@ -82,6 +84,7 @@
 			"@wordpress/i18n": "$@wordpress/i18n",
 			"@wordpress/icons": "$@wordpress/icons",
 			"@wordpress/keycodes": "^4.55.0",
+			"newspack-icons": "~1.2.0",
 			"@wordpress/url": "^4.55.0"
 		}
 	}

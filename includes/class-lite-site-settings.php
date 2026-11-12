@@ -20,16 +20,52 @@ class Lite_Site_Settings {
 	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
+	 * Slug of the hidden RSS Entries admin page.
+	 */
+	const ENTRIES_PAGE_SLUG = 'newspack-lite-site-rss-entries';
+
+	/**
+	 * Hook suffix of the hidden RSS Entries admin page.
+	 */
+	const ENTRIES_HOOK_SUFFIX = 'admin_page_newspack-lite-site-rss-entries';
+
+	/**
+	 * Hook suffix of the top-level Lite Site page, which is the Settings page.
+	 */
+	const TOPLEVEL_HOOK_SUFFIX = 'toplevel_page_newspack-lite-site';
+
+	/**
+	 * Menu icon: the `feather` glyph from newspack-icons.
+	 */
+	const MENU_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M8.6 18L7.35 19.69C7.32333 19.73 7.29333 19.7667 7.26 19.8C7.22 19.8333 7.18 19.8633 7.14 19.89C7.1 19.9167 7.05667 19.94 7.01 19.96C6.96333 19.9733 6.91333 19.9833 6.86 19.99C6.81333 19.9967 6.76667 20 6.72 20C6.66667 20 6.61667 19.9933 6.57 19.98C6.52333 19.9667 6.47667 19.95 6.43 19.93C6.39 19.91 6.35 19.8833 6.31 19.85C6.27 19.8233 6.23333 19.7933 6.2 19.76C6.16667 19.72 6.13667 19.68 6.11 19.64C6.08333 19.6 6.06 19.5567 6.04 19.51C6.02667 19.4633 6.01667 19.4133 6.01 19.36C6.00333 19.3133 6 19.2667 6 19.22C6 19.1667 6.00667 19.1167 6.02 19.07C6.03333 19.0233 6.05 18.9767 6.07 18.93C6.09 18.89 6.11667 18.85 6.15 18.81L7.39 17.12C7.32333 16.7733 7.28333 16.4033 7.27 16.01C7.25667 15.4633 7.29 14.8933 7.37 14.3C7.56333 12.9667 7.98667 11.6933 8.64 10.48C9.40667 9.05333 10.4367 7.83 11.73 6.81C13.21 5.64333 14.98 4.78667 17.04 4.24L17.94 4L17.98 4.93C18.08 7.05667 17.7933 9.00333 17.12 10.77C16.5333 12.31 15.6767 13.6567 14.55 14.81C13.59 15.7967 12.5 16.5833 11.28 17.17C10.7467 17.43 10.2133 17.6333 9.68 17.78C9.3 17.8867 8.94 17.96 8.6 18ZM8.86 14.49C9.43333 13.63 10.0867 12.7733 10.82 11.92C11.7 10.9067 12.6167 9.98667 13.57 9.16C14.53 8.33333 15.4867 7.64667 16.44 7.1C16.4733 6.72667 16.4933 6.34667 16.5 5.96C15.0333 6.44667 13.7533 7.12333 12.66 7.99C11.5267 8.88333 10.6267 9.95 9.96 11.19C9.39333 12.2367 9.02667 13.3367 8.86 14.49ZM16.08 9.1C15.5733 9.46 15.0633 9.86 14.55 10.3C13.65 11.0733 12.7867 11.94 11.96 12.9C11.2067 13.7667 10.55 14.6333 9.99 15.5C9.81667 15.7667 9.66 16.02 9.52 16.26C9.88667 16.1467 10.2567 16 10.63 15.82C11.69 15.3133 12.64 14.63 13.48 13.77C14.46 12.7567 15.2067 11.58 15.72 10.24C15.86 9.86667 15.98 9.48667 16.08 9.1Z"/></svg>';
+
+	/**
+	 * Legacy list table query args forwarded to the RSS Entries page.
+	 */
+	const FORWARDED_LEGACY_ARGS = [ 'post_status', 's', 'author' ];
+
+	/**
+	 * Legacy list table result counts forwarded to the RSS Entries page, such as after trashing from the editor.
+	 */
+	const FORWARDED_LEGACY_COUNTS = [ 'trashed', 'untrashed', 'deleted' ];
+
+	/**
 	 * Initialize the settings functionality.
 	 */
 	public static function init() {
 		add_action( 'admin_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'rest_api_init', [ __CLASS__, 'register_settings' ] );
 		add_action( 'admin_menu', [ __CLASS__, 'add_menu_page' ] );
+		add_filter( 'custom_menu_order', '__return_true' );
+		add_filter( 'menu_order', [ __CLASS__, 'menu_order' ], 12 );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_styles' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
 		add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_link' ], 100 );
 		add_filter( 'admin_body_class', [ __CLASS__, 'admin_header_body_class' ] );
+		add_action( 'current_screen', [ __CLASS__, 'maybe_redirect_legacy_entries_list' ] );
+		add_action( 'current_screen', [ __CLASS__, 'set_title_for_entries_page' ] );
+		add_filter( 'parent_file', [ __CLASS__, 'filter_entries_parent_file' ] );
+		add_filter( 'submenu_file', [ __CLASS__, 'filter_entries_submenu_file' ] );
 		add_action( 'updated_option', [ __CLASS__, 'handle_updated_option' ], 10, 3 );
 		add_action( 'added_option', [ __CLASS__, 'handle_added_option' ], 10, 2 );
 	}
@@ -169,9 +205,9 @@ class Lite_Site_Settings {
 	/**
 	 * Enqueue admin scripts for the plugin's admin pages.
 	 *
-	 * A single JS bundle loads on both the Settings and RSS Feed Import pages.
-	 * Bootstrap data for both sections is passed in one wp_localize_script call.
-	 * Static config (e.g. interval labels) is defined in JS.
+	 * A single JS bundle loads on the Settings, RSS Entries and RSS Feed Import pages.
+	 * Bootstrap data for all three, including the interval labels, is passed in one
+	 * wp_localize_script call.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
@@ -208,7 +244,9 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			'newspackLiteSite',
 			[
+				'rssEntries'   => self::ENTRIES_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
 				'defaultColor' => $default_color,
+				'homeUrl'      => home_url( '/' ),
 				'categories'   => array_values(
 					array_map(
 						fn( $cat ) => [
@@ -252,14 +290,13 @@ class Lite_Site_Settings {
 	 * Register the top-level Lite Site menu and its Settings and RSS Feed Import subpages.
 	 */
 	public static function add_menu_page() {
-		// Top-level "Lite Site" menu entry in the WP admin sidebar.
 		add_menu_page(
-			__( 'Lite Site', 'newspack-lite-site' ),
-			__( 'Lite Site', 'newspack-lite-site' ),
+			'Lite Site',
+			'Lite Site',
 			'manage_options',
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ],
-			'dashicons-admin-site',
+			'data:image/svg+xml;base64,' . base64_encode( self::MENU_ICON_SVG ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			26
 		);
 
@@ -282,10 +319,60 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			[ __CLASS__, 'render_settings_page' ]
 		);
+
+		self::register_entries_page();
 	}
 
 	/**
-	 * Add a "View Lite Site" link to the admin toolbar on the Lite Site settings screen.
+	 * Register the hidden RSS Entries page.
+	 *
+	 * It is added under the Lite Site menu and then removed from it, rather than
+	 * registered with an empty parent, because core resets the parent file to an
+	 * empty string for pages that live under an empty parent, which stops the
+	 * Lite Site menu from highlighting.
+	 */
+	private static function register_entries_page() {
+		global $_registered_pages;
+
+		$post_type = get_post_type_object( Post_Type::POST_TYPE );
+		if ( ! $post_type ) {
+			return;
+		}
+
+		add_submenu_page(
+			'newspack-lite-site',
+			__( 'RSS Entries', 'newspack-lite-site' ),
+			__( 'RSS Entries', 'newspack-lite-site' ),
+			$post_type->cap->edit_posts,
+			self::ENTRIES_PAGE_SLUG,
+			[ __CLASS__, 'render_entries_page' ]
+		);
+		remove_submenu_page( 'newspack-lite-site', self::ENTRIES_PAGE_SLUG );
+
+		add_action( self::ENTRIES_HOOK_SUFFIX, [ __CLASS__, 'render_entries_page' ] );
+		$_registered_pages[ self::ENTRIES_HOOK_SUFFIX ] = true; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	}
+
+	/**
+	 * Place the Lite Site menu directly below Newspack Network when it is present.
+	 *
+	 * @param string[] $menu_order Ordered top-level menu slugs.
+	 * @return string[]
+	 */
+	public static function menu_order( array $menu_order ): array {
+		$anchor = array_search( 'newspack-network', $menu_order, true );
+		$own    = array_search( 'newspack-lite-site', $menu_order, true );
+		if ( false === $anchor || false === $own ) {
+			return $menu_order;
+		}
+		array_splice( $menu_order, $own, 1 );
+		$anchor = array_search( 'newspack-network', $menu_order, true );
+		array_splice( $menu_order, $anchor + 1, 0, 'newspack-lite-site' );
+		return $menu_order;
+	}
+
+	/**
+	 * Add a "View Lite Site" link to the admin toolbar on the Lite Site screens.
 	 *
 	 * @param WP_Admin_Bar $wp_admin_bar The admin bar instance.
 	 */
@@ -295,7 +382,7 @@ class Lite_Site_Settings {
 		}
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || 'toplevel_page_newspack-lite-site' !== $screen->id ) {
+		if ( ! $screen || ! self::is_plugin_admin_page( $screen->id ) ) {
 			return;
 		}
 
@@ -345,6 +432,229 @@ class Lite_Site_Settings {
 	}
 
 	/**
+	 * Render the RSS Entries page.
+	 *
+	 * Mount point for the React RSS entries app.
+	 */
+	public static function render_entries_page() {
+		echo '<div id="newspack-lite-app" data-page="rss-entries"></div>';
+	}
+
+	/**
+	 * Whether the current request is for the hidden RSS Entries page.
+	 *
+	 * @return bool
+	 */
+	private static function is_entries_page_request(): bool {
+		global $plugin_page;
+		return self::ENTRIES_PAGE_SLUG === $plugin_page;
+	}
+
+	/**
+	 * Highlight the Lite Site menu on the hidden RSS Entries page.
+	 *
+	 * @param string $parent_file The parent menu file.
+	 * @return string
+	 */
+	public static function filter_entries_parent_file( $parent_file ) {
+		return self::is_entries_page_request() ? 'newspack-lite-site' : $parent_file;
+	}
+
+	/**
+	 * Highlight the RSS Entries submenu item on the hidden RSS Entries page.
+	 *
+	 * @param string|null $submenu_file The submenu file.
+	 * @return string|null
+	 */
+	public static function filter_entries_submenu_file( $submenu_file ) {
+		return self::is_entries_page_request() ? 'edit.php?post_type=' . Post_Type::POST_TYPE : $submenu_file;
+	}
+
+	/**
+	 * Restore the page title that WP drops for hidden admin pages.
+	 *
+	 * @param \WP_Screen $screen Current screen.
+	 */
+	public static function set_title_for_entries_page( $screen ) {
+		if ( $screen instanceof \WP_Screen && self::ENTRIES_HOOK_SUFFIX === $screen->id ) {
+			$GLOBALS['title'] = __( 'RSS Entries', 'newspack-lite-site' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		}
+	}
+
+	/**
+	 * Redirect the legacy RSS entries list table to the React page.
+	 *
+	 * @param \WP_Screen $screen Current screen.
+	 */
+	public static function maybe_redirect_legacy_entries_list( $screen ) {
+		if ( ! is_admin() || ! $screen instanceof \WP_Screen || 'edit-' . Post_Type::POST_TYPE !== $screen->id ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only nav check.
+		$query  = wp_unslash( $_GET );
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+		if ( ! self::should_redirect_legacy_entries_list( $query, $method ) ) {
+			return;
+		}
+
+		wp_safe_redirect( self::get_entries_redirect_target( $query ) );
+		exit;
+	}
+
+	/**
+	 * Whether a request for the legacy RSS entries list should go to the React page.
+	 *
+	 * Only plain GET requests are redirected. Requests whose action or action2 carry a real
+	 * value, rather than WP's -1 sentinel, are left to the classic screen.
+	 *
+	 * @param array  $query  Request query args.
+	 * @param string $method Request method.
+	 * @return bool
+	 */
+	public static function should_redirect_legacy_entries_list( array $query, string $method ): bool {
+		if ( 'GET' !== strtoupper( $method ) ) {
+			return false;
+		}
+		foreach ( [ 'action', 'action2' ] as $key ) {
+			if ( ! isset( $query[ $key ] ) ) {
+				continue;
+			}
+			if ( ! is_scalar( $query[ $key ] ) || ! in_array( (string) $query[ $key ], [ '', '-1' ], true ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Build the React page URL, forwarding the supported legacy query args.
+	 *
+	 * @param array $query Legacy query args.
+	 * @return string
+	 */
+	public static function get_entries_redirect_target( array $query ): string {
+		$args = [ 'page' => self::ENTRIES_PAGE_SLUG ];
+		foreach ( self::FORWARDED_LEGACY_ARGS as $key ) {
+			if ( isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) && '' !== (string) $query[ $key ] ) {
+				$args[ $key ] = rawurlencode( sanitize_text_field( (string) $query[ $key ] ) );
+			}
+		}
+		foreach ( self::FORWARDED_LEGACY_COUNTS as $key ) {
+			if ( isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) && absint( $query[ $key ] ) > 0 ) {
+				$args[ $key ] = absint( $query[ $key ] );
+			}
+		}
+		if ( isset( $query['ids'] ) && is_scalar( $query['ids'] ) ) {
+			$ids = array_filter( array_map( 'absint', explode( ',', (string) $query['ids'] ) ) );
+			if ( $ids ) {
+				$args['ids'] = implode( ',', $ids );
+			}
+		}
+		return add_query_arg( $args, admin_url( 'admin.php' ) );
+	}
+
+	/**
+	 * Read the result of an action forwarded from another screen, such as trashing an entry in the editor.
+	 *
+	 * Core strips these args from the address bar before scripts run, so the page gets them from here.
+	 *
+	 * @param array $query Request query args.
+	 * @return array|null The action (trash, restore or delete), the number of entries, and their IDs.
+	 */
+	public static function get_forwarded_result( array $query ): ?array {
+		$ids = isset( $query['ids'] ) && is_scalar( $query['ids'] ) ? array_values( array_filter( array_map( 'absint', explode( ',', (string) $query['ids'] ) ) ) ) : [];
+		foreach ( array_combine( self::FORWARDED_LEGACY_COUNTS, [ 'trash', 'restore', 'delete' ] ) as $key => $action ) {
+			$count = isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) ? absint( $query[ $key ] ) : 0;
+			if ( $count > 0 ) {
+				$action_ids = 'trash' === $action ? self::get_trashed_entry_ids( $ids ) : $ids;
+				return [
+					'action' => $action,
+					'count'  => $action_ids ? count( $action_ids ) : $count,
+					'ids'    => $action_ids,
+				];
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Keep only the IDs of RSS entries that are in the trash and that the current user can edit.
+	 *
+	 * @param int[] $ids Candidate post IDs.
+	 * @return int[]
+	 */
+	private static function get_trashed_entry_ids( array $ids ): array {
+		$ids = array_slice( $ids, 0, 100 );
+		if ( ! $ids ) {
+			return [];
+		}
+		$trashed = get_posts(
+			[
+				'post__in'       => $ids,
+				'post_type'      => Post_Type::POST_TYPE,
+				'post_status'    => 'trash',
+				'fields'         => 'ids',
+				'posts_per_page' => count( $ids ),
+				'no_found_rows'  => true,
+				'orderby'        => 'post__in',
+			]
+		);
+		return array_values(
+			array_filter(
+				array_map( 'intval', $trashed ),
+				fn( $id ) => current_user_can( 'edit_post', $id )
+			)
+		);
+	}
+
+	/**
+	 * Bootstrap data for the RSS Entries page.
+	 *
+	 * @return array
+	 */
+	private static function get_rss_entries_data(): array {
+		global $wpdb;
+
+		$feeds = [];
+		foreach ( Post_Type::get_entry_feeds() as $id => $label ) {
+			$feeds[] = [
+				'value' => $id,
+				'label' => $label,
+			];
+		}
+
+		$cache_key = 'entry_tags:' . wp_cache_get_last_changed( 'posts' ) . ':' . wp_cache_get_last_changed( 'terms' );
+		$tags      = wp_cache_get( $cache_key, 'newspack-lite-site' );
+		if ( ! is_array( $tags ) ) {
+			$tags = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$wpdb->prepare(
+					"SELECT DISTINCT t.term_id, t.name FROM {$wpdb->terms} t INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_id = t.term_id INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id WHERE tt.taxonomy = %s AND p.post_type = %s ORDER BY t.name ASC",
+					'post_tag',
+					Post_Type::POST_TYPE
+				)
+			);
+			wp_cache_set( $cache_key, $tags, 'newspack-lite-site' );
+		}
+
+		return [
+			'feeds'       => $feeds,
+			'tags'        => array_map(
+				fn( $tag ) => [
+					'value' => (string) $tag->term_id,
+					'label' => $tag->name,
+				],
+				$tags
+			),
+			'editUrl'     => admin_url( 'post.php' ),
+			'addUrl'      => current_user_can( get_post_type_object( Post_Type::POST_TYPE )->cap->create_posts ) ? admin_url( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) : '',
+			'importUrl'   => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) : '',
+			'liteEnabled' => (bool) Lite_Site::is_enabled(),
+			'result'      => self::get_forwarded_result( wp_unslash( $_GET ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice data.
+		];
+	}
+
+	/**
 	 * Render the Settings page.
 	 *
 	 * Mount point for the React settings app.
@@ -363,8 +673,9 @@ class Lite_Site_Settings {
 		return in_array(
 			$hook,
 			[
-				'toplevel_page_newspack-lite-site',
+				self::TOPLEVEL_HOOK_SUFFIX,
 				'lite-site_page_newspack-lite-site-rss-import',
+				self::ENTRIES_HOOK_SUFFIX,
 			],
 			true 
 		);

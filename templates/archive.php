@@ -75,7 +75,7 @@ $current_page = min( $current_page, $total_pages );
 </head>
 <body>
 	<header class="back">
-		<a href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'View Full-Featured Homepage', 'newspack-lite-site' ); ?></a>
+		<a href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'View full site', 'newspack-lite-site' ); ?></a>
 	</header>
 	<main>
 		<h1><?php bloginfo( 'name' ); ?></h1>
@@ -95,7 +95,7 @@ $current_page = min( $current_page, $total_pages );
 		);
 		if ( $pagination ) :
 			?>
-			<nav class="pagination" aria-label="<?php esc_attr_e( 'Archive pagination', 'newspack-lite-site' ); ?>">
+			<nav class="pagination" aria-label="<?php esc_attr_e( 'Pagination', 'newspack-lite-site' ); ?>">
 				<?php echo wp_kses_post( $pagination ); ?>
 			</nav>
 		<?php endif; ?>

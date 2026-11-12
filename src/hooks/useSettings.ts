@@ -44,7 +44,8 @@ function getDefaultSettings(): SiteSettings {
  * Manages settings state and REST API interactions for the Settings page.
  *
  * Fetches saved settings on mount. Tracks dirty state by comparing current
- * values against the last saved snapshot.
+ * values against the last saved snapshot. Saving resolves to whether it succeeded,
+ * and discarding puts the last saved snapshot back.
  */
 export function useSettings() {
 	const [ settings, setSettings ] = useState< SiteSettings | null >( null );
@@ -52,7 +53,6 @@ export function useSettings() {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
-	const [ saveSuccess, setSaveSuccess ] = useState( false );
 
 	const isDirty = settings !== null && JSON.stringify( settings ) !== JSON.stringify( savedSettings );
 
@@ -73,7 +73,7 @@ export function useSettings() {
 				if ( cancelled ) {
 					return;
 				}
-				setError( err.message ?? __( 'Failed to load settings.', 'newspack-lite-site' ) );
+				setError( err.message ?? __( "Couldn't load settings. Reload the page to try again.", 'newspack-lite-site' ) );
 				setIsLoading( false );
 			} );
 
@@ -84,17 +84,19 @@ export function useSettings() {
 
 	const updateSettings = useCallback( ( partial: Partial< SiteSettings > ) => {
 		setSettings( prev => ( prev ? { ...prev, ...partial } : prev ) );
-		setSaveSuccess( false );
 	}, [] );
 
-	const saveSettings = useCallback( async () => {
+	const discardChanges = useCallback( () => {
+		setSettings( savedSettings );
+	}, [ savedSettings ] );
+
+	const saveSettings = useCallback( async (): Promise< boolean > => {
 		if ( ! settings ) {
-			return;
+			return false;
 		}
 
 		setIsSaving( true );
 		setError( null );
-		setSaveSuccess( false );
 
 		try {
 			const response = await apiFetch< Record< string, SiteSettings > >( {
@@ -106,10 +108,10 @@ export function useSettings() {
 			const saved = response[ OPTION_KEY ] ?? settings;
 			setSettings( saved );
 			setSavedSettings( saved );
-			setSaveSuccess( true );
-			setTimeout( () => setSaveSuccess( false ), 3000 );
+			return true;
 		} catch ( err ) {
-			setError( ( err as Error ).message ?? __( 'Failed to save settings.', 'newspack-lite-site' ) );
+			setError( ( err as Error ).message ?? __( "Couldn't save settings. Try again.", 'newspack-lite-site' ) );
+			return false;
 		} finally {
 			setIsSaving( false );
 		}
@@ -122,7 +124,7 @@ export function useSettings() {
 		isSaving,
 		isDirty,
 		saveSettings,
+		discardChanges,
 		error,
-		saveSuccess,
 	};
 }

@@ -15,6 +15,7 @@ export interface LastResult {
 	failed?: number;
 	up_to_date?: boolean;
 	error?: string;
+	detail?: string;
 }
 
 /**

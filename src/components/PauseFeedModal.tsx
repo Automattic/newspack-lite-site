@@ -24,7 +24,12 @@ export const PauseFeedModal = ( { items, closeModal, onActionPerformed, onAction
 
 	return (
 		<>
-			<p>{ __( 'Pausing will prevent future imports. Any import currently in progress will finish.', 'newspack-lite-site' ) }</p>
+			<p>
+				{ __(
+					"Pausing stops future imports until you resume the feed. An import that's already running will finish.",
+					'newspack-lite-site'
+				) }
+			</p>
 			<p>
 				<strong>{ item.feed_url }</strong>
 			</p>

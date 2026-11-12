@@ -1,4 +1,4 @@
-# Lite Sites
+# Lite Site
 
 [![Try in WordPress Playground](https://img.shields.io/badge/TRY%20IN-WordPress%20Playground!-blue.svg)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
 
@@ -18,7 +18,7 @@
 
 - [Description](#description)
 - [Background](#background)
-- [Lite Sites Features](#lite-sites-features)
+- [Lite Site Features](#lite-site-features)
 - [Known Limitations](#known-limitations)
 - [Installation](#installation)
 - [FAQ](#faq-frequently-asked-questions)
@@ -28,14 +28,14 @@
 
 ## Description
 
-Lite Sites is a WordPress plugin developed by Newspack and released to all WordPress users through the Emergency Mode for News initiative. It creates a stripped-down, **text-only version of your website** that loads rapidly even when bandwidth is severely compromised—making critical information accessible during network failures, disasters and other emergencies.
+Lite Site is a WordPress plugin developed by Newspack and released to all WordPress users through the Emergency Mode for News initiative. It creates a stripped-down, **text-only version of your website** that loads rapidly even when bandwidth is severely compromised, so critical information stays accessible during network failures, disasters and other emergencies.
 
 > [!IMPORTANT]
-> **Try it now!** [Launch Lite Sites in a temporary WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
+> **Try it now!** [Launch Lite Site in a temporary WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/Automattic/newspack-lite-site/trunk/blueprint.json)
 
-Think of it as the digital equivalent of keeping a transistor radio for emergencies: 📻 **it works when everything else fails**.
+Think of it as the digital equivalent of keeping a transistor radio for emergencies: it is built to keep working when the full site can't load.
 
-This alternate Lite Site provides a stripped-down, basic HTML document with inline CSS — no theme, no Blocks runtime, no tracking scripts and no images _unless_ the reader taps to load one.
+This alternate Lite Site provides a stripped-down, basic HTML document with inline CSS: no theme, no Blocks runtime, no tracking scripts and no images _unless_ the reader taps to load one.
 
 With some planning, it can also help address:
 
@@ -44,13 +44,13 @@ With some planning, it can also help address:
 - readers on a metered plan
 - low-vision-optimized renderings and other accessibility improvements
 
-Lite Sites publishes via a domain suffix like `<your-site.com>/lite/`, `<your-site.com>/text/` or other domain variations you configure. On WordPress the domain path you choose will be added automatically. However, you could mask that pattern via any subdomain or other pattern you prefer via your hosting provider's records.
+Lite Site publishes via a domain suffix like `<your-site.com>/lite/`, `<your-site.com>/text/` or other domain variations you configure. On WordPress the domain path you choose will be added automatically. However, you could mask that pattern via any subdomain or other pattern you prefer via your hosting provider's records.
 
 <img src=".github/images/playground-lite-site_homescreen.png" alt="Lite Site sample homepage" width="400" />
 
 ## Background
 
-Lite Sites began as a [Newspack-hosted feature](https://help.newspack.com/lite-site/) and available to Newspack Publishers who needed text-only options during disasters.
+Lite Site began as a [Newspack-hosted feature](https://help.newspack.com/lite-site/) and available to Newspack Publishers who needed text-only options during disasters.
 
 This repository is the **rebuilt, public version**. It was upgraded and opened to all WordPress users through the [**Emergency Mode for News**](https://emergencymode.news/) grant, made possible by an infrastructure grant from [Press Forward](https://www.pressforward.news/infrastructure25/), a national initiative to reimagine local news.
 
@@ -64,17 +64,17 @@ The [Emergency Mode for News](https://emergencymode.news/) program provides free
 - Appearance controls (brand color, fonts, footer, custom CSS) so a Lite Site still reads as yours
 - An **offline page** for sites running a service worker via the PWA plugin
 
-## Lite Sites Features
+## Lite Site Features
 
 ### Text-only rendering
 
-- Serves every eligible Post and Page, and your reverse-cron full archive as a text-only site alternative
-- Simplifies standard WordPress content via a strict allowlist of elements — headings, paragraphs, lists, blockquotes, links and basic emphasis
+- Serves every eligible Post and Page, and your full archive, newest first, as a text-only site alternative
+- Simplifies standard WordPress content via a strict allowlist of elements: headings, paragraphs, lists, blockquotes, links and basic emphasis
   - Strips `<script>` tags and HTML comments entirely
-  - Converts every `<figure>` into a **tap-to-load placeholder** showing the alt text and caption — images or interactivity downloads only on direct reader action  
+  - Converts every `<figure>` into a **tap-to-load placeholder** showing the alt text and caption. Images or interactivity download only on direct reader action  
   <img src=".github/images/playground-lite-site_article-pre-image.png" alt="A Lite Site article showing an unloaded tap-to-load image placeholder" width="250" align="top" />
   <img src=".github/images/playground-lite-site_article_with_image.png" alt="The same article after the reader taps to load the image" width="250" align="top" />  
-- Each Lite Site article links back to the full-featured version and declares it as `rel="canonical"`, with `noindex, follow` so the Lite Site version never competes with the original
+- Each Lite Site article links back to the full version and declares it as `rel="canonical"`, with `noindex, follow` so the Lite Site version never competes with the original
 - Displays author bylines and publication dates on single posts, with support for co-authors
 - Sticky posts are visually highlighted in the archive with heading-level emphasis
 
@@ -84,30 +84,30 @@ Choose the categories and tags that appear on the Lite Site, with optional autom
 
 <img src=".github/images/playground-lite-site_settings.png" alt="Lite Site settings" width="400" />
 
-- Configurable URL base, so `/lite` can become `/text`, `/fast` or anything else
-- Configurable Pagination, defaulting to your WordPress **Settings → Reading** value
+- Configurable Lite Site path, so `/lite` can become `/text`, `/fast` or anything else
+- Configurable number of posts per page (10 by default)
 - Filter what appears within the Lite Site by including/excluding Categories and/or Tags
 - Footer HTML, for your copyright and legalese
 - Toggled behavior changes for external links
   - Open in new tabs and/or style them to convey that link _away_ from a text-only option (a `.lite-site-external` class[^2])
 - An opt-_in_ field for setting a Google Analytics GA4 Measurement ID (not included from your site's default settings)
 
-The display defaults to a reverse-chronology feed of Posts or Pages, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved or permanently deleted, at its old address too when the save changes its permalink or unpublishes it. Moving, renaming, trashing, or deleting a Page also busts the cache of up to 100 Pages below it, whose addresses change with it. Renaming a Category doesn't bust its Posts' caches, so when permalinks include the category, a Post's old address can serve its cached page for up to 15 minutes. Every reader gets the version a signed-out visitor sees, so blocks shown only to signed-in readers are left out. Only plain visits to the site's own address fill the cache; visits with a query string or a sign-in cookie still get the page but don't fill the cache themselves.
+The display defaults to a newest-first list of posts and RSS entries, with configurable pagination enabled for users to read deeper than the first `X` entries. Rendered Posts or Pages are cached in a transient for 15 minutes and cache is busted when the published Post or Page is saved or permanently deleted, at its old address too when the save changes its permalink or unpublishes it. Moving, renaming, trashing, or deleting a Page also busts the cache of up to 100 Pages below it, whose addresses change with it. Renaming a Category doesn't bust its Posts' caches, so when permalinks include the category, a Post's old address can serve its cached page for up to 15 minutes. Every reader gets the version a signed-out visitor sees, so blocks shown only to signed-in readers are left out. Only plain visits to the site's own address fill the cache; visits with a query string or a sign-in cookie still get the page but don't fill the cache themselves.
 
 ### Alternative RSS Feed import
 
 <img src=".github/images/playground-lite-site_RSS-import.png" alt="Lite Site RSS import settings" width="400" />
 
-If your organization uses a different CMS than WordPress, you can provide any RSS Feed to the Lite Sites plugin. However, you will need to setup an alternative or "shadow" WordPress.com (`<your-site>.wordpress.com/text/`) or other WordPress instance (`alt.<your-site>.com/text/`) in order to run an RSS-driven Lite Site.[^1] Then you can install this plugin and configure it to populate with the contents of your external RSS Feed.
+If your organization uses a different CMS than WordPress, you can provide any RSS Feed to the Lite Site plugin. However, you will need to set up an alternative or "shadow" WordPress.com (`<your-site>.wordpress.com/text/`) or other WordPress instance (`alt.<your-site>.com/text/`) in order to run an RSS-driven Lite Site.[^1] Then you can install this plugin and configure it to populate with the contents of your external RSS Feed.
 
-Once connected via Lite Sites, your alternative WordPress site will import the specified RSS Feed at the interval you choose and create a copy of your Feed items as WordPress Posts. Those Posts will then be published to as your Lite Site.
+Once connected via Lite Site, your alternative WordPress site will import the specified RSS Feed at the interval you choose and save each feed item as an RSS entry and publish it on the Lite Site.
 
 Using your RSS Feed, you can continue to use your own CMS and "dual-publish" to a simple WordPress backup site.
 
 #### Details
 
 - Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
-- Pause, resume and delete feeds from the admin — each feed shows its last run, last result and next scheduled run
+- Pause, resume and delete feeds from the admin. Each feed shows its last run, last result and next scheduled run
 - Feed reprocessing never creates duplicates
 - Feed-defined images or similar assets are sideloaded
 - Secure:
@@ -131,11 +131,11 @@ You are able to control:
 
 ## Known Limitations
 
-Lite Sites works with most WordPress setups, but some configurations may cause conflicts:
+Lite Site works with most WordPress setups, but some configurations may cause conflicts:
 
 | Setup Feature | Details to look for |
 |---------------|---------------------|
-| **Custom post types** | Only standard Posts and Pages are supported. Custom post types won't appear unless filtered through categories or tags. |
+| **Custom post types** | Only standard Posts and Pages are supported. Custom post types don't appear; developers can add them with the `newspack_lite_site_supported_post_types` filter. |
 | **Advanced block types** | Complex blocks (embeds, interactive elements, custom blocks) are stripped to basic HTML. Only headings, paragraphs, lists, blockquotes, links and basic formatting survive. |
 | **Redirect plugins** | Plugins that aggressively redirect or rewrite URLs (Redirection, Simple 301 Redirects) may interfere with `/lite/` URLs. Test after activating redirect plugins. See [Troubleshooting](#lite-or-equivalent-showing-404). |
 | **Membership/paywall plugins** | Content restrictions may not carry over to Lite Site URLs. Test that protected content remains protected. |
@@ -156,11 +156,11 @@ If you encounter a conflict, check the [Troubleshooting section](#troubleshootin
 1. After installation completes, click **Activate Plugin**
 1. Continue with [Admin Setup](#admin-setup)
 
-To update later, repeat the same steps with a newer ZIP — WordPress will replace the existing copy and your settings and imported Posts are preserved.
+To update later, repeat the same steps with a newer ZIP. WordPress will replace the existing copy and your settings and imported Posts are preserved.
 
 ### Install from source
 
-You only need this method if you want to alter code or try something that has not been released yet. If you just want to run Lite Sites on a site, the ZIP instructions above are the better path.
+You only need this method if you want to alter code or try something that has not been released yet. If you just want to run Lite Site on a site, the ZIP instructions above are the better path.
 
 The source in this repository is **not** ready to install as-is, because the Admin components must be compiled first.
 
@@ -169,9 +169,9 @@ The source in this repository is **not** ready to install as-is, because the Adm
 
 These are the tools that do the compiling. Each links to its own install instructions:
 
-- [**Node.js**](https://nodejs.org/) — use the current LTS release. This builds the admin screens
-- [**Composer**](https://getcomposer.org/download/) — a PHP dependency manager. This repository has no PHP libraries to download, but Composer still has to generate the file the plugin loads at startup
-- **A copy of the source code.** Either [**Git**](https://git-scm.com/downloads), or no extra tool at all — see the two options below
+- [**Node.js**](https://nodejs.org/): use the current LTS release. This builds the admin screens
+- [**Composer**](https://getcomposer.org/download/): a PHP dependency manager. This repository has no PHP libraries to download, but Composer still has to generate the file the plugin loads at startup
+- **A copy of the source code.** Either [**Git**](https://git-scm.com/downloads), or no extra tool at all. See the two options below
 
 You will run a few commands in a terminal (Terminal on macOS/Linux, or PowerShell/Windows Terminal on Windows). Every command below is meant to be copied and pasted as written.
 
@@ -184,9 +184,9 @@ Pick which option is easier for you: GitHub download or `git clone`.
 <details>
    <summary><strong>Option details</strong></summary>
 
-   **Option A — download it from GitHub, no Git required.** On the [repository page](https://github.com/Automattic/newspack-lite-site), click the green **Code** button, choose **Download ZIP** and unzip it wherever you keep projects. The unzipped folder will be named `newspack-lite-site-trunk`; rename it to `newspack-lite-site`, since WordPress expects that name.
+   **Option A: download it from GitHub, no Git required.** On the [repository page](https://github.com/Automattic/newspack-lite-site), click the green **Code** button, choose **Download ZIP** and unzip it wherever you keep projects. The unzipped folder will be named `newspack-lite-site-trunk`; rename it to `newspack-lite-site`, since WordPress expects that name.
 
-   **Option B — clone it with Git.** This makes it easier to pull in later updates:
+   **Option B: clone it with Git.** This makes it easier to pull in later updates:
 
    ```bash
    git clone https://github.com/Automattic/newspack-lite-site.git
@@ -225,7 +225,7 @@ cp -r newspack-lite-site /path/to/wordpress/wp-content/plugins/
 ln -s /path/to/newspack-lite-site /path/to/wordpress/wp-content/plugins/newspack-lite-site
 ```
 
-Replace `/path/to/...` with the real locations on your machine. Then go to **Plugins** in your WordPress admin and activate **Lite Sites**.
+Replace `/path/to/...` with the real locations on your machine. Then go to **Plugins** in your WordPress admin and activate **Newspack Lite Site**.
 
 A symlink is a pointer rather than a second copy of the files. Some hosts and some Windows setups disallow them, in which case use Option 1.
 
@@ -245,12 +245,12 @@ If your WordPress runs on a server somewhere else, package the built folder into
 
 ### Admin Setup
 
-1. Activating Lite Sites will add a new entry to your Admin Toolbar called Lite Site
+1. Activating the plugin adds a Lite Site menu to the WordPress admin sidebar.
 1. Go to **Lite Site → Settings**
-1. Turn on **Enable Lite Site** and Save
+1. Check **Enable Lite Site** and click **Save**
 1. Options
 
-    - Edit the URL base
+    - Edit the Lite Site path
     - Add category and tag filters to find the content mix you want
     - Configure pagination you prefer to see
     - Set appearance/branding options
@@ -264,7 +264,7 @@ Link to `/lite` from your main site's header or footer so readers can find it be
 
 ### Will this affect my SEO?
 
-No. Every Lite Site page includes a `rel="canonical"` link pointing back to your full-featured version and is marked with `noindex, follow` meta tags. This means:
+No. Every Lite Site page includes a `rel="canonical"` link pointing back to your full version and is marked with `noindex, follow` meta tags. This means:
 
 - Search engines will index only your main site, never the `/lite/` versions
 - The canonical tag tells search engines which version is authoritative
@@ -275,7 +275,7 @@ The Lite Site is invisible to search engines but fully accessible to readers who
 
 ### How much bandwidth does this actually save?
 
-Typically 90-95% reduction compared to a full WordPress site. A standard article page that loads 2-3 MB on your main site will typically deliver as 20-50 KB on the Lite Site.
+In our tests, a typical article dropped from about 3 MB to under 50 KB.
 
 What gets stripped down:
 
@@ -298,14 +298,14 @@ For a typical news article with 3-4 images, the savings break down roughly like 
 | Fonts | 100 KB | 0 KB (optional) | 100 KB |
 | **Total** | **~3.1 MB** | **~18 KB** | **~3.08 MB (99%)** |
 
-These savings mean the difference between a page that won't load on a compromised connection and one that loads in under 2 seconds even on 2G.
+These savings can mean the difference between a page that won't load on a compromised connection and one that does.
 </details>
 
 ### Can I use this with caching plugins?
 
-Yes — and it's highly recommended. Lite Sites already includes built-in transient caching (15 minutes), but adding a page caching plugin creates an additional performance layer that makes Lite Sites even faster. Subsequent requests serve the static cached version directly — no PHP execution needed.
+Yes, and we recommend it. Lite Site already includes built-in transient caching (15 minutes), but adding a page caching plugin adds a second layer of caching. Subsequent requests serve the static cached version directly, with no PHP execution needed.
 
-Lite Sites respects standard WordPress cache-busting hooks, so when you update content, both the plugin's transient cache and your caching plugin's cache are purged automatically.
+Lite Site respects standard WordPress cache-busting hooks, so when you update content, both the plugin's transient cache and your caching plugin's cache are purged automatically.
 
 <details>
 <summary><strong>Compatible caching plugins</strong></summary>
@@ -329,18 +329,18 @@ Your `/lite/` URLs will return 404 errors, but nothing else on your site is affe
 #### What stays intact
 
 - All plugin settings are preserved in your database
-- Posts imported via RSS Feed remain in your WordPress database as regular Posts
-- No data is deleted — if you reactivate, everything returns exactly as you left it
+- Imported RSS entries stay in your WordPress database
+- No data is deleted: if you reactivate, everything returns exactly as you left it
 
 #### To fully remove the plugin
 
-Deactivation alone doesn't delete any data. If you want to completely remove Lite Sites and its data, go to **Lite Site → Settings** and manually delete any RSS feeds you configured. Deactivate the plugin via **Plugins**. Click **Delete** on the deactivated plugin to remove files and settings.
+Deactivation alone doesn't delete any data. If you want to completely remove Lite Site and its data, go to **Lite Site → RSS Feed Import** and manually delete any RSS feeds you configured. Deactivate the plugin via **Plugins**. Click **Delete** on the deactivated plugin to remove files and settings.
 
-Alternatively, delete imported RSS Entries manually before uninstalling if you want to clean up those Posts from your database.
+Alternatively, delete imported RSS Entries manually before uninstalling if you want to clean up those entries from your database.
 
 ### Accessibility impact?
 
-Lite Sites generally improve accessibility, especially for users with assistive technology, cognitive disabilities or limited bandwidth. But getting this version in front of those users in your audience may be a different challenge.
+A Lite Site generally improves accessibility, especially for users with assistive technology, cognitive disabilities or limited bandwidth. But getting this version in front of those users in your audience may be a different challenge.
 
 > [!TIP]
 > Use the Lite Site as an emergency/bandwidth fallback, not a replacement for your main site's full accessibility features. For most readers using assistive technology in low-bandwidth situations, the Lite Site will be significantly more usable than a full site that won't load.
@@ -373,7 +373,7 @@ RSS feed imports depend on WP-Cron. If feeds aren't importing on schedule:
 
 1. Check if WP-Cron is disabled: Look in `wp-config.php` for `define('DISABLE_WP_CRON', true);`. If present, WP-Cron won't run automatically and you'll need system cron (see below).
 
-1. Verify scheduled tasks exist: Install [WP Crontrol](https://wordpress.org/plugins/wp-crontrol/) to view all scheduled events. Look for `newspack_lite_site_rss_import` events—each active feed should have one scheduled.
+1. Verify scheduled tasks exist: Install [WP Crontrol](https://wordpress.org/plugins/wp-crontrol/) to view all scheduled events. Look for `newspack_lite_site_rss_import` events. Each active feed should have one scheduled.
 
 1. Test manual execution: Visit `https://<your-wordpress-shadow-site>/wp-cron.php` directly in a browser. This triggers pending cron events. Check if your feed imports afterward under **Lite Site → RSS Feed Import**.
 
@@ -385,7 +385,7 @@ If your `/lite/` URLs return 404 errors even after enabling the plugin:
 
 1. Manually flush rewrite rules: Go to **Settings → Permalinks** in WordPress admin and click **Save Changes** without changing anything. This forces WordPress to regenerate all rewrite rules.
 
-1. Check permalink structure: Lite Sites requires pretty permalinks. If your site uses "Plain" permalinks (`?p=123`), go to **Settings → Permalinks** and choose any other structure (Post name is recommended).
+1. Check permalink structure: Lite Site requires pretty permalinks. If your site uses "Plain" permalinks (`?p=123`), go to **Settings → Permalinks** and choose any other structure (Post name is recommended).
 
 1. Deactivate and reactivate: Sometimes deactivating and reactivating the plugin triggers the rewrite rules to flush properly.
 
@@ -399,12 +399,12 @@ If feeds aren't importing or show errors in **Lite Site → RSS Feed Import**:
 
 1. Check the feed URL is valid: Copy the feed URL and open it in a browser. You should see valid RSS/XML content. If it redirects, times out, or shows an error, the feed itself is broken.
 
-1. Review the "Last Result" in the admin: Under **Lite Site → RSS Feed Import**, each feed shows its last result. Common errors:
-   - "Invalid feed URL": The URL format is malformed or blocked by security validation
-   - "Feed fetch failed": The remote server is unreachable, blocking your WordPress site, or returned an error
-   - "No valid items found": The feed parsed successfully but contained no importable content
+1. Check the result under "Last Run": Under **Lite Site → RSS Feed Import**, each feed shows its last result. Common errors:
+   - "A valid RSS feed URL is required.": The URL format is malformed or blocked by security validation
+   - "Couldn't reach this RSS feed. Check that the URL opens in a browser, then wait for the next run.": The remote server is unreachable, blocking your WordPress site, or returned an error. Hover over the message to see the technical detail.
+   - "The RSS feed contains no items.": The feed parsed successfully but contained no importable content
 
-1. Check for security restrictions: Lite Sites blocks feeds from private/reserved IP ranges (`localhost`, `192.168.x.x`, `10.x.x.x`, etc) to prevent Server-Side Request Forgery attacks. If you're testing with a local feed, this is expected behavior.
+1. Check for security restrictions: Lite Site blocks feeds from private/reserved IP ranges (`localhost`, `192.168.x.x`, `10.x.x.x`, etc) to prevent Server-Side Request Forgery attacks. If you're testing with a local feed, this is expected behavior.
 
 1. Enable WordPress debug logging: Add to `wp-config.php`:
 
@@ -423,7 +423,7 @@ If accessing your Lite Site URL returns a 404 error:
 
 1. Verify the plugin is enabled: Go to **Lite Site → Settings** and confirm **Enable Lite Site** is checked and saved.
 
-1. Check your URL base setting: Under **Lite Site → Settings**, verify the URL base matches what you're trying to access. If you changed it from `/lite` to `/text`, you need to use `<your-site.com>/text/` not `<your-site.com>/lite/`.
+1. Check your path setting: Under **Lite Site → Settings**, verify the **Lite Site Path** matches what you're trying to access. If you changed it from `/lite` to `/text`, you need to use `<your-site.com>/text/` not `<your-site.com>/lite/`.
 
 1. Flush rewrite rules: See the [Rewrite rules not flushing](#rewrite-rules-not-flushing) section above for detailed steps.
 
@@ -432,7 +432,7 @@ If accessing your Lite Site URL returns a 404 error:
    - Your category/tag filters exclude all content
    - All your posts are in categories/tags you've explicitly excluded in settings
 
-1. Test with a specific post: Try accessing a single post's Lite Site version by adding your URL base to a post URL: `<your-site.com>/lite/2024/01/your-post-slug/`. If single posts work but the archive doesn't, it's a content filtering issue.
+1. Test with a specific post: Try accessing a single post's Lite Site version by adding your Lite Site path to a post URL: `<your-site.com>/lite/2024/01/your-post-slug/`. If single posts work but the archive doesn't, it's a content filtering issue.
 
 1. Check for plugin conflicts: Temporarily deactivate other plugins (especially those affecting permalinks or redirects) to see if one is interfering.
 
@@ -444,9 +444,9 @@ If accessing your Lite Site URL returns a 404 error:
 
 To disclose a security issue to our team, [please submit a report via HackerOne here](https://hackerone.com/automattic/).
 
-### Contributing to Lite Sites
+### Contributing to Lite Site
 
-We welcome contributions! If you have a patch or have found an issue with the Lite Sites plugin, here's how to contribute:
+We welcome contributions! If you have a patch or have found an issue with the Lite Site plugin, here's how to contribute:
 
 #### Reporting Bugs
 
@@ -514,5 +514,5 @@ Built by [Automattic](https://automattic.com/) for [Newspack](https://newspack.c
 
 ---
 
-[^1]: **Hosted vs. Self-Hosting** — Which version is right for you? The choice between WordPress.com hosting and self-hosting involves variables unique to your organization: budget, technical ability, existing hosting and backup-site priorities. Consider whether your staff can manage maintenance and updates, or if managed hosting's guaranteed uptime during crises outweighs the cost. [Instructions for setting up a WordPress.com site can be found here](https://wordpress.com/go/website-building/create-a-news-website/). Your hosting provider or Cloud platform of choice may provide instructions about how to install your own self-hosted WordPress instance within your current hosting plan, as well. [Non-profits or other NGOs](https://wpvip.com/solutions/non-profit/) may have free or discounted options, too.  
-[^2]: WordPress Plugins like [**Page Link To**](https://wordpress.org/plugins/page-links-to/) may help you mix text-only articles and full-featured articles within a Lite Site, if needed
+[^1]: **Hosted vs. Self-Hosting**: Which version is right for you? The choice between WordPress.com hosting and self-hosting involves variables unique to your organization: budget, technical ability, existing hosting and backup-site priorities. Consider whether your staff can manage maintenance and updates, or if managed hosting's guaranteed uptime during crises outweighs the cost. [Instructions for setting up a WordPress.com site can be found here](https://wordpress.com/go/website-building/create-a-news-website/). Your hosting provider or Cloud platform of choice may provide instructions about how to install your own self-hosted WordPress instance within your current hosting plan, as well. [Non-profits or other NGOs](https://wpvip.com/solutions/non-profit/) may have free or discounted options, too.  
+[^2]: WordPress Plugins like [**Page Link To**](https://wordpress.org/plugins/page-links-to/) may help you mix text-only articles and full-version articles within a Lite Site, if needed

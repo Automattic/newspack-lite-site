@@ -69,6 +69,16 @@ export interface ColorPickerFieldProps {
 }
 
 /**
+ * A named group of settings, shown as one two-column section.
+ */
+export interface SettingsSection {
+	id: string;
+	title: string;
+	description: string;
+	fields: Array< keyof SiteSettings >;
+}
+
+/**
  * Props for a settings panel component.
  */
 export interface PanelProps {

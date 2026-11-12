@@ -6,11 +6,13 @@
  * WordPress dependencies.
  */
 import { __ } from '@wordpress/i18n';
+import { Stack } from '@wordpress/ui';
 
 /**
  * External dependencies.
  */
 import StatusIndicator from 'newspack-components/dist/esm/status-indicator';
+import InfoButton from 'newspack-components/dist/esm/info-button';
 
 /**
  * Internal dependencies.
@@ -81,9 +83,18 @@ export const FEED_FIELDS = [
 				<span className="newspack-lite-feed-run">
 					<span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.last_run ) }</span>
 					{ item.last_result && (
-						<span className={ `newspack-lite-feed-result${ item.last_result.error ? ' newspack-lite-feed-result--error' : '' }` }>
+						<Stack
+							render={ <span /> }
+							direction="row"
+							align="center"
+							gap="xs"
+							className={ `newspack-lite-feed-result${ item.last_result.error ? ' newspack-lite-feed-result--error' : '' }` }
+						>
 							{ formatLastResult( item.last_result ) }
-						</span>
+							{ item.last_result.detail && (
+								<InfoButton description={ item.last_result.detail } triggerLabel={ __( 'Error details', 'newspack-lite-site' ) } />
+							) }
+						</Stack>
 					) }
 				</span>
 			);
