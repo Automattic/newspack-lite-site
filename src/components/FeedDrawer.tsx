@@ -121,8 +121,8 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 			</Drawer.Header>
 			<Drawer.Content>
 				{ feed?.last_result?.error && (
-					<Notice status="error" isDismissible={ false } spokenMessage="">
-						{ formatLastResult( feed.last_result ) }
+					<Notice status="error" isDismissible={ false } politeness="polite">
+						{ feed.last_result.error || formatLastResult( feed.last_result ) }
 					</Notice>
 				) }
 				{ error && (

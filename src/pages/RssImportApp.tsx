@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { useCallback, useMemo, useState } from '@wordpress/element';
+import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { Button, Notice, Snackbar, ExternalLink } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
@@ -40,9 +40,24 @@ const countLabel = ( count: number, formatted: string ) =>
  */
 export const RssImportApp = () => {
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
-	const { feeds, isLoading, isSaving, saveError, notice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
+	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
 	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
-	const drawerFeed = useMemo( () => feeds.find( item => item.id === drawerFeedId ) ?? null, [ feeds, drawerFeedId ] );
+	const lastDrawerFeed = useRef< Feed | null >( null );
+	const found = drawerFeedId ? feeds.find( item => item.id === drawerFeedId ) : undefined;
+	if ( found ) {
+		lastDrawerFeed.current = found;
+	} else if ( ! drawerFeedId ) {
+		lastDrawerFeed.current = null;
+	}
+	const drawerFeed = drawerFeedId ? lastDrawerFeed.current : null;
+	const isFeedMissing = isDrawerOpen && null !== drawerFeedId && ! isLoading && ! found;
+
+	useEffect( () => {
+		if ( isFeedMissing ) {
+			setIsDrawerOpen( false );
+			showNotice( __( 'This RSS feed no longer exists.', 'newspack-lite-site' ), 'error' );
+		}
+	}, [ isFeedMissing, showNotice ] );
 
 	const openAdd = useCallback( () => {
 		clearSaveError();

@@ -143,6 +143,7 @@ export function useFeeds( isDrawerOpen = false ) {
 		isSaving,
 		saveError,
 		notice,
+		showNotice,
 		addFeed,
 		updateFeed,
 		deleteFeed,
