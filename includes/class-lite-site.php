@@ -294,7 +294,8 @@ class Lite_Site {
 	 * Print the font provider stylesheet, when one is set.
 	 *
 	 * Lite pages write their own <head> without wp_head(), so this prints
-	 * only this stylesheet, never the rest of what the site enqueues.
+	 * only this stylesheet: not the rest of what the site enqueues, and not
+	 * the wp_print_styles callbacks, which can echo markup of their own.
 	 */
 	public static function print_font_stylesheet() {
 		$font_import_url = self::get_font_import_url();
@@ -304,15 +305,16 @@ class Lite_Site {
 
 		// No version: a ver argument would change the URL the font provider receives.
 		wp_enqueue_style( 'newspack-lite-site-fonts', $font_import_url, [], null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
-		wp_print_styles( 'newspack-lite-site-fonts' );
+		wp_styles()->do_items( 'newspack-lite-site-fonts' );
 	}
 
 	/**
 	 * Print the GA4 tag, when a Measurement ID is set.
 	 *
-	 * Like print_font_stylesheet(), this prints only this script. The
-	 * config runs before the async loader, which picks up the queued calls
-	 * from dataLayer when it arrives.
+	 * Like print_font_stylesheet(), this prints only this script.
+	 * wp_print_scripts() would also fire the wp_print_scripts action, even
+	 * when given a handle. The config runs before the async loader, which
+	 * picks up the queued calls from dataLayer when it arrives.
 	 */
 	public static function print_analytics_tag() {
 		$measurement_id = self::get_ga4_measurement_id();
@@ -335,7 +337,7 @@ class Lite_Site {
 			),
 			'before'
 		);
-		wp_print_scripts( 'newspack-lite-site-gtag' );
+		wp_scripts()->do_items( 'newspack-lite-site-gtag' );
 	}
 
 	/**

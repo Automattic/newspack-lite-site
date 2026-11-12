@@ -103,4 +103,25 @@ class Test_Lite_Site_Head_Assets extends Lite_Site_TestCase {
 
 		$this->assertStringNotContainsString( 'example.test', $output );
 	}
+
+	/**
+	 * Printing the lite assets runs none of the site's print callbacks, which could echo markup into the head.
+	 */
+	public function test_runs_no_site_print_callbacks() {
+		self::set_settings(
+			[
+				'font_import_url'    => 'https://fonts.googleapis.com/css2?family=Inter',
+				'ga4_measurement_id' => 'G-TEST123',
+			]
+		);
+		$echo_sentinel = function () {
+			echo '<script src="https://example.test/injected.js"></script>';
+		};
+		add_action( 'wp_print_scripts', $echo_sentinel );
+		add_action( 'wp_print_styles', $echo_sentinel );
+
+		$output = get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) . get_echo( [ Lite_Site::class, 'print_analytics_tag' ] );
+
+		$this->assertStringNotContainsString( 'injected.js', $output );
+	}
 }
