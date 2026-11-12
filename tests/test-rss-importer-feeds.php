@@ -480,6 +480,22 @@ class Test_RSS_Importer_Feeds extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A rollback after a capped interval change restores the original next run, not the capped one.
+	 */
+	public function test_update_feed_rollback_restores_original_next_run() {
+		$next_run = time() + 6 * HOUR_IN_SECONDS;
+		$feed_id  = $this->seed_scheduled_feed( $next_run );
+		$this->fail_scheduling( 'hourly' );
+
+		$response = $this->update_feed( $feed_id, [ 'interval' => 'hourly' ] );
+		$event    = wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] );
+
+		$this->assertSame( 500, $response->get_status(), 'A failed interval change should return a server error.' );
+		$this->assertNotFalse( $event, 'The old schedule should be restored.' );
+		$this->assertSame( $next_run, $event->timestamp, 'The restored event should keep the original next run.' );
+	}
+
+	/**
 	 * When the rollback also fails, the feed is paused rather than left active without an event.
 	 */
 	public function test_update_feed_rollback_failure_pauses_feed() {
@@ -490,6 +506,8 @@ class Test_RSS_Importer_Feeds extends Lite_Site_TestCase {
 		$feeds    = RSS_Importer::get_feeds();
 
 		$this->assertSame( 500, $response->get_status(), 'A failed rollback should return a server error.' );
+		$this->assertSame( 'schedule_failed', $response->get_data()['code'], 'The error code should be schedule_failed.' );
+		$this->assertStringContainsString( 'paused', $response->get_data()['message'], 'The message should say the feed was paused.' );
 		$this->assertSame( 'paused', $feeds[ $feed_id ]['status'], 'The feed should be paused.' );
 		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'No event should be scheduled.' );
 	}
@@ -538,6 +556,7 @@ class Test_RSS_Importer_Feeds extends Lite_Site_TestCase {
 	 */
 	public function test_add_feed_paused_is_not_scheduled() {
 		$feed_id = RSS_Importer::get_feed_id( self::PUBLIC_FEED );
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', RSS_Importer::CRON_HOOK, [ $feed_id ] );
 
 		$response = $this->add_feed( [ 'status' => 'paused' ] );
 		$feeds    = RSS_Importer::get_feeds();

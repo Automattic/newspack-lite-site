@@ -231,7 +231,7 @@ class RSS_Importer {
 	 * @param \WP_REST_Request $request The REST request.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public static function rest_add_feed( $request ) {
+	public static function rest_add_feed( \WP_REST_Request $request ) {
 		$params    = $request->get_params();
 		$feed_url  = $params['feed_url'] ?? '';
 		$interval  = $params['interval'] ?? 'daily';
@@ -316,7 +316,7 @@ class RSS_Importer {
 	 * @param \WP_REST_Request $request The REST request.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public static function rest_update_feed( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+	public static function rest_update_feed( \WP_REST_Request $request ) {
 		$params  = $request->get_params();
 		$feed_id = $params['id'] ?? '';
 		$feeds   = self::get_feeds();
@@ -379,8 +379,9 @@ class RSS_Importer {
 			}
 		} elseif ( $is_active && $feed['interval'] !== $old_interval ) {
 			$schedules = wp_get_schedules();
-			$next_run  = wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] );
-			$next_run  = $next_run ? $next_run : time();
+			$original  = wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] );
+			$original  = $original ? $original : time();
+			$next_run  = $original;
 
 			if ( isset( $schedules[ $feed['interval'] ]['interval'] ) ) {
 				$next_run = min( $next_run, time() + (int) $schedules[ $feed['interval'] ]['interval'] );
@@ -389,9 +390,15 @@ class RSS_Importer {
 			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
 
 			if ( false === wp_schedule_event( $next_run, $feed['interval'], self::CRON_HOOK, [ $feed_id ] ) ) {
-				if ( false === wp_schedule_event( $next_run, $old_interval, self::CRON_HOOK, [ $feed_id ] ) ) {
+				if ( false === wp_schedule_event( $original, $old_interval, self::CRON_HOOK, [ $feed_id ] ) ) {
 					$feeds[ $feed_id ]['status'] = 'paused';
 					self::save_feeds( $feeds );
+
+					return new \WP_Error(
+						'schedule_failed',
+						__( 'Couldn\'t update the RSS feed, so it has been paused.', 'newspack-lite-site' ),
+						[ 'status' => 500 ]
+					);
 				}
 
 				return new \WP_Error(
