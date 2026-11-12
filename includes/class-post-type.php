@@ -73,12 +73,11 @@ class Post_Type {
 	 */
 	public static function register_rest_fields() {
 		$fields = [
-			'feed_id'      => [ __CLASS__, 'get_entry_feed_id' ],
-			'feed_label'   => [ __CLASS__, 'get_entry_feed_label' ],
-			'source_url'   => fn( $post ) => (string) get_post_meta( $post['id'], '_rss_import_source_url', true ),
-			'author_name'  => [ __CLASS__, 'get_author_name' ],
-			'lite_url'     => [ __CLASS__, 'get_lite_url' ],
-			'trash_status' => [ __CLASS__, 'get_trash_status' ],
+			'feed_id'     => [ __CLASS__, 'get_entry_feed_id' ],
+			'feed_label'  => [ __CLASS__, 'get_entry_feed_label' ],
+			'source_url'  => fn( $post ) => (string) get_post_meta( $post['id'], '_rss_import_source_url', true ),
+			'author_name' => [ __CLASS__, 'get_author_name' ],
+			'lite_url'    => [ __CLASS__, 'get_lite_url' ],
 		];
 
 		foreach ( $fields as $name => $callback ) {
@@ -146,19 +145,6 @@ class Post_Type {
 			return '';
 		}
 		return (string) Lite_Site::get_lite_page_url( get_post( $post['id'] ) );
-	}
-
-	/**
-	 * Get the status a trashed post had before it was trashed.
-	 *
-	 * @param array $post Prepared REST post data.
-	 * @return string
-	 */
-	public static function get_trash_status( $post ): string {
-		if ( 'trash' !== get_post_status( $post['id'] ) ) {
-			return '';
-		}
-		return (string) get_post_meta( $post['id'], '_wp_trash_meta_status', true );
 	}
 
 	/**

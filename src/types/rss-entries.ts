@@ -30,7 +30,6 @@ export interface RssEntry {
 	author_name: string;
 	author_avatar_urls?: Record< string, string >;
 	lite_url: string;
-	trash_status: string;
 }
 
 /**
