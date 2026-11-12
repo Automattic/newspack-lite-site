@@ -31,6 +31,16 @@ export function useFeeds( isDrawerOpen = false ) {
 	const [ saveError, setSaveError ] = useState< string | null >( null );
 	const [ notice, setNotice ] = useState< Notice | null >( null );
 
+	const requestCounter = useRef( 0 );
+	const appliedRequest = useRef( 0 );
+
+	const applyFeeds = useCallback( ( requestId: number, data: Feed[] ) => {
+		if ( requestId > appliedRequest.current ) {
+			appliedRequest.current = requestId;
+			setFeeds( data );
+		}
+	}, [] );
+
 	const isDrawerOpenRef = useRef( isDrawerOpen );
 	isDrawerOpenRef.current = isDrawerOpen;
 
@@ -43,10 +53,12 @@ export function useFeeds( isDrawerOpen = false ) {
 	useEffect( () => {
 		let cancelled = false;
 
+		const requestId = ++requestCounter.current;
+
 		apiFetch< Feed[] >( { path: FEEDS_PATH } )
 			.then( data => {
 				if ( ! cancelled ) {
-					setFeeds( data );
+					applyFeeds( requestId, data );
 					setIsLoading( false );
 				}
 			} )
@@ -67,9 +79,11 @@ export function useFeeds( isDrawerOpen = false ) {
 			setIsSaving( true );
 			setSaveError( null );
 
+			const requestId = ++requestCounter.current;
+
 			try {
 				const updated = await apiFetch< Feed[] >( request );
-				setFeeds( updated );
+				applyFeeds( requestId, updated );
 				showNotice( successMessage );
 				return true;
 			} catch ( err ) {
@@ -78,15 +92,16 @@ export function useFeeds( isDrawerOpen = false ) {
 				if ( notifyError || ! isDrawerOpenRef.current ) {
 					showNotice( message, 'error' );
 				}
+				const refetchId = ++requestCounter.current;
 				apiFetch< Feed[] >( { path: FEEDS_PATH } )
-					.then( setFeeds )
+					.then( data => applyFeeds( refetchId, data ) )
 					.catch( () => {} );
 				return false;
 			} finally {
 				setIsSaving( false );
 			}
 		},
-		[ showNotice ]
+		[ showNotice, applyFeeds ]
 	);
 
 	const addFeed = useCallback(

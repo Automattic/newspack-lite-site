@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { useCallback, useState } from '@wordpress/element';
+import { useCallback, useMemo, useState } from '@wordpress/element';
 import { Button, Notice, Snackbar, ExternalLink } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
@@ -41,18 +41,19 @@ const countLabel = ( count: number, formatted: string ) =>
 export const RssImportApp = () => {
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
 	const { feeds, isLoading, isSaving, saveError, notice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
-	const [ drawerFeed, setDrawerFeed ] = useState< Feed | null >( null );
+	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
+	const drawerFeed = useMemo( () => feeds.find( item => item.id === drawerFeedId ) ?? null, [ feeds, drawerFeedId ] );
 
 	const openAdd = useCallback( () => {
 		clearSaveError();
-		setDrawerFeed( null );
+		setDrawerFeedId( null );
 		setIsDrawerOpen( true );
 	}, [ clearSaveError ] );
 
 	const openEdit = useCallback(
 		( feed: Feed ) => {
 			clearSaveError();
-			setDrawerFeed( feed );
+			setDrawerFeedId( feed.id );
 			setIsDrawerOpen( true );
 		},
 		[ clearSaveError ]
