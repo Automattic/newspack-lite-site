@@ -19,6 +19,8 @@ import { UserRow } from '../components/UserRow';
 
 const intervals = window.newspackLiteSite?.intervals ?? [];
 const authors = window.newspackLiteSite?.authors ?? [];
+const authorLabels = new Map( authors.map( author => [ String( author.value ), author.label ] ) );
+const authorLabel = ( authorId: string ) => authorLabels.get( authorId ) ?? authorId;
 
 /**
  * Default view configuration for the DataViews feeds table.
@@ -61,9 +63,13 @@ export const FEED_FIELDS: Field< Feed >[] = [
 		getValue: ( { item } ) => item.status,
 		render: ( { item } ) =>
 			'active' === item.status ? (
-				<Badge intent="stable">{ __( 'Active', 'newspack-lite-site' ) }</Badge>
+				<Badge className="newspack-status-badge" intent="stable">
+					{ __( 'Active', 'newspack-lite-site' ) }
+				</Badge>
 			) : (
-				<Badge intent="draft">{ __( 'Inactive', 'newspack-lite-site' ) }</Badge>
+				<Badge className="newspack-status-badge" intent="draft">
+					{ __( 'Inactive', 'newspack-lite-site' ) }
+				</Badge>
 			),
 	},
 	{
@@ -82,6 +88,7 @@ export const FEED_FIELDS: Field< Feed >[] = [
 		elements: authors,
 		filterBy: { operators: [ 'isAny' ], isPrimary: true },
 		getValue: ( { item } ) => String( item.author_id ),
+		sort: ( a: string, b: string, direction ) => ( 'asc' === direction ? 1 : -1 ) * authorLabel( a ).localeCompare( authorLabel( b ) ),
 		render: ( { item } ) => ( item.author_name ? <UserRow label={ item.author_name } avatarUrls={ item.author_avatar_urls } /> : '—' ),
 	},
 	{

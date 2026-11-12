@@ -7,6 +7,7 @@
  */
 import { useState } from '@wordpress/element';
 import { Button } from '@wordpress/components';
+import { Stack } from '@wordpress/ui';
 import { __ } from '@wordpress/i18n';
 import { type RenderModalProps } from '@wordpress/dataviews';
 
@@ -34,7 +35,7 @@ export const DeleteFeedModal = ( {
 			<p>
 				<strong>{ items[ 0 ].feed_url }</strong>
 			</p>
-			<div className="newspack-lite-modal-actions">
+			<Stack direction="row" justify="flex-end" gap="sm">
 				<Button variant="secondary" onClick={ () => closeModal?.() } disabled={ isDeleting }>
 					{ __( 'Cancel', 'newspack-lite-site' ) }
 				</Button>
@@ -52,7 +53,7 @@ export const DeleteFeedModal = ( {
 				>
 					{ __( 'Delete', 'newspack-lite-site' ) }
 				</Button>
-			</div>
+			</Stack>
 		</>
 	);
 };

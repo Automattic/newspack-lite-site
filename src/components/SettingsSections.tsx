@@ -6,7 +6,7 @@
  * WordPress dependencies.
  */
 import { Fragment } from '@wordpress/element';
-import { Button, CheckboxControl } from '@wordpress/components';
+import { Button, CheckboxControl, VisuallyHidden } from '@wordpress/components';
 import { DataForm, type Field } from '@wordpress/dataviews';
 import { Stack } from '@wordpress/ui';
 import { __ } from '@wordpress/i18n';
@@ -87,7 +87,7 @@ export const SettingsSections = ( {
 								return (
 									<Stack key={ fieldId } direction="row" gap="sm" align="flex-start">
 										<div className="newspack-lite-path-field__input">{ dataForm }</div>
-										<div className="newspack-lite-path-field__link">
+										<Stack direction="column" gap="xs" className="newspack-lite-path-field__link">
 											<Button
 												variant="secondary"
 												href={ canView ? liteSiteUrl : undefined }
@@ -95,11 +95,20 @@ export const SettingsSections = ( {
 												rel="noopener"
 												disabled={ ! canView }
 												accessibleWhenDisabled
+												aria-describedby={ canView ? undefined : 'newspack-lite-view-help' }
 												__next40pxDefaultSize
 											>
 												{ __( 'View Lite Site', 'newspack-lite-site' ) }
+												{ canView && (
+													<VisuallyHidden as="span"> { __( '(opens in a new tab)', 'newspack-lite-site' ) }</VisuallyHidden>
+												) }
 											</Button>
-										</div>
+											{ ! canView && (
+												<span id="newspack-lite-view-help" className="newspack-lite-path-field__help">
+													{ __( 'Turn on Lite Site and save the settings to view it.', 'newspack-lite-site' ) }
+												</span>
+											) }
+										</Stack>
 									</Stack>
 								);
 							}
