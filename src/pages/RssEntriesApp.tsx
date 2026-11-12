@@ -6,7 +6,7 @@
  * WordPress dependencies.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
-import { Button, Snackbar } from '@wordpress/components';
+import { Button, Notice, Snackbar } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
 import { type Action, type RenderModalProps, type View } from '@wordpress/dataviews';
@@ -93,7 +93,7 @@ function getInitialView(): View {
 export const RssEntriesApp = () => {
 	const [ view, setView ] = useState< View >( getInitialView );
 	const setPage = useCallback( ( page: number ) => setView( current => ( { ...current, page } ) ), [] );
-	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, notice, showNotice, dismissNotice, mutate } = useEntries(
+	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate } = useEntries(
 		view,
 		setPage
 	);
@@ -128,7 +128,7 @@ export const RssEntriesApp = () => {
 	const editUrl = rssEntries?.editUrl ?? '';
 	const importUrl = rssEntries?.importUrl ?? '';
 	const addUrl = rssEntries?.addUrl ?? '';
-	const showCount = ! isLoading && ! isEmpty;
+	const showCount = ! isLoading && ! isEmpty && ! loadError;
 	const fields = useMemo( () => getEntryFields( editUrl ), [ editUrl ] );
 
 	const actions: Action< RssEntry >[] = useMemo(
@@ -203,6 +203,12 @@ export const RssEntriesApp = () => {
 					<strong>{ __( 'Fetching…', 'newspack-lite-site' ) }</strong>
 				</Stack>
 			</div>
+		);
+	} else if ( loadError ) {
+		content = (
+			<Notice status="error" isDismissible={ false } politeness="polite">
+				{ loadError }
+			</Notice>
 		);
 	} else if ( isEmpty ) {
 		content = (

@@ -148,6 +148,7 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isFetching, setIsFetching ] = useState( true );
 	const [ isEmpty, setIsEmpty ] = useState( false );
+	const [ loadError, setLoadError ] = useState( '' );
 	const [ notice, setNotice ] = useState< EntriesNotice | null >( null );
 	const [ reloadKey, setReloadKey ] = useState( 0 );
 	const [ search, setSearch ] = useState( view.search ?? '' );
@@ -222,6 +223,8 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 						}
 						showNotice( await getErrorMessage( lastPageErr, fallback ), 'error' );
 					}
+				} else if ( isFirstLoad.current ) {
+					setLoadError( body.message || fallback );
 				} else {
 					showNotice( body.message || fallback, 'error' );
 				}
@@ -309,5 +312,5 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 		[ showNotice ]
 	);
 
-	return { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, notice, showNotice, dismissNotice, mutate };
+	return { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate };
 }
