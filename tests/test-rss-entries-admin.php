@@ -15,6 +15,21 @@ use Newspack_Lite_Site\RSS_Importer;
 class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 
 	/**
+	 * The $pagenow global as it was before each test.
+	 *
+	 * @var string|null
+	 */
+	private $saved_pagenow;
+
+	/**
+	 * Save the $pagenow global, which the editor access test changes.
+	 */
+	public function set_up() {
+		parent::set_up();
+		$this->saved_pagenow = $GLOBALS['pagenow'] ?? null;
+	}
+
+	/**
 	 * The legacy list redirect targets the Entries tab of the RSS page.
 	 */
 	public function test_redirect_target_points_to_entries_tab() {
@@ -571,7 +586,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$_parent_pages      = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$_wp_menu_nopriv    = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$_wp_submenu_nopriv = []; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-		$pagenow            = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$pagenow            = $this->saved_pagenow; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$plugin_page        = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$parent_file        = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$current_screen     = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
