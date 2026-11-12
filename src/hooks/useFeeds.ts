@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import apiFetch, { type APIFetchOptions } from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 
@@ -21,14 +21,18 @@ const FEEDS_PATH = '/newspack-lite-site/v1/rss-feeds';
  *
  * Fetches the RSS feed list on mount. Each mutation (add, update, delete)
  * updates local state from the server's response to stay in sync, and resolves
- * to whether it succeeded so the caller knows if it can close its drawer.
+ * to whether it succeeded so the caller knows if it can close its drawer. A failure
+ * is also shown as a notice when the drawer is no longer open to show it.
  */
-export function useFeeds() {
+export function useFeeds( isDrawerOpen = false ) {
 	const [ feeds, setFeeds ] = useState< Feed[] >( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
 	const [ saveError, setSaveError ] = useState< string | null >( null );
 	const [ notice, setNotice ] = useState< Notice | null >( null );
+
+	const isDrawerOpenRef = useRef( isDrawerOpen );
+	isDrawerOpenRef.current = isDrawerOpen;
 
 	const showNotice = useCallback( ( message: string, status: 'success' | 'error' = 'success' ) => {
 		setNotice( { message, status } );
@@ -71,7 +75,7 @@ export function useFeeds() {
 			} catch ( err ) {
 				const message = ( err as Error ).message || fallbackError;
 				setSaveError( message );
-				if ( notifyError ) {
+				if ( notifyError || ! isDrawerOpenRef.current ) {
 					showNotice( message, 'error' );
 				}
 				return false;

@@ -33,6 +33,17 @@ export const DEFAULT_FEED: FeedFormData = {
 	status: 'active',
 };
 
+const authorValues = authors.map( author => String( author.value ) );
+
+/**
+ * Whether an author ID belongs to one of the authors who can be assigned to a feed.
+ *
+ * @param authorId The author ID as a string.
+ */
+export const isKnownAuthor = ( authorId: string ) => authorValues.includes( authorId );
+
+const AUTHOR_PLACEHOLDER = { value: '', label: __( 'Choose an author', 'newspack-lite-site' ), disabled: true };
+
 const FeedStatusEdit = ( { data, field, onChange }: DataFormControlProps< FeedFormData > ) => (
 	<ToggleGroupControl
 		label={ field.label }
@@ -53,14 +64,15 @@ const FeedStatusEdit = ( { data, field, onChange }: DataFormControlProps< FeedFo
  *
  * In edit mode the URL is the feed's identity, so its textarea is disabled.
  *
- * @param isEdit Whether an existing feed is being edited.
+ * @param isEdit      Whether an existing feed is being edited.
+ * @param needsAuthor Whether the feed's author is no longer available, so the author field starts on a placeholder.
  */
-export function getFeedFormFields( isEdit: boolean ): Field< FeedFormData >[] {
+export function getFeedFormFields( isEdit: boolean, needsAuthor = false ): Field< FeedFormData >[] {
 	const FeedUrlEdit = ( { data, field, onChange }: DataFormControlProps< FeedFormData > ) => (
 		<TextareaControl
 			label={ field.label }
 			value={ data.feed_url }
-			onChange={ value => onChange( { feed_url: value } ) }
+			onChange={ value => onChange( { feed_url: value.replace( /[\r\n]+/g, '' ) } ) }
 			rows={ 3 }
 			disabled={ isEdit }
 			className="newspack-lite-code-textarea"
@@ -84,7 +96,7 @@ export function getFeedFormFields( isEdit: boolean ): Field< FeedFormData >[] {
 			id: 'author_id',
 			label: __( 'Author', 'newspack-lite-site' ),
 			description: __( 'Imported entries are published under this author.', 'newspack-lite-site' ),
-			elements: authors,
+			elements: needsAuthor ? [ AUTHOR_PLACEHOLDER, ...authors ] : authors,
 		},
 		{
 			id: 'status',

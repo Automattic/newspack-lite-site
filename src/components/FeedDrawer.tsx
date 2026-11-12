@@ -20,7 +20,7 @@ import { Drawer } from 'newspack-components/dist/esm/drawer';
  * Internal dependencies.
  */
 import { type FeedChanges, type FeedDrawerProps, type FeedFormData } from '../types/rss-feed-import';
-import { DEFAULT_FEED, getFeedFormFields } from '../utils/feeds-dataform';
+import { DEFAULT_FEED, getFeedFormFields, isKnownAuthor } from '../utils/feeds-dataform';
 
 const FORM_FIELDS = [ 'feed_url', 'status', 'interval', 'author_id' ];
 
@@ -33,7 +33,14 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 	const isEdit = !! feed;
 	const initial: FeedFormData = useMemo(
 		() =>
-			feed ? { feed_url: feed.feed_url, interval: feed.interval, author_id: String( feed.author_id ), status: feed.status } : DEFAULT_FEED,
+			feed
+				? {
+						feed_url: feed.feed_url,
+						interval: feed.interval,
+						author_id: isKnownAuthor( String( feed.author_id ) ) ? String( feed.author_id ) : '',
+						status: feed.status,
+					}
+				: DEFAULT_FEED,
 		[ feed ]
 	);
 	const [ draft, setDraft ] = useState< FeedFormData >( initial );
@@ -57,7 +64,8 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 		return () => clearTimeout( timer );
 	}, [ isOpen ] );
 
-	const fields = useMemo( () => getFeedFormFields( isEdit ), [ isEdit ] );
+	const needsAuthor = isEdit && '' === initial.author_id;
+	const fields = useMemo( () => getFeedFormFields( isEdit, needsAuthor ), [ isEdit, needsAuthor ] );
 	const isDirty = isEdit
 		? draft.interval !== initial.interval || draft.author_id !== initial.author_id || draft.status !== initial.status
 		: draft.feed_url !== initial.feed_url ||
@@ -97,7 +105,7 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 		}
 	};
 
-	const canSave = ! isSaving && ( isEdit ? isDirty : '' !== draft.feed_url.trim() );
+	const canSave = ! isSaving && isKnownAuthor( draft.author_id ) && ( isEdit ? isDirty : '' !== draft.feed_url.trim() );
 
 	return (
 		<Drawer.Root isOpen={ isOpen } size="medium" isDirty={ isDirty || isSaving } onRequestClose={ onClose }>

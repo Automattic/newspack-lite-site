@@ -39,8 +39,8 @@ const countLabel = ( count: number, formatted: string ) =>
  * Lists the scheduled feeds, filters them, and opens a drawer to add or edit one. Delete is a row action.
  */
 export const RssImportApp = () => {
-	const { feeds, isLoading, isSaving, saveError, notice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds();
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
+	const { feeds, isLoading, isSaving, saveError, notice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
 	const [ drawerFeed, setDrawerFeed ] = useState< Feed | null >( null );
 
 	const openAdd = useCallback( () => {
@@ -116,7 +116,7 @@ export const RssImportApp = () => {
 			>
 				<div className="newspack-lite-rss-sections newspack-lite-feeds">
 					{ cronDisabled && (
-						<Notice status="warning" isDismissible={ false }>
+						<Notice status="warning" isDismissible={ false } spokenMessage="">
 							{ __(
 								"WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host.",
 								'newspack-lite-site'
