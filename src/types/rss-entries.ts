@@ -49,6 +49,7 @@ export interface RssEntriesData {
  * A snackbar notice on the RSS Entries page.
  */
 export interface EntriesNotice {
+	key: number;
 	message: string;
 	status: 'success' | 'error';
 	actions?: Array< { label: string; onClick: () => void } >;

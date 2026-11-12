@@ -234,7 +234,12 @@ export const RssEntriesApp = () => {
 			</Page>
 			{ notice && (
 				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>
-					<Snackbar actions={ notice.actions } onRemove={ dismissNotice } politeness={ 'error' === notice.status ? 'assertive' : 'polite' }>
+					<Snackbar
+						key={ notice.key }
+						actions={ notice.actions }
+						onRemove={ dismissNotice }
+						politeness={ 'error' === notice.status ? 'assertive' : 'polite' }
+					>
 						{ notice.message }
 					</Snackbar>
 				</div>
