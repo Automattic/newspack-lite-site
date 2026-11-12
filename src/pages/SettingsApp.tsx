@@ -92,7 +92,11 @@ const SettingsScreen = () => {
 	return (
 		<>
 			<Page
-				breadcrumbItems={ [ { label: 'Lite Site' }, { label: __( 'Settings', 'newspack-lite-site' ) } ] }
+				breadcrumbItems={ [
+					{ label: 'Lite Site' },
+					{ label: __( 'Settings', 'newspack-lite-site' ) },
+					...( activeTab ? [ { label: activeTab.label } ] : [] ),
+				] }
 				subTitle={ activeTab?.subTitle }
 				tabbedNavigation={ <TabbedNavigation items={ SETTINGS_TABS } /> }
 				actions={
