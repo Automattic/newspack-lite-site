@@ -7,7 +7,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import apiFetch, { type APIFetchOptions } from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 /**
  * Internal dependencies.
@@ -125,12 +125,18 @@ export function useFeeds( isDrawerOpen = false ) {
 		[ mutate ]
 	);
 
-	const deleteFeed = useCallback(
-		( feedId: string ) =>
+	const deleteFeeds = useCallback(
+		( feedIds: string[] ) =>
 			mutate(
-				{ path: `${ FEEDS_PATH }/${ feedId }/action`, method: 'POST', data: { action: 'delete' } },
-				__( 'RSS feed deleted.', 'newspack-lite-site' ),
-				__( "Couldn't delete the RSS feed. Try again.", 'newspack-lite-site' ),
+				{ path: `${ FEEDS_PATH }/delete`, method: 'POST', data: { ids: feedIds } },
+				1 === feedIds.length
+					? __( 'RSS feed deleted.', 'newspack-lite-site' )
+					: sprintf(
+							/* translators: %d: number of RSS feeds deleted. */
+							_n( '%d RSS feed deleted.', '%d RSS feeds deleted.', feedIds.length, 'newspack-lite-site' ),
+							feedIds.length
+						),
+				_n( "Couldn't delete the RSS feed. Try again.", "Couldn't delete the RSS feeds. Try again.", feedIds.length, 'newspack-lite-site' ),
 				true
 			),
 		[ mutate ]
@@ -175,7 +181,7 @@ export function useFeeds( isDrawerOpen = false ) {
 		showNotice,
 		addFeed,
 		updateFeed,
-		deleteFeed,
+		deleteFeeds,
 		importFeed,
 		isImporting,
 		clearSaveError,

@@ -40,7 +40,7 @@ const countLabel = ( count: number, formatted: string ) =>
  */
 export const RssImportApp = () => {
 	const [ isDrawerOpen, setIsDrawerOpen ] = useState( false );
-	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeed, importFeed, isImporting, clearSaveError } =
+	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeeds, importFeed, isImporting, clearSaveError } =
 		useFeeds( isDrawerOpen );
 	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
 	const lastDrawerFeed = useRef< Feed | null >( null );
@@ -108,7 +108,7 @@ export const RssImportApp = () => {
 			</EmptyState.Root>
 		);
 	} else {
-		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeed } />;
+		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeeds } />;
 	}
 
 	return (

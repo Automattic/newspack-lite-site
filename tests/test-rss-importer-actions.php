@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for the RSS feed import REST action.
+ * Tests for the RSS feed import and bulk delete REST actions.
  *
  * @package newspack-lite-site
  */
@@ -8,7 +8,7 @@
 use Newspack_Lite_Site\RSS_Importer;
 
 /**
- * Covers the manual import action.
+ * Covers the manual import action and the bulk delete route.
  */
 class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 
@@ -129,6 +129,18 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Send a bulk delete request.
+	 *
+	 * @param array $ids Feed IDs.
+	 * @return WP_REST_Response The REST response.
+	 */
+	private function bulk_delete( array $ids ) {
+		$request = new WP_REST_Request( 'POST', '/newspack-lite-site/v1/rss-feeds/delete' );
+		$request->set_body_params( [ 'ids' => $ids ] );
+		return rest_do_request( $request );
+	}
+
+	/**
 	 * Importing runs the feed and returns the refreshed list.
 	 */
 	public function test_import_runs_the_feed_and_returns_the_list() {
@@ -209,5 +221,56 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'editor' ] ) );
 
 		$this->assertSame( 403, $this->action( $feed_id, 'import' )->get_status(), 'An editor should be refused.' );
+	}
+
+	/**
+	 * Bulk delete removes the feeds and clears their cron events.
+	 */
+	public function test_bulk_delete_removes_feeds_and_clears_cron() {
+		$ids = $this->seed( [ self::PUBLIC_FEED, self::OTHER_FEED, 'http://93.184.216.34/third.xml' ] );
+		foreach ( $ids as $id ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', RSS_Importer::CRON_HOOK, [ $id ] );
+		}
+
+		$response = $this->bulk_delete( [ $ids[0], $ids[1] ] );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status(), 'Deleting should succeed.' );
+		$this->assertSame( [ $ids[2] ], wp_list_pluck( $data, 'id' ), 'Only the unselected feed should remain.' );
+		$this->assertSame( [ $ids[2] ], array_keys( RSS_Importer::get_feeds() ), 'The registry should match.' );
+		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $ids[0] ] ), 'The first cron event should be cleared.' );
+		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $ids[1] ] ), 'The second cron event should be cleared.' );
+		$this->assertNotFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $ids[2] ] ), 'The kept feed should stay scheduled.' );
+	}
+
+	/**
+	 * Unknown IDs are ignored.
+	 */
+	public function test_bulk_delete_ignores_unknown_ids() {
+		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
+
+		$response = $this->bulk_delete( [ md5( 'missing' ), $feed_id ] );
+
+		$this->assertSame( 200, $response->get_status(), 'Unknown IDs should not fail the request.' );
+		$this->assertSame( [], $response->get_data(), 'The known feed should be deleted.' );
+	}
+
+	/**
+	 * Malformed IDs are rejected.
+	 */
+	public function test_bulk_delete_rejects_malformed_ids() {
+		$this->assertSame( 400, $this->bulk_delete( [ 'not-an-id' ] )->get_status(), 'A malformed ID should be rejected.' );
+		$this->assertSame( 400, $this->bulk_delete( [] )->get_status(), 'An empty list should be rejected.' );
+	}
+
+	/**
+	 * Bulk delete needs the manage_options capability.
+	 */
+	public function test_bulk_delete_requires_manage_options() {
+		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'editor' ] ) );
+
+		$this->assertSame( 403, $this->bulk_delete( [ $feed_id ] )->get_status(), 'An editor should be refused.' );
+		$this->assertCount( 1, RSS_Importer::get_feeds(), 'Nothing should be deleted.' );
 	}
 }

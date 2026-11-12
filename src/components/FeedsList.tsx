@@ -20,7 +20,7 @@ import { DEFAULT_VIEW, FEED_FIELDS } from '../utils/feeds-dataview';
 /**
  * Renders the scheduled RSS feeds table with sortable columns.
  *
- * Each row has Edit and Delete buttons, and the feed URL opens the editor.
+ * Each row has Edit and Delete buttons, the feed URL opens the editor, and Delete also works on several selected rows.
  */
 export const FeedsList = ( { feeds, onEdit, onDelete }: FeedsListProps ) => {
 	const [ view, setView ] = useState< View >( DEFAULT_VIEW );
@@ -38,7 +38,10 @@ export const FeedsList = ( { feeds, onEdit, onDelete }: FeedsListProps ) => {
 				label: __( 'Delete', 'newspack-lite-site' ),
 				isPrimary: true,
 				isDestructive: true,
-				RenderModal: ( props: RenderModalProps< Feed > ) => <DeleteFeedModal { ...props } onConfirm={ items => onDelete( items[ 0 ].id ) } />,
+				supportsBulk: true,
+				RenderModal: ( props: RenderModalProps< Feed > ) => (
+					<DeleteFeedModal { ...props } onConfirm={ items => onDelete( items.map( item => item.id ) ) } />
+				),
 			},
 		],
 		[ onEdit, onDelete ]

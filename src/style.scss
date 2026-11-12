@@ -9,6 +9,7 @@
 
 $feeds-actions-width: 15em;
 $feeds-status-width: 9em;
+$feeds-checkbox-width: 3em;
 $feeds-url-min-width: 16em;
 $feeds-data-min-width: 9em;
 
@@ -85,7 +86,7 @@ body.newspack-lite-admin-header {
 }
 
 .newspack-lite-feeds table.dataviews-view-table {
-	min-width: calc(#{$feeds-url-min-width} + #{$feeds-status-width} + #{$feeds-actions-width} + 4 * #{$feeds-data-min-width});
+	min-width: calc(#{$feeds-checkbox-width} + #{$feeds-url-min-width} + #{$feeds-status-width} + #{$feeds-actions-width} + 4 * #{$feeds-data-min-width});
 	table-layout: fixed;
 	width: 100%;
 
@@ -98,15 +99,19 @@ body.newspack-lite-admin-header {
 	}
 
 	col.dataviews-view-table__col-first-data {
-		width: max(#{$feeds-url-min-width}, calc((100cqi - #{$feeds-status-width} - #{$feeds-actions-width}) / 5)) !important;
+		width: max(#{$feeds-url-min-width}, calc((100cqi - #{$feeds-checkbox-width} - #{$feeds-status-width} - #{$feeds-actions-width}) / 5)) !important;
+	}
+
+	col.dataviews-view-table__col-checkbox {
+		width: $feeds-checkbox-width !important;
 	}
 
 	col.dataviews-view-table__col-status {
 		width: $feeds-status-width !important;
 	}
 
-	thead th:not(.dataviews-view-table__actions-column),
-	tbody td:not(.dataviews-view-table__actions-column) {
+	thead th:not(.dataviews-view-table__actions-column, .dataviews-view-table__checkbox-column),
+	tbody td:not(.dataviews-view-table__actions-column, .dataviews-view-table__checkbox-column) {
 		width: auto !important;
 	}
 
@@ -153,6 +158,13 @@ body.newspack-lite-admin-header {
 			color: var(--wpds-color-foreground-interactive-error-active, #{$alert-red});
 		}
 	}
+}
+
+.newspack-lite-delete-feeds {
+	list-style: disc;
+	margin-block: 0 var(--wpds-dimension-gap-lg, #{$grid-unit-20});
+	margin-inline: $grid-unit-30 0;
+	overflow-wrap: anywhere;
 }
 
 .newspack-lite-feed-url {

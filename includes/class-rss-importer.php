@@ -161,6 +161,31 @@ class RSS_Importer {
 				],
 			]
 		);
+
+		register_rest_route(
+			$namespace,
+			'/rss-feeds/delete',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ __CLASS__, 'rest_delete_feeds' ],
+				'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
+				'args'                => [
+					'ids' => [
+						'type'              => 'array',
+						'required'          => true,
+						'items'             => [
+							'type'    => 'string',
+							'pattern' => '^[a-f0-9]{32}$',
+						],
+						'minItems'          => 1,
+						'validate_callback' => 'rest_validate_request_arg',
+						'sanitize_callback' => static function ( $ids ) {
+							return array_values( array_unique( array_map( 'sanitize_key', (array) $ids ) ) );
+						},
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -488,6 +513,29 @@ class RSS_Importer {
 				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
 				unset( $feeds[ $feed_id ] );
 				break;
+		}
+
+		self::save_feeds( $feeds );
+
+		return self::rest_feeds_response( $feeds );
+	}
+
+	/**
+	 * Delete several RSS feeds at once.
+	 *
+	 * Unknown IDs are ignored, so repeating a request is safe. Returns the full refreshed list.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response
+	 */
+	public static function rest_delete_feeds( \WP_REST_Request $request ) {
+		$feeds = self::get_feeds();
+
+		foreach ( (array) $request->get_param( 'ids' ) as $feed_id ) {
+			if ( isset( $feeds[ $feed_id ] ) ) {
+				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+				unset( $feeds[ $feed_id ] );
+			}
 		}
 
 		self::save_feeds( $feeds );

@@ -44,7 +44,7 @@ export interface Notice {
 export interface FeedsListProps {
 	feeds: Feed[];
 	onEdit: ( feed: Feed ) => void;
-	onDelete: ( feedId: string ) => Promise< boolean >;
+	onDelete: ( feedIds: string[] ) => Promise< boolean >;
 }
 
 /**
