@@ -402,7 +402,7 @@ If feeds aren't importing or show errors in **Lite Site → RSS Feeds**:
 1. Check the result under "Last Run": Under **Lite Site → RSS Feeds**, each feed shows its last result. Common errors:
    - "A valid RSS feed URL is required.": The URL format is malformed or blocked by security validation
    - "Couldn't reach this RSS feed.": The remote server is unreachable, blocking your WordPress site, or returned an error. Check that the URL opens in a browser, then wait for the next run.
-   - "The RSS feed contains no items.": The feed parsed successfully but contained no importable content
+   - "The RSS feed contains no items": The feed parsed successfully but contained no importable content
 
 1. Check for security restrictions: Lite Site blocks feeds from private/reserved IP ranges (`localhost`, `192.168.x.x`, `10.x.x.x`, etc) to prevent Server-Side Request Forgery attacks. If you're testing with a local feed, this is expected behavior.
 
