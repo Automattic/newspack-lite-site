@@ -6,9 +6,10 @@
  * WordPress dependencies.
  */
 import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
-import { Notice } from '@wordpress/components';
+import { Notice, VisuallyHidden } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { rss, Icon } from '@wordpress/icons';
+import type { ComponentProps, MouseEvent } from 'react';
 import { DataForm } from '@wordpress/dataviews';
 
 /**
@@ -20,8 +21,9 @@ import { Drawer } from 'newspack-components/dist/esm/drawer';
  * Internal dependencies.
  */
 import { type FeedChanges, type FeedDrawerProps, type FeedFormData } from '../types/rss-feed-import';
-import { formatLastResult } from '../utils/formatters';
 import { DEFAULT_FEED, getFeedFormFields, isKnownAuthor } from '../utils/feeds-dataform';
+
+type NoticeAction = ComponentProps< typeof Notice >[ 'actions' ] extends ( infer A )[] | undefined ? A : never;
 
 const FORM_FIELDS = [ 'feed_url', 'status', 'interval', 'author_id' ];
 
@@ -30,7 +32,7 @@ const FORM_FIELDS = [ 'feed_url', 'status', 'interval', 'author_id' ];
  *
  * Stays mounted and is driven by `isOpen`. Editing disables the URL.
  */
-export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onUpdate, onClearError }: FeedDrawerProps ) => {
+export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onUpdate, onClearError, isImporting, onImport }: FeedDrawerProps ) => {
 	const isEdit = !! feed;
 	const initial: FeedFormData = useMemo(
 		() =>
@@ -55,19 +57,30 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 		}
 	}
 
+	const focusFirstField = () => {
+		formRef.current
+			?.querySelector< HTMLElement >(
+				'textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [role="radio"][aria-checked="true"]'
+			)
+			?.focus();
+	};
+
 	useEffect( () => {
 		if ( ! isOpen ) {
 			return;
 		}
-		const timer = setTimeout( () => {
-			formRef.current
-				?.querySelector< HTMLElement >(
-					'textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [role="radio"][aria-checked="true"]'
-				)
-				?.focus();
-		}, 50 );
+		const timer = setTimeout( focusFirstField, 50 );
 		return () => clearTimeout( timer );
 	}, [ isOpen ] );
+
+	const hasFeedError = !! feed?.last_result?.error;
+	const hadFeedError = useRef( hasFeedError );
+	useEffect( () => {
+		if ( isOpen && hadFeedError.current && ! hasFeedError ) {
+			focusFirstField();
+		}
+		hadFeedError.current = hasFeedError;
+	}, [ isOpen, hasFeedError ] );
 
 	const needsAuthor = isEdit && '' === initial.author_id;
 	const fields = useMemo( () => getFeedFormFields( isEdit, needsAuthor ), [ isEdit, needsAuthor ] );
@@ -110,7 +123,37 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 		}
 	};
 
-	const canSave = ! isSaving && isKnownAuthor( draft.author_id ) && ( isEdit ? isDirty : '' !== draft.feed_url.trim() );
+	const canSave = ! isSaving && ! isImporting && isKnownAuthor( draft.author_id ) && ( isEdit ? isDirty : '' !== draft.feed_url.trim() );
+
+	const errorActions: NoticeAction[] = feed
+		? [
+				...( 'active' === feed.status
+					? [
+							{
+								label: __( 'Retry Now', 'newspack-lite-site' ),
+								className: isImporting ? 'is-busy' : undefined,
+								disabled: isImporting,
+								onClick: () => {
+									onImport( feed.id );
+								},
+							},
+						]
+					: [] ),
+				{
+					label: (
+						<>
+							{ __( 'Open Feed URL', 'newspack-lite-site' ) }
+							<VisuallyHidden> { __( '(opens in a new tab)', 'newspack-lite-site' ) }</VisuallyHidden>
+						</>
+					 ) as unknown as string,
+					url: feed.feed_url,
+					onClick: ( event: MouseEvent< HTMLAnchorElement | HTMLButtonElement > ) => {
+						event.preventDefault();
+						window.open( feed.feed_url, '_blank', 'noopener,noreferrer' );
+					},
+				},
+			]
+		: [];
 
 	return (
 		<Drawer.Root isOpen={ isOpen } size="medium" isDirty={ isDirty || isSaving } onRequestClose={ onClose }>
@@ -121,8 +164,8 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 			</Drawer.Header>
 			<Drawer.Content>
 				{ feed?.last_result?.error && (
-					<Notice status="error" isDismissible={ false } politeness="polite">
-						{ feed.last_result.error || formatLastResult( feed.last_result ) }
+					<Notice status="error" isDismissible={ false } politeness="polite" actions={ errorActions }>
+						{ feed.last_result.error }
 					</Notice>
 				) }
 				{ error && (

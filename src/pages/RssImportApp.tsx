@@ -48,7 +48,8 @@ export const RssImportApp = () => {
 			window.history.replaceState( null, '', url.toString() );
 		}
 	}, [] );
-	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeed, clearSaveError } = useFeeds( isDrawerOpen );
+	const { feeds, isLoading, isSaving, saveError, notice, showNotice, addFeed, updateFeed, deleteFeeds, importFeed, isImporting, clearSaveError } =
+		useFeeds( isDrawerOpen );
 	const [ drawerFeedId, setDrawerFeedId ] = useState< string | null >( null );
 	const lastDrawerFeed = useRef< Feed | null >( null );
 	const found = drawerFeedId ? feeds.find( item => item.id === drawerFeedId ) : undefined;
@@ -115,7 +116,7 @@ export const RssImportApp = () => {
 			</EmptyState.Root>
 		);
 	} else {
-		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeed } />;
+		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeeds } countLabel={ countLabel } />;
 	}
 
 	return (
@@ -162,6 +163,8 @@ export const RssImportApp = () => {
 				onAdd={ addFeed }
 				onUpdate={ updateFeed }
 				onClearError={ clearSaveError }
+				isImporting={ isImporting }
+				onImport={ importFeed }
 			/>
 			{ notice && (
 				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>

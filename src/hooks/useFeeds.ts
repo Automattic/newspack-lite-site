@@ -7,12 +7,13 @@
  */
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import apiFetch, { type APIFetchOptions } from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 /**
  * Internal dependencies.
  */
 import { revealEntriesMenu } from '../utils/entries-menu';
+import { formatLastResult } from '../utils/formatters';
 import { type Feed, type FeedChanges, type NewFeedData, type Notice } from '../types/rss-feed-import';
 
 const FEEDS_PATH = '/newspack-lite-site/v1/rss-feeds';
@@ -29,6 +30,7 @@ export function useFeeds( isDrawerOpen = false ) {
 	const [ feeds, setFeeds ] = useState< Feed[] >( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isSaving, setIsSaving ] = useState( false );
+	const [ isImporting, setIsImporting ] = useState( false );
 	const [ saveError, setSaveError ] = useState< string | null >( null );
 	const [ notice, setNotice ] = useState< Notice | null >( null );
 
@@ -128,15 +130,74 @@ export function useFeeds( isDrawerOpen = false ) {
 		[ mutate ]
 	);
 
-	const deleteFeed = useCallback(
-		( feedId: string ) =>
+	const deleteFeeds = useCallback(
+		( feedIds: string[] ) =>
 			mutate(
-				{ path: `${ FEEDS_PATH }/${ feedId }/action`, method: 'POST', data: { action: 'delete' } },
-				__( 'RSS feed deleted.', 'newspack-lite-site' ),
-				__( "Couldn't delete the RSS feed. Try again.", 'newspack-lite-site' ),
+				{ path: `${ FEEDS_PATH }/delete`, method: 'POST', data: { ids: feedIds } },
+				1 === feedIds.length
+					? __( 'RSS feed deleted.', 'newspack-lite-site' )
+					: sprintf(
+							/* translators: %d: number of RSS feeds deleted. */
+							_n( '%d RSS feed deleted.', '%d RSS feeds deleted.', feedIds.length, 'newspack-lite-site' ),
+							feedIds.length
+						),
+				1 === feedIds.length
+					? __( "Couldn't delete the RSS feed. Try again.", 'newspack-lite-site' )
+					: __( "Couldn't delete the RSS feeds. Try again.", 'newspack-lite-site' ),
 				true
 			),
 		[ mutate ]
+	);
+
+	const importFeed = useCallback(
+		async ( feedId: string ) => {
+			setIsImporting( true );
+			setSaveError( null );
+			const requestId = ++requestCounter.current;
+			let failure: string | null = null;
+			let succeeded = false;
+			try {
+				const updated = await apiFetch< Feed[] >( {
+					path: `${ FEEDS_PATH }/${ feedId }/action`,
+					method: 'POST',
+					data: { action: 'import' },
+				} );
+				applyFeeds( requestId, updated );
+				const result = updated.find( item => item.id === feedId )?.last_result ?? null;
+				if ( result?.error ) {
+					failure = result.error;
+				} else {
+					succeeded = true;
+					if ( updated.length > 0 ) {
+						revealEntriesMenu();
+					}
+					showNotice( formatLastResult( result ) || __( 'RSS feed imported.', 'newspack-lite-site' ) );
+				}
+			} catch ( err ) {
+				const message = ( err as Error ).message || __( "Couldn't import the RSS feed. Try again.", 'newspack-lite-site' );
+				failure = message;
+				if ( isDrawerOpenRef.current ) {
+					setSaveError( message );
+					failure = null;
+				}
+			} finally {
+				setIsImporting( false );
+			}
+
+			if ( failure && ! isDrawerOpenRef.current ) {
+				showNotice( failure, 'error' );
+			}
+
+			if ( ! succeeded || appliedRequest.current !== requestId ) {
+				const refetchId = ++requestCounter.current;
+				apiFetch< Feed[] >( { path: FEEDS_PATH } )
+					.then( data => applyFeeds( refetchId, data ) )
+					.catch( () => {} );
+			}
+
+			return succeeded;
+		},
+		[ showNotice, applyFeeds ]
 	);
 
 	const clearSaveError = useCallback( () => setSaveError( null ), [] );
@@ -150,7 +211,9 @@ export function useFeeds( isDrawerOpen = false ) {
 		showNotice,
 		addFeed,
 		updateFeed,
-		deleteFeed,
+		deleteFeeds,
+		importFeed,
+		isImporting,
 		clearSaveError,
 	};
 }

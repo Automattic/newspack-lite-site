@@ -9,6 +9,7 @@ export interface LastResult {
 	imported?: number;
 	failed?: number;
 	up_to_date?: boolean;
+	empty?: boolean;
 	error?: string;
 	detail?: string;
 }
@@ -44,7 +45,7 @@ export interface Notice {
 export interface FeedsListProps {
 	feeds: Feed[];
 	onEdit: ( feed: Feed ) => void;
-	onDelete: ( feedId: string ) => Promise< boolean >;
+	onDelete: ( feedIds: string[] ) => Promise< boolean >;
 }
 
 /**
@@ -88,4 +89,6 @@ export interface FeedDrawerProps {
 	onAdd: ( data: NewFeedData ) => Promise< boolean >;
 	onUpdate: ( feedId: string, changes: FeedChanges ) => Promise< boolean >;
 	onClearError: () => void;
+	isImporting: boolean;
+	onImport: ( feedId: string ) => Promise< boolean >;
 }

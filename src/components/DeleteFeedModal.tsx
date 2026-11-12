@@ -8,7 +8,7 @@
 import { useState } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import { Stack } from '@wordpress/ui';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { type RenderModalProps } from '@wordpress/dataviews';
 
 /**
@@ -16,10 +16,12 @@ import { type RenderModalProps } from '@wordpress/dataviews';
  */
 import { type Feed } from '../types/rss-feed-import';
 
+const MAX_LISTED_FEEDS = 5;
+
 /**
  * Confirmation modal shown before deleting an RSS feed.
  *
- * Explains that imports stop and existing entries stay, then offers Cancel and Delete buttons.
+ * Explains that imports stop and existing entries stay, lists the feeds when there are only a few, then offers Cancel and Delete buttons.
  */
 export const DeleteFeedModal = ( {
 	items,
@@ -31,10 +33,34 @@ export const DeleteFeedModal = ( {
 
 	return (
 		<>
-			<p>{ __( 'Delete this RSS feed? It stops importing, and the entries it already imported stay on the site.', 'newspack-lite-site' ) }</p>
 			<p>
-				<strong>{ items[ 0 ].feed_url }</strong>
+				{ 1 === items.length
+					? __( 'Delete this RSS feed? It stops importing, and the entries it already imported stay on the site.', 'newspack-lite-site' )
+					: sprintf(
+							/* translators: %d: number of RSS feeds */
+							_n(
+								'Delete %d RSS feed? It stops importing, and the entries it already imported stay on the site.',
+								'Delete %d RSS feeds? They stop importing, and the entries they already imported stay on the site.',
+								items.length,
+								'newspack-lite-site'
+							),
+							items.length
+						) }
 			</p>
+			{ 1 === items.length && (
+				<p className="newspack-lite-delete-feed-url">
+					<strong>{ items[ 0 ].feed_url }</strong>
+				</p>
+			) }
+			{ items.length > 1 && items.length <= MAX_LISTED_FEEDS && (
+				<ul className="newspack-lite-delete-feeds">
+					{ items.map( item => (
+						<li key={ item.id }>
+							<strong>{ item.feed_url }</strong>
+						</li>
+					) ) }
+				</ul>
+			) }
 			<Stack direction="row" justify="flex-end" gap="sm">
 				<Button variant="secondary" onClick={ () => closeModal?.() } disabled={ isDeleting }>
 					{ __( 'Cancel', 'newspack-lite-site' ) }

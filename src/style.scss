@@ -8,7 +8,11 @@
 @import "~@wordpress/base-styles/variables";
 
 $feeds-actions-width: 15em;
+$feeds-actions-width-compact: 3.5em;
 $feeds-status-width: 9em;
+$feeds-checkbox-width: 3em;
+$feeds-url-min-width: 16em;
+$feeds-data-min-width: 9em;
 
 body.newspack-lite-admin-header {
 	background: #fff;
@@ -77,7 +81,20 @@ body.newspack-lite-admin-header {
 	}
 }
 
+.newspack-lite-feeds .dataviews-layout__container {
+	container-type: inline-size;
+}
+
+.newspack-lite-feeds {
+	--newspack-lite-feeds-actions-width: #{$feeds-actions-width-compact};
+
+	@media (min-width: #{$break-medium + 1}) {
+		--newspack-lite-feeds-actions-width: #{$feeds-actions-width};
+	}
+}
+
 .newspack-lite-feeds table.dataviews-view-table {
+	min-width: calc(#{$feeds-checkbox-width} + var(--newspack-lite-feeds-url-min-width, #{$feeds-url-min-width}) + var(--newspack-lite-feeds-status-width, #{$feeds-status-width}) + var(--newspack-lite-feeds-actions-width) + (var(--newspack-lite-feeds-columns, 5) - 1) * #{$feeds-data-min-width});
 	table-layout: fixed;
 	width: 100%;
 
@@ -86,21 +103,29 @@ body.newspack-lite-admin-header {
 	}
 
 	col.dataviews-view-table__col-actions {
-		width: $feeds-actions-width !important;
+		width: var(--newspack-lite-feeds-actions-width) !important;
+	}
+
+	col.dataviews-view-table__col-first-data {
+		width: max(#{$feeds-url-min-width}, calc((100cqi - #{$feeds-checkbox-width} - var(--newspack-lite-feeds-status-width, #{$feeds-status-width}) - var(--newspack-lite-feeds-actions-width)) / var(--newspack-lite-feeds-columns, 5))) !important;
+	}
+
+	col.dataviews-view-table__col-checkbox {
+		width: $feeds-checkbox-width !important;
 	}
 
 	col.dataviews-view-table__col-status {
 		width: $feeds-status-width !important;
 	}
 
-	thead th:not(.dataviews-view-table__actions-column),
-	tbody td:not(.dataviews-view-table__actions-column) {
+	thead th:not(.dataviews-view-table__actions-column, .dataviews-view-table__checkbox-column),
+	tbody td:not(.dataviews-view-table__actions-column, .dataviews-view-table__checkbox-column) {
 		width: auto !important;
 	}
 
 	thead th.dataviews-view-table__actions-column,
 	tbody td.dataviews-view-table__actions-column {
-		width: $feeds-actions-width !important;
+		width: var(--newspack-lite-feeds-actions-width) !important;
 	}
 
 	tbody td:not(.dataviews-view-table__actions-column) > .dataviews-view-table__cell-content-wrapper {
@@ -115,28 +140,6 @@ body.newspack-lite-admin-header {
 	.dataviews-view-table__primary-column-content,
 	.dataviews-title-field {
 		min-width: 0;
-	}
-
-	tbody tr {
-		position: relative;
-	}
-
-	tbody tr:has(.newspack-lite-feed-error) > td {
-		padding-bottom: calc(var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})) + var(--wpds-typography-line-height-xs, #{$font-line-height-x-small}) + var(--wpds-dimension-gap-sm, #{$grid-unit-10}));
-	}
-
-	.newspack-lite-feed-error {
-		bottom: var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15}));
-		inset-inline-end: calc(#{$feeds-actions-width} + var(--newspack-dataviews-cell-padding, var(--wpds-dimension-padding-md, #{$grid-unit-15})));
-		inset-inline-start: var(--wpds-dimension-padding-2xl, #{$grid-unit-30});
-		position: absolute;
-	}
-
-	.newspack-lite-feed-error__text {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	th.dataviews-view-table__actions-column .dataviews-view-table-header {
@@ -165,6 +168,18 @@ body.newspack-lite-admin-header {
 	}
 }
 
+.newspack-lite-delete-feed-url {
+	margin-block: 0 var(--wpds-dimension-gap-lg, #{$grid-unit-20});
+	overflow-wrap: anywhere;
+}
+
+.newspack-lite-delete-feeds {
+	list-style: disc;
+	margin-block: 0 var(--wpds-dimension-gap-lg, #{$grid-unit-20});
+	margin-inline: $grid-unit-30 0;
+	overflow-wrap: anywhere;
+}
+
 .newspack-lite-feed-url {
 	display: block;
 	overflow: hidden;
@@ -176,15 +191,6 @@ body.newspack-lite-admin-header {
 	color: var(--wpds-color-foreground-content-neutral-weak, #{$gray-700});
 	font-size: var(--wpds-typography-font-size-sm, #{$font-size-small});
 	line-height: var(--wpds-typography-line-height-xs, #{$font-line-height-x-small});
-
-	&--error {
-		color: var(--wpds-color-foreground-content-error-weak, #{$alert-red});
-	}
-
-	&__icon {
-		fill: currentcolor;
-		flex-shrink: 0;
-	}
 }
 
 .newspack-lite-path-field__input {

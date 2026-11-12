@@ -156,7 +156,32 @@ class RSS_Importer {
 					'action' => [
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => [ 'pause', 'resume', 'delete' ],
+						'enum'     => [ 'pause', 'resume', 'delete', 'import' ],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			$namespace,
+			'/rss-feeds/delete',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ __CLASS__, 'rest_delete_feeds' ],
+				'permission_callback' => [ __CLASS__, 'check_admin_permission' ],
+				'args'                => [
+					'ids' => [
+						'type'              => 'array',
+						'required'          => true,
+						'items'             => [
+							'type'    => 'string',
+							'pattern' => '^[a-f0-9]{32}$',
+						],
+						'minItems'          => 1,
+						'validate_callback' => 'rest_validate_request_arg',
+						'sanitize_callback' => static function ( $ids ) {
+							return array_values( array_unique( array_map( 'sanitize_key', wp_parse_list( $ids ) ) ) );
+						},
 					],
 				],
 			]
@@ -416,10 +441,10 @@ class RSS_Importer {
 	}
 
 	/**
-	 * Pause, resume, or delete a feed.
+	 * Pause, resume, import or delete a feed.
 	 *
 	 * Applies the action requested by the admin UI to the feed identified by its ID.
-	 * Pausing unschedules the WP-Cron event; resuming reschedules it; deleting removes
+	 * Pausing unschedules the WP-Cron event; resuming reschedules it; importing runs the scheduled import now; deleting removes
 	 * the feed entirely.
 	 *
 	 * @param \WP_REST_Request $request The REST request.
@@ -437,6 +462,36 @@ class RSS_Importer {
 				__( 'Feed not found.', 'newspack-lite-site' ),
 				[ 'status' => 404 ]
 			);
+		}
+
+		if ( 'import' === $feed_action ) {
+			if ( 'active' !== $feeds[ $feed_id ]['status'] ) {
+				return new \WP_Error(
+					'feed_paused',
+					__( 'Resume the RSS feed to import it.', 'newspack-lite-site' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			if ( ! self::run_scheduled_import( $feed_id ) ) {
+				wp_cache_delete( 'alloptions', 'options' );
+
+				if ( ! isset( self::get_feeds()[ $feed_id ] ) ) {
+					return new \WP_Error(
+						'feed_not_found',
+						__( 'Feed not found.', 'newspack-lite-site' ),
+						[ 'status' => 404 ]
+					);
+				}
+
+				return new \WP_Error(
+					'feed_busy',
+					__( 'This RSS feed is already importing. Try again in a few minutes.', 'newspack-lite-site' ),
+					[ 'status' => 409 ]
+				);
+			}
+
+			return self::rest_feeds_response( self::get_feeds() );
 		}
 
 		switch ( $feed_action ) {
@@ -465,6 +520,29 @@ class RSS_Importer {
 				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
 				unset( $feeds[ $feed_id ] );
 				break;
+		}
+
+		self::save_feeds( $feeds );
+
+		return self::rest_feeds_response( $feeds );
+	}
+
+	/**
+	 * Delete several RSS feeds at once.
+	 *
+	 * Unknown IDs are ignored, so repeating a request is safe. Returns the full refreshed list.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response
+	 */
+	public static function rest_delete_feeds( \WP_REST_Request $request ) {
+		$feeds = self::get_feeds();
+
+		foreach ( (array) $request->get_param( 'ids' ) as $feed_id ) {
+			if ( isset( $feeds[ $feed_id ] ) ) {
+				wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+				unset( $feeds[ $feed_id ] );
+			}
 		}
 
 		self::save_feeds( $feeds );
@@ -557,17 +635,18 @@ class RSS_Importer {
 	 * Run the scheduled import for a specific RSS feed.
 	 *
 	 * @param string $feed_id The RSS feed ID to import.
+	 * @return bool True if the import ran, false if it was skipped (locked or paused feed) or the feed no longer exists.
 	 */
 	public static function run_scheduled_import( $feed_id = '' ) {
 		if ( empty( $feed_id ) ) {
-			return;
+			return false;
 		}
 
 		$lock_key = self::LOCK_PREFIX . $feed_id;
 
 		// Prevent concurrent runs for this RSS feed.
 		if ( get_transient( $lock_key ) ) {
-			return;
+			return false;
 		}
 
 		set_transient( $lock_key, time(), self::LOCK_TTL );
@@ -576,7 +655,7 @@ class RSS_Importer {
 
 		if ( ! isset( $feeds[ $feed_id ] ) || 'active' !== $feeds[ $feed_id ]['status'] ) {
 			delete_transient( $lock_key );
-			return;
+			return false;
 		}
 
 		$feed   = $feeds[ $feed_id ];
@@ -588,7 +667,7 @@ class RSS_Importer {
 		// RSS feed deleted mid-run; skip write to avoid creating a ghost entry.
 		if ( ! isset( $feeds[ $feed_id ] ) ) {
 			delete_transient( $lock_key );
-			return;
+			return false;
 		}
 
 		$feeds[ $feed_id ]['last_run']    = time();
@@ -604,6 +683,8 @@ class RSS_Importer {
 		self::save_feeds( $feeds );
 
 		delete_transient( $lock_key );
+
+		return true;
 	}
 
 	/**
@@ -615,7 +696,7 @@ class RSS_Importer {
 	 *
 	 * @param string $feed_url  The RSS feed URL to import from.
 	 * @param int    $author_id WordPress user ID to assign as post author.
-	 * @return array|\WP_Error Array with 'imported', 'failed', and 'up_to_date' keys, or WP_Error on failure.
+	 * @return array|\WP_Error Array with 'imported', 'failed' and 'up_to_date' keys (plus 'empty' for a feed with no items), or WP_Error on failure.
 	 */
 	public static function run_import( $feed_url, $author_id = 0 ) {
 		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
@@ -645,7 +726,12 @@ class RSS_Importer {
 			$items = $feed->get_items();
 
 			if ( empty( $items ) ) {
-				return new \WP_Error( 'feed_empty', __( 'The RSS feed contains no items.', 'newspack-lite-site' ) );
+				return [
+					'imported'   => 0,
+					'failed'     => 0,
+					'up_to_date' => true,
+					'empty'      => true,
+				];
 			}
 
 			$imported   = 0;
