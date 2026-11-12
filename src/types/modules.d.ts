@@ -12,3 +12,7 @@ declare module 'newspack-components/dist/esm/empty-state';
 declare module 'newspack-components/dist/esm/waiting';
 declare module 'newspack-components/dist/esm/color-picker';
 declare module 'newspack-components/dist/esm/info-button';
+declare module 'newspack-components/dist/esm/proxied-imports/router' {
+	import * as ReactRouterDOM from 'react-router-dom';
+	export default ReactRouterDOM;
+}

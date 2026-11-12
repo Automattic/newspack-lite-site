@@ -13,7 +13,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies.
  */
-import { HashRouter, Switch, Route, Redirect, useLocation } from 'react-router-dom';
+import Router from 'newspack-components/dist/esm/proxied-imports/router';
 import Page from 'newspack-components/dist/esm/page';
 import TabbedNavigation from 'newspack-components/dist/esm/tabbed-navigation';
 import Waiting from 'newspack-components/dist/esm/waiting';
@@ -25,6 +25,8 @@ import useUnsavedChangesDialog from 'newspack-components/dist/esm/hooks/use-unsa
 import { useSettings } from '../hooks/useSettings';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { AppearancePanel } from '../components/AppearancePanel';
+
+const { HashRouter, Switch, Route, Redirect, useLocation } = Router;
 
 const SNACKBAR_DURATION = 3000;
 
