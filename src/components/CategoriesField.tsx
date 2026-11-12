@@ -24,7 +24,7 @@ export const CategoriesField = ( {
 	value,
 	onChange,
 	label = __( 'Categories', 'newspack-lite-site' ),
-	help = __( 'Select Categories to be included in your Lite Site homepage. Leave empty to include all Categories.', 'newspack-lite-site' ),
+	help = __( 'Only posts in these categories appear on the Lite Site. Leave empty to include all categories.', 'newspack-lite-site' ),
 }: CategoriesFieldProps ) => {
 	const categories = window.newspackLiteSite?.categories ?? [];
 	const suggestions = categories.map( getCategoryLabel );
@@ -45,7 +45,7 @@ export const CategoriesField = ( {
 	};
 
 	return (
-		<BaseControl help={ help }>
+		<BaseControl help={ help } __nextHasNoMarginBottom>
 			<FormTokenField
 				label={ label }
 				value={ tokenValue }

@@ -11,7 +11,7 @@ $current_post = Lite_Site::resolve_post( get_query_var( 'lite_path' ) );
 
 if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_supported_post_types(), true ) ) {
 	status_header( 404 );
-	exit( 'Post not found' );
+	exit( esc_html__( 'Page not found.', 'newspack-lite-site' ) );
 }
 
 $is_liveblog  = Lite_Site::is_liveblog( $current_post );
@@ -63,7 +63,7 @@ if ( $is_liveblog ) {
 <body>
 	<header class="back">
 		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to Lite Site homepage', 'newspack-lite-site' ); ?></a> |
-		<a href="<?php echo esc_url( get_permalink( $current_post ) ); ?>"><?php esc_html_e( 'View Full-Featured Post', 'newspack-lite-site' ); ?></a>
+		<a href="<?php echo esc_url( get_permalink( $current_post ) ); ?>"><?php esc_html_e( 'View full version', 'newspack-lite-site' ); ?></a>
 	</header>
 	<main>
 		<article>

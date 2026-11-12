@@ -16,7 +16,7 @@ namespace Newspack_Lite_Site;
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title><?php esc_html_e( 'You are offline', 'newspack-lite-site' ); ?> - <?php bloginfo( 'name' ); ?></title>
+	<title><?php esc_html_e( 'You\'re offline', 'newspack-lite-site' ); ?> - <?php bloginfo( 'name' ); ?></title>
 	<?php $font_import_url = Lite_Site::get_font_import_url(); ?>
 	<?php if ( $font_import_url ) : ?>
 		<link rel="stylesheet" href="<?php echo esc_url( $font_import_url ); ?>">
@@ -28,7 +28,7 @@ namespace Newspack_Lite_Site;
 		<a href="<?php echo esc_url( home_url( '/' . Lite_Site::get_url_base() ) ); ?>">← <?php esc_html_e( 'Back to Lite Site homepage', 'newspack-lite-site' ); ?></a>
 	</header>
 	<main>
-		<h1><?php esc_html_e( 'You are offline', 'newspack-lite-site' ); ?></h1>
+		<h1><?php esc_html_e( 'You\'re offline', 'newspack-lite-site' ); ?></h1>
 		<hr class="separator">
 		<?php if ( function_exists( 'wp_service_worker_error_message_placeholder' ) ) : ?>
 			<?php wp_service_worker_error_message_placeholder(); ?>

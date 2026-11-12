@@ -1200,8 +1200,11 @@ class Lite_Site {
 		}
 
 		$label = ! empty( $alt )
-		/* translators: %s: image alt text */
-			? sprintf( __( 'Image | %s', 'newspack-lite-site' ), $alt )
+			? sprintf(
+				/* translators: %s: image alt text. */
+				__( 'Image: %s', 'newspack-lite-site' ),
+				$alt
+			)
 			: __( 'Image', 'newspack-lite-site' );
 
 		$attrs = sprintf( ' data-src="%s"', esc_url( $src ) );

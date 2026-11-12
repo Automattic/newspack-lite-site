@@ -5,9 +5,14 @@
 /**
  * WordPress dependencies.
  */
-import { __ } from '@wordpress/i18n';
-import { TextareaControl, TextControl } from '@wordpress/components';
+import { __, sprintf } from '@wordpress/i18n';
+import { TextareaControl } from '@wordpress/components';
 import { type Field, type DataFormControlProps } from '@wordpress/dataviews';
+
+/**
+ * External dependencies.
+ */
+import TextControl from 'newspack-components/dist/esm/text-control';
 
 /**
  * Internal dependencies.
@@ -32,7 +37,7 @@ const TagsFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSettings >
 		label={ __( 'Tags', 'newspack-lite-site' ) }
 		value={ data.tags ?? [] }
 		onChange={ ids => onChange( { tags: ids } ) }
-		help={ __( 'Include all content with this Tag in your Lite Site. Leave it empty to include posts with any Tag.', 'newspack-lite-site' ) }
+		help={ __( 'Only posts with at least one of these tags appear on the Lite Site. Leave empty to include all posts.', 'newspack-lite-site' ) }
 	/>
 );
 
@@ -44,7 +49,7 @@ const ExcludedCategoriesFieldEdit = ( { data, onChange }: DataFormControlProps< 
 		label={ __( 'Excluded Categories', 'newspack-lite-site' ) }
 		value={ data.excluded_categories ?? [] }
 		onChange={ ids => onChange( { excluded_categories: ids } ) }
-		help={ __( 'Content in these Categories will not appear on your Lite Site.', 'newspack-lite-site' ) }
+		help={ __( 'Posts in these categories never appear on the Lite Site, even if they match the filters above.', 'newspack-lite-site' ) }
 	/>
 );
 
@@ -56,7 +61,7 @@ const ExcludedTagsFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSe
 		label={ __( 'Excluded Tags', 'newspack-lite-site' ) }
 		value={ data.excluded_tags ?? [] }
 		onChange={ ids => onChange( { excluded_tags: ids } ) }
-		help={ __( 'Content with these Tags will not appear on your Lite Site.', 'newspack-lite-site' ) }
+		help={ __( 'Posts with these tags never appear on the Lite Site, even if they match the filters above.', 'newspack-lite-site' ) }
 	/>
 );
 
@@ -64,22 +69,23 @@ const ExcludedTagsFieldEdit = ( { data, onChange }: DataFormControlProps< SiteSe
  * Custom Edit component for the URL Base field with a conditional live-site link.
  */
 const UrlBaseFieldEdit = ( { data, field, onChange }: DataFormControlProps< SiteSettings > ) => {
-	const archiveUrl = `${ window.location.origin }/${ data.url_base || 'lite' }/`;
+	const homeUrl = window.newspackLiteSite?.homeUrl ?? `${ window.location.origin }/`;
+	const archiveUrl = `${ homeUrl }${ data.url_base || 'lite' }/`;
+	const help = sprintf(
+		/* translators: %s: example Lite Site URL. */
+		__( 'The path your Lite Site is served from, for example %s.', 'newspack-lite-site' ),
+		archiveUrl
+	);
 	return (
-		<>
-			<TextControl label={ field.label } value={ data.url_base ?? '' } onChange={ val => onChange( { url_base: val } ) } />
-			<p className="components-base-control__help">
-				{ __( 'The URL base for the Lite Site (e.g.', 'newspack-lite-site' ) }{ ' ' }
-				{ data.enabled ? (
-					<a href={ archiveUrl } target="_blank" rel="noreferrer">
-						{ archiveUrl }
-					</a>
-				) : (
-					archiveUrl
-				) }
-				{ __( 'article-slug).', 'newspack-lite-site' ) }
-			</p>
-		</>
+		<TextControl
+			label={ field.label }
+			value={ data.url_base ?? '' }
+			onChange={ ( val: string ) => onChange( { url_base: val } ) }
+			help={ help }
+			withMargin={ false }
+			__nextHasNoMarginBottom
+			__next40pxDefaultSize
+		/>
 	);
 };
 
@@ -97,15 +103,15 @@ const FontImportUrlFieldEdit = ( { data, field, onChange }: DataFormControlProps
 	<TextControl
 		label={ field.label }
 		value={ data.font_import_url ?? '' }
-		placeholder={ __(
-			'<link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet"> or https://fonts.googleapis.com/css?family=Open+Sans',
-			'newspack-lite-site'
-		) }
-		onChange={ val => onChange( { font_import_url: val } ) }
+		placeholder="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
+		onChange={ ( val: string ) => onChange( { font_import_url: val } ) }
 		help={ __(
-			'The font will be loaded on your Lite Site pages. Caution: Loading multiple fonts or font weights can slow down your Lite Site. Choose only the fonts and weights you need.',
+			'Paste the embed code or stylesheet URL from a font provider such as Google Fonts. Each extra font or weight makes pages slower to load, so add only what you need.',
 			'newspack-lite-site'
 		) }
+		withMargin={ false }
+		__nextHasNoMarginBottom
+		__next40pxDefaultSize
 	/>
 );
 
@@ -117,8 +123,10 @@ const FooterHtmlFieldEdit = ( { data, field, onChange }: DataFormControlProps< S
 		label={ field.label }
 		value={ data.footer_html ?? '' }
 		onChange={ val => onChange( { footer_html: val } ) }
+		help={ field.description }
 		rows={ 5 }
 		className="newspack-lite-code-textarea"
+		__nextHasNoMarginBottom
 	/>
 );
 
@@ -133,6 +141,7 @@ const CustomCssFieldEdit = ( { data, field, onChange }: DataFormControlProps< Si
 		onChange={ val => onChange( { custom_css: val } ) }
 		rows={ 10 }
 		className="newspack-lite-code-textarea"
+		__nextHasNoMarginBottom
 	/>
 );
 
@@ -142,20 +151,21 @@ const CustomCssFieldEdit = ( { data, field, onChange }: DataFormControlProps< Si
 export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	{
 		id: 'enabled',
-		label: __( 'Enable Lite Sites for your content', 'newspack-lite-site' ),
+		/* translators: %s: product name, Lite Site. */
+		label: sprintf( __( 'Enable %s', 'newspack-lite-site' ), 'Lite Site' ),
 		type: 'boolean',
 	},
 	{
 		id: 'url_base',
-		label: __( 'Lite Site Suffix', 'newspack-lite-site' ),
+		label: __( 'Lite Site Path', 'newspack-lite-site' ),
 		Edit: UrlBaseFieldEdit,
 	},
 	{
 		id: 'posts_per_page',
-		label: __( 'Amount of content visible on Lite Site homepage', 'newspack-lite-site' ),
+		label: __( 'Posts per Page', 'newspack-lite-site' ),
 		type: 'integer',
 		description: __(
-			'Amount of content shown before a Back/Next button appears. Defaults to your WordPress Reading setting value for pagination.',
+			'How many posts each page of the Lite Site homepage lists. Readers use the page links at the bottom to see older posts.',
 			'newspack-lite-site'
 		),
 	},
@@ -186,16 +196,16 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'external_links_new_tab',
-		label: __( 'Open any external links in a new tab', 'newspack-lite-site' ),
+		label: __( 'Open external links in a new tab', 'newspack-lite-site' ),
 		type: 'boolean',
-		description: __( 'When enabled, links to external websites open in a new browser tab. Disable to open them in place.', 'newspack-lite-site' ),
+		description: __( 'Links to this site always open in the same tab.', 'newspack-lite-site' ),
 	},
 	{
 		id: 'footer_html',
 		label: __( 'Footer HTML', 'newspack-lite-site' ),
 		Edit: FooterHtmlFieldEdit,
 		description: __(
-			'HTML content shown in the footer across all Lite Site pages. Consider including Accessibility and Privacy policies and other essential content. Use the Lite Site Suffix set to provide low-bandwidth, text-only versions.',
+			'Shown at the bottom of every Lite Site page. Add links to your accessibility and privacy policies and other essential information. Basic HTML only; scripts are removed.',
 			'newspack-lite-site'
 		),
 	},
@@ -204,7 +214,7 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'GA4 Measurement ID', 'newspack-lite-site' ),
 		type: 'text',
 		description: __(
-			'Google Analytics 4 Measurement ID. Lite Site strips all the usual WordPress script inclusions, so this will re-inject GA4 tracking (which is turned off by default, so Lite Sites load very quickly).',
+			"Lite Site pages don't load your site's usual scripts, so analytics stays off unless you add an ID here. Paste a Measurement ID, such as G-XXXXXXXXXX, to track visits with Google Analytics. This adds one script to every page.",
 			'newspack-lite-site'
 		),
 	},
@@ -221,7 +231,7 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 	},
 	{
 		id: 'font_import_url',
-		label: __( 'Font Provider Import Code or URL', 'newspack-lite-site' ),
+		label: __( 'Font Embed Code or URL', 'newspack-lite-site' ),
 		Edit: FontImportUrlFieldEdit,
 	},
 	{
@@ -229,7 +239,7 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'Body Font', 'newspack-lite-site' ),
 		type: 'text',
 		description: __(
-			'Font name for Body Font. This must match the Font Provider Import (e.g. "Open Sans"). Leave empty to use the user\'s device system font.',
+			"Enter the font name exactly as the provider lists it, for example Open Sans. Leave empty to use each reader's system font.",
 			'newspack-lite-site'
 		),
 	},
@@ -237,9 +247,6 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		id: 'custom_css',
 		label: __( 'Custom CSS', 'newspack-lite-site' ),
 		Edit: CustomCssFieldEdit,
-		description: __(
-			'CSS injected into the <head> of every Lite Site page, after built-in stylesheets. Use this to override default styles or add custom rules.',
-			'newspack-lite-site'
-		),
+		description: __( 'Added after the built-in styles, so your rules can override them. Every rule adds to page weight.', 'newspack-lite-site' ),
 	},
 ];

@@ -6,7 +6,7 @@
  * WordPress dependencies.
  */
 import { dateI18n, getSettings } from '@wordpress/date';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 /**
  * Internal dependencies.
@@ -35,7 +35,11 @@ export function formatLastResult( result: LastResult | null ): string {
 		return '';
 	}
 	if ( result.error ) {
-		return `${ __( 'Error', 'newspack-lite-site' ) }: ${ result.error }`;
+		return sprintf(
+			/* translators: %s: error message from the last import. */
+			__( 'Error: %s', 'newspack-lite-site' ),
+			result.error
+		);
 	}
 
 	const imported = result.imported ?? 0;
@@ -47,22 +51,22 @@ export function formatLastResult( result: LastResult | null ): string {
 	}
 	if ( upToDate ) {
 		return sprintf(
-			/* translators: %d: number of posts imported */
-			__( '%d imported, up to date', 'newspack-lite-site' ),
+			/* translators: %d: number of entries imported */
+			_n( '%d imported, up to date', '%d imported, up to date', imported, 'newspack-lite-site' ),
 			imported
 		);
 	}
 	if ( failed > 0 ) {
 		return sprintf(
-			/* translators: 1: number of posts imported, 2: number of posts failed */
-			__( '%1$d imported, %2$d failed', 'newspack-lite-site' ),
+			/* translators: 1: number of entries imported, 2: number of entries that failed */
+			_n( '%1$d imported, %2$d failed', '%1$d imported, %2$d failed', imported, 'newspack-lite-site' ),
 			imported,
 			failed
 		);
 	}
 	return sprintf(
-		/* translators: %d: number of posts imported */
-		__( '%d imported', 'newspack-lite-site' ),
+		/* translators: %d: number of entries imported */
+		_n( '%d imported', '%d imported', imported, 'newspack-lite-site' ),
 		imported
 	);
 }

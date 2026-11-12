@@ -42,6 +42,7 @@ export const FEED_FORM_FIELDS: Field< FeedFormData >[] = [
 	{
 		id: 'author_id',
 		label: __( 'Author', 'newspack-lite-site' ),
+		description: __( 'Imported entries are published under this author.', 'newspack-lite-site' ),
 		elements: authors,
 	},
 ];

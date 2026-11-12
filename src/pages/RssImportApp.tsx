@@ -32,18 +32,16 @@ export const RssImportApp = () => {
 
 	return (
 		<div className="wrap">
-			<Page
-				breadcrumbItems={ [ { label: __( 'Lite Site', 'newspack-lite-site' ) }, { label: __( 'RSS Feed Import', 'newspack-lite-site' ) } ] }
-			>
+			<Page breadcrumbItems={ [ { label: 'Lite Site' }, { label: __( 'RSS Feed Import', 'newspack-lite-site' ) } ] }>
 				<div className="newspack-lite-rss-sections">
 					{ cronDisabled && (
 						<Notice status="warning" isDismissible={ false }>
 							{ __(
-								'WP-Cron is disabled on this site. RSS feed imports will not run automatically unless a server-level cron job is configured to trigger WordPress scheduled events.',
+								"WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host.",
 								'newspack-lite-site'
 							) }{ ' ' }
 							<ExternalLink href="https://developer.wordpress.org/plugins/cron/">
-								{ __( 'Learn more about WordPress Cron', 'newspack-lite-site' ) }
+								{ __( 'Learn more about WP-Cron', 'newspack-lite-site' ) }
 							</ExternalLink>
 						</Notice>
 					) }

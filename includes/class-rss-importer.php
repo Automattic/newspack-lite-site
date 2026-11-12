@@ -212,7 +212,7 @@ class RSS_Importer {
 		if ( ! array_key_exists( $interval, self::get_interval_labels() ) ) {
 			return new \WP_Error(
 				'invalid_interval',
-				__( 'Please select a valid polling interval for your RSS feed.', 'newspack-lite-site' ),
+				__( 'Choose how often to import this RSS feed.', 'newspack-lite-site' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -223,7 +223,7 @@ class RSS_Importer {
 		if ( isset( $feeds[ $feed_id ] ) ) {
 			return new \WP_Error(
 				'duplicate_feed',
-				__( 'This RSS feed is already configured.', 'newspack-lite-site' ),
+				__( 'This RSS feed is already in the list.', 'newspack-lite-site' ),
 				[ 'status' => 409 ]
 			);
 		}
@@ -444,7 +444,12 @@ class RSS_Importer {
 
 		$feeds[ $feed_id ]['last_run']    = time();
 		$feeds[ $feed_id ]['last_result'] = is_wp_error( $result )
-			? [ 'error' => $result->get_error_message() ]
+			? array_filter(
+				[
+					'error'  => $result->get_error_message(),
+					'detail' => $result->get_error_data( 'feed_error' ),
+				]
+			)
 			: $result;
 
 		self::save_feeds( $feeds );
@@ -469,7 +474,7 @@ class RSS_Importer {
 		}
 
 		if ( ! $author_id || ! user_can( $author_id, 'publish_posts' ) ) {
-			return new \WP_Error( 'invalid_author', __( 'A valid author ID is required.', 'newspack-lite-site' ) );
+			return new \WP_Error( 'invalid_author', __( 'The author set for this feed can no longer publish posts. Delete the feed and add it again with another author.', 'newspack-lite-site' ) );
 		}
 
 		add_filter( 'pre_http_request', [ __CLASS__, 'block_ssrf_request' ], 10, 3 );
@@ -483,11 +488,8 @@ class RSS_Importer {
 			if ( is_wp_error( $feed ) ) {
 				return new \WP_Error(
 					'feed_error',
-					sprintf(
-						/* translators: %s: error message from the feed parser */
-						__( 'Could not retrieve RSS feed: %s', 'newspack-lite-site' ),
-						$feed->get_error_message()
-					)
+					__( "Couldn't reach this RSS feed. Check that the URL opens in a browser, then wait for the next run.", 'newspack-lite-site' ),
+					$feed->get_error_message()
 				);
 			}
 
@@ -800,7 +802,7 @@ class RSS_Importer {
 	 */
 	public static function block_ssrf_request( $preempt, $args, $url ) {
 		if ( ! self::is_safe_url( $url ) ) {
-			return new \WP_Error( 'ssrf_blocked', __( 'Request to a private or reserved address was blocked.', 'newspack-lite-site' ) );
+			return new \WP_Error( 'ssrf_blocked', __( 'This address is on a private network, so it can\'t be imported.', 'newspack-lite-site' ) );
 		}
 		return $preempt;
 	}
