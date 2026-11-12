@@ -78,6 +78,9 @@ export function useFeeds( isDrawerOpen = false ) {
 				if ( notifyError || ! isDrawerOpenRef.current ) {
 					showNotice( message, 'error' );
 				}
+				apiFetch< Feed[] >( { path: FEEDS_PATH } )
+					.then( setFeeds )
+					.catch( () => {} );
 				return false;
 			} finally {
 				setIsSaving( false );
