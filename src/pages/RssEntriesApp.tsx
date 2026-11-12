@@ -188,7 +188,7 @@ export const RssEntriesApp = ( { tabbedNavigation, isActive = true, canManageFee
 		);
 	} else if ( isEmpty ) {
 		content = (
-			<Text render={ <p /> } variant="body-md">
+			<Text render={ <p /> } variant="body-md" className="newspack-lite-entries-message">
 				{ __( 'Entries appear here after the first import.', 'newspack-lite-site' ) }
 				{ canManageFeeds && (
 					<>
