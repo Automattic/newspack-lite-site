@@ -24,6 +24,7 @@ class Post_Type {
 		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_fields' ] );
 		add_filter( 'rest_' . self::POST_TYPE . '_collection_params', [ __CLASS__, 'add_feed_collection_param' ] );
 		add_filter( 'rest_' . self::POST_TYPE . '_query', [ __CLASS__, 'filter_rest_query_by_feed' ], 10, 2 );
+		add_action( 'transition_post_status', [ __CLASS__, 'clear_trash_meta_on_restore' ], 10, 3 );
 	}
 
 	/**
@@ -66,6 +67,24 @@ class Post_Type {
 				'supports'            => [ 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'custom-fields' ],
 			]
 		);
+	}
+
+	/**
+	 * Clears the trash meta of an RSS entry that leaves the trash.
+	 *
+	 * Only core's untrash clears it otherwise, so an entry restored another way, such as through
+	 * the REST API, would keep its old trash time and be purged early if trashed again.
+	 *
+	 * @param string   $new_status New post status.
+	 * @param string   $old_status Old post status.
+	 * @param \WP_Post $post       The post.
+	 */
+	public static function clear_trash_meta_on_restore( $new_status, $old_status, $post ): void {
+		if ( 'trash' !== $old_status || 'trash' === $new_status || ! $post instanceof \WP_Post || self::POST_TYPE !== $post->post_type ) {
+			return;
+		}
+		delete_post_meta( $post->ID, '_wp_trash_meta_status' );
+		delete_post_meta( $post->ID, '_wp_trash_meta_time' );
 	}
 
 	/**

@@ -197,4 +197,29 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 
 		$this->assertCount( 2, $data );
 	}
+
+	/**
+	 * Restoring an entry through the REST API clears its trash meta.
+	 */
+	public function test_rest_restore_clears_trash_meta() {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'editor' ] ) );
+		$id = self::factory()->post->create(
+			[
+				'post_type'   => Post_Type::POST_TYPE,
+				'post_status' => 'publish',
+			]
+		);
+		wp_trash_post( $id );
+		$this->assertSame( 'publish', get_post_meta( $id, '_wp_trash_meta_status', true ) );
+		$this->assertNotEmpty( get_post_meta( $id, '_wp_trash_meta_time', true ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/' . Post_Type::POST_TYPE . '/' . $id );
+		$request->set_param( 'status', 'draft' );
+		$response = rest_do_request( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'draft', get_post_status( $id ) );
+		$this->assertSame( '', get_post_meta( $id, '_wp_trash_meta_status', true ) );
+		$this->assertSame( '', get_post_meta( $id, '_wp_trash_meta_time', true ) );
+	}
 }
