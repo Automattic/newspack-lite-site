@@ -40,6 +40,33 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Result counts and post IDs are forwarded as integers, so the page can confirm the action and offer Undo.
+	 */
+	public function test_redirect_target_forwards_result_args() {
+		$target = Lite_Site_Settings::get_entries_redirect_target(
+			[
+				'trashed'   => '2',
+				'ids'       => '12,abc,0,34',
+				'untrashed' => 'x',
+				'deleted'   => '0',
+			]
+		);
+		$this->assertStringContainsString( 'trashed=2', $target );
+		$this->assertStringContainsString( 'ids=12,34', $target );
+		$this->assertStringNotContainsString( 'untrashed', $target );
+		$this->assertStringNotContainsString( 'deleted', $target );
+
+		$target = Lite_Site_Settings::get_entries_redirect_target(
+			[
+				'trashed' => [ '1' ],
+				'ids'     => [ '12' ],
+			]
+		);
+		$this->assertStringNotContainsString( 'trashed', $target );
+		$this->assertStringNotContainsString( 'ids', $target );
+	}
+
+	/**
 	 * Plain GET requests are redirected; real actions and other methods are not.
 	 *
 	 * @dataProvider redirect_requests

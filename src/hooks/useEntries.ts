@@ -13,8 +13,7 @@ import { type Filter, type View } from '@wordpress/dataviews';
 /**
  * Internal dependencies.
  */
-import { type EntryMutation, type RssEntry } from '../types/rss-entries';
-import { type Notice } from '../types/rss-feed-import';
+import { type EntriesNotice, type EntryMutation, type RssEntry } from '../types/rss-entries';
 
 const ENTRIES_PATH = '/wp/v2/nls_rss_entry';
 const FIELDS = 'id,title,date,status,author,categories,tags,link,feed_id,feed_label,source_url,author_name,author_avatar_urls,lite_url';
@@ -63,6 +62,35 @@ function buildQuery( view: View, search: string ): string {
 	return params.toString();
 }
 
+/**
+ * The confirmation shown after entries were trashed, restored or deleted.
+ *
+ * @param mutation The mutation that was applied.
+ * @param count    Number of entries it applied to.
+ */
+export function getMutationMessage( mutation: EntryMutation, count: number ): string {
+	switch ( mutation ) {
+		case 'trash':
+			return sprintf(
+				/* translators: %d: number of entries */
+				_n( '%d entry moved to the trash.', '%d entries moved to the trash.', count, 'newspack-lite-site' ),
+				count
+			);
+		case 'restore':
+			return sprintf(
+				/* translators: %d: number of entries */
+				_n( '%d entry restored.', '%d entries restored.', count, 'newspack-lite-site' ),
+				count
+			);
+		default:
+			return sprintf(
+				/* translators: %d: number of entries */
+				_n( '%d entry permanently deleted.', '%d entries permanently deleted.', count, 'newspack-lite-site' ),
+				count
+			);
+	}
+}
+
 async function getErrorMessage( err: unknown, fallback: string ): Promise< string > {
 	if ( err instanceof Response ) {
 		try {
@@ -91,7 +119,7 @@ export function useEntries( view: View ) {
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ isFetching, setIsFetching ] = useState( true );
 	const [ isEmpty, setIsEmpty ] = useState( false );
-	const [ notice, setNotice ] = useState< Notice | null >( null );
+	const [ notice, setNotice ] = useState< EntriesNotice | null >( null );
 	const [ reloadKey, setReloadKey ] = useState( 0 );
 	const [ search, setSearch ] = useState( view.search ?? '' );
 
@@ -99,10 +127,15 @@ export function useEntries( view: View ) {
 	const isFirstLoad = useRef( true );
 	const noticeTimer = useRef< ReturnType< typeof setTimeout > | undefined >( undefined );
 
-	const showNotice = useCallback( ( message: string, status: 'success' | 'error' = 'success' ) => {
+	const dismissNotice = useCallback( () => {
 		clearTimeout( noticeTimer.current );
-		setNotice( { message, status } );
-		noticeTimer.current = setTimeout( () => setNotice( null ), 'error' === status ? 6000 : 3000 );
+		setNotice( null );
+	}, [] );
+
+	const showNotice = useCallback( ( message: string, status: EntriesNotice[ 'status' ] = 'success', actions?: EntriesNotice[ 'actions' ] ) => {
+		clearTimeout( noticeTimer.current );
+		setNotice( { message, status, actions } );
+		noticeTimer.current = setTimeout( () => setNotice( null ), 'error' === status || actions?.length ? 6000 : 3000 );
 	}, [] );
 
 	useEffect( () => {
@@ -149,7 +182,7 @@ export function useEntries( view: View ) {
 	useEffect( () => () => clearTimeout( noticeTimer.current ), [] );
 
 	const mutate = useCallback(
-		async ( items: RssEntry[], mutation: EntryMutation ) => {
+		async ( items: Array< Pick< RssEntry, 'id' > >, mutation: EntryMutation ) => {
 			setIsFetching( true );
 
 			const results = await Promise.allSettled(
@@ -172,24 +205,7 @@ export function useEntries( view: View ) {
 			const failed = items.length - succeeded;
 
 			if ( succeeded > 0 ) {
-				const messages = {
-					trash: sprintf(
-						/* translators: %d: number of entries */
-						_n( '%d entry moved to the trash.', '%d entries moved to the trash.', succeeded, 'newspack-lite-site' ),
-						succeeded
-					),
-					restore: sprintf(
-						/* translators: %d: number of entries */
-						_n( '%d entry restored.', '%d entries restored.', succeeded, 'newspack-lite-site' ),
-						succeeded
-					),
-					delete: sprintf(
-						/* translators: %d: number of entries */
-						_n( '%d entry permanently deleted.', '%d entries permanently deleted.', succeeded, 'newspack-lite-site' ),
-						succeeded
-					),
-				};
-				showNotice( messages[ mutation ] );
+				showNotice( getMutationMessage( mutation, succeeded ) );
 			}
 
 			if ( failed > 0 ) {
@@ -236,5 +252,5 @@ export function useEntries( view: View ) {
 		[ showNotice ]
 	);
 
-	return { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, notice, mutate };
+	return { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, notice, showNotice, dismissNotice, mutate };
 }

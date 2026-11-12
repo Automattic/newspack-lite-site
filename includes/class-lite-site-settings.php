@@ -45,6 +45,11 @@ class Lite_Site_Settings {
 	const FORWARDED_LEGACY_ARGS = [ 'post_status', 's', 'author' ];
 
 	/**
+	 * Legacy list table result counts forwarded to the RSS Entries page, such as after trashing from the editor.
+	 */
+	const FORWARDED_LEGACY_COUNTS = [ 'trashed', 'untrashed', 'deleted' ];
+
+	/**
 	 * Initialize the settings functionality.
 	 */
 	public static function init() {
@@ -533,6 +538,17 @@ class Lite_Site_Settings {
 		foreach ( self::FORWARDED_LEGACY_ARGS as $key ) {
 			if ( isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) && '' !== (string) $query[ $key ] ) {
 				$args[ $key ] = rawurlencode( sanitize_text_field( (string) $query[ $key ] ) );
+			}
+		}
+		foreach ( self::FORWARDED_LEGACY_COUNTS as $key ) {
+			if ( isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) && absint( $query[ $key ] ) > 0 ) {
+				$args[ $key ] = absint( $query[ $key ] );
+			}
+		}
+		if ( isset( $query['ids'] ) && is_scalar( $query['ids'] ) ) {
+			$ids = array_filter( array_map( 'absint', explode( ',', (string) $query['ids'] ) ) );
+			if ( $ids ) {
+				$args['ids'] = implode( ',', $ids );
 			}
 		}
 		return add_query_arg( $args, admin_url( 'admin.php' ) );

@@ -45,6 +45,15 @@ export interface RssEntriesData {
 }
 
 /**
+ * A snackbar notice on the RSS Entries page.
+ */
+export interface EntriesNotice {
+	message: string;
+	status: 'success' | 'error';
+	actions?: Array< { label: string; onClick: () => void } >;
+}
+
+/**
  * The mutations that can be applied to RSS entries.
  */
 export type EntryMutation = 'trash' | 'restore' | 'delete';
