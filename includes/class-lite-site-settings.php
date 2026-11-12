@@ -461,12 +461,16 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Highlight the RSS submenu item on the RSS entry editor screens.
+	 * Highlight the RSS submenu item on the RSS entry list, edit and add screens.
 	 *
 	 * @param string|null $submenu_file The submenu file.
 	 * @return string|null
 	 */
 	public static function filter_entries_submenu_file( $submenu_file ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( $screen && Post_Type::POST_TYPE === $screen->post_type && in_array( $screen->base, [ 'edit', 'post' ], true ) ) {
+			return self::RSS_PAGE_SLUG;
+		}
 		return 'edit.php?post_type=' . Post_Type::POST_TYPE === $submenu_file ? self::RSS_PAGE_SLUG : $submenu_file;
 	}
 

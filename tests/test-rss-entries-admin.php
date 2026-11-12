@@ -483,6 +483,27 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The RSS entry list, edit and add screens highlight the RSS item, whatever submenu file core picked.
+	 *
+	 * The screens are set directly, since setting one through core fires the list table redirect.
+	 */
+	public function test_submenu_file_maps_entry_screens_to_rss() {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
+		require_once ABSPATH . 'wp-admin/includes/screen.php';
+
+		$GLOBALS['current_screen'] = WP_Screen::get( 'edit-' . Post_Type::POST_TYPE ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$this->assertSame( Lite_Site_Settings::RSS_PAGE_SLUG, Lite_Site_Settings::filter_entries_submenu_file( 'edit.php?post_type=' . Post_Type::POST_TYPE ) );
+
+		$GLOBALS['current_screen'] = WP_Screen::get( Post_Type::POST_TYPE ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$this->assertSame( 'post', get_current_screen()->base );
+		$this->assertSame( Lite_Site_Settings::RSS_PAGE_SLUG, Lite_Site_Settings::filter_entries_submenu_file( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) );
+		$this->assertSame( Lite_Site_Settings::RSS_PAGE_SLUG, Lite_Site_Settings::filter_entries_submenu_file( null ) );
+
+		$GLOBALS['current_screen'] = WP_Screen::get( 'edit-post' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$this->assertSame( 'edit.php', Lite_Site_Settings::filter_entries_submenu_file( 'edit.php' ) );
+	}
+
+	/**
 	 * The admin_page_access_denied hook sends a former page to its tab, and leaves other pages alone.
 	 */
 	public function test_legacy_page_redirects_through_the_hook() {
