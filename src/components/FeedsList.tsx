@@ -65,7 +65,7 @@ export const FeedsList = ( { feeds, actionInProgress, onAction }: FeedsListProps
 			{ actionInProgress && <Spinner /> }
 
 			{ feeds.length === 0 && (
-				<p className="newspack-lite-empty-message">{ __( 'No RSS feeds configured. Add one above.', 'newspack-lite-site' ) }</p>
+				<p className="newspack-lite-empty-message">{ __( 'No RSS feeds yet. Add one above to start importing.', 'newspack-lite-site' ) }</p>
 			) }
 
 			{ feeds.length > 0 && (

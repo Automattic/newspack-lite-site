@@ -41,7 +41,12 @@ export const FeedForm = ( { onAdd, isAdding }: FeedFormProps ) => {
 		<div className="newspack-lite-section">
 			<div className="newspack-lite-section-header">
 				<h3>{ __( 'Add RSS Feed', 'newspack-lite-site' ) }</h3>
-				<p>{ __( 'Schedule an RSS feed to be imported on a recurring basis.', 'newspack-lite-site' ) }</p>
+				<p>
+					{ __(
+						"Import posts from another site's RSS feed on a schedule. Each new item is published on the Lite Site as an RSS entry.",
+						'newspack-lite-site'
+					) }
+				</p>
 			</div>
 
 			<form onSubmit={ handleSubmit }>

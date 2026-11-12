@@ -3,11 +3,12 @@
  */
 
 @import "@wordpress/dataviews/build-style/style.css";
+@import "~@wordpress/base-styles/breakpoints";
+@import "~@wordpress/base-styles/variables";
 
 body.newspack-lite-admin-header {
 	background: #fff;
 
-	/* Newspack blue — drives header icon background and tab active colour. */
 	--wp-components-color-accent: #003da5;
 	--wp-components-color-accent-darker-10: #00296e;
 	--wp-components-color-accent-darker-20: #001f53;
@@ -20,40 +21,8 @@ body.newspack-lite-admin-header {
 		z-index: 1;
 	}
 
-	/* Header inner layout (base styles for .newspack-wizard__* structure). */
-	.newspack-wizard__header__inner {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		border-bottom: 1px solid #ddd;
-	}
-
-	/* Header logo background colour. */
-	.newspack-wizard__title svg {
-		background: var(--wp-components-color-accent) !important;
-	}
-
-	/* TabbedNavigation — sticky below the header, above page content. */
-	.newspack-tabbed-navigation {
-		position: sticky;
-		top: 0;
-		z-index: 10;
-
-		li a {
-			box-sizing: border-box;
-		}
-	}
-
-	/* Offset sticky top for the WP admin bar height at each breakpoint. */
-	&.admin-bar .newspack-tabbed-navigation {
-
-		@media only screen and ( min-width: 601px ) {
-			top: 46px;
-		}
-
-		@media only screen and ( min-width: 782px ) {
-			top: 32px;
-		}
+	&:not(.newspack-lite-admin-header--bundled) .newspack-page__header-visual {
+		display: none;
 	}
 }
 
@@ -99,29 +68,19 @@ body.newspack-lite-admin-header {
 	}
 }
 
-.newspack-lite-sections,
-.newspack-lite-rss-sections {
-
-	/* Container padding handles top spacing;
-	 * first section removes its top margin. */
-	> .newspack-lite-section:first-child {
-
-		.newspack-lite-section-header {
-			margin-top: 0;
-		}
-	}
+.newspack-lite-settings-page {
+	overflow-x: clip;
 }
 
-.newspack-lite-sections {
+.newspack-lite-settings {
+	box-sizing: border-box;
 	margin: 0 auto;
-	max-width: 760px;
-	padding: 48px 24px 0;
-}
+	max-width: $break-xlarge;
+	padding: $grid-unit-30;
 
-.newspack-lite-buttons-card {
-	display: flex;
-	flex-direction: row-reverse;
-	margin: 64px 0 32px;
+	@media (min-width: $break-medium) {
+		padding-block: $grid-unit-60;
+	}
 }
 
 .newspack-lite-code-textarea {
@@ -132,16 +91,19 @@ body.newspack-lite-admin-header {
 	}
 }
 
-.newspack-lite-color-picker-wrap {
-
-	/* Reset ColorPicker's default max-width so it fills the section column. */
-	.components-color-picker {
-		max-width: none;
-	}
-}
-
 .newspack-lite-rss-sections {
-	padding: 48px 24px 64px;
+	padding:
+		calc(2 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}))
+		calc(2 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}))
+		calc(2 * var(--wpds-dimension-padding-3xl, #{$grid-unit-40}));
+
+	> .newspack-lite-section:first-child .newspack-lite-section-header {
+		margin-top: 0;
+	}
+
+	.dataviews-wrapper {
+		margin-inline: calc(-1 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}));
+	}
 
 	.newspack-lite-section-fields {
 
@@ -151,12 +113,49 @@ body.newspack-lite-admin-header {
 	}
 }
 
-.newspack-lite-feed-status--active {
-	color: #00a32a;
+.newspack-lite-section .dataviews-view-table {
+
+	tbody td .dataviews-view-table__cell-content-wrapper {
+		max-width: none;
+		overflow-wrap: anywhere;
+		white-space: normal;
+	}
+
+	tbody td:first-child .dataviews-view-table__cell-content-wrapper {
+		min-width: 16rem;
+	}
+
+	col.dataviews-view-table__col-next_run {
+		width: 1%;
+	}
 }
 
-.newspack-lite-feed-status--paused {
-	color: #996800;
+.newspack-lite-feed-date {
+	white-space: nowrap;
+}
+
+.newspack-lite-feed-url {
+	display: block;
+	max-width: 20rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.newspack-lite-feed-run {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpds-dimension-gap-xs, 4px);
+}
+
+.newspack-lite-feed-result {
+	color: var(--wpds-color-foreground-content-neutral-weak, #757575);
+	font-size: var(--wpds-typography-font-size-sm, 12px);
+	line-height: var(--wpds-typography-line-height-xs, 16px);
+
+	&--error {
+		color: inherit;
+	}
 }
 
 .newspack-lite-empty-message {
@@ -168,4 +167,30 @@ body.newspack-lite-admin-header {
 	display: flex;
 	gap: 8px;
 	justify-content: flex-end;
+}
+
+.newspack-lite-user-row__avatar {
+	flex-shrink: 0;
+	height: $grid-unit-30;
+	width: $grid-unit-30;
+
+	img {
+		border-radius: $radius-round;
+		display: block;
+	}
+}
+
+.newspack-lite-loader {
+	display: flex;
+	justify-content: center;
+	padding: $grid-unit-60 0;
+
+	strong {
+		font-weight: $font-weight-medium;
+	}
+}
+
+.newspack-lite-color-picker-field__picker {
+	flex: 1;
+	min-width: 0;
 }

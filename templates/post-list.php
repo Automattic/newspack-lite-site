@@ -7,6 +7,10 @@
 
 namespace Newspack_Lite_Site;
 
+defined( 'ABSPATH' ) || exit;
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from archive.php, so these variables are local to the method that includes it.
+
 if ( empty( $query ) || empty( $query->posts ) ) {
 	return;
 }

@@ -6,6 +6,13 @@
  * WordPress dependencies.
  */
 import { __ } from '@wordpress/i18n';
+import { Stack } from '@wordpress/ui';
+
+/**
+ * External dependencies.
+ */
+import StatusIndicator from 'newspack-components/dist/esm/status-indicator';
+import InfoButton from 'newspack-components/dist/esm/info-button';
 
 /**
  * Internal dependencies.
@@ -35,16 +42,20 @@ export const FEED_FIELDS = [
 		label: __( 'RSS Feed URL', 'newspack-lite-site' ),
 		enableSorting: true,
 		enableGlobalSearch: true,
-		render: ( { item }: { item: Feed } ) => <strong>{ item.feed_url }</strong>,
+		render: ( { item }: { item: Feed } ) => (
+			<strong className="newspack-lite-feed-url" title={ item.feed_url }>
+				{ item.feed_url }
+			</strong>
+		),
 	},
 	{
 		id: 'status',
 		label: __( 'Status', 'newspack-lite-site' ),
 		enableSorting: true,
 		render: ( { item }: { item: Feed } ) => (
-			<span className={ `newspack-lite-feed-status--${ item.status }` }>
+			<StatusIndicator status={ 'active' === item.status ? 'active' : 'draft' }>
 				{ 'active' === item.status ? __( 'Active', 'newspack-lite-site' ) : __( 'Paused', 'newspack-lite-site' ) }
-			</span>
+			</StatusIndicator>
 		),
 	},
 	{
@@ -69,10 +80,23 @@ export const FEED_FIELDS = [
 				return <em>{ __( 'Never', 'newspack-lite-site' ) }</em>;
 			}
 			return (
-				<>
-					{ formatUnixTimestamp( item.last_run ) }
-					{ formatLastResult( item.last_result ) }
-				</>
+				<span className="newspack-lite-feed-run">
+					<span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.last_run ) }</span>
+					{ item.last_result && (
+						<Stack
+							render={ <span /> }
+							direction="row"
+							align="center"
+							gap="xs"
+							className={ `newspack-lite-feed-result${ item.last_result.error ? ' newspack-lite-feed-result--error' : '' }` }
+						>
+							{ formatLastResult( item.last_result ) }
+							{ item.last_result.detail && (
+								<InfoButton description={ item.last_result.detail } triggerLabel={ __( 'Error details', 'newspack-lite-site' ) } />
+							) }
+						</Stack>
+					) }
+				</span>
 			);
 		},
 	},
@@ -80,6 +104,7 @@ export const FEED_FIELDS = [
 		id: 'next_run',
 		label: __( 'Next Run', 'newspack-lite-site' ),
 		enableSorting: true,
-		render: ( { item }: { item: Feed } ) => ( item.next_run ? formatUnixTimestamp( item.next_run ) : '—' ),
+		render: ( { item }: { item: Feed } ) =>
+			item.next_run ? <span className="newspack-lite-feed-date">{ formatUnixTimestamp( item.next_run ) }</span> : '—',
 	},
 ];

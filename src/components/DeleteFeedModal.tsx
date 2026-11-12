@@ -23,7 +23,7 @@ export const DeleteFeedModal = ( { items, closeModal, onActionPerformed, onActio
 
 	return (
 		<>
-			<p>{ __( 'Are you sure you want to delete this RSS feed? This action cannot be undone.', 'newspack-lite-site' ) }</p>
+			<p>{ __( 'Delete this RSS feed? It stops importing, and the entries it already imported stay on the site.', 'newspack-lite-site' ) }</p>
 			<p>
 				<strong>{ item.feed_url }</strong>
 			</p>

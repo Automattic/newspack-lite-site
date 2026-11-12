@@ -104,7 +104,7 @@ export const TagsField = ( { value, onChange, label, help }: TagsFieldProps ) =>
 	};
 
 	return (
-		<BaseControl help={ help }>
+		<BaseControl help={ help } __nextHasNoMarginBottom>
 			<FormTokenField
 				label={ label }
 				value={ tokenValue }

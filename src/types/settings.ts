@@ -69,11 +69,13 @@ export interface ColorPickerFieldProps {
 }
 
 /**
- * Props for the AppHeader component.
+ * A named group of settings, shown as one two-column section.
  */
-export interface AppHeaderProps {
-	headerText: string;
-	subHeaderText?: string;
+export interface SettingsSection {
+	id: string;
+	title: string;
+	description: string;
+	fields: Array< keyof SiteSettings >;
 }
 
 /**

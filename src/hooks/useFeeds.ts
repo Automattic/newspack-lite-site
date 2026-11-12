@@ -47,7 +47,7 @@ export function useFeeds() {
 			} )
 			.catch( ( err: Error ) => {
 				if ( ! cancelled ) {
-					showNotice( err.message ?? __( 'Failed to load RSS feeds.', 'newspack-lite-site' ), 'error' );
+					showNotice( err.message ?? __( "Couldn't load RSS feeds. Reload the page to try again.", 'newspack-lite-site' ), 'error' );
 					setIsLoading( false );
 				}
 			} );
@@ -71,7 +71,7 @@ export function useFeeds() {
 				showNotice( __( 'RSS feed added.', 'newspack-lite-site' ) );
 				return true;
 			} catch ( err ) {
-				showNotice( ( err as Error ).message ?? __( 'Failed to add RSS feed.', 'newspack-lite-site' ), 'error' );
+				showNotice( ( err as Error ).message ?? __( "Couldn't add the RSS feed. Try again.", 'newspack-lite-site' ), 'error' );
 				return false;
 			} finally {
 				setIsAdding( false );
@@ -99,7 +99,7 @@ export function useFeeds() {
 				};
 				showNotice( messages[ action ] ?? __( 'RSS feed updated.', 'newspack-lite-site' ) );
 			} catch ( err ) {
-				showNotice( ( err as Error ).message ?? __( 'Failed to update RSS feed.', 'newspack-lite-site' ), 'error' );
+				showNotice( ( err as Error ).message ?? __( "Couldn't update the RSS feed. Try again.", 'newspack-lite-site' ), 'error' );
 			} finally {
 				setActionInProgress( null );
 			}

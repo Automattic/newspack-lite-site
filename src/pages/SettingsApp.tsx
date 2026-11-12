@@ -1,83 +1,160 @@
 /**
- * Settings & Appearance page root component.
+ * Settings page root component.
  */
 
 /**
  * WordPress dependencies.
  */
-import { Button, Notice, Snackbar, Spinner } from '@wordpress/components';
+import { useEffect, useRef, useState } from '@wordpress/element';
+import { Button, Notice, Snackbar } from '@wordpress/components';
+import { Stack } from '@wordpress/ui';
 import { __ } from '@wordpress/i18n';
 
 /**
  * External dependencies.
  */
-import { HashRouter, Switch, Route, Redirect } from 'react-router-dom';
-import { TabbedNavigation } from 'newspack-components';
+import Router from 'newspack-components/dist/esm/proxied-imports/router';
+import Page from 'newspack-components/dist/esm/page';
+import TabbedNavigation from 'newspack-components/dist/esm/tabbed-navigation';
+import Waiting from 'newspack-components/dist/esm/waiting';
+import useUnsavedChangesDialog from 'newspack-components/dist/esm/hooks/use-unsaved-changes-dialog';
 
 /**
  * Internal dependencies.
  */
 import { useSettings } from '../hooks/useSettings';
-import { AppHeader } from '../components/AppHeader';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { AppearancePanel } from '../components/AppearancePanel';
+
+const { HashRouter, Switch, Route, Redirect, useLocation } = Router;
+
+const SNACKBAR_DURATION = 3000;
 
 /**
  * Tab definitions for the Settings page.
  */
 const SETTINGS_TABS = [
-	{ label: __( 'General', 'newspack-lite-site' ), path: '/general' },
-	{ label: __( 'Appearance', 'newspack-lite-site' ), path: '/appearance' },
+	{
+		label: __( 'General', 'newspack-lite-site' ),
+		path: '/general',
+		subTitle: __( 'Turn on Lite Site and choose the content it shows.', 'newspack-lite-site' ),
+		Panel: SettingsPanel,
+	},
+	{
+		label: __( 'Appearance', 'newspack-lite-site' ),
+		path: '/appearance',
+		subTitle: __( 'Set colors and fonts. Keep it light so pages load fast on slow connections.', 'newspack-lite-site' ),
+		Panel: AppearancePanel,
+	},
 ];
 
 /**
- * Root component for the Settings page.
+ * The Settings page inside the router: header with tabs and Save, and the active tab's sections.
  *
- * Loads current settings on mount, renders the active panel (General or
- * Appearance), and handles saving via the WordPress REST API.
+ * Both tabs edit one settings object and Save stores all of it. Leaving a tab with
+ * unsaved changes asks first, and moving to another tab discards them, so each tab
+ * only ever saves what it shows.
  */
-export const SettingsApp = () => {
-	const { settings, updateSettings, isLoading, isSaving, isDirty, saveSettings, error, saveSuccess } = useSettings();
+const SettingsScreen = () => {
+	const { pathname } = useLocation();
+	const { settings, updateSettings, isLoading, isSaving, isDirty, saveSettings, discardChanges, error } = useSettings();
+	const [ isSaved, setIsSaved ] = useState( false );
+	const lastPathname = useRef( pathname );
+	const activeTab = SETTINGS_TABS.find( tab => tab.path === pathname );
 
-	const saveButton = (
-		<div className="newspack-lite-buttons-card">
-			<Button variant="primary" isBusy={ isSaving } disabled={ ! isDirty || isSaving } onClick={ saveSettings }>
-				{ isSaving ? __( 'Saving…', 'newspack-lite-site' ) : __( 'Save Settings', 'newspack-lite-site' ) }
-			</Button>
-		</div>
-	);
+	const { confirmDialog } = useUnsavedChangesDialog( { when: isDirty && ! isSaving } );
+
+	const handleSave = async () => {
+		setIsSaved( false );
+		if ( await saveSettings() ) {
+			setIsSaved( true );
+		}
+	};
+
+	const saveRef = useRef( handleSave );
+	saveRef.current = handleSave;
+
+	useEffect( () => {
+		if ( lastPathname.current !== pathname ) {
+			lastPathname.current = pathname;
+			discardChanges();
+		}
+	}, [ pathname, discardChanges ] );
+
+	useEffect( () => {
+		if ( ! isSaved ) {
+			return;
+		}
+		const timer = setTimeout( () => setIsSaved( false ), SNACKBAR_DURATION );
+		return () => clearTimeout( timer );
+	}, [ isSaved ] );
 
 	return (
-		<HashRouter>
-			<div className="wrap">
-				<AppHeader headerText={ __( 'Settings', 'newspack-lite-site' ) } />
-				<TabbedNavigation items={ SETTINGS_TABS } />
-				{ error && (
-					<Notice status="error" isDismissible={ false }>
-						{ error }
-					</Notice>
-				) }
-				<Switch>
-					<Route path="/general">
-						<div className="newspack-lite-sections">
-							{ isLoading ? <Spinner /> : <SettingsPanel settings={ settings } onChange={ updateSettings } /> }
-							{ saveButton }
-						</div>
-					</Route>
-					<Route path="/appearance">
-						<div className="newspack-lite-sections">
-							{ isLoading ? <Spinner /> : <AppearancePanel settings={ settings } onChange={ updateSettings } /> }
-							{ saveButton }
-						</div>
-					</Route>
-					<Redirect to="/general" />
-				</Switch>
-				{ saveSuccess && (
-					<div className="newspack-lite-snackbar-container">
-						<Snackbar>{ __( 'Settings saved.', 'newspack-lite-site' ) }</Snackbar>
-					</div>
-				) }
-			</div>
-		</HashRouter>
+		<>
+			<Page
+				breadcrumbItems={ [
+					{ label: 'Lite Site' },
+					{ label: __( 'Settings', 'newspack-lite-site' ) },
+					...( activeTab ? [ { label: activeTab.label } ] : [] ),
+				] }
+				subTitle={ activeTab?.subTitle }
+				tabbedNavigation={ <TabbedNavigation items={ SETTINGS_TABS } /> }
+				actions={
+					<Button
+						variant="primary"
+						onClick={ () => saveRef.current() }
+						isBusy={ isSaving }
+						disabled={ ! settings || ! isDirty || isSaving }
+						accessibleWhenDisabled
+					>
+						{ __( 'Save', 'newspack-lite-site' ) }
+					</Button>
+				}
+			>
+				<div className="newspack-lite-settings">
+					{ confirmDialog }
+					<Switch>
+						{ SETTINGS_TABS.map( ( { path, Panel } ) => (
+							<Route key={ path } path={ path }>
+								{ isLoading ? (
+									<div className="newspack-lite-loader">
+										<Stack direction="column" align="center" gap="sm">
+											<Waiting noMargin />
+											<strong>{ __( 'Fetching…', 'newspack-lite-site' ) }</strong>
+										</Stack>
+									</div>
+								) : (
+									<Stack direction="column" gap="xl">
+										{ error && (
+											<Notice status="error" isDismissible={ false } politeness={ settings ? 'assertive' : 'polite' }>
+												{ error }
+											</Notice>
+										) }
+										<Panel settings={ settings } onChange={ updateSettings } />
+									</Stack>
+								) }
+							</Route>
+						) ) }
+						<Redirect to="/general" />
+					</Switch>
+				</div>
+			</Page>
+			{ isSaved && (
+				<div className="newspack-lite-snackbar-container">
+					<Snackbar>{ __( 'Settings saved.', 'newspack-lite-site' ) }</Snackbar>
+				</div>
+			) }
+		</>
 	);
 };
+
+/**
+ * Root component for the Settings page.
+ */
+export const SettingsApp = () => (
+	<HashRouter>
+		<div className="wrap newspack-lite-settings-page">
+			<SettingsScreen />
+		</div>
+	</HashRouter>
+);
