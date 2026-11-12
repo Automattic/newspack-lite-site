@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T21:28:08+00:00\n"
+"POT-Creation-Date: 2026-11-12T21:58:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -34,27 +34,27 @@ msgstr ""
 msgid "https://newspack.com/"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:306
 #: includes/class-lite-site-settings.php:307
+#: includes/class-lite-site-settings.php:308
 #: dist/index.js:15
 msgid "RSS Feeds"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:316
 #: includes/class-lite-site-settings.php:317
+#: includes/class-lite-site-settings.php:318
 #: dist/index.js:11
 msgid "Settings"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:344
-#: includes/class-lite-site-settings.php:345
-#: includes/class-lite-site-settings.php:480
+#: includes/class-lite-site-settings.php:410
+#: includes/class-lite-site-settings.php:411
+#: includes/class-lite-site-settings.php:546
 #: includes/class-post-type.php:38
 #: dist/index.js:24
 msgid "RSS Entries"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:392
+#: includes/class-lite-site-settings.php:458
 #: dist/index.js:11
 msgid "View Lite Site"
 msgstr ""
@@ -602,6 +602,7 @@ msgstr ""
 #: dist/index.js:14
 #: dist/index.js:15
 #: dist/index.js:16
+#: dist/index.js:24
 msgid "Add RSS Feed"
 msgstr ""
 
@@ -683,6 +684,7 @@ msgid "This RSS feed no longer exists."
 msgstr ""
 
 #: dist/index.js:15
+#: dist/index.js:24
 msgid "No RSS feeds yet"
 msgstr ""
 
@@ -849,11 +851,15 @@ msgid "Restore"
 msgstr ""
 
 #: dist/index.js:24
+msgid "Entries are imported from RSS feeds. Add a feed to start importing."
+msgstr ""
+
+#: dist/index.js:24
 msgid "No RSS entries yet"
 msgstr ""
 
 #: dist/index.js:24
-msgid "Entries appear here after an RSS feed import runs."
+msgid "Entries appear here after the next import."
 msgstr ""
 
 #: dist/index.js:24
