@@ -329,17 +329,24 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Mark the RSS Entries submenu item hidden, so the admin script can reveal it once a feed is added.
+	 * Mark the RSS Entries submenu item hidden and move it to the end.
+	 *
+	 * The admin script reveals it once a feed is added. Moving it keeps the first visible
+	 * item, which the top-level Lite Site link points to, on RSS Feeds.
 	 */
 	private static function hide_entries_menu_item() {
 		global $submenu;
 
 		$entries_slug = 'edit.php?post_type=' . Post_Type::POST_TYPE;
-		foreach ( $submenu['newspack-lite-site'] ?? [] as $index => $item ) {
+		$items        = $submenu['newspack-lite-site'] ?? [];
+		foreach ( $items as $index => $item ) {
 			if ( $entries_slug === $item[2] ) {
-				$submenu['newspack-lite-site'][ $index ][4] = 'hidden'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				$item[4] = 'hidden';
+				unset( $items[ $index ] );
+				$items[ $index ] = $item;
 			}
 		}
+		$submenu['newspack-lite-site'] = $items; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 	}
 
 	/**

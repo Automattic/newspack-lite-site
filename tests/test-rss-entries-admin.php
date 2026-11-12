@@ -393,7 +393,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * The hidden menu item keeps its place and gains the hidden class, so the admin script can reveal it.
+	 * The hidden menu item moves last and gains the hidden class, so the admin script can reveal it.
 	 */
 	public function test_entries_menu_item_is_marked_hidden() {
 		global $submenu;
@@ -406,6 +406,7 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		];
 		self::invoke_private( Lite_Site_Settings::class, 'hide_entries_menu_item' );
 
+		$this->assertSame( [ 11, 10 ], array_keys( $submenu['newspack-lite-site'] ) );
 		$this->assertSame( 'hidden', $submenu['newspack-lite-site'][10][4] );
 		$this->assertArrayNotHasKey( 4, $submenu['newspack-lite-site'][11] );
 
