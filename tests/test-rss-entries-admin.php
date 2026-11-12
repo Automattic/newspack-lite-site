@@ -391,4 +391,28 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		);
 		$this->assertTrue( Lite_Site_Settings::should_show_entries_menu() );
 	}
+
+	/**
+	 * The hidden menu item keeps its place and gains the hidden class, so the admin script can reveal it.
+	 */
+	public function test_entries_menu_item_is_marked_hidden() {
+		global $submenu;
+		$slug     = 'edit.php?post_type=' . Post_Type::POST_TYPE;
+		$previous = $submenu['newspack-lite-site'] ?? null;
+
+		$submenu['newspack-lite-site'] = [ // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			10 => [ 'RSS Entries', 'edit_posts', $slug ],
+			11 => [ 'RSS Feeds', 'manage_options', 'newspack-lite-site-rss-import' ],
+		];
+		self::invoke_private( Lite_Site_Settings::class, 'hide_entries_menu_item' );
+
+		$this->assertSame( 'hidden', $submenu['newspack-lite-site'][10][4] );
+		$this->assertArrayNotHasKey( 4, $submenu['newspack-lite-site'][11] );
+
+		if ( null === $previous ) {
+			unset( $submenu['newspack-lite-site'] );
+		} else {
+			$submenu['newspack-lite-site'] = $previous; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		}
+	}
 }

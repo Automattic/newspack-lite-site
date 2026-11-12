@@ -12,6 +12,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies.
  */
+import { syncEntriesMenu } from '../utils/entries-menu';
 import { type Feed, type FeedChanges, type NewFeedData, type Notice } from '../types/rss-feed-import';
 
 const FEEDS_PATH = '/newspack-lite-site/v1/rss-feeds';
@@ -84,6 +85,7 @@ export function useFeeds( isDrawerOpen = false ) {
 			try {
 				const updated = await apiFetch< Feed[] >( request );
 				applyFeeds( requestId, updated );
+				syncEntriesMenu( updated.length );
 				showNotice( successMessage );
 				return true;
 			} catch ( err ) {

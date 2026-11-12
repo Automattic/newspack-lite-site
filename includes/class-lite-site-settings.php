@@ -244,6 +244,7 @@ class Lite_Site_Settings {
 			'newspack-lite-site',
 			'newspackLiteSite',
 			[
+				'hasEntries'   => self::has_entries(),
 				'rssEntries'   => self::ENTRIES_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
 				'defaultColor' => $default_color,
 				'homeUrl'      => home_url( '/' ),
@@ -323,7 +324,21 @@ class Lite_Site_Settings {
 		self::register_entries_page();
 
 		if ( ! self::should_show_entries_menu() ) {
-			remove_submenu_page( 'newspack-lite-site', 'edit.php?post_type=' . Post_Type::POST_TYPE );
+			self::hide_entries_menu_item();
+		}
+	}
+
+	/**
+	 * Mark the RSS Entries submenu item hidden, so the admin script can reveal it once a feed is added.
+	 */
+	private static function hide_entries_menu_item() {
+		global $submenu;
+
+		$entries_slug = 'edit.php?post_type=' . Post_Type::POST_TYPE;
+		foreach ( $submenu['newspack-lite-site'] ?? [] as $index => $item ) {
+			if ( $entries_slug === $item[2] ) {
+				$submenu['newspack-lite-site'][ $index ][4] = 'hidden'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			}
 		}
 	}
 
@@ -337,10 +352,15 @@ class Lite_Site_Settings {
 	 * @return bool
 	 */
 	public static function should_show_entries_menu(): bool {
-		if ( ! empty( RSS_Importer::get_feeds() ) ) {
-			return true;
-		}
+		return ! empty( RSS_Importer::get_feeds() ) || self::has_entries();
+	}
 
+	/**
+	 * Whether any RSS entry exists in a status other than trash and auto-draft.
+	 *
+	 * @return bool
+	 */
+	public static function has_entries(): bool {
 		$query = new \WP_Query(
 			[
 				'post_type'      => Post_Type::POST_TYPE,
