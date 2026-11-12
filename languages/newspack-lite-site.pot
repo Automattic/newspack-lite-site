@@ -2,14 +2,14 @@
 # This file is distributed under the GPL3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Newspack Lite Site 0.2.0\n"
+"Project-Id-Version: Newspack Lite Site 0.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/newspack-lite-site\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T19:29:40+00:00\n"
+"POT-Creation-Date: 2026-11-12T21:58:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -34,27 +34,28 @@ msgstr ""
 msgid "https://newspack.com/"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:306
 #: includes/class-lite-site-settings.php:307
-#: dist/index.js:11
-msgid "RSS Feed Import"
+#: includes/class-lite-site-settings.php:308
+#: dist/index.js:15
+msgid "RSS Feeds"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:316
 #: includes/class-lite-site-settings.php:317
+#: includes/class-lite-site-settings.php:318
 #: dist/index.js:11
 msgid "Settings"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:344
-#: includes/class-lite-site-settings.php:345
-#: includes/class-lite-site-settings.php:480
+#: includes/class-lite-site-settings.php:410
+#: includes/class-lite-site-settings.php:411
+#: includes/class-lite-site-settings.php:546
 #: includes/class-post-type.php:38
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "RSS Entries"
 msgstr ""
 
-#: includes/class-lite-site-settings.php:392
+#: includes/class-lite-site-settings.php:458
+#: dist/index.js:11
 msgid "View Lite Site"
 msgstr ""
 
@@ -96,7 +97,7 @@ msgstr ""
 
 #: includes/class-post-type.php:40
 #: includes/class-post-type.php:41
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Add RSS Entry"
 msgstr ""
 
@@ -152,90 +153,102 @@ msgstr ""
 msgid "Posts imported from other sites' RSS feeds by Lite Site."
 msgstr ""
 
-#: includes/class-post-type.php:263
+#: includes/class-post-type.php:272
 msgid "Limit results to entries imported from the feed with this ID."
 msgstr ""
 
-#: includes/class-rss-importer.php:199
+#: includes/class-rss-importer.php:244
 msgid "Please enter a valid RSS feed URL."
 msgstr ""
 
-#: includes/class-rss-importer.php:207
+#: includes/class-rss-importer.php:252
+#: includes/class-rss-importer.php:342
 msgid "Please select a valid author."
 msgstr ""
 
-#: includes/class-rss-importer.php:215
+#: includes/class-rss-importer.php:260
+#: includes/class-rss-importer.php:354
 msgid "Choose how often to import this RSS feed."
 msgstr ""
 
-#: includes/class-rss-importer.php:226
+#: includes/class-rss-importer.php:271
 msgid "This RSS feed is already in the list."
 msgstr ""
 
-#: includes/class-rss-importer.php:249
+#: includes/class-rss-importer.php:297
 msgid "Failed to schedule the RSS feed."
 msgstr ""
 
-#: includes/class-rss-importer.php:283
+#: includes/class-rss-importer.php:327
+#: includes/class-rss-importer.php:437
 msgid "Feed not found."
 msgstr ""
 
-#: includes/class-rss-importer.php:304
+#: includes/class-rss-importer.php:376
+#: includes/class-rss-importer.php:458
 msgid "Failed to resume the RSS feed."
 msgstr ""
 
-#: includes/class-rss-importer.php:336
-#: includes/class-rss-importer.php:397
+#: includes/class-rss-importer.php:399
+msgid "Couldn't update the RSS feed, so it has been paused."
+msgstr ""
+
+#: includes/class-rss-importer.php:406
+msgid "Failed to update the RSS feed."
+msgstr ""
+
+#: includes/class-rss-importer.php:485
+#: includes/class-rss-importer.php:546
 msgid "Every 5 Minutes"
 msgstr ""
 
-#: includes/class-rss-importer.php:340
-#: includes/class-rss-importer.php:398
+#: includes/class-rss-importer.php:489
+#: includes/class-rss-importer.php:547
 msgid "Every 10 Minutes"
 msgstr ""
 
-#: includes/class-rss-importer.php:344
-#: includes/class-rss-importer.php:399
+#: includes/class-rss-importer.php:493
+#: includes/class-rss-importer.php:548
 msgid "Every 30 Minutes"
 msgstr ""
 
-#: includes/class-rss-importer.php:348
+#: includes/class-rss-importer.php:497
 msgid "Once Weekly"
 msgstr ""
 
-#: includes/class-rss-importer.php:400
+#: includes/class-rss-importer.php:549
 msgid "Hourly"
 msgstr ""
 
-#: includes/class-rss-importer.php:401
+#: includes/class-rss-importer.php:550
 msgid "Twice Daily"
 msgstr ""
 
-#: includes/class-rss-importer.php:402
+#: includes/class-rss-importer.php:551
 msgid "Daily"
 msgstr ""
 
-#: includes/class-rss-importer.php:403
+#: includes/class-rss-importer.php:552
 msgid "Weekly"
 msgstr ""
 
-#: includes/class-rss-importer.php:473
+#: includes/class-rss-importer.php:622
 msgid "A valid RSS feed URL is required."
 msgstr ""
 
-#: includes/class-rss-importer.php:477
-msgid "The author set for this feed can no longer publish posts. Delete the feed and add it again with another author."
+#: includes/class-rss-importer.php:626
+msgid "The author set for this feed can no longer publish posts. Edit the feed to choose another author."
 msgstr ""
 
-#: includes/class-rss-importer.php:491
-msgid "Couldn't reach this RSS feed. Check that the URL opens in a browser, then wait for the next run."
+#: includes/class-rss-importer.php:640
+msgid "Couldn't reach this RSS feed."
 msgstr ""
 
-#: includes/class-rss-importer.php:499
+#: includes/class-rss-importer.php:648
 msgid "The RSS feed contains no items."
 msgstr ""
 
-#: includes/class-rss-importer.php:805
+#: includes/class-rss-importer.php:954
 msgid "This address is on a private network, so it can't be imported."
 msgstr ""
 
@@ -313,7 +326,7 @@ msgstr[1] ""
 
 #: dist/index.js:8
 #: dist/index.js:11
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Categories"
 msgstr ""
 
@@ -359,7 +372,7 @@ msgid "Include subcategories"
 msgstr ""
 
 #: dist/index.js:11
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Tags"
 msgstr ""
 
@@ -429,6 +442,14 @@ msgstr ""
 
 #: dist/index.js:11
 msgid "Added after the built-in styles, so your rules can override them. Every rule adds to page weight."
+msgstr ""
+
+#: dist/index.js:11
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: dist/index.js:11
+msgid "Turn on Lite Site and save the settings to view it."
 msgstr ""
 
 #: dist/index.js:11
@@ -508,11 +529,13 @@ msgid "Couldn't save settings. Try again."
 msgstr ""
 
 #: dist/index.js:11
+#: dist/index.js:14
 msgid "Save"
 msgstr ""
 
 #: dist/index.js:11
-#: dist/index.js:20
+#: dist/index.js:15
+#: dist/index.js:24
 msgid "Fetching…"
 msgstr ""
 
@@ -520,160 +543,74 @@ msgstr ""
 msgid "Settings saved."
 msgstr ""
 
-#: dist/index.js:11
-msgid "RSS Feed URL"
+#. translators: %s: the drawer's title.
+#: dist/index.js:14
+msgid "Choose an author"
 msgstr ""
 
-#: dist/index.js:11
-msgid "Frequency"
-msgstr ""
-
-#: dist/index.js:11
-#: dist/index.js:20
-msgid "Author"
-msgstr ""
-
-#: dist/index.js:11
-msgid "Imported entries are published under this author."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Add RSS Feed"
-msgstr ""
-
-#: dist/index.js:11
-msgid "Import posts from another site's RSS feed on a schedule. Each new item is published on the Lite Site as an RSS entry."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Adding…"
-msgstr ""
-
-#: dist/index.js:11
-#: dist/index.js:20
-msgid "Status"
-msgstr ""
-
-#: dist/index.js:11
+#: dist/index.js:14
+#: dist/index.js:15
 msgid "Active"
 msgstr ""
 
-#: dist/index.js:11
-msgid "Paused"
+#: dist/index.js:14
+#: dist/index.js:15
+msgid "Inactive"
 msgstr ""
 
-#: dist/index.js:11
-msgid "Last Run"
+#: dist/index.js:14
+msgid "RSS Feed URL"
 msgstr ""
 
-#: dist/index.js:11
-msgid "Error details"
+#: dist/index.js:14
+#: dist/index.js:15
+msgid "Frequency"
 msgstr ""
 
-#: dist/index.js:11
-msgid "Never"
+#: dist/index.js:14
+msgid "How often new items are imported from this RSS feed."
 msgstr ""
 
-#: dist/index.js:11
-msgid "Next Run"
+#: dist/index.js:14
+#: dist/index.js:15
+#: dist/index.js:24
+msgid "Author"
 msgstr ""
 
-#: dist/index.js:11
-msgid "Pausing stops future imports until you resume the feed. An import that's already running will finish."
+#: dist/index.js:14
+msgid "The previous author can no longer be assigned. Choose another author."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
+msgid "Imported entries are published under this author."
+msgstr ""
+
+#: dist/index.js:14
+#: dist/index.js:15
+#: dist/index.js:24
+msgid "Status"
+msgstr ""
+
+#: dist/index.js:14
+msgid "Inactive feeds stop importing until you set them back to Active. An import that's already running will finish."
+msgstr ""
+
+#: dist/index.js:14
+msgid "Edit RSS Feed"
+msgstr ""
+
+#: dist/index.js:14
+#: dist/index.js:15
 #: dist/index.js:16
+#: dist/index.js:24
+msgid "Add RSS Feed"
+msgstr ""
+
+#: dist/index.js:14
+#: dist/index.js:15
+#: dist/index.js:20
 msgid "Cancel"
 msgstr ""
-
-#: dist/index.js:11
-msgid "Pause"
-msgstr ""
-
-#: dist/index.js:11
-msgid "Delete this RSS feed? It stops importing, and the entries it already imported stay on the site."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Delete"
-msgstr ""
-
-#: dist/index.js:11
-msgid "Resume"
-msgstr ""
-
-#: dist/index.js:11
-msgid "Scheduled RSS Feeds"
-msgstr ""
-
-#: dist/index.js:11
-msgid "No RSS feeds yet. Add one above to start importing."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Couldn't load RSS feeds. Reload the page to try again."
-msgstr ""
-
-#: dist/index.js:11
-msgid "RSS feed added."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Couldn't add the RSS feed. Try again."
-msgstr ""
-
-#: dist/index.js:11
-msgid "RSS feed paused."
-msgstr ""
-
-#: dist/index.js:11
-msgid "RSS feed resumed."
-msgstr ""
-
-#: dist/index.js:11
-msgid "RSS feed deleted."
-msgstr ""
-
-#: dist/index.js:11
-msgid "RSS feed updated."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Couldn't update the RSS feed. Try again."
-msgstr ""
-
-#: dist/index.js:11
-msgid "WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host."
-msgstr ""
-
-#: dist/index.js:11
-msgid "Learn more about WP-Cron"
-msgstr ""
-
-#. translators: %d: number of entries
-#: dist/index.js:12
-#, js-format
-msgid "%d entry moved to the trash."
-msgid_plural "%d entries moved to the trash."
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: number of entries
-#: dist/index.js:13
-#, js-format
-msgid "%d entry restored."
-msgid_plural "%d entries restored."
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: number of entries
-#: dist/index.js:14
-#, js-format
-msgid "%d entry permanently deleted."
-msgid_plural "%d entries permanently deleted."
-msgstr[0] ""
-msgstr[1] ""
 
 #. translators: 1: number of items on this page, 2: total number of items with their name, e.g. "616 newsletters".
 #: dist/index.js:15
@@ -682,41 +619,159 @@ msgid "%1$s of %2$s"
 msgstr ""
 
 #: dist/index.js:15
+msgid "Delete this RSS feed? It stops importing, and the entries it already imported stay on the site."
+msgstr ""
+
+#: dist/index.js:15
+msgid "Delete"
+msgstr ""
+
+#: dist/index.js:15
+msgid "RSS Feed"
+msgstr ""
+
+#: dist/index.js:15
+msgid "Author Name"
+msgstr ""
+
+#: dist/index.js:15
+msgid "Last Run"
+msgstr ""
+
+#: dist/index.js:15
+msgid "Never"
+msgstr ""
+
+#: dist/index.js:15
+msgid "Next Run"
+msgstr ""
+
+#: dist/index.js:15
+#: dist/index.js:24
+msgid "Edit"
+msgstr ""
+
+#: dist/index.js:15
+msgid "Couldn't load RSS feeds. Reload the page to try again."
+msgstr ""
+
+#: dist/index.js:15
+msgid "RSS feed added."
+msgstr ""
+
+#: dist/index.js:15
+msgid "Couldn't add the RSS feed. Try again."
+msgstr ""
+
+#: dist/index.js:15
+msgid "RSS feed updated."
+msgstr ""
+
+#: dist/index.js:15
+msgid "Couldn't update the RSS feed. Try again."
+msgstr ""
+
+#: dist/index.js:15
+msgid "RSS feed deleted."
+msgstr ""
+
+#: dist/index.js:15
+msgid "Couldn't delete the RSS feed. Try again."
+msgstr ""
+
+#: dist/index.js:15
+msgid "This RSS feed no longer exists."
+msgstr ""
+
+#: dist/index.js:15
+#: dist/index.js:24
+msgid "No RSS feeds yet"
+msgstr ""
+
+#: dist/index.js:15
+msgid "Import posts from another site's RSS feed on a schedule. Each new item is published on the Lite Site as an RSS entry."
+msgstr ""
+
+#: dist/index.js:15
+msgid "Set which RSS feeds to import and how often each one runs."
+msgstr ""
+
+#. translators: %s: number of RSS feeds.
+#: dist/index.js:16
+#, js-format
+msgid "%s RSS feed"
+msgid_plural "%s RSS feeds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: dist/index.js:16
+msgid "WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host."
+msgstr ""
+
+#: dist/index.js:16
+msgid "Learn more about WP-Cron"
+msgstr ""
+
+#. translators: %d: number of entries
+#: dist/index.js:17
+#, js-format
+msgid "%d entry moved to the trash."
+msgid_plural "%d entries moved to the trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of entries
+#: dist/index.js:18
+#, js-format
+msgid "%d entry restored."
+msgid_plural "%d entries restored."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of entries
+#: dist/index.js:19
+#, js-format
+msgid "%d entry permanently deleted."
+msgid_plural "%d entries permanently deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: dist/index.js:19
 msgid "Permanently delete this entry? This can't be undone."
 msgstr ""
 
 #. translators: %d: number of entries
-#: dist/index.js:16
+#: dist/index.js:20
 #, js-format
 msgid "Permanently delete %d entry? This can't be undone."
 msgid_plural "Permanently delete these %d entries? This can't be undone."
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:16
 #: dist/index.js:20
+#: dist/index.js:24
 msgid "(no title)"
 msgstr ""
 
-#: dist/index.js:16
 #: dist/index.js:20
+#: dist/index.js:24
 msgid "Delete Permanently"
 msgstr ""
 
 #. translators: %s: number of RSS entries.
-#: dist/index.js:17
+#: dist/index.js:21
 #, js-format
 msgid "%s RSS entry"
 msgid_plural "%s RSS entries"
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:17
+#: dist/index.js:21
 msgid "Couldn't load RSS entries. Reload the page to try again."
 msgstr ""
 
 #. translators: 1: number of entries that failed, 2: total number of entries
-#: dist/index.js:18
+#: dist/index.js:22
 #, js-format
 msgid "%1$d of %2$d entry couldn't be moved to the trash."
 msgid_plural "%1$d of %2$d entries couldn't be moved to the trash."
@@ -724,7 +779,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of entries that failed, 2: total number of entries
-#: dist/index.js:19
+#: dist/index.js:23
 #, js-format
 msgid "%1$d of %2$d entry couldn't be restored."
 msgid_plural "%1$d of %2$d entries couldn't be restored."
@@ -732,81 +787,85 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of entries that failed, 2: total number of entries
-#: dist/index.js:20
+#: dist/index.js:24
 #, js-format
 msgid "%1$d of %2$d entry couldn't be deleted."
 msgid_plural "%1$d of %2$d entries couldn't be deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Undo"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Published"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Draft"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Pending"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Scheduled"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Private"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Trash"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Title"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Feed"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Date"
 msgstr ""
 
-#: dist/index.js:20
-msgid "Edit"
-msgstr ""
-
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "View on Lite Site"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "View Original"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Move to Trash"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
 msgid "Restore"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:24
+msgid "Entries are imported from RSS feeds. Add a feed to start importing."
+msgstr ""
+
+#: dist/index.js:24
 msgid "No RSS entries yet"
 msgstr ""
 
-#: dist/index.js:20
-msgid "Entries appear here after an RSS feed import runs."
+#: dist/index.js:24
+msgid "Entries appear here after the next import."
 msgstr ""
 
-#: dist/index.js:20
-msgid "Go to RSS Feed Import"
+#: dist/index.js:24
+msgid "Go to RSS Feeds"
+msgstr ""
+
+#: dist/index.js:24
+msgid "Review, edit and remove the posts imported from RSS feeds."
 msgstr ""
