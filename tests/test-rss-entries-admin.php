@@ -7,6 +7,7 @@
 
 use Newspack_Lite_Site\Lite_Site_Settings;
 use Newspack_Lite_Site\Post_Type;
+use Newspack_Lite_Site\RSS_Importer;
 
 /**
  * Covers the legacy list redirect target and the REST feed filter and fields.
@@ -340,5 +341,20 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$this->assertSame( 'draft', get_post_status( $id ) );
 		$this->assertSame( '', get_post_meta( $id, '_wp_trash_meta_status', true ) );
 		$this->assertSame( '', get_post_meta( $id, '_wp_trash_meta_time', true ) );
+	}
+
+	/**
+	 * The entries data reports whether any feeds exist.
+	 */
+	public function test_entries_data_reports_has_feeds() {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+		$data = self::invoke_private( Lite_Site_Settings::class, 'get_rss_entries_data' );
+		$this->assertFalse( $data['hasFeeds'] );
+
+		update_option( RSS_Importer::FEEDS_OPTION_NAME, [ 'feeds' => [ 'abc' => [ 'url' => 'https://example.org/feed' ] ] ] );
+		$data = self::invoke_private( Lite_Site_Settings::class, 'get_rss_entries_data' );
+		$this->assertTrue( $data['hasFeeds'] );
 	}
 }

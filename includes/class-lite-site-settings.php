@@ -649,6 +649,7 @@ class Lite_Site_Settings {
 			'editUrl'     => admin_url( 'post.php' ),
 			'addUrl'      => current_user_can( get_post_type_object( Post_Type::POST_TYPE )->cap->create_posts ) ? admin_url( 'post-new.php?post_type=' . Post_Type::POST_TYPE ) : '',
 			'importUrl'   => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=newspack-lite-site-rss-import' ) : '',
+			'hasFeeds'    => ! empty( RSS_Importer::get_feeds() ),
 			'liteEnabled' => (bool) Lite_Site::is_enabled(),
 			'result'      => self::get_forwarded_result( wp_unslash( $_GET ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only notice data.
 		];

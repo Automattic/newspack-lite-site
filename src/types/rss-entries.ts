@@ -41,6 +41,7 @@ export interface RssEntriesData {
 	editUrl: string;
 	addUrl: string;
 	importUrl: string;
+	hasFeeds: boolean;
 	liteEnabled: boolean;
 	result: { action: EntryMutation; count: number; ids: number[] } | null;
 }
