@@ -206,8 +206,8 @@ class Lite_Site_Settings {
 	 * Enqueue admin scripts for the plugin's admin pages.
 	 *
 	 * A single JS bundle loads on the Settings, RSS Entries and RSS Feed Import pages.
-	 * Bootstrap data for all three is passed in one wp_localize_script call.
-	 * Static config (e.g. interval labels) is defined in JS.
+	 * Bootstrap data for all three, including the interval labels, is passed in one
+	 * wp_localize_script call.
 	 *
 	 * @param string $hook_suffix The current admin page hook suffix.
 	 */
@@ -359,7 +359,7 @@ class Lite_Site_Settings {
 	 * @param string[] $menu_order Ordered top-level menu slugs.
 	 * @return string[]
 	 */
-	public static function menu_order( $menu_order ): array {
+	public static function menu_order( array $menu_order ): array {
 		$anchor = array_search( 'newspack-network', $menu_order, true );
 		$own    = array_search( 'newspack-lite-site', $menu_order, true );
 		if ( false === $anchor || false === $own ) {

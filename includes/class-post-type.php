@@ -35,21 +35,22 @@ class Post_Type {
 			self::POST_TYPE,
 			[
 				'labels'              => [
-					'name'                   => __( 'RSS Entries', 'newspack-lite-site' ),
-					'singular_name'          => __( 'RSS Entry', 'newspack-lite-site' ),
-					'add_new'                => __( 'Add RSS Entry', 'newspack-lite-site' ),
-					'add_new_item'           => __( 'Add RSS Entry', 'newspack-lite-site' ),
-					'edit_item'              => __( 'Edit RSS Entry', 'newspack-lite-site' ),
-					'new_item'               => __( 'New RSS Entry', 'newspack-lite-site' ),
-					'view_item'              => __( 'View RSS Entry', 'newspack-lite-site' ),
-					'search_items'           => __( 'Search RSS Entries', 'newspack-lite-site' ),
-					'not_found'              => __( 'No RSS entries found.', 'newspack-lite-site' ),
-					'not_found_in_trash'     => __( 'No RSS entries found in the trash.', 'newspack-lite-site' ),
-					'item_published'         => __( 'RSS entry published.', 'newspack-lite-site' ),
-					'item_updated'           => __( 'RSS entry updated.', 'newspack-lite-site' ),
-					'item_reverted_to_draft' => __( 'RSS entry reverted to draft.', 'newspack-lite-site' ),
-					'item_scheduled'         => __( 'RSS entry scheduled.', 'newspack-lite-site' ),
-					'item_trashed'           => __( 'RSS entry moved to the trash.', 'newspack-lite-site' ),
+					'name'                     => __( 'RSS Entries', 'newspack-lite-site' ),
+					'singular_name'            => __( 'RSS Entry', 'newspack-lite-site' ),
+					'add_new'                  => __( 'Add RSS Entry', 'newspack-lite-site' ),
+					'add_new_item'             => __( 'Add RSS Entry', 'newspack-lite-site' ),
+					'edit_item'                => __( 'Edit RSS Entry', 'newspack-lite-site' ),
+					'new_item'                 => __( 'New RSS Entry', 'newspack-lite-site' ),
+					'view_item'                => __( 'View RSS Entry', 'newspack-lite-site' ),
+					'search_items'             => __( 'Search RSS Entries', 'newspack-lite-site' ),
+					'not_found'                => __( 'No RSS entries found.', 'newspack-lite-site' ),
+					'not_found_in_trash'       => __( 'No RSS entries found in the trash.', 'newspack-lite-site' ),
+					'item_published'           => __( 'RSS entry published.', 'newspack-lite-site' ),
+					'item_published_privately' => __( 'RSS entry published privately.', 'newspack-lite-site' ),
+					'item_updated'             => __( 'RSS entry updated.', 'newspack-lite-site' ),
+					'item_reverted_to_draft'   => __( 'RSS entry reverted to draft.', 'newspack-lite-site' ),
+					'item_scheduled'           => __( 'RSS entry scheduled.', 'newspack-lite-site' ),
+					'item_trashed'             => __( 'RSS entry moved to the trash.', 'newspack-lite-site' ),
 				],
 				'description'         => __( "Posts imported from other sites' RSS feeds by Lite Site.", 'newspack-lite-site' ),
 				'public'              => false,
@@ -79,7 +80,7 @@ class Post_Type {
 	 * @param string   $old_status Old post status.
 	 * @param \WP_Post $post       The post.
 	 */
-	public static function clear_trash_meta_on_restore( $new_status, $old_status, $post ): void {
+	public static function clear_trash_meta_on_restore( string $new_status, string $old_status, $post ): void {
 		if ( 'trash' !== $old_status || 'trash' === $new_status || ! $post instanceof \WP_Post || self::POST_TYPE !== $post->post_type ) {
 			return;
 		}
@@ -90,7 +91,7 @@ class Post_Type {
 	/**
 	 * Registers the read-only REST fields used by the RSS entries list.
 	 */
-	public static function register_rest_fields() {
+	public static function register_rest_fields(): void {
 		$fields = [
 			'feed_id'     => [ __CLASS__, 'get_entry_feed_id' ],
 			'feed_label'  => [ __CLASS__, 'get_entry_feed_label' ],
@@ -134,7 +135,7 @@ class Post_Type {
 	 * @param array $post Prepared REST post data.
 	 * @return array
 	 */
-	public static function get_author_avatar_urls( $post ): array {
+	public static function get_author_avatar_urls( array $post ): array {
 		$author = (int) get_post_field( 'post_author', $post['id'] );
 		if ( ! $author || ! get_option( 'show_avatars' ) ) {
 			return [];
@@ -148,7 +149,7 @@ class Post_Type {
 	 * @param array $post Prepared REST post data.
 	 * @return string
 	 */
-	public static function get_author_name( $post ): string {
+	public static function get_author_name( array $post ): string {
 		$user = get_userdata( (int) get_post_field( 'post_author', $post['id'] ) );
 		return $user ? $user->display_name : '';
 	}
@@ -159,7 +160,7 @@ class Post_Type {
 	 * @param array $post Prepared REST post data.
 	 * @return string
 	 */
-	public static function get_lite_url( $post ): string {
+	public static function get_lite_url( array $post ): string {
 		if ( 'publish' !== get_post_status( $post['id'] ) || ! Lite_Site::is_enabled() ) {
 			return '';
 		}
@@ -172,7 +173,7 @@ class Post_Type {
 	 * @param array $post Prepared REST post data.
 	 * @return string
 	 */
-	public static function get_entry_feed_id( $post ): string {
+	public static function get_entry_feed_id( array $post ): string {
 		$url = (string) get_post_meta( $post['id'], '_rss_import_feed_url', true );
 		return '' !== $url ? RSS_Importer::get_feed_id( $url ) : '';
 	}
@@ -183,7 +184,7 @@ class Post_Type {
 	 * @param array $post Prepared REST post data.
 	 * @return string
 	 */
-	public static function get_entry_feed_label( $post ): string {
+	public static function get_entry_feed_label( array $post ): string {
 		$id = self::get_entry_feed_id( $post );
 		if ( '' === $id ) {
 			return '';
@@ -257,7 +258,7 @@ class Post_Type {
 	 * @param array $params Collection parameters.
 	 * @return array
 	 */
-	public static function add_feed_collection_param( $params ) {
+	public static function add_feed_collection_param( array $params ): array {
 		$params['feed'] = [
 			'description' => __( 'Limit results to entries imported from the feed with this ID.', 'newspack-lite-site' ),
 			'type'        => 'string',
@@ -275,7 +276,7 @@ class Post_Type {
 	 * @param \WP_REST_Request $request The request.
 	 * @return array
 	 */
-	public static function filter_rest_query_by_feed( $args, $request ) {
+	public static function filter_rest_query_by_feed( array $args, \WP_REST_Request $request ): array {
 		if ( ! current_user_can( get_post_type_object( self::POST_TYPE )->cap->edit_posts ) ) {
 			return $args;
 		}
