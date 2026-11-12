@@ -85,8 +85,7 @@ export const FEED_FIELDS: Field< Feed >[] = [
 							intent="high"
 							tooltip={
 								<>
-									{ item.last_result?.error }
-									<br />
+									{ item.last_result?.error } <br />
 									{ __( 'Edit the feed for options.', 'newspack-lite-site' ) }
 								</>
 							}

@@ -57,19 +57,30 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 		}
 	}
 
+	const focusFirstField = () => {
+		formRef.current
+			?.querySelector< HTMLElement >(
+				'textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [role="radio"][aria-checked="true"]'
+			)
+			?.focus();
+	};
+
 	useEffect( () => {
 		if ( ! isOpen ) {
 			return;
 		}
-		const timer = setTimeout( () => {
-			formRef.current
-				?.querySelector< HTMLElement >(
-					'textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [role="radio"][aria-checked="true"]'
-				)
-				?.focus();
-		}, 50 );
+		const timer = setTimeout( focusFirstField, 50 );
 		return () => clearTimeout( timer );
 	}, [ isOpen ] );
+
+	const hasFeedError = !! feed?.last_result?.error;
+	const hadFeedError = useRef( hasFeedError );
+	useEffect( () => {
+		if ( isOpen && hadFeedError.current && ! hasFeedError ) {
+			focusFirstField();
+		}
+		hadFeedError.current = hasFeedError;
+	}, [ isOpen, hasFeedError ] );
 
 	const needsAuthor = isEdit && '' === initial.author_id;
 	const fields = useMemo( () => getFeedFormFields( isEdit, needsAuthor ), [ isEdit, needsAuthor ] );
@@ -112,7 +123,7 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 		}
 	};
 
-	const canSave = ! isSaving && isKnownAuthor( draft.author_id ) && ( isEdit ? isDirty : '' !== draft.feed_url.trim() );
+	const canSave = ! isSaving && ! isImporting && isKnownAuthor( draft.author_id ) && ( isEdit ? isDirty : '' !== draft.feed_url.trim() );
 
 	const errorActions: NoticeAction[] = feed
 		? [

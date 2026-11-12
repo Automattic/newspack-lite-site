@@ -8,6 +8,7 @@
 @import "~@wordpress/base-styles/variables";
 
 $feeds-actions-width: 15em;
+$feeds-actions-width-compact: 3.5em;
 $feeds-status-width: 9em;
 $feeds-checkbox-width: 3em;
 $feeds-url-min-width: 16em;
@@ -82,11 +83,18 @@ body.newspack-lite-admin-header {
 
 .newspack-lite-feeds .dataviews-layout__container {
 	container-type: inline-size;
-	overflow-x: auto;
+}
+
+.newspack-lite-feeds {
+	--newspack-lite-feeds-actions-width: #{$feeds-actions-width-compact};
+
+	@media (min-width: #{$break-medium + 1}) {
+		--newspack-lite-feeds-actions-width: #{$feeds-actions-width};
+	}
 }
 
 .newspack-lite-feeds table.dataviews-view-table {
-	min-width: calc(#{$feeds-checkbox-width} + #{$feeds-url-min-width} + #{$feeds-status-width} + #{$feeds-actions-width} + 4 * #{$feeds-data-min-width});
+	min-width: calc(#{$feeds-checkbox-width} + #{$feeds-url-min-width} + #{$feeds-status-width} + var(--newspack-lite-feeds-actions-width) + (var(--newspack-lite-feeds-columns, 5) - 1) * #{$feeds-data-min-width});
 	table-layout: fixed;
 	width: 100%;
 
@@ -95,11 +103,11 @@ body.newspack-lite-admin-header {
 	}
 
 	col.dataviews-view-table__col-actions {
-		width: $feeds-actions-width !important;
+		width: var(--newspack-lite-feeds-actions-width) !important;
 	}
 
 	col.dataviews-view-table__col-first-data {
-		width: max(#{$feeds-url-min-width}, calc((100cqi - #{$feeds-checkbox-width} - #{$feeds-status-width} - #{$feeds-actions-width}) / 5)) !important;
+		width: max(#{$feeds-url-min-width}, calc((100cqi - #{$feeds-checkbox-width} - #{$feeds-status-width} - var(--newspack-lite-feeds-actions-width)) / var(--newspack-lite-feeds-columns, 5))) !important;
 	}
 
 	col.dataviews-view-table__col-checkbox {
@@ -117,7 +125,7 @@ body.newspack-lite-admin-header {
 
 	thead th.dataviews-view-table__actions-column,
 	tbody td.dataviews-view-table__actions-column {
-		width: $feeds-actions-width !important;
+		width: var(--newspack-lite-feeds-actions-width) !important;
 	}
 
 	tbody td:not(.dataviews-view-table__actions-column) > .dataviews-view-table__cell-content-wrapper {

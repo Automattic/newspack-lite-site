@@ -47,7 +47,12 @@ export const DeleteFeedModal = ( {
 							items.length
 						) }
 			</p>
-			{ items.length <= MAX_LISTED_FEEDS && (
+			{ 1 === items.length && (
+				<p>
+					<strong>{ items[ 0 ].feed_url }</strong>
+				</p>
+			) }
+			{ items.length > 1 && items.length <= MAX_LISTED_FEEDS && (
 				<ul className="newspack-lite-delete-feeds">
 					{ items.map( item => (
 						<li key={ item.id }>

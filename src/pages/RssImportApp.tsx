@@ -108,7 +108,7 @@ export const RssImportApp = () => {
 			</EmptyState.Root>
 		);
 	} else {
-		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeeds } />;
+		content = <FeedsList feeds={ feeds } onEdit={ openEdit } onDelete={ deleteFeeds } countLabel={ countLabel } />;
 	}
 
 	return (
