@@ -91,16 +91,31 @@ export function getMutationMessage( mutation: EntryMutation, count: number ): st
 	}
 }
 
-async function getErrorMessage( err: unknown, fallback: string ): Promise< string > {
+async function getErrorBody( err: unknown ): Promise< { code?: string; message?: string } > {
 	if ( err instanceof Response ) {
 		try {
-			const body = await err.json();
-			return body?.message || fallback;
+			return ( await err.json() ) ?? {};
 		} catch {
-			return fallback;
+			return {};
 		}
 	}
-	return ( err as Error )?.message || fallback;
+	return { message: ( err as Error )?.message };
+}
+
+async function getErrorMessage( err: unknown, fallback: string ): Promise< string > {
+	return ( await getErrorBody( err ) ).message || fallback;
+}
+
+function getHeaderNumber( response: Response, header: string ): number {
+	return parseInt( response.headers.get( header ) ?? '0', 10 ) || 0;
+}
+
+async function getLastPage( query: string ): Promise< number > {
+	const params = new URLSearchParams( query );
+	params.set( 'page', '1' );
+	params.set( '_fields', 'id' );
+	const response = await apiFetch< Response, false >( { path: `${ ENTRIES_PATH }?${ params }`, parse: false } );
+	return Math.max( 1, getHeaderNumber( response, 'X-WP-TotalPages' ) );
 }
 
 /**
@@ -108,11 +123,13 @@ async function getErrorMessage( err: unknown, fallback: string ): Promise< strin
  *
  * Fetches a server-paginated page whenever the view changes, with search input
  * debounced and stale responses ignored. Mutations run in parallel, then the
- * current page is fetched again.
+ * current page is fetched again. When the page is past the last one, such as
+ * after its entries were trashed, the view moves to the last page instead.
  *
- * @param view Current DataViews view.
+ * @param view         Current DataViews view.
+ * @param onPageChange Moves the view to another page.
  */
-export function useEntries( view: View ) {
+export function useEntries( view: View, onPageChange: ( page: number ) => void ) {
 	const [ entries, setEntries ] = useState< RssEntry[] >( [] );
 	const [ totalItems, setTotalItems ] = useState( 0 );
 	const [ totalPages, setTotalPages ] = useState( 0 );
@@ -147,36 +164,60 @@ export function useEntries( view: View ) {
 
 	useEffect( () => {
 		const id = ++requestId.current;
+		const isCurrent = () => id === requestId.current;
 		const isUnfiltered = ! search && ! view.filters?.length;
+		const page = view.page ?? 1;
+		const fallback = __( "Couldn't load RSS entries. Reload the page to try again.", 'newspack-lite-site' );
 		setIsFetching( true );
 
-		apiFetch< Response, false >( { path: `${ ENTRIES_PATH }?${ query }`, parse: false } )
-			.then( async response => {
+		const load = async () => {
+			try {
+				const response = await apiFetch< Response, false >( { path: `${ ENTRIES_PATH }?${ query }`, parse: false } );
 				const data: RssEntry[] = await response.json();
-				if ( id !== requestId.current ) {
+				if ( ! isCurrent() ) {
 					return;
 				}
-				const total = parseInt( response.headers.get( 'X-WP-Total' ) ?? '0', 10 );
+				const total = getHeaderNumber( response, 'X-WP-Total' );
+				if ( ! data.length && page > 1 ) {
+					onPageChange( 1 );
+					return;
+				}
 				setEntries( data );
 				setTotalItems( total );
-				setTotalPages( parseInt( response.headers.get( 'X-WP-TotalPages' ) ?? '0', 10 ) );
+				setTotalPages( getHeaderNumber( response, 'X-WP-TotalPages' ) );
 				if ( isFirstLoad.current ) {
 					setIsEmpty( isUnfiltered && 0 === total );
 				}
-			} )
-			.catch( async err => {
-				const message = await getErrorMessage( err, __( "Couldn't load RSS entries. Reload the page to try again.", 'newspack-lite-site' ) );
-				if ( id === requestId.current ) {
-					showNotice( message, 'error' );
+			} catch ( err ) {
+				const body = await getErrorBody( err );
+				if ( ! isCurrent() ) {
+					return;
 				}
-			} )
-			.finally( () => {
-				if ( id === requestId.current ) {
-					isFirstLoad.current = false;
-					setIsLoading( false );
-					setIsFetching( false );
+				if ( 'rest_post_invalid_page_number' === body.code ) {
+					try {
+						const lastPage = await getLastPage( query );
+						if ( isCurrent() ) {
+							onPageChange( lastPage );
+						}
+						return;
+					} catch ( lastPageErr ) {
+						if ( ! isCurrent() ) {
+							return;
+						}
+						showNotice( await getErrorMessage( lastPageErr, fallback ), 'error' );
+					}
+				} else {
+					showNotice( body.message || fallback, 'error' );
 				}
-			} );
+			}
+			if ( isCurrent() ) {
+				isFirstLoad.current = false;
+				setIsLoading( false );
+				setIsFetching( false );
+			}
+		};
+
+		load();
 	}, [ query, reloadKey ] );
 
 	useEffect( () => () => clearTimeout( noticeTimer.current ), [] );

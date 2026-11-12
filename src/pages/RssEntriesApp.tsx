@@ -5,7 +5,7 @@
 /**
  * WordPress dependencies.
  */
-import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { Button, Snackbar } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
@@ -92,7 +92,11 @@ function getInitialView(): View {
  */
 export const RssEntriesApp = () => {
 	const [ view, setView ] = useState< View >( getInitialView );
-	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, notice, showNotice, dismissNotice, mutate } = useEntries( view );
+	const setPage = useCallback( ( page: number ) => setView( current => ( { ...current, page } ) ), [] );
+	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, notice, showNotice, dismissNotice, mutate } = useEntries(
+		view,
+		setPage
+	);
 	const forwardedResult = useRef( getForwardedResult() );
 
 	useEffect( () => {
