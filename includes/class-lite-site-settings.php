@@ -479,25 +479,47 @@ class Lite_Site_Settings {
 	/**
 	 * Redirect the legacy RSS entries list table to the React page.
 	 *
-	 * Only plain GET requests are redirected; requests carrying a real
-	 * action or action2 are left to the classic screen.
-	 *
 	 * @param \WP_Screen $screen Current screen.
 	 */
 	public static function maybe_redirect_legacy_entries_list( $screen ) {
 		if ( ! is_admin() || ! $screen instanceof \WP_Screen || 'edit-' . Post_Type::POST_TYPE !== $screen->id ) {
 			return;
 		}
-		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
-			return;
-		}
-		if ( self::has_real_get_action() ) {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only nav check.
+		$query  = wp_unslash( $_GET );
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+		if ( ! self::should_redirect_legacy_entries_list( $query, $method ) ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only nav check.
-		wp_safe_redirect( self::get_entries_redirect_target( wp_unslash( $_GET ) ) );
+		wp_safe_redirect( self::get_entries_redirect_target( $query ) );
 		exit;
+	}
+
+	/**
+	 * Whether a request for the legacy RSS entries list should go to the React page.
+	 *
+	 * Only plain GET requests are redirected. Requests whose action or action2 carry a real
+	 * value, rather than WP's -1 sentinel, are left to the classic screen.
+	 *
+	 * @param array  $query  Request query args.
+	 * @param string $method Request method.
+	 * @return bool
+	 */
+	public static function should_redirect_legacy_entries_list( array $query, string $method ): bool {
+		if ( 'GET' !== strtoupper( $method ) ) {
+			return false;
+		}
+		foreach ( [ 'action', 'action2' ] as $key ) {
+			if ( ! isset( $query[ $key ] ) ) {
+				continue;
+			}
+			if ( ! is_scalar( $query[ $key ] ) || ! in_array( (string) $query[ $key ], [ '', '-1' ], true ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -514,22 +536,6 @@ class Lite_Site_Settings {
 			}
 		}
 		return add_query_arg( $args, admin_url( 'admin.php' ) );
-	}
-
-	/**
-	 * Whether action or action2 carry a real value rather than WP's -1 sentinel.
-	 *
-	 * @return bool
-	 */
-	private static function has_real_get_action(): bool {
-		foreach ( [ 'action', 'action2' ] as $key ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only nav check.
-			$value = isset( $_GET[ $key ] ) ? sanitize_text_field( wp_unslash( $_GET[ $key ] ) ) : '';
-			if ( '' !== $value && '-1' !== $value ) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**

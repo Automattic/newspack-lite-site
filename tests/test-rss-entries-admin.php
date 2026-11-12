@@ -40,6 +40,49 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Plain GET requests are redirected; real actions and other methods are not.
+	 *
+	 * @dataProvider redirect_requests
+	 *
+	 * @param array  $query    Query args.
+	 * @param string $method   Request method.
+	 * @param bool   $expected Whether the request should redirect.
+	 */
+	public function test_should_redirect_legacy_entries_list( array $query, string $method, bool $expected ) {
+		$this->assertSame( $expected, Lite_Site_Settings::should_redirect_legacy_entries_list( $query, $method ) );
+	}
+
+	/**
+	 * Legacy list requests and whether each should redirect.
+	 *
+	 * @return array
+	 */
+	public function redirect_requests(): array {
+		return [
+			'plain GET'           => [ [ 'post_type' => Post_Type::POST_TYPE ], 'GET', true ],
+			'no-op bulk actions'  => [
+				[
+					'action'  => '-1',
+					'action2' => '-1',
+				],
+				'GET',
+				true,
+			],
+			'trash action'        => [ [ 'action' => 'trash' ], 'GET', false ],
+			'bottom trash action' => [
+				[
+					'action'  => '-1',
+					'action2' => 'trash',
+				],
+				'GET',
+				false,
+			],
+			'array action'        => [ [ 'action' => [ 'trash' ] ], 'GET', false ],
+			'POST'                => [ [], 'POST', false ],
+		];
+	}
+
+	/**
 	 * Dispatch a collection request for RSS entries.
 	 *
 	 * @param array $params Request params.
