@@ -22,13 +22,12 @@ import { Drawer } from 'newspack-components/dist/esm/drawer';
 import { type FeedChanges, type FeedDrawerProps, type FeedFormData } from '../types/rss-feed-import';
 import { DEFAULT_FEED, getFeedFormFields } from '../utils/feeds-dataform';
 
-const EDIT_FIELDS = [ 'feed_url', 'interval', 'author_id', 'status' ];
-const ADD_FIELDS = [ 'feed_url', 'interval', 'author_id' ];
+const FORM_FIELDS = [ 'feed_url', 'status', 'interval', 'author_id' ];
 
 /**
  * Drawer for adding a new RSS feed or editing an existing one.
  *
- * Stays mounted and is driven by `isOpen`. Editing disables the URL and adds a Status field.
+ * Stays mounted and is driven by `isOpen`. Editing disables the URL.
  */
 export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onUpdate, onClearError }: FeedDrawerProps ) => {
 	const isEdit = !! feed;
@@ -61,7 +60,10 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 	const fields = useMemo( () => getFeedFormFields( isEdit ), [ isEdit ] );
 	const isDirty = isEdit
 		? draft.interval !== initial.interval || draft.author_id !== initial.author_id || draft.status !== initial.status
-		: draft.feed_url !== initial.feed_url || draft.interval !== initial.interval || draft.author_id !== initial.author_id;
+		: draft.feed_url !== initial.feed_url ||
+			draft.interval !== initial.interval ||
+			draft.author_id !== initial.author_id ||
+			draft.status !== initial.status;
 
 	const handleChange = ( partial: Partial< FeedFormData > ) => {
 		onClearError();
@@ -87,6 +89,7 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 				feed_url: draft.feed_url.trim(),
 				interval: draft.interval,
 				author_id: parseInt( draft.author_id, 10 ),
+				status: draft.status,
 			} );
 		}
 		if ( success ) {
@@ -113,7 +116,7 @@ export const FeedDrawer = ( { isOpen, feed, isSaving, error, onClose, onAdd, onU
 					<DataForm
 						data={ draft }
 						fields={ fields }
-						form={ { layout: { type: 'regular' }, fields: isEdit ? EDIT_FIELDS : ADD_FIELDS } }
+						form={ { layout: { type: 'regular' }, fields: FORM_FIELDS } }
 						onChange={ handleChange }
 					/>
 				</div>

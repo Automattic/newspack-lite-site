@@ -54,6 +54,7 @@ export interface NewFeedData {
 	feed_url: string;
 	interval: string;
 	author_id: number;
+	status: 'active' | 'paused';
 }
 
 /**

@@ -101,6 +101,11 @@ class RSS_Importer {
 							'required'          => true,
 							'sanitize_callback' => 'absint',
 						],
+						'status'    => [
+							'type'    => 'string',
+							'enum'    => [ 'active', 'paused' ],
+							'default' => 'active',
+						],
 					],
 				],
 			]
@@ -219,8 +224,8 @@ class RSS_Importer {
 	/**
 	 * Register and schedule a new RSS feed.
 	 *
-	 * Validates the RSS feed URL, author, and import interval submitted by the admin UI,
-	 * persists the RSS feed configuration, schedules the first WP-Cron import event, and
+	 * Validates the RSS feed URL, author, import interval and optional status submitted by the admin UI,
+	 * persists the RSS feed configuration, schedules the first WP-Cron import event unless the feed is added paused, and
 	 * returns the full refreshed RSS feeds list.
 	 *
 	 * @param \WP_REST_Request $request The REST request.
@@ -231,6 +236,7 @@ class RSS_Importer {
 		$feed_url  = $params['feed_url'] ?? '';
 		$interval  = $params['interval'] ?? 'daily';
 		$author_id = $params['author_id'] ?? 0;
+		$status    = $params['status'] ?? 'active';
 
 		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
 			return new \WP_Error(
@@ -271,12 +277,15 @@ class RSS_Importer {
 			'feed_url'    => $feed_url,
 			'interval'    => $interval,
 			'author_id'   => $author_id,
-			'status'      => 'active',
+			'status'      => 'paused' === $status ? 'paused' : 'active',
 			'last_run'    => null,
 			'last_result' => null,
 		];
 
-		if ( wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] ) ) {
+		if ( 'paused' === $feeds[ $feed_id ]['status'] ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK, [ $feed_id ] );
+			$scheduled = true;
+		} elseif ( wp_next_scheduled( self::CRON_HOOK, [ $feed_id ] ) ) {
 			$scheduled = true;
 		} else {
 			$scheduled = wp_schedule_event( time(), $interval, self::CRON_HOOK, [ $feed_id ] );

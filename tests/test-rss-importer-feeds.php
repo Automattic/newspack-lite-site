@@ -493,4 +493,66 @@ class Test_RSS_Importer_Feeds extends Lite_Site_TestCase {
 		$this->assertSame( 'paused', $feeds[ $feed_id ]['status'], 'The feed should be paused.' );
 		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'No event should be scheduled.' );
 	}
+
+	/**
+	 * Send a POST request to the add route as an administrator.
+	 *
+	 * @param array $params Request parameters.
+	 * @return WP_REST_Response The REST response.
+	 */
+	private function add_feed( array $params ) {
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin_id );
+
+		$request = new WP_REST_Request( 'POST', '/newspack-lite-site/v1/rss-feeds' );
+		$request->set_body_params(
+			array_merge(
+				[
+					'feed_url'  => self::PUBLIC_FEED,
+					'interval'  => 'hourly',
+					'author_id' => $admin_id,
+				],
+				$params
+			)
+		);
+
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * A feed added without a status is active and scheduled.
+	 */
+	public function test_add_feed_defaults_to_active_and_scheduled() {
+		$feed_id = RSS_Importer::get_feed_id( self::PUBLIC_FEED );
+
+		$response = $this->add_feed( [] );
+		$feeds    = RSS_Importer::get_feeds();
+
+		$this->assertSame( 200, $response->get_status(), 'Adding should succeed.' );
+		$this->assertSame( 'active', $feeds[ $feed_id ]['status'], 'The feed should default to active.' );
+		$this->assertNotFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'A cron event should be scheduled.' );
+	}
+
+	/**
+	 * A feed added as paused is stored paused and has no cron event.
+	 */
+	public function test_add_feed_paused_is_not_scheduled() {
+		$feed_id = RSS_Importer::get_feed_id( self::PUBLIC_FEED );
+
+		$response = $this->add_feed( [ 'status' => 'paused' ] );
+		$feeds    = RSS_Importer::get_feeds();
+
+		$this->assertSame( 200, $response->get_status(), 'Adding should succeed.' );
+		$this->assertSame( 'paused', $feeds[ $feed_id ]['status'], 'The feed should be stored paused.' );
+		$this->assertFalse( wp_get_scheduled_event( RSS_Importer::CRON_HOOK, [ $feed_id ] ), 'No cron event should be scheduled.' );
+	}
+
+	/**
+	 * An unknown status is rejected.
+	 */
+	public function test_add_feed_rejects_invalid_status() {
+		$response = $this->add_feed( [ 'status' => 'sleeping' ] );
+
+		$this->assertSame( 400, $response->get_status(), 'An unknown status should be rejected.' );
+	}
 }
