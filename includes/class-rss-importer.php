@@ -474,6 +474,16 @@ class RSS_Importer {
 			}
 
 			if ( ! self::run_scheduled_import( $feed_id ) ) {
+				wp_cache_delete( 'alloptions', 'options' );
+
+				if ( ! isset( self::get_feeds()[ $feed_id ] ) ) {
+					return new \WP_Error(
+						'feed_not_found',
+						__( 'Feed not found.', 'newspack-lite-site' ),
+						[ 'status' => 404 ]
+					);
+				}
+
 				return new \WP_Error(
 					'feed_busy',
 					__( 'This RSS feed is already importing. Try again in a few minutes.', 'newspack-lite-site' ),
@@ -625,7 +635,7 @@ class RSS_Importer {
 	 * Run the scheduled import for a specific RSS feed.
 	 *
 	 * @param string $feed_id The RSS feed ID to import.
-	 * @return bool True if the import ran, false if it was skipped (locked, paused or missing feed).
+	 * @return bool True if the import ran, false if it was skipped (locked or paused feed) or the feed no longer exists.
 	 */
 	public static function run_scheduled_import( $feed_id = '' ) {
 		if ( empty( $feed_id ) ) {
@@ -686,7 +696,7 @@ class RSS_Importer {
 	 *
 	 * @param string $feed_url  The RSS feed URL to import from.
 	 * @param int    $author_id WordPress user ID to assign as post author.
-	 * @return array|\WP_Error Array with 'imported', 'failed' and 'up_to_date' keys (plus 'note' for an empty feed), or WP_Error on failure.
+	 * @return array|\WP_Error Array with 'imported', 'failed' and 'up_to_date' keys (plus 'empty' for a feed with no items), or WP_Error on failure.
 	 */
 	public static function run_import( $feed_url, $author_id = 0 ) {
 		if ( empty( $feed_url ) || ! self::is_safe_url( $feed_url ) ) {
@@ -720,7 +730,7 @@ class RSS_Importer {
 					'imported'   => 0,
 					'failed'     => 0,
 					'up_to_date' => true,
-					'note'       => __( 'The RSS feed contains no items.', 'newspack-lite-site' ),
+					'empty'      => true,
 				];
 			}
 

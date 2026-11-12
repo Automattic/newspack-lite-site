@@ -193,7 +193,7 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 	/**
 	 * An empty feed is recorded as up to date, not as an error.
 	 */
-	public function test_import_records_an_empty_feed_as_a_note_not_an_error() {
+	public function test_import_records_an_empty_feed_as_up_to_date_not_an_error() {
 		$this->fake_empty_feed();
 		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
 
@@ -202,7 +202,7 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 		$this->assertArrayNotHasKey( 'error', $data[0]['last_result'], 'An empty feed is not an error.' );
 		$this->assertSame( 0, $data[0]['last_result']['imported'], 'Nothing should be imported.' );
 		$this->assertTrue( $data[0]['last_result']['up_to_date'], 'The feed should count as up to date.' );
-		$this->assertSame( 'The RSS feed contains no items.', $data[0]['last_result']['note'], 'The empty-feed note should be recorded.' );
+		$this->assertTrue( $data[0]['last_result']['empty'], 'The empty-feed flag should be recorded.' );
 	}
 
 	/**
@@ -250,6 +250,25 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 
 		$this->assertNotEmpty( $data[0]['last_result']['error'], 'The blocked URL should record an error.' );
 		$this->assertSame( 0, $requests, 'No outbound request should be made.' );
+	}
+
+	/**
+	 * A feed deleted during the import is a 404, not a busy feed.
+	 */
+	public function test_import_of_a_feed_deleted_mid_run_returns_404() {
+		list( $feed_id ) = $this->seed( [ self::PUBLIC_FEED ] );
+		add_filter(
+			'pre_http_request',
+			static function ( $pre ) {
+				delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+				return new WP_Error( 'http_request_failed', 'Gone.' );
+			}
+		);
+
+		$response = $this->action( $feed_id, 'import' );
+
+		$this->assertSame( 404, $response->get_status(), 'A feed deleted mid-run should be a 404.' );
+		$this->assertFalse( get_transient( RSS_Importer::LOCK_PREFIX . $feed_id ), 'The lock should be released.' );
 	}
 
 	/**

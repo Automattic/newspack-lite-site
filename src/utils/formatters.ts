@@ -46,8 +46,8 @@ export function formatLastResult( result: LastResult | null ): string {
 	const failed = result.failed ?? 0;
 	const upToDate = result.up_to_date ?? false;
 
-	if ( result.note && 0 === imported ) {
-		return result.note;
+	if ( result.empty && 0 === imported ) {
+		return __( 'The RSS feed contains no items.', 'newspack-lite-site' );
 	}
 	if ( upToDate && 0 === imported ) {
 		return __( 'Up to date', 'newspack-lite-site' );
