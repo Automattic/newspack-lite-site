@@ -567,14 +567,45 @@ class Lite_Site_Settings {
 		foreach ( array_combine( self::FORWARDED_LEGACY_COUNTS, [ 'trash', 'restore', 'delete' ] ) as $key => $action ) {
 			$count = isset( $query[ $key ] ) && is_scalar( $query[ $key ] ) ? absint( $query[ $key ] ) : 0;
 			if ( $count > 0 ) {
+				$action_ids = 'trash' === $action ? self::get_trashed_entry_ids( $ids ) : $ids;
 				return [
 					'action' => $action,
-					'count'  => $ids ? count( $ids ) : $count,
-					'ids'    => $ids,
+					'count'  => $action_ids ? count( $action_ids ) : $count,
+					'ids'    => $action_ids,
 				];
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Keep only the IDs of RSS entries that are in the trash and that the current user can edit.
+	 *
+	 * @param int[] $ids Candidate post IDs.
+	 * @return int[]
+	 */
+	private static function get_trashed_entry_ids( array $ids ): array {
+		$ids = array_slice( $ids, 0, 100 );
+		if ( ! $ids ) {
+			return [];
+		}
+		$trashed = get_posts(
+			[
+				'post__in'       => $ids,
+				'post_type'      => Post_Type::POST_TYPE,
+				'post_status'    => 'trash',
+				'fields'         => 'ids',
+				'posts_per_page' => count( $ids ),
+				'no_found_rows'  => true,
+				'orderby'        => 'post__in',
+			]
+		);
+		return array_values(
+			array_filter(
+				array_map( 'intval', $trashed ),
+				fn( $id ) => current_user_can( 'edit_post', $id )
+			)
+		);
 	}
 
 	/**

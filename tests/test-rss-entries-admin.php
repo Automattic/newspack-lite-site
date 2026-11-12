@@ -70,16 +70,36 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 	 * The forwarded result becomes the action, count and IDs the page confirms.
 	 */
 	public function test_get_forwarded_result() {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$first     = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		$second    = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		$published = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		wp_trash_post( $first );
+		wp_trash_post( $second );
+
 		$this->assertSame(
 			[
 				'action' => 'trash',
 				'count'  => 2,
-				'ids'    => [ 12, 34 ],
+				'ids'    => [ $first, $second ],
 			],
 			Lite_Site_Settings::get_forwarded_result(
 				[
 					'trashed' => '1',
-					'ids'     => '12,abc,34',
+					'ids'     => $first . ',abc,' . $second . ',' . $published,
+				]
+			)
+		);
+		$this->assertSame(
+			[
+				'action' => 'trash',
+				'count'  => 1,
+				'ids'    => [],
+			],
+			Lite_Site_Settings::get_forwarded_result(
+				[
+					'trashed' => '1',
+					'ids'     => (string) $published,
 				]
 			)
 		);
