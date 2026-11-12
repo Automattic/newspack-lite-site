@@ -40,7 +40,10 @@ export const ColorPickerField = ( { value, onChange }: ColorPickerFieldProps ) =
 	return (
 		<BaseControl
 			id={ id }
-			help={ value ? __( 'Using a custom color.', 'newspack-lite-site' ) : __( "Using the theme's primary color.", 'newspack-lite-site' ) }
+			help={ __(
+				"Colors links in articles and the separator lines. Uses your theme's primary color until you pick one.",
+				'newspack-lite-site'
+			) }
 			__nextHasNoMarginBottom
 		>
 			<Stack direction="row" gap="sm" align="flex-end">
