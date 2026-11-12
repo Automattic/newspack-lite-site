@@ -203,6 +203,8 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 						return;
 					}
 					setIsEmpty( 0 === trashed );
+				} else if ( total > 0 ) {
+					setIsEmpty( false );
 				}
 				setEntries( data );
 				setTotalItems( total );
@@ -247,6 +249,8 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 	}, [ query, reloadKey ] );
 
 	useEffect( () => () => clearTimeout( noticeTimer.current ), [] );
+
+	const reload = useCallback( () => setReloadKey( key => key + 1 ), [] );
 
 	const mutate = useCallback(
 		async ( items: Array< Pick< RssEntry, 'id' > >, mutation: EntryMutation ) => {
@@ -319,5 +323,5 @@ export function useEntries( view: View, onPageChange: ( page: number ) => void )
 		[ showNotice ]
 	);
 
-	return { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate };
+	return { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate, reload };
 }

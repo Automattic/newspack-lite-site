@@ -237,6 +237,12 @@ body.newspack-lite-admin-header {
 	}
 }
 
+.newspack-lite-entries-message {
+	margin: 0;
+	padding-block-start: calc(2 * var(--wpds-dimension-padding-2xl, #{$grid-unit-30}));
+	text-align: center;
+}
+
 .newspack-lite-color-picker-field__picker {
 	flex: 1;
 	min-width: 0;

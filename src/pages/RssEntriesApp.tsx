@@ -1,5 +1,5 @@
 /**
- * RSS Entries page root component.
+ * RSS page's Entries tab.
  */
 
 /**
@@ -8,15 +8,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { Button, Notice, Snackbar } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { postContent } from '@wordpress/icons';
 import { type Action, type RenderModalProps, type View } from '@wordpress/dataviews';
-import { Stack } from '@wordpress/ui';
+import { Link, Stack, Text } from '@wordpress/ui';
 
 /**
  * External dependencies.
  */
-import Page from 'newspack-components/dist/esm/page';
-import { EmptyState } from 'newspack-components/dist/esm/empty-state';
+import { type MouseEvent } from 'react';
 import Waiting from 'newspack-components/dist/esm/waiting';
 
 /**
@@ -28,6 +26,7 @@ import { DeleteEntriesModal } from '../components/DeleteEntriesModal';
 import { DEFAULT_VIEW, getEntryFields } from '../utils/entries-dataview';
 import { formatCount } from '../utils/format-count';
 import { type RssEntry } from '../types/rss-entries';
+import { type RssTabProps } from '../types/rss';
 
 const countLabel = ( count: number, formatted: string ) =>
 	/* translators: %s: number of RSS entries. */
@@ -53,18 +52,36 @@ function getInitialView(): View {
 }
 
 /**
- * Root component for the RSS Entries page.
+ * The Entries tab of the RSS page.
  *
  * Lists imported RSS entries in a server-paginated table with filters and bulk actions.
+ * The list loads again whenever the tab comes back into view, since imports run in the background.
+ *
+ * @param props                Component props.
+ * @param props.isActive       Whether this tab is the one shown.
+ * @param props.canManageFeeds Whether the current user can open the Feeds tab.
+ * @param props.onHeaderChange Called with the page header parts this tab sets.
+ * @param props.onGoToFeeds    Called when the link to the Feeds tab is followed.
  */
-export const RssEntriesApp = () => {
+export const RssEntriesApp = ( {
+	isActive = true,
+	canManageFeeds = false,
+	onHeaderChange,
+	onGoToFeeds,
+}: RssTabProps & { canManageFeeds?: boolean; onGoToFeeds?: () => void } ) => {
 	const [ view, setView ] = useState< View >( getInitialView );
 	const setPage = useCallback( ( page: number ) => setView( current => ( { ...current, page } ) ), [] );
-	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate } = useEntries(
-		view,
-		setPage
-	);
+	const { entries, totalItems, totalPages, isLoading, isFetching, isEmpty, loadError, notice, showNotice, dismissNotice, mutate, reload } =
+		useEntries( view, setPage );
 	const forwardedResult = useRef( rssEntries?.result ?? null );
+	const wasActive = useRef( isActive );
+
+	useEffect( () => {
+		if ( isActive && ! wasActive.current ) {
+			reload();
+		}
+		wasActive.current = isActive;
+	}, [ isActive, reload ] );
 
 	useEffect( () => {
 		const result = forwardedResult.current;
@@ -92,12 +109,36 @@ export const RssEntriesApp = () => {
 	}, [ showNotice, mutate ] );
 
 	const editUrl = rssEntries?.editUrl ?? '';
-	const importUrl = rssEntries?.importUrl ?? '';
 	const addUrl = rssEntries?.addUrl ?? '';
-	const hasFeeds = rssEntries?.hasFeeds ?? true;
-	const addFeedUrl = importUrl ? `${ importUrl }&add=1` : '';
 	const showCount = ! isLoading && ! isEmpty && ! loadError;
 	const fields = useMemo( () => getEntryFields( editUrl ), [ editUrl ] );
+
+	const headerActions = useMemo(
+		() =>
+			showCount && addUrl ? (
+				<Button variant="primary" href={ addUrl }>
+					{ __( 'Add RSS Entry', 'newspack-lite-site' ) }
+				</Button>
+			) : undefined,
+		[ showCount, addUrl ]
+	);
+
+	useEffect( () => {
+		onHeaderChange?.( {
+			count: showCount ? totalItems : undefined,
+			countLabel: showCount ? countLabel( totalItems, formatCount( totalItems ) ) : undefined,
+			actions: headerActions,
+		} );
+	}, [ showCount, totalItems, headerActions, onHeaderChange ] );
+
+	const goToFeeds = useCallback(
+		( event: MouseEvent< HTMLAnchorElement > ) => {
+			if ( ! event.metaKey && ! event.ctrlKey && ! event.shiftKey && ! event.altKey ) {
+				onGoToFeeds?.();
+			}
+		},
+		[ onGoToFeeds ]
+	);
 
 	const actions: Action< RssEntry >[] = useMemo(
 		() => [
@@ -178,39 +219,19 @@ export const RssEntriesApp = () => {
 				{ loadError }
 			</Notice>
 		);
-	} else if ( isEmpty && ! hasFeeds ) {
-		content = (
-			<EmptyState.Root>
-				<EmptyState.Header
-					icon={ postContent }
-					title={ __( 'No RSS feeds yet', 'newspack-lite-site' ) }
-					description={ __( 'Entries are imported from RSS feeds. Add a feed to start importing.', 'newspack-lite-site' ) }
-				/>
-				{ importUrl && (
-					<EmptyState.Actions>
-						<Button variant="primary" href={ addFeedUrl }>
-							{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
-						</Button>
-					</EmptyState.Actions>
-				) }
-			</EmptyState.Root>
-		);
 	} else if ( isEmpty ) {
 		content = (
-			<EmptyState.Root>
-				<EmptyState.Header
-					icon={ postContent }
-					title={ __( 'No RSS entries yet', 'newspack-lite-site' ) }
-					description={ __( 'Entries appear here after the next import.', 'newspack-lite-site' ) }
-				/>
-				{ importUrl && (
-					<EmptyState.Actions>
-						<Button variant="secondary" href={ importUrl }>
-							{ __( 'Go to RSS Feeds', 'newspack-lite-site' ) }
-						</Button>
-					</EmptyState.Actions>
+			<Text render={ <p /> } variant="body-md" className="newspack-lite-entries-message">
+				{ __( 'Entries appear here after the first import.', 'newspack-lite-site' ) }
+				{ canManageFeeds && (
+					<>
+						{ ' ' }
+						<Link href="#/feeds" onClick={ goToFeeds }>
+							{ __( 'Go to Feeds', 'newspack-lite-site' ) }
+						</Link>
+					</>
 				) }
-			</EmptyState.Root>
+			</Text>
 		);
 	} else {
 		content = (
@@ -230,28 +251,8 @@ export const RssEntriesApp = () => {
 	}
 
 	return (
-		<div className="wrap">
-			<Page
-				subTitle={ __( 'Review, edit and remove the posts imported from RSS feeds.', 'newspack-lite-site' ) }
-				breadcrumbItems={ [
-					{ label: 'Lite Site' },
-					{
-						label: __( 'RSS Entries', 'newspack-lite-site' ),
-						count: showCount ? totalItems : undefined,
-						countLabel: showCount ? countLabel( totalItems, formatCount( totalItems ) ) : undefined,
-					},
-				] }
-				actions={
-					showCount &&
-					addUrl && (
-						<Button variant="primary" href={ addUrl }>
-							{ __( 'Add RSS Entry', 'newspack-lite-site' ) }
-						</Button>
-					)
-				}
-			>
-				<div className="newspack-lite-rss-sections">{ content }</div>
-			</Page>
+		<>
+			<div className="newspack-lite-rss-sections">{ content }</div>
 			{ notice && (
 				<div className={ `newspack-lite-snackbar-container newspack-lite-snackbar-container--${ notice.status }` }>
 					<Snackbar
@@ -264,6 +265,6 @@ export const RssEntriesApp = () => {
 					</Snackbar>
 				</div>
 			) }
-		</div>
+		</>
 	);
 };
