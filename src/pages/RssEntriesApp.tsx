@@ -187,7 +187,7 @@ export const RssEntriesApp = () => {
 				{ importUrl && (
 					<EmptyState.Actions>
 						<Button variant="primary" href={ importUrl }>
-							{ __( 'Go to RSS Feed Import', 'newspack-lite-site' ) }
+							{ __( 'Go to RSS Feeds', 'newspack-lite-site' ) }
 						</Button>
 					</EmptyState.Actions>
 				) }
@@ -213,6 +213,7 @@ export const RssEntriesApp = () => {
 	return (
 		<div className="wrap">
 			<Page
+				subTitle={ __( 'Review, edit and remove the posts imported from RSS feeds.', 'newspack-lite-site' ) }
 				breadcrumbItems={ [
 					{ label: 'Lite Site' },
 					{

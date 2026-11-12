@@ -57,7 +57,7 @@ const SETTINGS_TABS = [
  */
 const SettingsScreen = () => {
 	const { pathname } = useLocation();
-	const { settings, updateSettings, isLoading, isSaving, isDirty, saveSettings, discardChanges, error } = useSettings();
+	const { settings, savedSettings, updateSettings, isLoading, isSaving, isDirty, saveSettings, discardChanges, error } = useSettings();
 	const [ isSaved, setIsSaved ] = useState( false );
 	const lastPathname = useRef( pathname );
 	const activeTab = SETTINGS_TABS.find( tab => tab.path === pathname );
@@ -130,7 +130,7 @@ const SettingsScreen = () => {
 												{ error }
 											</Notice>
 										) }
-										<Panel settings={ settings } onChange={ updateSettings } />
+										<Panel settings={ settings } savedSettings={ savedSettings } onChange={ updateSettings } />
 									</Stack>
 								) }
 							</Route>

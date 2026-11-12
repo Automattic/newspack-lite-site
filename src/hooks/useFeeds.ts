@@ -5,29 +5,44 @@
 /**
  * WordPress dependencies.
  */
-import { useState, useEffect, useCallback } from '@wordpress/element';
-import apiFetch from '@wordpress/api-fetch';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import apiFetch, { type APIFetchOptions } from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 
 /**
  * Internal dependencies.
  */
-import { type Feed, type FeedAction, type NewFeedData, type Notice } from '../types/rss-feed-import';
+import { type Feed, type FeedChanges, type NewFeedData, type Notice } from '../types/rss-feed-import';
 
 const FEEDS_PATH = '/newspack-lite-site/v1/rss-feeds';
 
 /**
  * Manages RSS feed state and all REST API interactions for the RSS Import page.
  *
- * Fetches the RSS feed list on mount. Each mutation (add, pause, resume, delete)
- * updates local state from the server's response to stay in sync.
+ * Fetches the RSS feed list on mount. Each mutation (add, update, delete)
+ * updates local state from the server's response to stay in sync, and resolves
+ * to whether it succeeded so the caller knows if it can close its drawer. A failure
+ * is also shown as a notice when the drawer is no longer open to show it.
  */
-export function useFeeds() {
+export function useFeeds( isDrawerOpen = false ) {
 	const [ feeds, setFeeds ] = useState< Feed[] >( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
-	const [ isAdding, setIsAdding ] = useState( false );
-	const [ actionInProgress, setActionInProgress ] = useState< string | null >( null );
+	const [ isSaving, setIsSaving ] = useState( false );
+	const [ saveError, setSaveError ] = useState< string | null >( null );
 	const [ notice, setNotice ] = useState< Notice | null >( null );
+
+	const requestCounter = useRef( 0 );
+	const appliedRequest = useRef( 0 );
+
+	const applyFeeds = useCallback( ( requestId: number, data: Feed[] ) => {
+		if ( requestId > appliedRequest.current ) {
+			appliedRequest.current = requestId;
+			setFeeds( data );
+		}
+	}, [] );
+
+	const isDrawerOpenRef = useRef( isDrawerOpen );
+	isDrawerOpenRef.current = isDrawerOpen;
 
 	const showNotice = useCallback( ( message: string, status: 'success' | 'error' = 'success' ) => {
 		setNotice( { message, status } );
@@ -38,10 +53,12 @@ export function useFeeds() {
 	useEffect( () => {
 		let cancelled = false;
 
+		const requestId = ++requestCounter.current;
+
 		apiFetch< Feed[] >( { path: FEEDS_PATH } )
 			.then( data => {
 				if ( ! cancelled ) {
-					setFeeds( data );
+					applyFeeds( requestId, data );
 					setIsLoading( false );
 				}
 			} )
@@ -57,63 +74,79 @@ export function useFeeds() {
 		};
 	}, [] );
 
-	const addFeed = useCallback(
-		async ( data: NewFeedData ) => {
-			setIsAdding( true );
+	const mutate = useCallback(
+		async ( request: APIFetchOptions< true >, successMessage: string, fallbackError: string, notifyError = false ) => {
+			setIsSaving( true );
+			setSaveError( null );
+
+			const requestId = ++requestCounter.current;
 
 			try {
-				const updated = await apiFetch< Feed[] >( {
-					path: FEEDS_PATH,
-					method: 'POST',
-					data,
-				} );
-				setFeeds( updated );
-				showNotice( __( 'RSS feed added.', 'newspack-lite-site' ) );
+				const updated = await apiFetch< Feed[] >( request );
+				applyFeeds( requestId, updated );
+				showNotice( successMessage );
 				return true;
 			} catch ( err ) {
-				showNotice( ( err as Error ).message ?? __( "Couldn't add the RSS feed. Try again.", 'newspack-lite-site' ), 'error' );
+				const message = ( err as Error ).message || fallbackError;
+				setSaveError( message );
+				if ( notifyError || ! isDrawerOpenRef.current ) {
+					showNotice( message, 'error' );
+				}
+				const refetchId = ++requestCounter.current;
+				apiFetch< Feed[] >( { path: FEEDS_PATH } )
+					.then( data => applyFeeds( refetchId, data ) )
+					.catch( () => {} );
 				return false;
 			} finally {
-				setIsAdding( false );
+				setIsSaving( false );
 			}
 		},
-		[ showNotice ]
+		[ showNotice, applyFeeds ]
 	);
 
-	const feedAction = useCallback(
-		async ( feedId: string, action: FeedAction ) => {
-			setActionInProgress( feedId );
-
-			try {
-				const updated = await apiFetch< Feed[] >( {
-					path: `${ FEEDS_PATH }/${ feedId }/action`,
-					method: 'POST',
-					data: { action },
-				} );
-				setFeeds( updated );
-
-				const messages: Record< FeedAction, string > = {
-					pause: __( 'RSS feed paused.', 'newspack-lite-site' ),
-					resume: __( 'RSS feed resumed.', 'newspack-lite-site' ),
-					delete: __( 'RSS feed deleted.', 'newspack-lite-site' ),
-				};
-				showNotice( messages[ action ] ?? __( 'RSS feed updated.', 'newspack-lite-site' ) );
-			} catch ( err ) {
-				showNotice( ( err as Error ).message ?? __( "Couldn't update the RSS feed. Try again.", 'newspack-lite-site' ), 'error' );
-			} finally {
-				setActionInProgress( null );
-			}
-		},
-		[ showNotice ]
+	const addFeed = useCallback(
+		( data: NewFeedData ) =>
+			mutate(
+				{ path: FEEDS_PATH, method: 'POST', data },
+				__( 'RSS feed added.', 'newspack-lite-site' ),
+				__( "Couldn't add the RSS feed. Try again.", 'newspack-lite-site' )
+			),
+		[ mutate ]
 	);
+
+	const updateFeed = useCallback(
+		( feedId: string, changes: FeedChanges ) =>
+			mutate(
+				{ path: `${ FEEDS_PATH }/${ feedId }`, method: 'PATCH', data: changes },
+				__( 'RSS feed updated.', 'newspack-lite-site' ),
+				__( "Couldn't update the RSS feed. Try again.", 'newspack-lite-site' )
+			),
+		[ mutate ]
+	);
+
+	const deleteFeed = useCallback(
+		( feedId: string ) =>
+			mutate(
+				{ path: `${ FEEDS_PATH }/${ feedId }/action`, method: 'POST', data: { action: 'delete' } },
+				__( 'RSS feed deleted.', 'newspack-lite-site' ),
+				__( "Couldn't delete the RSS feed. Try again.", 'newspack-lite-site' ),
+				true
+			),
+		[ mutate ]
+	);
+
+	const clearSaveError = useCallback( () => setSaveError( null ), [] );
 
 	return {
 		feeds,
 		isLoading,
-		isAdding,
-		actionInProgress,
+		isSaving,
+		saveError,
 		notice,
+		showNotice,
 		addFeed,
-		feedAction,
+		updateFeed,
+		deleteFeed,
+		clearSaveError,
 	};
 }

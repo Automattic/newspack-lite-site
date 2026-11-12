@@ -1,11 +1,6 @@
 /**
- * TypeScript types for the RSS Feed Import page.
+ * TypeScript types for the RSS Feeds page.
  */
-
-/**
- * WordPress dependencies.
- */
-import { type RenderModalProps } from '@wordpress/dataviews';
 
 /**
  * The result object stored after each RSS feed import attempt.
@@ -28,16 +23,12 @@ export interface Feed {
 	interval_label: string;
 	author_id: number;
 	author_name: string;
+	author_avatar_urls?: Record< string, string >;
 	status: 'active' | 'paused';
 	last_run: number | null;
 	last_result: LastResult | null;
 	next_run: number | null;
 }
-
-/**
- * The actions that can be performed on a RSS feed.
- */
-export type FeedAction = 'pause' | 'resume' | 'delete';
 
 /**
  * A transient notice message shown to the user after an action completes.
@@ -52,15 +43,8 @@ export interface Notice {
  */
 export interface FeedsListProps {
 	feeds: Feed[];
-	actionInProgress: string | null;
-	onAction: ( feedId: string, action: FeedAction ) => void;
-}
-
-/**
- * Props shared by the Pause and Delete feed confirmation modals.
- */
-export interface FeedModalProps extends RenderModalProps< Feed > {
-	onAction: ( feedId: string, action: FeedAction ) => void;
+	onEdit: ( feed: Feed ) => void;
+	onDelete: ( feedId: string ) => Promise< boolean >;
 }
 
 /**
@@ -70,21 +54,38 @@ export interface NewFeedData {
 	feed_url: string;
 	interval: string;
 	author_id: number;
+	status: 'active' | 'paused';
 }
 
 /**
- * Internal form state managed by the Add Feed DataForm.
+ * The fields of an RSS feed that can be changed after it is added.
+ */
+export interface FeedChanges {
+	interval?: string;
+	author_id?: number;
+	status?: 'active' | 'paused';
+}
+
+/**
+ * Internal form state managed by the feed drawer DataForm.
  */
 export interface FeedFormData {
 	feed_url: string;
 	interval: string;
 	author_id: string;
+	status: 'active' | 'paused';
 }
 
 /**
- * Props for the FeedForm component.
+ * Props for the FeedDrawer component.
  */
-export interface FeedFormProps {
+export interface FeedDrawerProps {
+	isOpen: boolean;
+	feed: Feed | null;
+	isSaving: boolean;
+	error: string | null;
+	onClose: () => void;
 	onAdd: ( data: NewFeedData ) => Promise< boolean >;
-	isAdding: boolean;
+	onUpdate: ( feedId: string, changes: FeedChanges ) => Promise< boolean >;
+	onClearError: () => void;
 }

@@ -44,10 +44,18 @@ const SECTIONS: SettingsSection[] = [
 /**
  * Renders the Lite Site, Content, Links and Footer, and Analytics sections of the General tab.
  */
-export const SettingsPanel = ( { settings, onChange }: PanelProps ) => {
+export const SettingsPanel = ( { settings, savedSettings, onChange }: PanelProps ) => {
 	if ( ! settings ) {
 		return null;
 	}
 
-	return <SettingsSections sections={ SECTIONS } fields={ SETTINGS_FIELDS } settings={ settings } onChange={ onChange } />;
+	return (
+		<SettingsSections
+			sections={ SECTIONS }
+			fields={ SETTINGS_FIELDS }
+			settings={ settings }
+			savedSettings={ savedSettings }
+			onChange={ onChange }
+		/>
+	);
 };

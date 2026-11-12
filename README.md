@@ -59,7 +59,7 @@ The [Emergency Mode for News](https://emergencymode.news/) program provides free
 **What changed with this new version:**
 
 - Packaged as a standalone WordPress plugin
-- A new **RSS Feed Import** system, so a Lite Site can aggregate and republish coverage from partner newsrooms during an emergency
+- A new **RSS Feeds** system, so a Lite Site can aggregate and republish coverage from partner newsrooms during an emergency
 - A React-based admin (built on `@wordpress/dataviews`) replacing the original settings screen
 - Appearance controls (brand color, fonts, footer, custom CSS) so a Lite Site still reads as yours
 - An **offline page** for sites running a service worker via the PWA plugin
@@ -107,7 +107,7 @@ Using your RSS Feed, you can continue to use your own CMS and "dual-publish" to 
 #### Details
 
 - Add any number of RSS feeds, each with its own import interval (minimum every 5 minutes) and assigned WordPress author
-- Pause, resume and delete feeds from the admin. Each feed shows its last run, last result and next scheduled run
+- Edit a feed's frequency, author and status, or delete it, from the admin. Each feed shows its last run, last result and next scheduled run
 - Feed reprocessing never creates duplicates
 - Feed-defined images or similar assets are sideloaded
 - Secure:
@@ -256,7 +256,7 @@ If your WordPress runs on a server somewhere else, package the built folder into
     - Set appearance/branding options
 
 1. Visit `https://<your-site.com>/lite/` or your revised URL
-1. Optionally, add feeds under **Lite Site → RSS Feed Import**
+1. Optionally, add feeds under **Lite Site → RSS Feeds**
 
 Link to `/lite` from your main site's header or footer so readers can find it before they need it.
 
@@ -334,7 +334,7 @@ Your `/lite/` URLs will return 404 errors, but nothing else on your site is affe
 
 #### To fully remove the plugin
 
-Deactivation alone doesn't delete any data. If you want to completely remove Lite Site and its data, go to **Lite Site → RSS Feed Import** and manually delete any RSS feeds you configured. Deactivate the plugin via **Plugins**. Click **Delete** on the deactivated plugin to remove files and settings.
+Deactivation alone doesn't delete any data. If you want to completely remove Lite Site and its data, go to **Lite Site → RSS Feeds** and manually delete any RSS feeds you configured. Deactivate the plugin via **Plugins**. Click **Delete** on the deactivated plugin to remove files and settings.
 
 Alternatively, delete imported RSS Entries manually before uninstalling if you want to clean up those entries from your database.
 
@@ -375,7 +375,7 @@ RSS feed imports depend on WP-Cron. If feeds aren't importing on schedule:
 
 1. Verify scheduled tasks exist: Install [WP Crontrol](https://wordpress.org/plugins/wp-crontrol/) to view all scheduled events. Look for `newspack_lite_site_rss_import` events. Each active feed should have one scheduled.
 
-1. Test manual execution: Visit `https://<your-wordpress-shadow-site>/wp-cron.php` directly in a browser. This triggers pending cron events. Check if your feed imports afterward under **Lite Site → RSS Feed Import**.
+1. Test manual execution: Visit `https://<your-wordpress-shadow-site>/wp-cron.php` directly in a browser. This triggers pending cron events. Check if your feed imports afterward under **Lite Site → RSS Feeds**.
 
 1. Set up system cron: See the [WordPress WP-Cron documentation](https://developer.wordpress.org/plugins/cron/) and [Hooking WP-Cron Into the System Task Scheduler](https://developer.wordpress.org/plugins/cron/hooking-wp-cron-into-the-system-task-scheduler/) for more details.
 
@@ -393,15 +393,15 @@ See the [WordPress Rewrite API documentation](https://developer.wordpress.org/re
 
 ### RSS feeds not importing
 
-If feeds aren't importing or show errors in **Lite Site → RSS Feed Import**:
+If feeds aren't importing or show errors in **Lite Site → RSS Feeds**:
 
 1. Verify WP-Cron is running: RSS imports rely on WP-Cron. See the [WP-Cron troubleshooting section](#wp-cron-not-running) above.
 
 1. Check the feed URL is valid: Copy the feed URL and open it in a browser. You should see valid RSS/XML content. If it redirects, times out, or shows an error, the feed itself is broken.
 
-1. Check the result under "Last Run": Under **Lite Site → RSS Feed Import**, each feed shows its last result. Common errors:
+1. Check the result under "Last Run": Under **Lite Site → RSS Feeds**, each feed shows its last result. Common errors:
    - "A valid RSS feed URL is required.": The URL format is malformed or blocked by security validation
-   - "Couldn't reach this RSS feed. Check that the URL opens in a browser, then wait for the next run.": The remote server is unreachable, blocking your WordPress site, or returned an error. Hover over the message to see the technical detail.
+   - "Couldn't reach this RSS feed.": The remote server is unreachable, blocking your WordPress site, or returned an error. Check that the URL opens in a browser, then wait for the next run.
    - "The RSS feed contains no items.": The feed parsed successfully but contained no importable content
 
 1. Check for security restrictions: Lite Site blocks feeds from private/reserved IP ranges (`localhost`, `192.168.x.x`, `10.x.x.x`, etc) to prevent Server-Side Request Forgery attacks. If you're testing with a local feed, this is expected behavior.

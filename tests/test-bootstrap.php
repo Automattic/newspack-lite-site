@@ -117,6 +117,7 @@ class Test_Bootstrap extends Lite_Site_TestCase {
 		$routes = rest_get_server()->get_routes();
 
 		$this->assertArrayHasKey( '/newspack-lite-site/v1/rss-feeds', $routes, 'The feeds collection route should exist.' );
+		$this->assertArrayHasKey( '/newspack-lite-site/v1/rss-feeds/(?P<id>[a-f0-9]{32})', $routes, 'The feed update route should exist.' );
 	}
 
 	/**

@@ -38,10 +38,18 @@ const SECTIONS: SettingsSection[] = [
 /**
  * Renders the Colors, Typography and Advanced sections of the Appearance tab.
  */
-export const AppearancePanel = ( { settings, onChange }: PanelProps ) => {
+export const AppearancePanel = ( { settings, savedSettings, onChange }: PanelProps ) => {
 	if ( ! settings ) {
 		return null;
 	}
 
-	return <SettingsSections sections={ SECTIONS } fields={ APPEARANCE_FIELDS } settings={ settings } onChange={ onChange } />;
+	return (
+		<SettingsSections
+			sections={ SECTIONS }
+			fields={ APPEARANCE_FIELDS }
+			settings={ settings }
+			savedSettings={ savedSettings }
+			onChange={ onChange }
+		/>
+	);
 };
