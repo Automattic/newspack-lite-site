@@ -94,7 +94,7 @@ body.newspack-lite-admin-header {
 }
 
 .newspack-lite-feeds table.dataviews-view-table {
-	min-width: calc(#{$feeds-checkbox-width} + #{$feeds-url-min-width} + var(--newspack-lite-feeds-status-width, #{$feeds-status-width}) + var(--newspack-lite-feeds-actions-width) + (var(--newspack-lite-feeds-columns, 5) - 1) * #{$feeds-data-min-width});
+	min-width: calc(#{$feeds-checkbox-width} + var(--newspack-lite-feeds-url-min-width, #{$feeds-url-min-width}) + var(--newspack-lite-feeds-status-width, #{$feeds-status-width}) + var(--newspack-lite-feeds-actions-width) + (var(--newspack-lite-feeds-columns, 5) - 1) * #{$feeds-data-min-width});
 	table-layout: fixed;
 	width: 100%;
 
@@ -168,7 +168,11 @@ body.newspack-lite-admin-header {
 	}
 }
 
-.newspack-lite-delete-feed-url,
+.newspack-lite-delete-feed-url {
+	margin-block: 0 var(--wpds-dimension-gap-lg, #{$grid-unit-20});
+	overflow-wrap: anywhere;
+}
+
 .newspack-lite-delete-feeds {
 	list-style: disc;
 	margin-block: 0 var(--wpds-dimension-gap-lg, #{$grid-unit-20});

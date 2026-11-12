@@ -68,6 +68,7 @@ export const FeedsList = ( { feeds, onEdit, onDelete, countLabel }: FeedsListPro
 			style={
 				{
 					'--newspack-lite-feeds-columns': autoColumns,
+					...( false === view.showTitle ? { '--newspack-lite-feeds-url-min-width': '0px' } : {} ),
 					...( hasStatus ? {} : { '--newspack-lite-feeds-status-width': '0px' } ),
 				} as React.CSSProperties
 			}

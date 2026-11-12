@@ -269,6 +269,7 @@ class Test_RSS_Importer_Actions extends Lite_Site_TestCase {
 
 		$this->assertSame( 404, $response->get_status(), 'A feed deleted mid-run should be a 404.' );
 		$this->assertFalse( get_transient( RSS_Importer::LOCK_PREFIX . $feed_id ), 'The lock should be released.' );
+		$this->assertEmpty( RSS_Importer::get_feeds(), 'No ghost feed should be written back.' );
 	}
 
 	/**
