@@ -163,7 +163,22 @@ npm run shot -- guides/lite-articles-3 --site https://screenshots.local \
   --click .lite-image-load-btn --scroll '.content figure' --spotlight '.content figure'
 ```
 
-Posts' addresses include their date on sites with date-based permalinks, which changes with every seed, so open a Lite Site article from the Lite Site homepage with `--click` rather than by its address.
+A hover, and a spotlight around two elements at once (the box that contains both). This is a try-out, so `--out` writes it to a scratch file instead of a docs image:
+
+```bash
+npm run shot -- guides/scratch-1 --site https://screenshots.local \
+  --url "wp-admin/admin.php?page=newspack-lite-site-rss#/feeds" --out /tmp/two-rows.webp \
+  --hover 'tr:has-text("kettlewatershed.example") .newspack-status-badge > *' \
+  --spotlight 'tr:has-text("kettlewatershed.example")' --spotlight 'tr:has-text("riverbendschools.example")'
+```
+
+Loading the image in a signed-out Lite Site article, waiting for it, scrolling it into view and then back up a little, again to a scratch file:
+
+```bash
+npm run shot -- guides/scratch-1 --site https://screenshots.local \
+  --url lite/ --logged-out --click 'text=Kettle River flood:' --out /tmp/scroll-test.webp \
+  --click .lite-image-load-btn --wait 500 --scroll '.content figure' --scroll=-200
+```
 
 ### Options
 
@@ -172,21 +187,38 @@ Posts' addresses include their date on sites with date-based permalinks, which c
 | `--site <url>` | The screenshot site's address, including any folder WordPress is installed in. `https://` is added when you leave it out. You can set `SHOT_SITE` instead. |
 | `--url <path>` | The page to open, relative to the site's address. Defaults to `wp-admin/`. |
 | `--logged-out` | Opens the page in a fresh browser with no one signed in, so there's no admin bar. Use it for Lite Site pages and the full site as readers see them. |
-| `--spotlight <selector>` | Spotlights the first element that matches, instead of Alt-clicking. |
-| `--click <selector>` | Clicks an element, and waits for the page to settle. |
-| `--fill <selector>` and `--value <text>` | Types the text into the first field that matches, such as a feed address in a drawer. When the field is a menu, picks the option with that label instead, such as a frequency or an author. Put each `--value` right after its `--fill`. |
-| `--hover <selector>` | Rests the pointer on an element, such as a status with a tooltip. The pointer stays there when the hover is the last step that uses it. |
-| `--scroll <selector>` | Scrolls an element to the middle of the window, such as the image placeholder or the footer of a Lite Site page. |
-| `--press <key>` | Presses a key, such as `Escape` to close a menu. |
-| `--wait <ms>` | Waits this many milliseconds, for anything that takes longer to appear than the page takes to settle. |
+| `--spotlight <selector>` | Spotlights the first element that matches, instead of Alt-clicking. Repeat it to spotlight the one box that contains all the matches, such as a field and its button. |
+| `--click <selector>` | Clicks an element before the capture, and waits for the page to settle. Repeat it for several clicks, in order. |
+| `--fill <selector>` and `--value <text>` | Types the text into the first field that matches, such as a feed address in a drawer. When the field is a select menu, picks the choice with that label instead, such as a frequency or an author. Put each `--value` right after its `--fill`. |
+| `--hover <selector>` | Rests the pointer on the first element that matches, to show a tooltip or a hover state, such as the message on an Error status. The pointer stays there for the capture. Repeat it for several hovers. |
+| `--scroll <selector or px>` | With a selector, scrolls the first element that matches into the middle of the window, such as the image placeholder or the footer of a Lite Site page. With a number of pixels, scrolls down by that much, or up when it's negative. Write a negative number with an equals sign, as `--scroll=-2000`: a bare `--scroll -2000` fails to parse. It scrolls an open modal first, then the block editor's canvas, then the page. |
+| `--press <key>` | Presses a key, such as `Escape`, `Enter` or `Control+a`, using Playwright's key names. Repeat it for several keys. |
+| `--wait <ms>` | Waits that many milliseconds, for an animation or anything that takes longer to appear than the page takes to settle. Repeat it where you need it. |
+| `--eval <js>` | Runs JavaScript in the page and in each frame inside it, such as the editor canvas, for a step no other option covers. Errors in the main page are printed. Repeat it for several scripts. |
+| `--mouse <x,y>` | Leaves the pointer at this point in the window, in pixels from the top left of the 1512×982 viewport. By default it moves to the bottom right corner after a click or fill. |
 | `--now` | Captures as soon as the page settles, without opening a window or waiting for Enter. Use it with the steps above and `--spotlight` for screens you can reach without help. Without a saved sign-in it needs `WP_USER` and `WP_PASSWORD`, since it can't ask. |
 | `--out <file>` | Writes the image somewhere else, for trying things out. A relative path starts from the folder you ran `npm run` in. |
 
-`--click`, `--fill`, `--hover`, `--scroll`, `--press` and `--wait` can each be repeated, and run in the order you give them.
+Clicks, fills, hovers, scrolls, key presses, waits and scripts all run in the order you give them, whichever options they use.
 
-Selectors can be CSS, or Playwright's text selectors such as `button:has-text("Add RSS Feed")` and `text=Kettle River flood:`. To find a field by its label, use `internal:label="<label>"s`, where the `s` makes the match exact.
+Selectors can be CSS, or Playwright's text selectors such as `button:has-text("Add RSS Feed")` and `text=Kettle River flood:`. To find a field by its label, use `internal:label="<label>"s`, where the `s` makes the match exact. They also find elements inside the block editor's canvas.
 
 The script also captures without waiting when it isn't run from a terminal.
+
+### Selector tips
+
+- Posts' addresses include their date on sites with date-based permalinks, which changes with every seed, so open a Lite Site article from the Lite Site homepage with `--click` rather than by its address.
+- To reach one feed or entry in a list, scope the selector to its row by something only that row shows, such as `tr:has-text("kettlewatershed.example")` for a feed's address or the entry's title, then add the control: `tr:has-text("...") button:has-text("Edit")`.
+- Playwright's `:text-is()` doesn't match menu items whose text sits in a child element. Use `:has-text()`, or `:has(:text-is("..."))`.
+- A bare `[role="menuitem"]` or `[role="menu"]` also matches hidden elements in the admin bar. Scope it, for example `[role="menu"]:has-text("View Original")`.
+
+### Clean up after a session
+
+Signing in through wp-admin makes WordPress's Quick Draft create an auto-draft post. Delete the strays after a session:
+
+```bash
+wp post delete $(wp post list --post_type=post --post_status=auto-draft --format=ids) --force
+```
 
 ## House settings
 
@@ -195,6 +227,8 @@ Every screenshot uses these, and the script applies them for you:
 - A 1512×982 viewport at twice the pixel density, saved as a 3024×1964 WebP at quality 85, without metadata.
 - Light mode, the visible viewport only (never the full page), and no scrollbars.
 - Signed in as James Smith, who has a flat blue avatar, for admin screens. Signed out for Lite Site pages and the full site as readers see them. Update notices, cookie banners, the Newspack debug notice and similar noise are hidden from the moment the page loads.
+- The reader sign-up prompt is closed on front-end pages.
+- The editor isn't in fullscreen mode and shows no block breadcrumbs, welcome guides or pattern chooser. Top toolbar is on, so a selected block's toolbar sits in the editor's header instead of over the page. These apply in the post, page, pattern and Site Editor alike, and the script saves them for the account you sign in with each time it runs.
 - At most one spotlight: everything outside the element and an 8px margin is dimmed with 45% black.
 
 Before you commit an image, look at it.
