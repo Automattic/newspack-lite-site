@@ -3,8 +3,7 @@
 		"title": "The Riverbend Gazette",
 		"tagline": "Riverbend's newsroom since 1897",
 		"logo": "riverbend-gazette-wordmark.png",
-		"icon": "site-icon.png",
-		"default_author": "mreilly"
+		"icon": "site-icon.png"
 	},
 	"theme": {
 		"mods": {

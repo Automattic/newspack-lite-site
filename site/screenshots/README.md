@@ -60,13 +60,14 @@ The seed creates, and marks as its own:
 - Three pages for the theme's menus: Donate, Newsletters and About Us, each with the first paragraph of the Gazette's own page.
 - The Gazette's menus: Primary (the six sections the posts use, in the Gazette's order), Secondary (Donate, Newsletters and About Us, in the green strip above the masthead) and Social (Facebook, Instagram, Bluesky and YouTube).
 - Block widgets: Support local reporting, Latest stories and Get it by email in the sidebar, and the Gazette's tagline in the footer.
-- A must-use plugin, `wp-content/mu-plugins/newspack-ls-screenshots.php`, copied from `fakes.php`. It answers the demo feeds' scheduled imports and Retry Now with the result each feed is meant to show, serves the fonts of Lite Site and the theme from this folder in place of the Google Fonts stylesheets, blocks every request WordPress's HTTP API makes to a host other than the site itself, blocks all email, and gives every account a fixed avatar. It does nothing on a site the seed hasn't seeded.
+- A must-use plugin, `wp-content/mu-plugins/newspack-ls-screenshots.php`, copied from `fakes.php`. It answers the demo feeds' scheduled imports and Retry Now with the result `content.json` gives each feed, serves the fonts of Lite Site and the theme from this folder in place of the Google Fonts stylesheets, blocks every request WordPress's HTTP API makes to a host other than the site itself, blocks all email, and gives every account a fixed avatar. It does nothing on a site the seed hasn't seeded.
 
 It also changes these settings, and keeps their old values to put back on removal: the site title and tagline, the active theme, the theme mods of the Newspack theme and of the theme it replaces, the Newspack theme's Additional CSS, the widgets, the front page (set to show the latest posts), the site logo, the site icon, the Lite Site settings and the list of RSS feeds. The Lite Site settings turn Lite Site on at `/lite/` with 10 posts a page, a footer with the Gazette's address, The Riverbend Gazette's green as the primary color, and Source Serif 4 from Google Fonts as the body font. Other plugins can react to a theme switch in ways removal can't undo.
 
 The full site looks like The Riverbend Gazette's live site. Everything that makes it so is under `theme` in `content.json`:
 
-- `mods`: the Gazette's theme mods, as the Customizer saves them: its green and blue, Inter for headings and Source Serif 4 for body text, the centered logo at the Gazette's size, no site title or tagline under the logo, the stacked footer and the small footer logo. The footer logo is the site icon.
+- `mods`: the Gazette's theme mods, as the Customizer saves them: its green and blue, Inter for headings and Source Serif 4 for body text, the centered logo at the Gazette's size, no site title or tagline under the logo, the stacked footer and the small footer logo.
+- `footer_logo`: the image in `assets/media/` the footer shows, the site icon.
 - `custom_css`: the Gazette's Additional CSS, which paints the strip above the masthead in the primary color.
 - `pages`, `menus` and `widgets`: the pages, menus and widgets listed above. Widget links to a page use `{{page:<slug>}}`.
 
@@ -88,11 +89,11 @@ To remove everything the seed created and put the settings back:
 wp eval-file wp-content/plugins/newspack-lite-site/site/screenshots/seed.php remove
 ```
 
-Removal deletes only what the seed marked and the RSS feeds it added, and refuses to run on a site with no seed state unless you add `force`. Posts that someone else wrote as one of the demo accounts move to the site's first other administrator, and it never deletes the site's last administrator.
+Removal deletes only what the seed marked and the RSS feeds it added, and refuses to run on a site with no seed state unless you add `force`. It works with Lite Site deactivated, so run it before deleting the plugin: until then, the fakes plugin keeps blocking requests and email. Posts that someone else wrote as one of the demo accounts move to the site's first other administrator, and it never deletes the site's last administrator.
 
 If a seed stops partway, run `remove`, fix what it reported, and seed again.
 
-Retry Now on the Kettle Watershed Institute feed fails again with the same error, like a feed that's still down. For a screenshot of a retry that works, turn that on with `wp option update newspack_ls_screenshots_retry_works 1`, and turn it off again with `wp option delete newspack_ls_screenshots_retry_works`. Rerun the seed to bring the error back.
+Scheduled imports leave each feed's last run and result as the seed set them, so the Feeds screen reads the same however long the site sits before you take a screenshot. Retry Now records a run at that moment, with the feed's seeded result. Retry Now on the Kettle Watershed Institute feed fails again with the same error, like a feed that's still down. For a screenshot of a retry that works, so that Retry Now and the scheduled imports bring it back up to date, turn that on with `wp option update newspack_ls_screenshots_retry_works 1`, and turn it off again with `wp option delete newspack_ls_screenshots_retry_works`. Rerun the seed to bring the error back.
 
 ## Take a screenshot
 

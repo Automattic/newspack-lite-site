@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdirSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -394,7 +394,12 @@ async function openContext( browser, options ) {
 	}
 	if ( ! cached ) {
 		mkdirSync( LOGINS_DIR, { recursive: true, mode: 0o700 } );
-		await context.storageState( { path: file } );
+		chmodSync( LOGINS_DIR, 0o700 );
+		writeFileSync(
+			file,
+			JSON.stringify( await context.storageState() ),
+			{ mode: 0o600 }
+		);
 		chmodSync( file, 0o600 );
 	}
 	await savePreferences( probe, options.site, user.preferences );

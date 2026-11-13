@@ -15,7 +15,6 @@
  */
 
 use Newspack_Lite_Site\Lite_Site_Settings;
-use Newspack_Lite_Site\Post_Type;
 use Newspack_Lite_Site\RSS_Importer;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,6 +23,11 @@ const NEWSPACK_LS_SCREENSHOTS_MARK  = '_newspack_ls_screenshots';
 const NEWSPACK_LS_SCREENSHOTS_STATE = 'newspack_ls_screenshots_state';
 const NEWSPACK_LS_SCREENSHOTS_FAKES = 'newspack-ls-screenshots.php';
 const NEWSPACK_LS_SCREENSHOTS_THEME = 'newspack-theme';
+
+const NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION = 'newspack_lite_site_settings';
+const NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION    = 'newspack_lite_site_rss_importer';
+const NEWSPACK_LS_SCREENSHOTS_CRON_HOOK       = 'newspack_lite_site_rss_import';
+const NEWSPACK_LS_SCREENSHOTS_ENTRY_TYPE      = 'nls_rss_entry';
 
 /**
  * Entry point.
@@ -36,10 +40,6 @@ function newspack_ls_screenshots_main( $args ) {
 	if ( is_multisite() ) {
 		WP_CLI::error( 'Nothing was changed. The seed works on a single site only, not a multisite network.' );
 	}
-	if ( ! defined( 'NEWSPACK_LITE_SITE_PLUGIN_FILE' ) ) {
-		WP_CLI::error( 'Nothing was changed. Lite Site is not active. Activate your git checkout of the plugin, with its assets built.' );
-	}
-
 	newspack_ls_screenshots_require_admin_files();
 	newspack_ls_screenshots_block_requests();
 
@@ -53,6 +53,10 @@ function newspack_ls_screenshots_main( $args ) {
 		newspack_ls_screenshots_remove( true );
 		WP_CLI::success( 'Removed the screenshot content and fakes plugin, and put back the settings the seed changed.' );
 		return;
+	}
+
+	if ( ! defined( 'NEWSPACK_LITE_SITE_PLUGIN_FILE' ) ) {
+		WP_CLI::error( 'Nothing was changed. Lite Site is not active. Activate your git checkout of the plugin, with its assets built.' );
 	}
 
 	WP_CLI::log( 'This seed is meant for a local site set aside for screenshots, not an everyday dev site.' );
@@ -217,6 +221,17 @@ function newspack_ls_screenshots_read_content() {
 }
 
 /**
+ * The site's RSS feeds, read without Lite Site so removal works when the
+ * plugin is inactive.
+ *
+ * @return array Feeds by feed ID.
+ */
+function newspack_ls_screenshots_feeds() {
+	$option = get_option( NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION, [] );
+	return isset( $option['feeds'] ) && is_array( $option['feeds'] ) ? $option['feeds'] : [];
+}
+
+/**
  * The seed's state, as saved by the last run.
  *
  * @return array
@@ -275,7 +290,7 @@ function newspack_ls_screenshots_preflight( $content ) {
 	}
 
 	$seeded_feeds = array_keys( newspack_ls_screenshots_state()['feeds'] ?? [] );
-	$own_feeds    = array_diff( array_keys( RSS_Importer::get_feeds() ), $seeded_feeds );
+	$own_feeds    = array_diff( array_keys( newspack_ls_screenshots_feeds() ), $seeded_feeds );
 	if ( $own_feeds ) {
 		$problems[] = sprintf( 'The site already has %d RSS feed(s) of its own under Lite Site > RSS. Delete them first: the seed replaces the feed list.', count( $own_feeds ) );
 	}
@@ -293,7 +308,7 @@ function newspack_ls_screenshots_preflight( $content ) {
 		$problems[] = 'The mu-plugins folder is not writable: ' . WPMU_PLUGIN_DIR;
 	}
 
-	$files = [ 'fakes.php', 'assets/media/' . $content['site']['icon'], 'assets/media/' . $content['site']['logo'] ];
+	$files = [ 'fakes.php', 'assets/media/' . $content['site']['icon'], 'assets/media/' . $content['site']['logo'], 'assets/media/' . $content['theme']['footer_logo'] ];
 	foreach ( $content['media'] as $item ) {
 		$files[] = 'assets/media/' . $item['file'];
 	}
@@ -343,7 +358,7 @@ function newspack_ls_screenshots_warn_others( $content ) {
 	];
 	$others   = get_posts(
 		[
-			'post_type'   => [ 'post', Post_Type::POST_TYPE ],
+			'post_type'   => [ 'post', NEWSPACK_LS_SCREENSHOTS_ENTRY_TYPE ],
 			'post_status' => 'publish',
 			'numberposts' => 3,
 			'meta_query'  => $unmarked, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
@@ -406,8 +421,8 @@ function newspack_ls_screenshots_seed( $content, $fresh ) {
 			'custom_css'      => newspack_ls_screenshots_custom_css(),
 			'widgets'         => get_option( 'sidebars_widgets' ),
 			'widget_block'    => get_option( 'widget_block' ),
-			'settings'        => get_option( Lite_Site_Settings::OPTION_NAME ),
-			'feeds'           => get_option( RSS_Importer::FEEDS_OPTION_NAME ),
+			'settings'        => get_option( NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION ),
+			'feeds'           => get_option( NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION ),
 		];
 		newspack_ls_screenshots_save_state( $state );
 	}
@@ -447,13 +462,13 @@ function newspack_ls_screenshots_seed( $content, $fresh ) {
 	];
 	update_option( 'site_logo', newspack_ls_screenshots_seed_media( [ $logo ] )[ $logo['file'] ] );
 	update_option( 'show_on_front', 'posts' );
-	newspack_ls_screenshots_seed_theme( $content['theme'], $icon_id );
+	newspack_ls_screenshots_seed_theme( $content['theme'], [ $icon['file'] => $icon_id ] );
 	$state = newspack_ls_screenshots_state();
 
 	if ( $fresh ) {
-		delete_option( Lite_Site_Settings::OPTION_NAME );
+		delete_option( NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION );
 	} else {
-		update_option( Lite_Site_Settings::OPTION_NAME, Lite_Site_Settings::sanitize_settings( $content['settings'] ) );
+		update_option( NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION, Lite_Site_Settings::sanitize_settings( $content['settings'] ) );
 		$state['feeds'] = newspack_ls_screenshots_seed_feeds( $content['feeds'], $users );
 		newspack_ls_screenshots_save_state( $state );
 		newspack_ls_screenshots_seed_entries( $content['entries'], $content['feeds'], $users );
@@ -497,14 +512,27 @@ function newspack_ls_screenshots_custom_css() {
  * logo and Additional CSS, the pages its menus link to, its menus and its
  * widgets.
  *
- * @param array $theme   Theme settings from content.json.
- * @param int   $icon_id Attachment ID of the site icon, which is also the footer logo.
+ * @param array $theme Theme settings from content.json.
+ * @param array $media Attachment IDs of the media seeded so far, by file name. The footer logo reuses one of them when it's the same file.
  */
-function newspack_ls_screenshots_seed_theme( $theme, $icon_id ) {
+function newspack_ls_screenshots_seed_theme( $theme, $media ) {
 	foreach ( $theme['mods'] as $name => $value ) {
 		set_theme_mod( $name, $value );
 	}
-	set_theme_mod( 'newspack_footer_logo', $icon_id );
+	$footer_logo = $theme['footer_logo'];
+	if ( ! isset( $media[ $footer_logo ] ) ) {
+		$media += newspack_ls_screenshots_seed_media(
+			[
+				[
+					'file'    => $footer_logo,
+					'title'   => 'Footer logo',
+					'alt'     => '',
+					'caption' => '',
+				],
+			]
+		);
+	}
+	set_theme_mod( 'newspack_footer_logo', $media[ $footer_logo ] );
 
 	$css_post = wp_get_custom_css_post( NEWSPACK_LS_SCREENSHOTS_THEME );
 	$saved    = wp_update_custom_css_post( $theme['custom_css'], [ 'stylesheet' => NEWSPACK_LS_SCREENSHOTS_THEME ] );
@@ -826,7 +854,7 @@ function newspack_ls_screenshots_seed_posts( $posts, $users, $media ) {
  * @return array Seeded feeds, keyed by feed ID, with the key each has in content.json.
  */
 function newspack_ls_screenshots_seed_feeds( $feeds, $users ) {
-	$option = RSS_Importer::get_feeds();
+	$option = newspack_ls_screenshots_feeds();
 	$seeded = [];
 	foreach ( $feeds as $key => $feed ) {
 		$feed_id            = RSS_Importer::get_feed_id( $feed['url'] );
@@ -838,13 +866,16 @@ function newspack_ls_screenshots_seed_feeds( $feeds, $users ) {
 			'last_run'    => time() - (int) $feed['last_run'],
 			'last_result' => $feed['last_result'],
 		];
-		wp_clear_scheduled_hook( RSS_Importer::CRON_HOOK, [ $feed_id ] );
-		if ( 'active' === $feed['status'] && false === wp_schedule_event( time() + (int) $feed['next_run'], $feed['interval'], RSS_Importer::CRON_HOOK, [ $feed_id ], true ) ) {
-			newspack_ls_screenshots_fail( sprintf( 'Could not schedule the RSS feed %s', $feed['url'] ), 'WP-Cron refused the event' );
+		wp_clear_scheduled_hook( NEWSPACK_LS_SCREENSHOTS_CRON_HOOK, [ $feed_id ] );
+		if ( 'active' === $feed['status'] ) {
+			$scheduled = wp_schedule_event( time() + (int) $feed['next_run'], $feed['interval'], NEWSPACK_LS_SCREENSHOTS_CRON_HOOK, [ $feed_id ], true );
+			if ( is_wp_error( $scheduled ) ) {
+				newspack_ls_screenshots_fail( sprintf( 'Could not schedule the RSS feed %s', $feed['url'] ), $scheduled->get_error_message() );
+			}
 		}
 		$seeded[ $feed_id ] = $key;
 	}
-	update_option( RSS_Importer::FEEDS_OPTION_NAME, [ 'feeds' => $option ] );
+	update_option( NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION, [ 'feeds' => $option ] );
 	return $seeded;
 }
 
@@ -860,7 +891,7 @@ function newspack_ls_screenshots_seed_entries( $entries, $feeds, $users ) {
 		$feed     = $feeds[ $entry['feed'] ];
 		$entry_id = newspack_ls_screenshots_insert_post(
 			[
-				'post_type'    => Post_Type::POST_TYPE,
+				'post_type'    => NEWSPACK_LS_SCREENSHOTS_ENTRY_TYPE,
 				'post_status'  => $entry['status'] ?? 'publish',
 				'post_title'   => $entry['title'],
 				'post_content' => $entry['content'],
@@ -929,7 +960,7 @@ function newspack_ls_screenshots_remove( $everything ) {
 
 	$posts = get_posts(
 		[
-			'post_type'   => array_values( get_post_types() ),
+			'post_type'   => array_values( array_unique( array_merge( get_post_types(), [ NEWSPACK_LS_SCREENSHOTS_ENTRY_TYPE ] ) ) ),
 			'post_status' => array_keys( get_post_stati() ),
 			'numberposts' => -1, // phpcs:ignore WordPressVIPMinimum.Performance.NoPaging.posts_per_page_numberposts -- Every marked item, from a command line run.
 			'fields'      => 'ids',
@@ -976,15 +1007,15 @@ function newspack_ls_screenshots_remove( $everything ) {
 	}
 
 	if ( ! empty( $state['feeds'] ) ) {
-		$feeds = RSS_Importer::get_feeds();
+		$feeds = newspack_ls_screenshots_feeds();
 		foreach ( array_keys( $state['feeds'] ) as $feed_id ) {
-			wp_clear_scheduled_hook( RSS_Importer::CRON_HOOK, [ $feed_id ] );
+			wp_clear_scheduled_hook( NEWSPACK_LS_SCREENSHOTS_CRON_HOOK, [ $feed_id ] );
 			unset( $feeds[ $feed_id ] );
 		}
 		if ( ! $feeds && false === ( $state['previous']['feeds'] ?? false ) ) {
-			delete_option( RSS_Importer::FEEDS_OPTION_NAME );
+			delete_option( NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION );
 		} else {
-			update_option( RSS_Importer::FEEDS_OPTION_NAME, [ 'feeds' => $feeds ] );
+			update_option( NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION, [ 'feeds' => $feeds ] );
 		}
 		$state['feeds'] = [];
 	}
@@ -1035,16 +1066,10 @@ function newspack_ls_screenshots_remove( $everything ) {
 		foreach ( [ 'blogname', 'blogdescription', 'show_on_front', 'page_on_front', 'site_icon' ] as $option ) {
 			update_option( $option, $previous[ $option ] );
 		}
-		$restore = [
-			'site_logo' => 'site_logo',
-			'settings'  => Lite_Site_Settings::OPTION_NAME,
-		];
-		foreach ( $restore as $key => $option ) {
-			if ( false === $previous[ $key ] ) {
-				delete_option( $option );
-			} else {
-				update_option( $option, $previous[ $key ] );
-			}
+		if ( false === $previous['settings'] ) {
+			delete_option( NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION );
+		} else {
+			update_option( NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION, $previous['settings'] );
 		}
 		if ( get_stylesheet() !== $previous['stylesheet'] ) {
 			$requirements = wp_get_theme( $previous['stylesheet'] )->exists() ? validate_theme_requirements( $previous['stylesheet'] ) : false;
@@ -1074,6 +1099,8 @@ function newspack_ls_screenshots_remove( $everything ) {
 		if ( isset( $previous['custom_css'] ) && wp_get_custom_css_post( NEWSPACK_LS_SCREENSHOTS_THEME ) ) {
 			wp_update_custom_css_post( $previous['custom_css'], [ 'stylesheet' => NEWSPACK_LS_SCREENSHOTS_THEME ] );
 		}
+
+		newspack_ls_screenshots_restore_site_logo( $previous['site_logo'] );
 	}
 	delete_option( NEWSPACK_LS_SCREENSHOTS_STATE );
 	delete_option( 'newspack_ls_screenshots_retry_works' );
@@ -1084,6 +1111,29 @@ function newspack_ls_screenshots_remove( $everything ) {
 	}
 	wp_cache_flush();
 	set_transient( 'nls_flush_rewrite_rules', true );
+}
+
+/**
+ * Puts back the site logo. It comes last in a removal: core deletes the
+ * site_logo option when the active theme's mods are deleted or lose their
+ * custom_logo, and removes the active theme's custom_logo when site_logo is
+ * deleted, so restoring it earlier would let the theme restore undo it.
+ *
+ * @param int|string|false $site_logo The site_logo option before the seed, or false when there was none.
+ */
+function newspack_ls_screenshots_restore_site_logo( $site_logo ) {
+	if ( false !== $site_logo ) {
+		update_option( 'site_logo', $site_logo );
+		return;
+	}
+	$sync = has_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo' );
+	if ( false !== $sync ) {
+		remove_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo', $sync );
+	}
+	delete_option( 'site_logo' );
+	if ( false !== $sync ) {
+		add_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo', $sync );
+	}
 }
 
 /**
