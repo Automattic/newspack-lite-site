@@ -28,6 +28,7 @@ const NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION = 'newspack_lite_site_settings';
 const NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION    = 'newspack_lite_site_rss_importer';
 const NEWSPACK_LS_SCREENSHOTS_CRON_HOOK       = 'newspack_lite_site_rss_import';
 const NEWSPACK_LS_SCREENSHOTS_ENTRY_TYPE      = 'nls_rss_entry';
+const NEWSPACK_LS_SCREENSHOTS_SUBTITLE        = 'newspack_post_subtitle';
 
 /**
  * Entry point.
@@ -314,6 +315,17 @@ function newspack_ls_screenshots_preflight( $content ) {
 	}
 	foreach ( $content['fonts'] as $file ) {
 		$files[] = 'assets/' . $file;
+	}
+	foreach ( $content['users'] as $user ) {
+		if ( ! empty( $user['avatar'] ) ) {
+			$files[] = 'assets/avatars/' . $user['avatar'];
+		}
+	}
+	$media_files = array_column( $content['media'], 'file' );
+	foreach ( $content['posts'] as $post ) {
+		if ( ! empty( $post['image'] ) && ! in_array( $post['image'], $media_files, true ) ) {
+			$problems[] = sprintf( 'The post "%s" uses the image %s, which is not in the media list.', $post['slug'], $post['image'] );
+		}
 	}
 	foreach ( $files as $file ) {
 		if ( ! is_readable( __DIR__ . '/' . $file ) ) {
@@ -718,7 +730,8 @@ function newspack_ls_screenshots_insert_user( $user, $password ) {
 }
 
 /**
- * Adds photos to the media library.
+ * Adds photos to the media library, with their captions and the credits the
+ * Newspack plugin shows under them.
  *
  * @param array $media Media from content.json.
  * @return array<string, int> Attachment IDs by file name.
@@ -731,6 +744,10 @@ function newspack_ls_screenshots_seed_media( $media ) {
 		if ( ! empty( $file['error'] ) ) {
 			newspack_ls_screenshots_fail( sprintf( 'Could not upload %s', $item['file'] ), $file['error'] );
 		}
+		$meta = [
+			NEWSPACK_LS_SCREENSHOTS_MARK => 1,
+			'_wp_attachment_image_alt'   => $item['alt'],
+		];
 		$attachment_id = wp_insert_attachment(
 			wp_slash(
 				[
@@ -738,10 +755,7 @@ function newspack_ls_screenshots_seed_media( $media ) {
 					'post_excerpt'   => $item['caption'],
 					'post_mime_type' => wp_check_filetype( $item['file'] )['type'],
 					'post_status'    => 'inherit',
-					'meta_input'     => [
-						NEWSPACK_LS_SCREENSHOTS_MARK => 1,
-						'_wp_attachment_image_alt'   => $item['alt'],
-					],
+					'meta_input'     => $meta,
 				]
 			),
 			$file['file'],
@@ -752,6 +766,12 @@ function newspack_ls_screenshots_seed_media( $media ) {
 			newspack_ls_screenshots_fail( sprintf( 'Could not add %s to the media library', $item['file'] ), $attachment_id->get_error_message() );
 		}
 		wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $file['file'] ) );
+		if ( ! empty( $item['credit'] ) ) {
+			update_post_meta( $attachment_id, '_media_credit', wp_slash( $item['credit'] ) );
+		}
+		if ( ! empty( $item['credit_org'] ) ) {
+			update_post_meta( $attachment_id, '_navis_media_credit_org', wp_slash( $item['credit_org'] ) );
+		}
 		$ids[ $item['file'] ] = $attachment_id;
 	}
 	return $ids;
@@ -778,8 +798,9 @@ function newspack_ls_screenshots_term( $name, $taxonomy ) {
 }
 
 /**
- * Creates the posts, with their categories, tags, featured images and sticky
- * flags, then fills in the links between them.
+ * Creates the posts, with their categories, tags, standfirsts, featured images
+ * and sticky flags, then fills in the links between them. A post's standfirst
+ * is its excerpt unless content.json gives it a subtitle.
  *
  * @param array $posts Posts from content.json.
  * @param array $users User IDs by login.
@@ -806,6 +827,7 @@ function newspack_ls_screenshots_seed_posts( $posts, $users, $media ) {
 				'post_content'  => strtr( $post['content'], $tokens ),
 				'post_author'   => $users[ $post['author'] ],
 				'post_category' => [ newspack_ls_screenshots_term( $post['category'], 'category' ) ],
+				'meta_input'    => [ NEWSPACK_LS_SCREENSHOTS_SUBTITLE => $post['subtitle'] ?? $post['excerpt'] ],
 				'tags_input'    => array_map(
 					function ( $tag ) {
 						return newspack_ls_screenshots_term( $tag, 'post_tag' );
@@ -921,7 +943,7 @@ function newspack_ls_screenshots_insert_post( $postarr, $age ) {
 				[
 					'post_date'     => get_date_from_gmt( $date_gmt ),
 					'post_date_gmt' => $date_gmt,
-					'meta_input'    => [ NEWSPACK_LS_SCREENSHOTS_MARK => 1 ],
+					'meta_input'    => array_merge( $postarr['meta_input'] ?? [], [ NEWSPACK_LS_SCREENSHOTS_MARK => 1 ] ),
 				]
 			)
 		),

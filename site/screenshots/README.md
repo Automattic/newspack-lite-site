@@ -52,11 +52,11 @@ wp user update james --user_pass=<new password>
 
 The seed creates, and marks as its own:
 
-- Seven authors from the Gazette's newsroom, with fixed avatars: Dana Okafor, Marcus Reilly, Ellis Thorne, Priya Verma, Nora Doyle, Simone Adeyemi and Hal Brennan. James Smith, the editor-in-chief, writes the Opinion piece.
-- 15 posts, with their categories and tags. Four cover the flood itself, newest first: "Kettle River flood: what's closed and where to get help" (sticky, with a photo in the story for the tap-to-load image, an external link and a link to another post), "Mill Race Footbridge closes as the Kettle rises", "Kettle River crests at 21.3 feet and starts to fall" and "Friday night games moved as the Kettle River rises". The other 11 are Gazette stories about the river, flooding and the emergency services, from the last seven weeks. Dates are set relative to when you run the seed, so the order reads the same whenever you seed.
+- Seven authors from the Gazette's newsroom, with the Gazette's monogram avatars: Dana Okafor, Marcus Reilly, Ellis Thorne, Priya Verma, Nora Doyle, Simone Adeyemi and Hal Brennan. James Smith, the editor-in-chief, writes the Opinion piece.
+- 15 posts, with their categories, tags, standfirsts and featured photos. Four cover the flood itself, newest first: "Kettle River flood: what's closed and where to get help" (sticky, with a photo in the story for the tap-to-load image, an external link and a link to another post), "Mill Race Footbridge closes as the Kettle rises", "Kettle River crests at 21.3 feet and starts to fall" and "Friday night games moved as the Kettle River rises". The other 11 are Gazette stories about the river, flooding and the emergency services, from the last seven weeks. Dates are set relative to when you run the seed, so the order reads the same whenever you seed. A post's standfirst, the subtitle the Newspack theme shows under the headline, is its excerpt unless `content.json` gives it a `subtitle`. Seven posts have a featured image, as they would in the paper; the stories that no photo in `assets/media/` fits have none.
 - Four RSS feeds from the county's partners, under Lite Site > RSS: Halloway County Emergency Management (every 10 minutes, Active), Riverbend Public Schools (hourly, Active), the Kettle Watershed Institute (every 30 minutes, Error: "Couldn't reach this RSS feed.") and Riverbend Transit (daily, Inactive). The feeds point at made-up `.example` addresses and nothing is fetched.
 - Nine RSS entries those feeds imported, one of them a draft.
-- The flood photo, the site logo and the site icon, in the media library, and the categories and tags the posts use that the site doesn't have yet.
+- Seven photos, with the captions and photographer credits the Newspack plugin shows under them, the site logo and the site icon, in the media library, and the categories and tags the posts use that the site doesn't have yet.
 - Three pages for the theme's menus: Donate, Newsletters and About Us, each with the first paragraph of the Gazette's own page.
 - The Gazette's menus: Primary (the six sections the posts use, in the Gazette's order), Secondary (Donate, Newsletters and About Us, in the green strip above the masthead) and Social (Facebook, Instagram, Bluesky and YouTube).
 - Block widgets: Support local reporting, Latest stories and Get it by email in the sidebar, and the Gazette's tagline in the footer.
@@ -163,7 +163,22 @@ npm run shot -- guides/lite-articles-3 --site https://screenshots.local \
   --click .lite-image-load-btn --scroll '.content figure' --spotlight '.content figure'
 ```
 
-Posts' addresses include their date on sites with date-based permalinks, which changes with every seed, so open a Lite Site article from the Lite Site homepage with `--click` rather than by its address.
+A hover, and a spotlight around two elements at once (the box that contains both). This is a try-out, so `--out` writes it to a scratch file instead of a docs image:
+
+```bash
+npm run shot -- guides/scratch-1 --site https://screenshots.local \
+  --url "wp-admin/admin.php?page=newspack-lite-site-rss#/feeds" --out /tmp/two-rows.webp \
+  --hover 'tr:has-text("kettlewatershed.example") .newspack-status-badge > *' \
+  --spotlight 'tr:has-text("kettlewatershed.example")' --spotlight 'tr:has-text("riverbendschools.example")'
+```
+
+Loading the image in a signed-out Lite Site article, waiting for it, scrolling it into view and then back up a little, again to a scratch file:
+
+```bash
+npm run shot -- guides/scratch-1 --site https://screenshots.local \
+  --url lite/ --logged-out --click 'text=Kettle River flood:' --out /tmp/scroll-test.webp \
+  --click .lite-image-load-btn --wait 500 --scroll '.content figure' --scroll=-200
+```
 
 ### Options
 
@@ -172,21 +187,38 @@ Posts' addresses include their date on sites with date-based permalinks, which c
 | `--site <url>` | The screenshot site's address, including any folder WordPress is installed in. `https://` is added when you leave it out. You can set `SHOT_SITE` instead. |
 | `--url <path>` | The page to open, relative to the site's address. Defaults to `wp-admin/`. |
 | `--logged-out` | Opens the page in a fresh browser with no one signed in, so there's no admin bar. Use it for Lite Site pages and the full site as readers see them. |
-| `--spotlight <selector>` | Spotlights the first element that matches, instead of Alt-clicking. |
-| `--click <selector>` | Clicks an element, and waits for the page to settle. |
-| `--fill <selector>` and `--value <text>` | Types the text into the first field that matches, such as a feed address in a drawer. When the field is a menu, picks the option with that label instead, such as a frequency or an author. Put each `--value` right after its `--fill`. |
-| `--hover <selector>` | Rests the pointer on an element, such as a status with a tooltip. The pointer stays there when the hover is the last step that uses it. |
-| `--scroll <selector>` | Scrolls an element to the middle of the window, such as the image placeholder or the footer of a Lite Site page. |
-| `--press <key>` | Presses a key, such as `Escape` to close a menu. |
-| `--wait <ms>` | Waits this many milliseconds, for anything that takes longer to appear than the page takes to settle. |
+| `--spotlight <selector>` | Spotlights the first element that matches, instead of Alt-clicking. Repeat it to spotlight the one box that contains all the matches, such as a field and its button. |
+| `--click <selector>` | Clicks an element before the capture, and waits for the page to settle. Repeat it for several clicks, in order. |
+| `--fill <selector>` and `--value <text>` | Types the text into the first field that matches, such as a feed address in a drawer. When the field is a select menu, picks the choice with that label instead, such as a frequency or an author. Put each `--value` right after its `--fill`. |
+| `--hover <selector>` | Rests the pointer on the first element that matches, to show a tooltip or a hover state, such as the message on an Error status. The pointer stays there for the capture. Repeat it for several hovers. |
+| `--scroll <selector or px>` | With a selector, scrolls the first element that matches into the middle of the window, such as the image placeholder or the footer of a Lite Site page. With a number of pixels, scrolls down by that much, or up when it's negative. Write a negative number with an equals sign, as `--scroll=-2000`: a bare `--scroll -2000` fails to parse. It scrolls an open modal first, then the block editor's canvas, then the page. |
+| `--press <key>` | Presses a key, such as `Escape`, `Enter` or `Control+a`, using Playwright's key names. Repeat it for several keys. |
+| `--wait <ms>` | Waits that many milliseconds, for an animation or anything that takes longer to appear than the page takes to settle. Repeat it where you need it. |
+| `--eval <js>` | Runs JavaScript in the page and in each frame inside it, such as the editor canvas, for a step no other option covers. Errors in the main page are printed. Repeat it for several scripts. |
+| `--mouse <x,y>` | Leaves the pointer at this point in the window, in pixels from the top left of the 1512×982 viewport. By default it moves to the bottom right corner after a click or fill, unless the last step is a `--hover`, which keeps the pointer where it is. Pass `--mouse` to move the pointer off a final hover. |
 | `--now` | Captures as soon as the page settles, without opening a window or waiting for Enter. Use it with the steps above and `--spotlight` for screens you can reach without help. Without a saved sign-in it needs `WP_USER` and `WP_PASSWORD`, since it can't ask. |
 | `--out <file>` | Writes the image somewhere else, for trying things out. A relative path starts from the folder you ran `npm run` in. |
 
-`--click`, `--fill`, `--hover`, `--scroll`, `--press` and `--wait` can each be repeated, and run in the order you give them.
+Clicks, fills, hovers, scrolls, key presses, waits and scripts all run in the order you give them, whichever options they use.
 
-Selectors can be CSS, or Playwright's text selectors such as `button:has-text("Add RSS Feed")` and `text=Kettle River flood:`. To find a field by its label, use `internal:label="<label>"s`, where the `s` makes the match exact.
+Selectors can be CSS, or Playwright's text selectors such as `button:has-text("Add RSS Feed")` and `text=Kettle River flood:`. To find a field by its label, use `internal:label="<label>"s`, where the `s` makes the match exact. They also find elements inside the block editor's canvas.
 
 The script also captures without waiting when it isn't run from a terminal.
+
+### Selector tips
+
+- Posts' addresses include their date on sites with date-based permalinks, which changes with every seed, so open a Lite Site article from the Lite Site homepage with `--click` rather than by its address.
+- To reach one feed or entry in a list, scope the selector to its row by something only that row shows, such as `tr:has-text("kettlewatershed.example")` for a feed's address or the entry's title, then add the control: `tr:has-text("...") button:has-text("Edit")`.
+- Playwright's `:text-is()` doesn't match menu items whose text sits in a child element. Use `:has-text()`, or `:has(:text-is("..."))`.
+- A bare `[role="menuitem"]` or `[role="menu"]` also matches hidden elements in the admin bar. Scope it, for example `[role="menu"]:has-text("View Original")`.
+
+### Clean up after a session
+
+Signing in through wp-admin makes WordPress's Quick Draft create an auto-draft post. Delete the strays after a session:
+
+```bash
+ids=$(wp post list --post_type=post --post_status=auto-draft --format=ids); [ -n "$ids" ] && wp post delete $ids --force
+```
 
 ## House settings
 
@@ -195,7 +227,9 @@ Every screenshot uses these, and the script applies them for you:
 - A 1512×982 viewport at twice the pixel density, saved as a 3024×1964 WebP at quality 85, without metadata.
 - Light mode, the visible viewport only (never the full page), and no scrollbars.
 - Signed in as James Smith, who has a flat blue avatar, for admin screens. Signed out for Lite Site pages and the full site as readers see them. Update notices, cookie banners, the Newspack debug notice and similar noise are hidden from the moment the page loads.
-- At most one spotlight: everything outside the element and an 8px margin is dimmed with 45% black.
+- The reader sign-up prompt is closed on front-end pages.
+- The editor isn't in fullscreen mode and shows no block breadcrumbs, welcome guides or pattern chooser. Top toolbar is on, so a selected block's toolbar sits in the editor's header instead of over the page. These apply in the post, page, pattern and Site Editor alike, and the script saves them for the account you sign in with each time it runs.
+- At most one spotlighted box, around one element or around all the `--spotlight` matches: everything outside it and an 8px margin is dimmed with 45% black.
 
 Before you commit an image, look at it.
 
@@ -210,9 +244,17 @@ Before you commit an image, look at it.
 
 ## Credits
 
-- **The flood photo**, `assets/media/flood-street.jpg`, is by Sveta K, from [Pexels](https://www.pexels.com/), free to use under the [Pexels license](https://www.pexels.com/license/).
+- **Photos** in `assets/media/` (all but the site logo and site icon). Their captions and credits are in `content.json`:
+  - From [Pexels](https://www.pexels.com/), free to use under the [Pexels license](https://www.pexels.com/license/): `flood-street.jpg` by Sveta K, and these three, resized to 1600 pixels on the long edge:
+    - `flooded-field.jpg`: "Flooded Field" by Toon de Vos, [Pexels](https://www.pexels.com/photo/flooded-field-6208447/).
+    - `flooded-riverside-walkway.jpg`: "Flooded Riverbank Walkway" by Andrey Karpov, [Pexels](https://www.pexels.com/photo/flooded-riverbank-walkway-7821835/).
+    - `road-works.jpg`: "Road Construction Worker with Jackhammer" by Thomas Fuhrmann, [Pexels](https://www.pexels.com/photo/road-construction-worker-with-jackhammer-33484883/).
+  - Found through [Openverse](https://openverse.org/), dedicated to the public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) or marked with the [Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/), so they need no credit, though the site credits each under its caption. Each is resized.
+    - `kettle-river-sunset.jpg`: "autumn sunset on the river" by azxa661, Public Domain Mark, [Flickr](https://www.flickr.com/photos/197207264@N02/52581985117).
+    - `reporters-notebook.jpg`: "Research" by neil conway, Public Domain Mark, [Flickr](https://www.flickr.com/photos/30934989@N06/5625707813).
+    - `water-main-trench.jpg`: "Bøgeskov Høvej 25, vejarbejde - DSC_2223_Balancer" by Lav Ulv, CC0, [Flickr](https://www.flickr.com/photos/99460566@N06/35776145673).
 - **The site logo and site icon**, `assets/media/riverbend-gazette-wordmark.png` and `assets/media/site-icon.png`, are The Riverbend Gazette's wordmark and icon, made for Newspack's demo sites. The icon is also the footer logo.
 - **Source Serif 4**, the variable WOFF2 files in `assets/fonts/source-serif-4/`, is by Adobe, from [adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif) release 4.005, under the [SIL Open Font License 1.1](https://openfontlicense.org/) (`assets/fonts/source-serif-4/LICENSE.md`). Lite Site pages and the theme on the screenshot site load it from this folder in place of Google Fonts.
 - **Inter**, the variable WOFF2 files in `assets/fonts/inter/`, is by The Inter Project Authors ([rsms/inter](https://github.com/rsms/inter)), the Latin files Google Fonts serves for version 20, under the [SIL Open Font License 1.1](https://openfontlicense.org/) (`assets/fonts/inter/LICENSE.md`). The theme on the screenshot site loads it from this folder in place of Google Fonts.
-- **Avatars** in `assets/avatars/` are flat colors made for this folder, one per seeded author.
+- **Avatars** in `assets/avatars/` are The Riverbend Gazette's monogram avatars, one per seeded author, made for Newspack's demo sites and resized to 192 pixels. `default.svg`, a flat blue square, is the avatar of James Smith and every other account.
 - **The stories** come from The Riverbend Gazette, the invented newspaper of Newspack's demo sites.
