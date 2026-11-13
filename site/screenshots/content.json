@@ -1,0 +1,555 @@
+{
+	"site": {
+		"title": "The Riverbend Gazette",
+		"tagline": "Riverbend's newsroom since 1897",
+		"logo": "riverbend-gazette-wordmark.png",
+		"icon": "site-icon.png"
+	},
+	"theme": {
+		"mods": {
+			"header_center_logo": true,
+			"header_simplified": false,
+			"header_text": false,
+			"logo_size": 19,
+			"header_display_tagline": false,
+			"theme_colors": "custom",
+			"primary_color_hex": "#117644",
+			"secondary_color_hex": "#2a5fa8",
+			"header_color": "custom",
+			"header_color_hex": "#003da5",
+			"footer_color": "default",
+			"footer_logo_size": "small",
+			"footer_widget_layout": "stacked",
+			"accent_allcaps": true,
+			"font_header": "Inter",
+			"font_header_stack": "sans-serif",
+			"font_body": "Source Serif 4",
+			"font_body_stack": "serif",
+			"custom_font_import_code": "//fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap",
+			"custom_font_import_code_alternate": "//fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap"
+		},
+		"footer_logo": "site-icon.png",
+		"custom_css": ".top-header-contain{background: var(--newspack-theme-color-primary-against-white);}.footer-widgets .widget_nav_menu ul{margin: 0;}",
+		"pages": [
+			{
+				"slug": "donate",
+				"title": "Donate",
+				"content": "<!-- wp:paragraph -->\n<p>The Riverbend Gazette is a nonprofit newsroom. Reader money is the largest part of our budget, and it is the part that pays reporters to sit through the whole meeting, read the permit filing and walk the riverbank before writing about it.</p>\n<!-- /wp:paragraph -->"
+			},
+			{
+				"slug": "newsletters",
+				"title": "Newsletters",
+				"content": "<!-- wp:paragraph -->\n<p>Four newsletters come out of this newsroom. Each one is written by the reporter who holds the beat, not assembled from the day's headlines by a machine, and each is short enough to read before the coffee goes cold. About 11,000 people take at least one of them.</p>\n<!-- /wp:paragraph -->"
+			},
+			{
+				"slug": "about",
+				"title": "About Us",
+				"content": "<!-- wp:paragraph -->\n<p>The Riverbend Gazette is the daily newspaper of Riverbend and Halloway County. We have published from 118 Water Street since 1897, first as a four-page weekly and now as a nonprofit newsroom of 13 people, online every day and in print on Wednesday and Saturday.</p>\n<!-- /wp:paragraph -->"
+			}
+		],
+		"menus": [
+			{
+				"location": "primary-menu",
+				"name": "Primary",
+				"items": [
+					{
+						"category": "News"
+					},
+					{
+						"category": "Sport"
+					},
+					{
+						"category": "Environment"
+					},
+					{
+						"category": "Health"
+					},
+					{
+						"category": "Science & Technology"
+					},
+					{
+						"category": "Opinion"
+					}
+				]
+			},
+			{
+				"location": "secondary-menu",
+				"name": "Secondary",
+				"items": [
+					{
+						"page": "donate"
+					},
+					{
+						"page": "newsletters"
+					},
+					{
+						"page": "about"
+					}
+				]
+			},
+			{
+				"location": "social",
+				"name": "Social",
+				"items": [
+					{
+						"title": "Facebook",
+						"url": "https://www.facebook.com/AutomatticInc/"
+					},
+					{
+						"title": "Instagram",
+						"url": "https://www.instagram.com/automattichq/"
+					},
+					{
+						"title": "Bluesky",
+						"url": "https://bsky.app/profile/newspack.com"
+					},
+					{
+						"title": "YouTube",
+						"url": "https://www.youtube.com/@newspackdotcom"
+					}
+				]
+			}
+		],
+		"widgets": {
+			"sidebar-1": [
+				"<!-- wp:group -->\n<div class=\"wp-block-group\"><!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Support local reporting</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The Riverbend Gazette is a nonprofit newsroom and nothing here is behind a paywall. Reader money pays for the reporting.</p>\n<!-- /wp:paragraph --></div>\n<!-- /wp:group -->",
+				"<!-- wp:group -->\n<div class=\"wp-block-group\"><!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Latest stories</h2>\n<!-- /wp:heading -->\n\n<!-- wp:newspack-blocks/homepage-articles {\"postsToShow\":5,\"showImage\":false,\"showExcerpt\":false,\"showAuthor\":false,\"showDate\":true,\"typeScale\":2,\"deduplicate\":true} /--></div>\n<!-- /wp:group -->",
+				"<!-- wp:group -->\n<div class=\"wp-block-group\"><!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Get it by email</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>Four newsletters, all free, each one written by the reporter who holds the beat. The Daily Bend arrives on weekday mornings and the Weekender on Friday.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:buttons -->\n<div class=\"wp-block-buttons\"><!-- wp:button -->\n<div class=\"wp-block-button\"><a class=\"wp-block-button__link wp-element-button\" href=\"{{page:newsletters}}\">See all four newsletters</a></div>\n<!-- /wp:button --></div>\n<!-- /wp:buttons --></div>\n<!-- /wp:group -->"
+			],
+			"footer-1": [
+				"<!-- wp:group {\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group\"><!-- wp:separator {\"className\":\"is-style-wide\",\"style\":{\"color\":{\"background\":\"#cccccc\"}}} -->\n<hr class=\"wp-block-separator has-text-color has-alpha-channel-opacity has-background is-style-wide\" style=\"background-color:#cccccc;color:#cccccc\"/>\n<!-- /wp:separator -->\n\n<!-- wp:columns -->\n<div class=\"wp-block-columns\"><!-- wp:column {\"verticalAlignment\":\"top\"} -->\n<div class=\"wp-block-column is-vertically-aligned-top\"><!-- wp:paragraph {\"style\":{\"elements\":{\"link\":{\"color\":{\"text\":\"var:preset|color|medium-gray\"}}},\"css\":\"font-family: var(\\u002d\\u002dnewspack-theme-font-body)\"},\"textColor\":\"medium-gray\",\"fontSize\":\"small\"} -->\n<p class=\"has-custom-css has-medium-gray-color has-text-color has-link-color has-small-font-size\"><em>Riverbend's newsroom since 1897. Reader-funded, and nothing here sits behind a paywall.</em></p>\n<!-- /wp:paragraph --></div>\n<!-- /wp:column --></div>\n<!-- /wp:columns --></div>\n<!-- /wp:group -->"
+			]
+		}
+	},
+	"admin": {
+		"login": "james",
+		"first_name": "James",
+		"last_name": "Smith",
+		"email": "james.smith@example.com"
+	},
+	"users": [
+		{
+			"login": "dokafor",
+			"first_name": "Dana",
+			"last_name": "Okafor",
+			"email": "dokafor@example.com",
+			"role": "editor",
+			"avatar": "dana.svg"
+		},
+		{
+			"login": "mreilly",
+			"first_name": "Marcus",
+			"last_name": "Reilly",
+			"email": "mreilly@example.com",
+			"role": "author",
+			"avatar": "marcus.svg"
+		},
+		{
+			"login": "ethorne",
+			"first_name": "Ellis",
+			"last_name": "Thorne",
+			"email": "ethorne@example.com",
+			"role": "author",
+			"avatar": "ellis.svg"
+		},
+		{
+			"login": "pverma",
+			"first_name": "Priya",
+			"last_name": "Verma",
+			"email": "pverma@example.com",
+			"role": "author",
+			"avatar": "priya.svg"
+		},
+		{
+			"login": "ndoyle",
+			"first_name": "Nora",
+			"last_name": "Doyle",
+			"email": "ndoyle@example.com",
+			"role": "author",
+			"avatar": "nora.svg"
+		},
+		{
+			"login": "sadeyemi",
+			"first_name": "Simone",
+			"last_name": "Adeyemi",
+			"email": "sadeyemi@example.com",
+			"role": "author",
+			"avatar": "simone.svg"
+		},
+		{
+			"login": "hbrennan",
+			"first_name": "Hal",
+			"last_name": "Brennan",
+			"email": "hbrennan@example.com",
+			"role": "author",
+			"avatar": "hal.svg"
+		}
+	],
+	"media": [
+		{
+			"file": "flood-street.jpg",
+			"title": "Flooded street",
+			"alt": "Two cars drive through brown floodwater running across a city street.",
+			"caption": "Floodwater crosses Water Street at the Depot Street low point as the river rose."
+		}
+	],
+	"posts": [
+		{
+			"slug": "kettle-river-flood-whats-closed",
+			"title": "Kettle River flood: what's closed and where to get help",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Flooding",
+				"Emergency services",
+				"Kettle River"
+			],
+			"excerpt": "The river is falling but the greenway and the Mill Race Footbridge stay shut, and the fairgrounds shelter is open again tonight.",
+			"age": 19800,
+			"sticky": true,
+			"image": "flood-street.jpg",
+			"content": "<!-- wp:paragraph -->\n<p>The Kettle River is falling, but much of the riverfront is still shut. The Bridge Street gauge read 19.8 feet this afternoon, and Halloway County Emergency Management expects the river to drop back under flood stage, 18 feet, by tomorrow morning. Here is what is closed, what has reopened and where to get help. We update this page as things change.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Still closed</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>The Kettle Greenway, from Pilcher Park to the South End. The parks department expects it to stay closed for several days while crews clear silt and check the boardwalks.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>The Mill Race Footbridge, until the river is back under flood stage. Cross on the Depot Street Bridge instead.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Fields in Northgate and along the greenway. High school games have been moved.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:image {\"id\":\"{{media-id:flood-street.jpg}}\",\"sizeSlug\":\"large\",\"linkDestination\":\"none\"} -->\n<figure class=\"wp-block-image size-large\"><img src=\"{{media-url:flood-street.jpg}}\" alt=\"Two cars drive through brown floodwater running across a city street.\" class=\"wp-image-{{media-id:flood-street.jpg}}\"/><figcaption class=\"wp-element-caption\">Floodwater crosses Water Street at the Depot Street low point as the river rose.</figcaption></figure>\n<!-- /wp:image -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Open again</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Water Street, between Bridge Street and Depot Street, after the river dropped back below the curb.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Grove Avenue, after crews cleared a fallen ash. Buses are back on their usual routes.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Power in Northgate. Anyone still without supply should call the utility's outage line.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Where to get help</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>The fairgrounds shelter on Route 9 stays open tonight for anyone who can't go home. Pets go in a separate barn. Bring medication, documents and phone chargers if you can.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>The main library on Courthouse Square is open until 9 p.m. for flooded households, with free coffee and phone charging.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Filled sandbags are free at the public works yard on Depot Street, up to 25 per household.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, asked people to stay off flooded roads until the warning is lifted. &quot;Two feet of moving water floats a car. Turn around and find another way,&quot; she said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Sign up for the county's text alerts at <a href=\"https://hallowaycounty.example/alerts/\">hallowaycounty.example/alerts</a>, and read our guide to <a href=\"{{post:flood-preparedness-guide}}\">what to do before the Kettle River rises</a>.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "kettle-river-crests",
+			"title": "Kettle River crests at 21.3 feet and starts to fall",
+			"author": "ethorne",
+			"category": "Environment",
+			"tags": [
+				"Flooding",
+				"Kettle River"
+			],
+			"excerpt": "The river peaked just after 6 p.m., 3.3 feet above flood stage, and the warning stays in place until it is back under 18 feet.",
+			"age": 183600,
+			"content": "<!-- wp:paragraph -->\n<p>The Kettle River peaked at 21.3 feet at the Bridge Street gauge just after 6 p.m. and has started to fall. That is 3.3 feet above flood stage, and well short of the 25.1 feet the river reached in 2019.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The first sign the crest was close came in the afternoon, when the Kettle Watershed Institute's station at the Kettleford Lock showed the river upstream had stopped rising. The rain stopped soon after.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, said the flood warning stays in place until the river is back under 18 feet, which forecasters expect by the end of tomorrow. &quot;The water goes down slower than it came up, and the roads it leaves behind are not safe yet,&quot; Ambrose said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Water Street will stay closed overnight while public works crews check the storm drains and clear debris. Marla Deen, director of Riverbend Public Works, said her crews would start at the low point by Depot Street, where the river came over the curb in the afternoon.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The fairgrounds shelter on Route 9 is open through the night, with a nurse team from Riverbend Memorial on site.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "mill-race-footbridge-closes",
+			"title": "Mill Race Footbridge closes as the Kettle rises",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Flooding",
+				"Infrastructure"
+			],
+			"excerpt": "The footbridge stays shut until the river drops below flood stage, so people on foot and on bikes cross on the Depot Street Bridge.",
+			"age": 180000,
+			"content": "<!-- wp:paragraph -->\n<p>The Mill Race Footbridge is closed. People walking or cycling should cross on the Depot Street Bridge, which has a protected lane on its downstream side.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The parks department shut the footbridge as the river rose toward its deck. Marla Deen, director of Riverbend Public Works, said it will stay closed until the river is back under flood stage and an engineer has checked the supports for debris.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;We would rather keep it shut a day longer than reopen it with a tree jammed against a pier,&quot; Deen said.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "friday-night-games-moved-as-the-kettle-river-rises",
+			"title": "Friday night games moved as the Kettle River rises",
+			"author": "hbrennan",
+			"category": "Sport",
+			"tags": [
+				"Flooding",
+				"Youth sport"
+			],
+			"excerpt": "Fields in Northgate and along the greenway are under water, so high school coaches spent the day finding new dates.",
+			"age": 194400,
+			"content": "<!-- wp:paragraph -->\n<p>Coaches across the county scrambled to find new dates for Friday's high school games as the Kettle River left fields in Northgate and along the greenway under water.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, said the river should crest by early evening, but Water Street and the greenway will stay closed through the night.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Residents in the floodplain were urged to stay at the fairgrounds shelter until officials confirm it is safe to return. Schools in Northgate will open late tomorrow.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Marla Deen, director of Riverbend Public Works, said her department will review the storm drains on Water Street once the water drops, starting with the low point at Depot Street.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "covering-the-river",
+			"title": "Why we cover the river the way we do",
+			"author": "james",
+			"category": "Opinion",
+			"tags": [
+				"Flooding",
+				"Kettle River",
+				"Local history"
+			],
+			"excerpt": "The editor on gauge readings, checklists and why this paper writes about the Kettle like a utility to be watched rather than a drama to be narrated.",
+			"age": 446400,
+			"content": "<!-- wp:paragraph -->\n<p>A reader wrote to ask, kindly, why our flood coverage is so boring. Where other outlets have drone shots and urgent music, we print a gauge number, a list of closed crossings and the sandbag pickup times. She wanted to know if we had considered being more exciting. We have. We decided against it, and this letter is the why.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>This newsroom has covered the Kettle for well over a century and has been flooded by it once. In 1957 the river put three feet of water into the press hall downstairs, and the paper printed from the fairgrounds for nine days without missing an edition. The front page from that week hangs on our wall. What strikes you, reading it now, is how calm it is: river stage, road closures, shelter hours, in that order. The people who produced it were standing in the building the water had just left. They still led with the number.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Drama is cheap and gauge readings are not</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>They led with the number because a flood is one of the few stories readers act on while it is happening. If we tell you the river is at 16 feet and rising, you know, because this paper has printed the thresholds for decades, that the greenway closes soon, that sandbags are worth collecting, and that 18 feet is the line. A photograph of brown water tells you the river is dramatic. The number tells you what to do before dinner.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Excitement also has a cost that shows up later. A reader alarmed by every high-water story stops being alarmable, and the year the river means it, the alarm has been spent. The county's emergency planners ration their urgency carefully, and we think a newspaper should ration in step. When our flood coverage changes tone, we want that change itself to carry information.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What we promise, and what we ask</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>So here is the standing promise. When the Kettle rises, we will print the gauge reading and the forecast, every closed crossing, the shelter status and the sandbag hours, in words a tired person can act on, as often as the facts change. We will put nothing about a flood behind anything. We will name what officials did and did not do, afterward, when the water is down and the record is checkable. And we will keep the drone footage to a minimum, on the theory that nobody has ever moved a car to high ground because a video was beautiful.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>What we ask in return is that you act like the coverage is boring on purpose, because it is. Sign up for the county's alerts. Learn your own threshold, whether it is the basement, the bus detour or the block of Fell Street you park on. The river is a neighbor with a long memory and no malice, and the paper's job in flood season is to be its interpreter, not its publicist.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The reader who wrote in has our thanks, and a standing invitation to visit the wall with the 1957 front page. Boring, it turns out, is a tradition here. We intend to keep it.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "flood-preparedness-guide",
+			"title": "What to do before the Kettle River rises",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Flooding",
+				"Emergency services",
+				"Halloway County"
+			],
+			"excerpt": "Flood stage is 18 feet, the record is 27.4, and the county's emergency planners say the useful decisions all happen before the water does.",
+			"age": 698400,
+			"content": "<!-- wp:paragraph -->\n<p>The Kettle River runs high in March and April, Fell Creek flashes after summer storms, and the county's emergency planners repeat the same sentence every year: the decisions that matter are the ones made before the water arrives. Here is what they want every household to have done ahead of time, drawn from the county's flood plan and the people who run it.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Know your number and sign up for the alert</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>Flood stage at Riverbend is 18 feet. The record is 27.4 feet, set in 1957, and the modern benchmark is 25.1 feet in 2019, which put water into Northgate basements and closed the greenway for a month. The river gauge updates hourly on the county emergency management website, and the county's free alert service sends a text when the forecast crosses 15 feet. &quot;If you live in the floodplain, the gauge is your weather report,&quot; said Ruth Ambrose, director of Halloway County Emergency Management. &quot;Sign up for the alert, and decide now what you will do at 15 feet, because at 18 you will be busy doing it.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Sandbags, basements and the car</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>When the county issues a flood watch, the public works yard on Depot Street opens for sandbag pickup, filled and free, with a limit of 25 per household. Marla Deen, director of Riverbend Public Works, said the yard runs out of takers before it runs out of bags, which she considers the wrong way around. &quot;Twenty-five bags placed the night before beats a hundred placed at midnight in the rain,&quot; Deen said. Her department's other standing advice: move anything you love off the basement floor in February, not when the gauge says 16, and move the car to high ground early. More vehicles are lost to floods in the county than furnaces.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">If you have to leave</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The county's shelter and staging area is the Halloway County Fairgrounds on Route 9, on high ground north of the city. It opens when the forecast crosses 20 feet, takes pets in a separate barn, and is stocked for several hundred people. Ambrose's checklist for a household that might need it fits on a card: medications, documents, phone chargers, three days of anything you cannot buy at a drugstore. &quot;Pack the card's worth of things in a bag in the closet,&quot; she said. &quot;People who have the bag leave early and calm. People who do not have it leave late, and late is how cars end up in water.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Renters should ask one question this week, Ambrose said: whether the basement has flooded before. Landlords in the city must disclose past flood damage on request, and the answer changes where the boxes go. Businesses on Fell Street and Water Street can join the county's flood warden program, which assigns each block a volunteer who walks it when a watch is issued, checking that door barriers are placed and that nobody elderly is riding it out alone unnoticed.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The last rule is the one both officials repeat most: never drive through water on a road. Two feet of moving water floats a car, and the county's rescue calls in every recent flood have been drivers, not residents. The full flood plan, the alert signup and a printable version of the checklist are on the county emergency management website.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "memorial-flood-protocol",
+			"title": "How Riverbend Memorial gets ready for the river to rise",
+			"author": "ndoyle",
+			"category": "Health",
+			"tags": [
+				"Riverbend Memorial",
+				"Flooding",
+				"Emergency services"
+			],
+			"excerpt": "Riverbend Memorial sits far above flood stage, but its emergency department drills a 31-item river plan twice a year, because a flood arrives through its doors for weeks.",
+			"age": 972000,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The flood drill at Riverbend Memorial Hospital begins with a phone call nobody enjoys getting. The river has crossed 15 feet and is still rising, the message says, and from that sentence the emergency department works a checklist 31 items long. Gail Norwood, the department's nurse manager, keeps a laminated copy taped inside a supply cabinet and a creased one folded in her pocket, and twice a year, before the river's high months, she makes the whole department walk through every line of it.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The Kettle has never reached the hospital and almost certainly never will. Riverbend Memorial sits on the rise at the top of Ashgrove, about as far above flood stage as a building in this county can get. Its emergency department plans for the river anyway, because a flood arrives at the hospital the way everything else in the county eventually does: through the front doors, one person at a time, for weeks.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;People picture a flood as a water emergency, and for the fire department it is,&quot; said Dr. Beatriz Duarte, the hospital's chief of medicine. &quot;For us it is a medication emergency, a transportation emergency, an injury emergency and an exhaustion emergency, arriving in roughly that order, over about three weeks.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What 25.1 feet taught</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The plan in Norwood's pocket was written after the near miss everyone in Riverbend dates things by, when the river crested at 25.1 feet, put water into Northgate basements and closed the greenway for a month. The hospital came through that week intact, and then spent a year studying how much of its flood problem had nothing to do with water reaching the building.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The river is an old subject here. The hospital opened in 1908, and its files still hold photographs from the 1957 flood, the record 27.4-foot crest that put three feet of water in the newspaper's press hall and sent the fairgrounds into service as a shelter for the first time. The staff who worked that week are gone, but the shape of what they dealt with has not changed: not drownings, mostly, but everything a drowned town does to the people who live in it. What has changed is that the hospital now writes the shape down.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The first lesson was staffing. When high water threatens the Kettle River Bridge, traffic between the banks squeezes onto the Depot Street Bridge and a short trip stops being short. During the crest, nurses living on the west bank spent longer getting to the hospital than some of them spent at home between shifts. The plan now maps the department's roster by side of the river. When a closure looks likely, west-bank staff are offered beds at the hospital, and about 80 employees slept in the old conference wing on the worst two nights of that flood. The plan books a floor of the patient tower for the next one.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The second lesson was medication and machines. In the days before a forecast crest, the hospital's dialysis unit adds sessions so patients scheduled through the flood window are treated early, and pharmacists call the department's list of patients who depend on refrigerated drugs or powered equipment in the blocks nearest the creek and the river. Halloway County keeps a voluntary medical-needs registry for exactly this, a list of residents who rely on oxygen concentrators, home dialysis or daily treatment, and the county's shelter planning starts from it.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;The shelter list starts with the registry,&quot; said Ruth Ambrose, director of Halloway County Emergency Management, whose agency opens the fairgrounds shelter when the forecast passes 20 feet. &quot;A cot is easy. Knowing who needs an outlet for a concentrator before they walk in, that is what a good flood looks like from my desk.&quot; A Riverbend Memorial nurse team staffs the shelter's medical corner whenever it opens, another line on Norwood's checklist.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">The week after the water</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The department's own numbers say the busy part of a flood starts when the river starts falling. In the two weeks after the 25.1-foot crest, the emergency department logged about 380 visits it classed as flood-related, more than it saw during the high water itself. Almost none of them involved the river. All of them involved what the river left behind.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Cuts and punctures from debris and stripped-out basements, and the tetanus boosters that follow them.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Sprains and falls on wet stairs and mud-slicked ramps, mostly in the first four days.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Carbon monoxide exposure from generators and pressure washers run in basements and closed garages.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Breathing trouble as wet buildings begin to grow mold, arriving for weeks after the water is gone.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Missed medications, missed appointments and plain exhaustion, the quiet category the staff calls the flood's long tail.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:pullquote -->\n<figure class=\"wp-block-pullquote\"><blockquote><p>The flood is the quiet part. The week after is when our waiting room fills.</p><cite>Gail Norwood, Riverbend Memorial</cite></blockquote></figure>\n<!-- /wp:pullquote -->\n\n<!-- wp:paragraph -->\n<p>Norwood has worked in the department for 22 years and managed it for eight, long enough to have treated the same block of Northgate twice. &quot;We staff up for the crest, and then we really staff up for the cleanup,&quot; she said. &quot;A river in a basement does not send many people to the hospital. A wet basement full of tools and extension cords sends plenty.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Rehearsing the checklist</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The drills happen twice a year, a tabletop exercise in late winter and a full walk-through before the spring high water. The checklist they rehearse is specific to the point of fussiness, which is the intention. The department doubles its stock of tetanus vaccine and wound-care supplies when the 15-foot alert fires. Triage nurses ask every patient from a flooded address whether a generator is running at home, and the department keeps carbon monoxide monitors at the desk to settle the question. A social worker joins the department full time through cleanup weeks, because a fair share of what walks in after a flood is not treatable with sutures. Grief, ruined housing and insurance paperwork all present as chest pain sooner or later, Norwood said, and the department has learned to ask.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The plan also reaches past the hospital's own walls. The Northgate Clinic, the Halloway Health clinic closest to the neighborhoods that flood, keeps evening hours through cleanup weeks so that a tetanus booster or a prescription refill does not require an emergency room. &quot;The worst outcome of a flood is not a full waiting room,&quot; Duarte said. &quot;It is the person who decides their cough or their cut can wait because the waiting room looks full. We open more doors so nobody makes that decision.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ambrose reviews the hospital's plan alongside the county's own each year, and said the two documents have grown toward each other: the county's shelter plan assumes the nurse team, and the hospital's staffing plan assumes the county's text alerts. &quot;Plans that only work on their own pages fail together,&quot; she said. &quot;These two have been to the same flood.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The drills end the same way each time. The last item on Norwood's checklist is not medical, and she reads it aloud to the room before anyone goes back to work. It says: feed people. &quot;Cleanup crews forget to eat, and so do nurses,&quot; Norwood said. &quot;The kitchen sends sandwiches to the department every four hours until the river is back under 15 feet. It is the only item on the list nobody has ever argued with.&quot;</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "fell-creek-gauges",
+			"title": "New creek gauges buy Northgate a head start on flash floods",
+			"author": "sadeyemi",
+			"category": "Science & Technology",
+			"tags": [
+				"Flooding",
+				"Northgate",
+				"Emergency services"
+			],
+			"excerpt": "Three water-level sensors installed along Fell Creek will trigger automatic text alerts, giving low-lying blocks up to 45 minutes of warning before the creek tops its banks.",
+			"age": 1306800,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — Fell Creek now reports its own bad moods. The city has installed three water-level sensors along the creek's run through Northgate, and when the water rises faster than a set rate, the county's alert system will automatically text subscribers on the low-lying blocks, no human in the loop.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The creek's flash floods arrive on a different clock than the river's. The Kettle gives days of warning; Fell Creek, draining hard after a violent storm, can go from ordinary to overtopped in under an hour. The sensors upstream of the Fell Street culverts are placed to convert that hour into notice, up to 45 minutes for the blocks nearest the creek.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;Forty-five minutes is not long, but it is the difference between moving your car and losing it, and between a surprise and a plan,&quot; said Marla Deen, the public works director, whose department installed the gauges ahead of the culvert replacement. &quot;The creek was always going to keep flashing. Now it has to announce itself first.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The alerts ride the county's existing free text system, and residents already signed up for river flood warnings will receive creek alerts automatically if their address sits in the notification area. Sign-up instructions are available at the Northgate branch library and the community center, in the five languages the district's school messages already use.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "fire-rescue-boat",
+			"title": "Fire department adds a second swift-water rescue boat",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Emergency services",
+				"Flooding"
+			],
+			"excerpt": "The $86,000 boat will be stationed near the Depot Street Bridge, putting a rescue crew on each side of the Kettle when the river runs high.",
+			"age": 1659600,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The fire department has taken delivery of a second swift-water rescue boat, closing a gap in the city's flood response that has bothered its chief since the 2019 high water.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The $86,000 boat, paid for from the county's emergency management fund, will be stationed at the fire station near the Depot Street Bridge. The department's first boat lives on the east bank. Having one on each side of the Kettle means a rescue crew can launch no matter which bridge is closed or which bank is cut off, a scenario that stopped being hypothetical in 2019, when water reached 25.1 feet and put crews on the wrong side of the river from the calls.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;In 2019 we had one boat and two banks, and the river got to choose which one we could serve,&quot; said Ray Purcell, chief of the Riverbend Fire Department and the county's flood rescue lead. &quot;I have been asking for the second boat ever since. The river will run high again. Next time we will not be doing arithmetic about which side of it to park on.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">More trained crews to go with it</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The boat is the visible half of the purchase. The other half is people: 28 firefighters now hold swift-water rescue certification, up from 11, after a training rotation that ran crews through a rescue course on the river below the Kettleford Lock. The course work is deliberately unglamorous, Purcell said: throw-bag drills, capsize recovery, and hours of reading current, done until it is boring.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The certification matters as much as the hull, Purcell said, because a flood is a staffing problem before it is an equipment problem. High water does not schedule itself around shifts, and 28 certified firefighters means every duty rotation now includes a full boat crew without calling anyone in. The department also keeps a rotation of drivers trained to launch from the ramps at Pilcher Park and below the Kettleford Lock, the two put-ins that stay usable at high water.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, said the county funded the boat because flood rescue does not stop at the city line. The same crews cover Fell Creek when it flashes, the county towns when the Kettle spreads into its floodplain, and the occasional summer call for a kayaker who misjudged the current. &quot;The checklist for a flood has three early lines: open the shelter, close the crossings, launch the boats,&quot; Ambrose said. &quot;As of this week the third line is twice as strong.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What residents should take from it</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>Both officials used the announcement to repeat the advice that keeps the boats idle. Most swift-water rescues in the county involve vehicles driven into flooded crossings, and a car lifts and floats in less than two feet of moving water. &quot;The boat is for the person the warnings could not reach,&quot; Purcell said. &quot;Do not be that person. Turn around. We would rather train forever than launch once.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The department will show the new boat, and run throw-bag demonstrations, at its annual open house at the Depot Street station. Details go up on the city's website closer to the date.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "fell-street-culverts",
+			"title": "City commits $8.2 million to replace Fell Street culverts",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Flooding",
+				"Northgate",
+				"Infrastructure"
+			],
+			"excerpt": "The culverts that carry Fell Creek under Northgate's main street were sized in 1961 and have been overtopped four times since 2019; construction starts next spring.",
+			"age": 2080800,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The culverts that carry Fell Creek under Fell Street have a construction date at last: the $8.2 million replacement project will break ground next spring, the public works department said this week, taking aim at Northgate's most reliable flood problem.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The two concrete barrels under the street were sized in 1961 for a smaller neighborhood and a tamer creek. Since 2019 they have been overtopped four times, sending Fell Creek across the pavement and into basements along three blocks of the commercial spine. Each time, the pattern is the same: a hard summer storm, an hour of rain the culverts cannot pass, and a street of businesses squeegeeing out the day after.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;The culverts are the chokepoint, and everybody who lives there knows it,&quot; said Marla Deen, director of Riverbend Public Works. &quot;We have cleaned them, lined them and prayed over them. They are half the size the creek needs. The fix is the boring one: dig them out and put in bigger ones.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What the project involves</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The new structure is a single box culvert roughly three times the capacity of the existing pair, with a debris rack upstream so storm-borne branches stop before the street instead of under it. The money comes from the city's stormwater fund and a state infrastructure grant, and Deen said the design leans on flood modeling from the Kettle Watershed Institute, which has gauged Fell Creek since the 2019 flood.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Construction means pain first: Fell Street will close to through traffic at the creek for an estimated 14 weeks, with a signed detour and access maintained to every business. Deen's department has promised weekly updates and a posted schedule in the storefronts, a lesson she said was learned on the Kettle River Bridge closure.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">A neighborhood that has heard promises before</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>Bigger culverts will not end flooding in Northgate by themselves, and Deen was careful to say so. When the Kettle River itself runs high, it backs water up Fell Creek from the bottom, and no culvert helps with that. The county's side of the fix is upstream: the Fell Creek Preserve, 110 acres of restored floodplain bought in 2016, holds storm water before it reaches the neighborhood at all. &quot;The preserve slows the water down and the culvert lets it through,&quot; Deen said. &quot;You need both. Either one alone is half a fix.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Megan Foley, 38, of Northgate, whose block flooded twice in three summers, said the neighborhood will believe the project when the excavators arrive. &quot;Every study for years has said the same thing, and we kept getting sandbags instead of concrete,&quot; Foley said. &quot;I am glad the money is real. I will be gladder when the street is torn up and I am complaining about the detour.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Until the new culvert is in, the existing flood routine stands: the Northgate Community Center opens as a dry-out and information site after flash floods, and residents can pick up filled sandbags at the public works yard when the county issues a flood watch. The department will hold a public session on the construction schedule at the community center next month, with Hungarian, Spanish, Somali and Vietnamese interpretation.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "well-check-weekly-calls",
+			"title": "County well-check line adds weekly calls year round",
+			"author": "ndoyle",
+			"category": "Health",
+			"tags": [
+				"Public health",
+				"Halloway County",
+				"Volunteering"
+			],
+			"excerpt": "The phone service that checks on older residents during heat alerts and floods will now make scheduled weekly calls in every season, with volunteers doing the dialing.",
+			"age": 2358000,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The county's well-check line is going year round. The phone service, which has until now called registered residents only during heat alerts and flood watches, will begin offering scheduled weekly calls to older adults who live alone, in every season, whether or not anything is going wrong outside.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The mechanics stay simple. Residents sign up by phone or at any library branch, pick a day and a rough time, and get a call from a trained volunteer each week. A call that goes unanswered triggers a second try, then a call to a listed neighbor or family member. Volunteers are recruited and trained by Halloway County Emergency Management, which runs the line, with the county health office writing the training.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;The alert-only version had a flaw we could not fix from inside it: the people we most needed to reach in an emergency were the ones nobody had talked to since the last emergency,&quot; said Ruth Ambrose, the county's emergency management director. &quot;A weekly call means the list is current, the phone numbers work, and the voice on the line is familiar before the week it matters. Also, and I will just say it, people like the calls.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The county is recruiting volunteers for the expansion, and Ambrose said the commitment is an hour or two a week from any phone. Sign-up for calls and for volunteering both run through the county's main line and the well-check page on its website.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "harder-rain-study",
+			"title": "The rain is arriving harder, and the county is redoing its math",
+			"author": "sadeyemi",
+			"category": "Science & Technology",
+			"tags": [
+				"Flooding",
+				"Research"
+			],
+			"excerpt": "A Riverbend State analysis of six decades of rainfall records finds the county's heaviest downpours delivering about 20% more water than they did a generation ago.",
+			"age": 2692800,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The total amount of rain that falls on Halloway County in a year has barely changed in 60 years. How it falls has changed a great deal, and a new analysis from Riverbend State University puts numbers on what every basement owner in Northgate already suspected: the county's heaviest downpours now deliver about 20% more water than the same-ranked storms did a generation ago.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;The year's rain is arriving in fewer, harder installments,&quot; said Dr. Laura Stanek, the climate scientist in the university's water resources group who led the work. &quot;A summer that used to spread four inches across ten gentle days now drops half of it in one loud afternoon. The annual total looks reassuringly normal, which is exactly why the total is the wrong number to plan with.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Warmer air, bigger buckets</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The mechanism is not mysterious. Warmer air holds more moisture, roughly 4% more for every degree, and a storm that forms in wetter air has a bigger bucket to empty. Stanek's team worked from six decades of daily records, the airport gauge, the wastewater plant's logs and the Kettle Watershed Institute's monitoring stations, and found the sharpest change at the top of the scale: the storms that used to arrive once a decade now arrive roughly twice as often, and carry more water when they do.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>For the river itself, the shift matters less than people assume. The Kettle's big floods are built over weeks of upstream snowmelt and saturated ground, and those dynamics move slowly. The immediate consequence lands on the small streams, and on everything engineered around the old arithmetic. Fell Creek, which drains Northgate's flashiest ground through culverts sized in 1961, is the study's worked example: the storm those culverts were designed for is no longer the storm that shows up.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Planning for the new normal</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, the county's emergency management director, said the study formalizes what her office had already begun doing by instinct. &quot;We have been treating short, violent rain as its own hazard for a few years now, separate from river flooding,&quot; Ambrose said. &quot;It behaves differently. It gives you 40 minutes of warning instead of four days. This work tells us we were right to split them, and it gives us the numbers to plan drills around.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The practical consequences run through the county's capital plans. The replacement culverts now being designed for Fell Street are sized against the updated rainfall figures rather than the historical ones, at roughly three times the old capacity. The parks department's bank plantings and the county's floodplain purchases, ground that exists to hold water, are the same logic in green: if the water is coming faster, the county needs more places willing to be wet.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Stanek's group is now extending the analysis to project the next 30 years, a range she concedes is less certain than the record behind it. The direction, she said, is not in doubt. &quot;Every degree of warming makes the bucket bigger. The open question is how much bigger, and whether we size our streets for the answer or keep sizing them for a climate that has already left.&quot;</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "kettle-river-comeback",
+			"title": "The Kettle River is coming back, one mussel at a time",
+			"author": "ethorne",
+			"category": "Environment",
+			"tags": [
+				"Kettle River",
+				"Wildlife",
+				"Water quality",
+				"Conservation"
+			],
+			"excerpt": "Survey crews from the Kettle Watershed Institute counted 14 native mussel species in the river this summer, nine more than they found in 2001.",
+			"age": 3121200,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — Diane Pruitt stood knee-deep in the Kettle River on a gravel bar just upstream of the Bridge Street crossing, reached into the current, and turned over something the size and color of a river stone. It was a mussel, a plain pocketbook, shut tight and very much alive. She held it up the way other people hold up a fish.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;Twenty-five years ago you would not have found one of these here,&quot; said Pruitt, the aquatic ecologist who has led the Kettle Watershed Institute's mussel and otter surveys since 2019. &quot;Twenty-five years ago I am not sure I would have put my hands in this water.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>This summer she and her crew found plenty. The institute's latest survey, finished last month, recorded live mussels of 14 native species at 12 sites between the Kettleford Lock and the South End, the most since counting began in 2001, when crews found five. River otters, first confirmed on the Kettle in 2021, have settled in: the survey documented three family groups, with pups at two sites. And for the third straight summer, dissolved oxygen stayed above the state's healthy-water threshold at every monitoring station in the county.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The river that runs 400 feet wide at Bridge Street is not the river Riverbend grew up with. By the institute's measures it is cleaner and more crowded with life than at any time in the last century. The comeback has been slow, expensive and mostly invisible, a matter of pipes and permits rather than ribbon cuttings. The animals are how you can finally see it.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What the mill left behind</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>For most of a century the Kettle did industrial work. The Kettle Paper Works opened in 1889, employed 900 people at its peak, and pulled its process water from the mill race before returning it, warmer and dirtier, downstream. The valve works at Dial Square added metals and machine oil from 1901. Older residents remember foam under the Depot Street Bridge and a smell that changed with the wind. Nobody swam. Few fished, and fewer ate what they caught.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The paper works closed in 1998 and the valve works in 2003, and the closures did some of the work simply by stopping the inputs. The rest was bought, argument by argument. The city rebuilt the South End wastewater plant in 2011. State officials tightened discharge limits on the industry that remained. The county spent $2.6 million in 2016 on 110 acres of floodplain north of Northgate, now the Fell Creek Preserve, specifically to hold and filter stormwater before it reaches the Kettle.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;People want a single hero for a story like this, and there is not one,&quot; said Dr. Adele Fenwick, dean of the College of Engineering and Applied Science at Riverbend State University, whose water resources group runs the monitoring network with the institute. &quot;It is 30 years of unglamorous decisions, and most of them were arguments about pipes.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:pullquote -->\n<figure class=\"wp-block-pullquote\"><blockquote><p>A mussel bed is a signed statement that the water has been decent for years.</p><cite>Diane Pruitt, Kettle Watershed Institute</cite></blockquote></figure>\n<!-- /wp:pullquote -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What the surveys found</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The institute does the river science everyone in the county ends up quoting: water quality, flood modeling, and the summer counts. Crews work on foot and by canoe from June to September, checking the same gravel bars and pools year after year so the numbers can be compared. The latest results, released this month:</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Live mussels of 14 native species at 12 survey sites, up from five species in 2001 and nine in 2015.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>River otters at three sites between the Kettleford Lock and the South End, with pups confirmed at two of them.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>41 fish species, including the river redhorse and the sand darter, neither recorded in the county since the 1970s.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Summer dissolved oxygen above the state's healthy-water threshold at all nine monitoring stations, for the third consecutive year.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:paragraph -->\n<p>Mussels are the measure Pruitt trusts most. They feed by filtering the water around them, they can live for decades, and they cannot leave when conditions turn. A fish can swim away from a bad stretch and swim back when it improves; a mussel bed either survives the years in between or it does not. &quot;They are doing the monitoring for us,&quot; Pruitt said. &quot;We just have to go count.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The count is deliberate, unhurried work. At each site the crew lays a measured grid on the riverbed and searches it by hand and by view scope, logging every live animal and returning each one to the spot it came from. A good site now yields more mussels in an hour than the 2001 survey found in a season.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The recovery is real, and it is not finished. The two miles below Dial Square still carry the valve works' legacy in their sediment: crews found only three mussel species there, and state officials still advise against eating bottom-feeding fish caught between the old works and the wastewater plant. Pruitt calls that stretch &quot;the last chapter, and the slowest one.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The threats have also changed shape, Dr. Fenwick said. The pipes are mostly fixed; now the water arrives too fast instead. &quot;Every big storm flushes the streets into the river in an hour,&quot; she said. &quot;Road salt in March, hot runoff in July. The 2019 flood moved more sediment in a week than the mill did in its last decade.&quot; The fixes, she said, are dull once again: more floodplain, more trees, bigger culverts, and the patience to keep paying for them.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">The people on the bank</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The clearest sign of the river's new standing may be the people beside it. On a Saturday morning in September the Kettle Greenway carries runners, anglers, birders and the Greenway Trail Crew, the roughly 60 volunteers who clear and repair the 11-mile path every week from March to November.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Judy Lambert, 67, of Ashgrove, has been on the crew for nine years. &quot;When I started we pulled shopping carts out of the shallows,&quot; she said, leaning on a rake near the Mill Race Footbridge. &quot;Two Saturdays ago we stood right here and watched an otter for 20 minutes. Nobody got a lick of work done, and nobody minded.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Silas Whitcomb, director of Riverbend Parks and Recreation, said trail counters have logged just over 600,000 greenway trips in the past year, roughly double the 2019 figure, and that his department has planted about 2,000 trees along the banks since 2020 to shade the water and slow the runoff. &quot;People protect what they can walk to,&quot; Whitcomb said. &quot;Every one of those trips is somebody who will speak up the next time the river needs money.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The crew's standing grievance is unchanged: the 1.2-mile gap in the greenway at the South End, blocked by an active rail easement and studied, so far inconclusively, since 2014. Whitcomb said the parks department has never stopped pressing the short-line operator for a crossing, and declined to guess at a construction date. Lambert has heard that before. She keeps a pair of bolt cutters in her garage, she said, and then made clear she was joking. Mostly.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Pruitt's crew has one more trip planned before the water cools: collecting brood stock for a hatchery trial that will attempt to reseed two mussel species below Dial Square next summer, with the state's blessing and the institute's usual refusal to promise results. If it works, the slowest chapter gets a faster ending. If it does not, the crew will count again next June and say exactly what it found.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;The river did the hard part. It stayed alive until we stopped hurting it,&quot; Pruitt said, packing wet mesh bags into a cooler on the tailgate. &quot;The least we can do is bring back the neighbors it lost.&quot;</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "kettle-river-bridge-repairs",
+			"title": "Kettle River Bridge closes for two weeks of repairs",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Kettle River",
+				"Infrastructure",
+				"Transit"
+			],
+			"excerpt": "Crews will replace four worn expansion joints starting next week, and Riverbend Transit will send three bus routes over the Depot Street Bridge in the meantime.",
+			"age": 3564000,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The Kettle River Bridge will close to traffic next week for two weeks while crews replace four worn expansion joints, the public works department said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The 1936 steel truss carries Bridge Street across the river, a lane each way, and is the older of the city's two road crossings. The joints coming out were installed in 1994 and have been patched six times since 2021, most recently in March, when a failed seal let water reach the deck beams below.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;We can keep filling the gaps with asphalt every spring, or we can close it once and fix it,&quot; said Marla Deen, director of Riverbend Public Works. &quot;Two weeks now is cheaper than a lane closed all winter.&quot; The job costs $940,000 and comes out of the city's annual street maintenance fund.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Drivers should use the Depot Street Bridge, about a half mile downstream. Riverbend Transit will route the 2, the 5 and the 9 over Depot Street for the duration, adding roughly 10 minutes to each trip, said Lucia Amaro, the agency's general manager. Revised timetables are posted at Union Depot and on the agency's website.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The sidewalk on the north side of the span stays open to people walking or wheeling bikes across, though it will close for short stretches while crews work overhead. The bridge is scheduled to reopen in two weeks, weather permitting, and Deen said the department will post daily updates on the city's website.</p>\n<!-- /wp:paragraph -->"
+		},
+		{
+			"slug": "grove-avenue-water-main",
+			"title": "Grove Avenue water main work starts Monday",
+			"author": "mreilly",
+			"category": "News",
+			"tags": [
+				"Infrastructure",
+				"Ashgrove"
+			],
+			"excerpt": "Crews will replace two blocks of 1948 cast-iron main under Ashgrove's commercial strip, working nights so the shops keep their daytime water and their customers.",
+			"age": 4154400,
+			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — Crews will begin replacing two blocks of water main under Grove Avenue on Monday, the public works department said, taking out a 1948 cast-iron pipe that has broken three times in the past two years.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The work covers Grove Avenue's commercial strip in Ashgrove and will run for about three weeks. To keep the shops open, crews will work from 8 p.m. to 6 a.m., with steel plates over the trench during the day and daytime water service maintained throughout.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;A 1948 main does not owe anybody anything, but it has started collecting its debts at random,&quot; said Marla Deen, director of Riverbend Public Works. &quot;Every break costs a day of emergency digging and a block of angry basements. Three weeks of planned night work is the cheap version of this.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Each property will get 48 hours' notice before its overnight service connection is switched, delivered by door hanger, and short overnight outages are expected only on switch nights. Parking on the west side of the avenue is suspended during the work, and the department will post progress updates on the city's website each Friday.</p>\n<!-- /wp:paragraph -->"
+		}
+	],
+	"feeds": {
+		"county": {
+			"url": "https://hallowaycounty.example/alerts/feed/",
+			"interval": "every_10_minutes",
+			"author": "dokafor",
+			"status": "active",
+			"last_run": 240,
+			"next_run": 360,
+			"last_result": {
+				"imported": 1,
+				"failed": 0,
+				"up_to_date": true
+			}
+		},
+		"schools": {
+			"url": "https://riverbendschools.example/feed/",
+			"interval": "hourly",
+			"author": "pverma",
+			"status": "active",
+			"last_run": 1500,
+			"next_run": 2100,
+			"last_result": {
+				"imported": 0,
+				"failed": 0,
+				"up_to_date": true
+			}
+		},
+		"watershed": {
+			"url": "https://kettlewatershed.example/gauges/feed/",
+			"interval": "every_30_minutes",
+			"author": "ethorne",
+			"status": "active",
+			"last_run": 720,
+			"next_run": 1080,
+			"last_result": {
+				"error": "Couldn't reach this RSS feed.",
+				"detail": "cURL error 28: Operation timed out after 10001 milliseconds with 0 bytes received"
+			}
+		},
+		"transit": {
+			"url": "https://riverbendtransit.example/alerts/feed/",
+			"interval": "daily",
+			"author": "mreilly",
+			"status": "paused",
+			"last_run": 158400,
+			"next_run": null,
+			"last_result": {
+				"imported": 2,
+				"failed": 0,
+				"up_to_date": true
+			}
+		}
+	},
+	"entries": [
+		{
+			"feed": "county",
+			"title": "Kettle River flood warning remains in effect",
+			"age": 3000,
+			"guid": "https://hallowaycounty.example/alerts/kettle-river-flood-warning-remains-in-effect/",
+			"source": "https://hallowaycounty.example/alerts/kettle-river-flood-warning-remains-in-effect/",
+			"content": "<p>The flood warning for the Kettle River through Riverbend remains in effect. The river is falling and should drop below flood stage, 18 feet, by tomorrow morning.</p>\n<p>Stay off flooded roads and out of floodwater. Two feet of moving water can float a car.</p>"
+		},
+		{
+			"feed": "county",
+			"title": "Fell Creek flood warning lifted",
+			"age": 15000,
+			"guid": "https://hallowaycounty.example/alerts/fell-creek-flood-warning-lifted/",
+			"source": "https://hallowaycounty.example/alerts/fell-creek-flood-warning-lifted/",
+			"content": "<p>The flood warning for the blocks along Fell Creek in Northgate has been lifted. The Kettle River warning stays in place.</p>"
+		},
+		{
+			"feed": "schools",
+			"title": "All schools open as normal tomorrow except Northgate High",
+			"age": 176400,
+			"guid": "https://riverbendschools.example/schools-open-as-normal-tomorrow/",
+			"source": "https://riverbendschools.example/schools-open-as-normal-tomorrow/",
+			"content": "<p>All Riverbend Public Schools will open at their usual times tomorrow. Northgate High will open at 10 a.m. while crews finish clearing the parking lot.</p>"
+		},
+		{
+			"feed": "county",
+			"title": "Fairgrounds shelter open on Route 9",
+			"age": 187200,
+			"guid": "https://hallowaycounty.example/alerts/fairgrounds-shelter-open/",
+			"source": "https://hallowaycounty.example/alerts/fairgrounds-shelter-open/",
+			"content": "<p>The county has opened the fairgrounds shelter on Route 9 for anyone who needs to leave home because of flooding. Pets are housed in a separate barn.</p>\n<p>Bring medication, documents and phone chargers if you can.</p>"
+		},
+		{
+			"feed": "watershed",
+			"title": "Kettleford Lock: the river has stopped rising upstream",
+			"age": 190800,
+			"guid": "https://kettlewatershed.example/gauges/kettleford-lock-stopped-rising/",
+			"source": "https://kettlewatershed.example/gauges/kettleford-lock-stopped-rising/",
+			"content": "<p>The Kettle Watershed Institute's station at the Kettleford Lock shows the river upstream has stopped rising. The crest at Riverbend usually follows a few hours later.</p>"
+		},
+		{
+			"feed": "transit",
+			"title": "Route 5 detours away from Fell Street",
+			"age": 192600,
+			"status": "draft",
+			"guid": "https://riverbendtransit.example/alerts/route-5-detour-fell-street/",
+			"source": "https://riverbendtransit.example/alerts/route-5-detour-fell-street/",
+			"content": "<p>Route 5 is detouring around Fell Street because of flooding at the creek. All other routes are running with delays of up to 15 minutes.</p>"
+		},
+		{
+			"feed": "schools",
+			"title": "All schools close at noon today",
+			"age": 205200,
+			"guid": "https://riverbendschools.example/schools-close-at-noon/",
+			"source": "https://riverbendschools.example/schools-close-at-noon/",
+			"content": "<p>All Riverbend Public Schools will close at noon today because of flooding. After-school programs are canceled, and buses will run on the early schedule.</p>"
+		},
+		{
+			"feed": "county",
+			"title": "Free sandbags at the Depot Street public works yard",
+			"age": 207000,
+			"guid": "https://hallowaycounty.example/alerts/free-sandbags-depot-street/",
+			"source": "https://hallowaycounty.example/alerts/free-sandbags-depot-street/",
+			"content": "<p>Filled sandbags are free at the public works yard on Depot Street, up to 25 per household. Bring a vehicle that can carry them.</p>"
+		},
+		{
+			"feed": "transit",
+			"title": "Buses cross the river on the Depot Street Bridge",
+			"age": 208800,
+			"guid": "https://riverbendtransit.example/alerts/buses-cross-on-depot-street-bridge/",
+			"source": "https://riverbendtransit.example/alerts/buses-cross-on-depot-street-bridge/",
+			"content": "<p>Routes 2, 5 and 9 are crossing the river on the Depot Street Bridge while Water Street is closed. Expect trips to take about 10 minutes longer.</p>"
+		}
+	],
+	"settings": {
+		"enabled": true,
+		"url_base": "lite",
+		"posts_per_page": 10,
+		"categories": [],
+		"include_subcategories": true,
+		"tags": [],
+		"excluded_categories": [],
+		"excluded_tags": [],
+		"footer_html": "<p>The Riverbend Gazette, 118 Water Street, Riverbend. Newsroom line: (555) 555-0140.</p>\n<p>Riverbend's newsroom since 1897. Reader-funded, and nothing here sits behind a paywall.</p>",
+		"custom_css": "",
+		"external_links_new_tab": true,
+		"ga4_measurement_id": "",
+		"primary_color": "#117644",
+		"font_import_url": "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap",
+		"font_body": "Source Serif 4"
+	},
+	"fonts": {
+		"https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap": "fonts/source-serif-4/source-serif-4.css",
+		"//fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap": "fonts/inter/inter.css",
+		"//fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap": "fonts/source-serif-4/source-serif-4.css"
+	}
+}
