@@ -1071,36 +1071,7 @@ function newspack_ls_screenshots_remove( $everything ) {
 		} else {
 			update_option( NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION, $previous['settings'] );
 		}
-		if ( get_stylesheet() !== $previous['stylesheet'] ) {
-			$requirements = wp_get_theme( $previous['stylesheet'] )->exists() ? validate_theme_requirements( $previous['stylesheet'] ) : false;
-			if ( is_wp_error( $requirements ) ) {
-				WP_CLI::warning( "The site's previous theme, {$previous['stylesheet']}, can't run on this site ({$requirements->get_error_message()}), so the Newspack theme stays active." );
-			} elseif ( $requirements ) {
-				newspack_ls_screenshots_switch_theme( $previous['stylesheet'] );
-			} else {
-				WP_CLI::warning( "The site's previous theme, {$previous['stylesheet']}, is no longer installed, so the Newspack theme stays active." );
-			}
-		}
-
-		$options = [
-			'sidebars_widgets' => $previous['widgets'] ?? null,
-			'widget_block'     => $previous['widget_block'] ?? null,
-		];
-		foreach ( $previous['theme_mods'] ?? [] as $stylesheet => $mods ) {
-			$options[ 'theme_mods_' . $stylesheet ] = $mods;
-		}
-		foreach ( array_filter( $options, 'is_array' ) as $option => $value ) {
-			update_option( $option, $value );
-		}
-		foreach ( array_keys( $options, false, true ) as $option ) {
-			delete_option( $option );
-		}
-
-		if ( isset( $previous['custom_css'] ) && wp_get_custom_css_post( NEWSPACK_LS_SCREENSHOTS_THEME ) ) {
-			wp_update_custom_css_post( $previous['custom_css'], [ 'stylesheet' => NEWSPACK_LS_SCREENSHOTS_THEME ] );
-		}
-
-		newspack_ls_screenshots_restore_site_logo( $previous['site_logo'] );
+		newspack_ls_screenshots_restore_theme( $previous );
 	}
 	delete_option( NEWSPACK_LS_SCREENSHOTS_STATE );
 	delete_option( 'newspack_ls_screenshots_retry_works' );
@@ -1114,26 +1085,71 @@ function newspack_ls_screenshots_remove( $everything ) {
 }
 
 /**
- * Puts back the site logo. It comes last in a removal: core deletes the
- * site_logo option when the active theme's mods are deleted or lose their
- * custom_logo, and removes the active theme's custom_logo when site_logo is
- * deleted, so restoring it earlier would let the theme restore undo it.
+ * Puts back the theme the site had before the seed, the widgets, theme mods
+ * and custom CSS the seed changed, and the site logo.
  *
- * @param int|string|false $site_logo The site_logo option before the seed, or false when there was none.
+ * Core keeps the site_logo option and the active theme's custom_logo mod in
+ * step: it deletes site_logo when the mods of the theme the request started
+ * with are deleted or lose their custom_logo, and removes the active theme's
+ * custom_logo when site_logo is deleted. A removal normally starts with the
+ * Newspack theme active, so deleting its mods after switching back would delete
+ * site_logo and, through it, the custom_logo just restored to the previous
+ * theme. Both deletions are off for the whole restore: the first through
+ * core's $_ignore_site_logo_changes flag, the second by unhooking it, since
+ * that callback ignores the flag and clears it. The logo is then put back
+ * exactly as it was.
+ *
+ * @param array $previous The settings from before the seed.
  */
-function newspack_ls_screenshots_restore_site_logo( $site_logo ) {
-	if ( false !== $site_logo ) {
-		update_option( 'site_logo', $site_logo );
-		return;
-	}
-	$sync = has_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo' );
+function newspack_ls_screenshots_restore_theme( $previous ) {
+	global $_ignore_site_logo_changes;
+
+	$ignore                    = $_ignore_site_logo_changes;
+	$_ignore_site_logo_changes = true;
+	$sync                      = has_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo' );
 	if ( false !== $sync ) {
 		remove_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo', $sync );
 	}
-	delete_option( 'site_logo' );
+
+	if ( get_stylesheet() !== $previous['stylesheet'] ) {
+		$requirements = wp_get_theme( $previous['stylesheet'] )->exists() ? validate_theme_requirements( $previous['stylesheet'] ) : false;
+		if ( is_wp_error( $requirements ) ) {
+			WP_CLI::warning( "The site's previous theme, {$previous['stylesheet']}, can't run on this site ({$requirements->get_error_message()}), so the Newspack theme stays active." );
+		} elseif ( $requirements ) {
+			newspack_ls_screenshots_switch_theme( $previous['stylesheet'] );
+		} else {
+			WP_CLI::warning( "The site's previous theme, {$previous['stylesheet']}, is no longer installed, so the Newspack theme stays active." );
+		}
+	}
+
+	$options = [
+		'sidebars_widgets' => $previous['widgets'] ?? null,
+		'widget_block'     => $previous['widget_block'] ?? null,
+	];
+	foreach ( $previous['theme_mods'] ?? [] as $stylesheet => $mods ) {
+		$options[ 'theme_mods_' . $stylesheet ] = $mods;
+	}
+	foreach ( array_filter( $options, 'is_array' ) as $option => $value ) {
+		update_option( $option, $value );
+	}
+	foreach ( array_keys( $options, false, true ) as $option ) {
+		delete_option( $option );
+	}
+
+	if ( isset( $previous['custom_css'] ) && wp_get_custom_css_post( NEWSPACK_LS_SCREENSHOTS_THEME ) ) {
+		wp_update_custom_css_post( $previous['custom_css'], [ 'stylesheet' => NEWSPACK_LS_SCREENSHOTS_THEME ] );
+	}
+
+	if ( false === $previous['site_logo'] ) {
+		delete_option( 'site_logo' );
+	} else {
+		update_option( 'site_logo', $previous['site_logo'] );
+	}
+
 	if ( false !== $sync ) {
 		add_action( 'delete_option_site_logo', '_delete_custom_logo_on_remove_site_logo', $sync );
 	}
+	$_ignore_site_logo_changes = $ignore;
 }
 
 /**

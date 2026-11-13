@@ -93,7 +93,7 @@ Removal deletes only what the seed marked and the RSS feeds it added, and refuse
 
 If a seed stops partway, run `remove`, fix what it reported, and seed again.
 
-Scheduled imports leave each feed's last run and result as the seed set them, so the Feeds screen reads the same however long the site sits before you take a screenshot. Retry Now records a run at that moment, with the feed's seeded result. Retry Now on the Kettle Watershed Institute feed fails again with the same error, like a feed that's still down. For a screenshot of a retry that works, so that Retry Now and the scheduled imports bring it back up to date, turn that on with `wp option update newspack_ls_screenshots_retry_works 1`, and turn it off again with `wp option delete newspack_ls_screenshots_retry_works`. Rerun the seed to bring the error back.
+Scheduled imports and Retry Now give each feed the result the seed set, so the results on the Feeds screen stay the same however long the site sits before you take a screenshot. Each run records its own time, so Last Run and Next Run move on as WP-Cron runs the imports, as they would on a real site. Retry Now on the Kettle Watershed Institute feed fails again with the same error, like a feed that's still down. For a screenshot of a retry that works, so that Retry Now and the scheduled imports bring it back up to date, turn that on with `wp option update newspack_ls_screenshots_retry_works 1`, and turn it off again with `wp option delete newspack_ls_screenshots_retry_works`. Rerun the seed to bring the error back.
 
 ## Take a screenshot
 

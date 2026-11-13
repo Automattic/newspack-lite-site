@@ -4,8 +4,7 @@
  * Description: Stands in for the services the docs screenshots show, on a site set aside for screenshots. The seed installs and removes this file.
  *
  * Answers the scheduled runs and Retry Now of the demo RSS feeds, which point
- * at made-up hosts, with the result each feed is meant to show, and leaves
- * each feed's last run as seeded on scheduled runs. Serves the
+ * at made-up hosts, with the result each feed is meant to show. Serves the
  * fonts of Lite Site and the theme from this folder in place of the font
  * provider's stylesheets.
  * Blocks every request WordPress's HTTP API makes to another host, and all
@@ -41,21 +40,21 @@ function newspack_ls_screenshots_fakes_content() {
  * Stands in for an import of a demo RSS feed, with the result the feed is
  * meant to show: the one content.json gives it. The feed that can't be
  * reached keeps failing, unless the `newspack_ls_screenshots_retry_works`
- * option is set, when it comes back up to date. A scheduled run keeps the
- * feed's last run where the seed put it, so the Feeds screen reads the same
- * however long the site sits between seed and screenshot; Retry Now records
- * a run at that moment, as a real retry would.
+ * option is set, when it comes back up to date. Every run, scheduled or Retry
+ * Now, records its time as the feed's last run, as a real import would.
  *
- * @param string $feed_id   Feed ID.
- * @param bool   $scheduled Whether this is a scheduled run rather than Retry Now.
+ * @param string $feed_id Feed ID.
  * @return bool Whether the feed is a demo feed that was answered.
  */
-function newspack_ls_screenshots_fake_import( $feed_id, $scheduled ) {
+function newspack_ls_screenshots_fake_import( $feed_id ) {
 	$state = get_option( 'newspack_ls_screenshots_state' );
 	$key   = $state['feeds'][ $feed_id ] ?? null;
+	if ( null === $key ) {
+		return false;
+	}
 	$feeds = get_option( 'newspack_lite_site_rss_importer', [] );
 	$seed  = newspack_ls_screenshots_fakes_content()['feeds'][ $key ]['last_result'] ?? null;
-	if ( null === $key || ! isset( $feeds['feeds'][ $feed_id ] ) || ! is_array( $seed ) ) {
+	if ( ! isset( $feeds['feeds'][ $feed_id ] ) || ! is_array( $seed ) ) {
 		return false;
 	}
 
@@ -68,9 +67,7 @@ function newspack_ls_screenshots_fake_import( $feed_id, $scheduled ) {
 		];
 	}
 
-	if ( ! $scheduled ) {
-		$feeds['feeds'][ $feed_id ]['last_run'] = time();
-	}
+	$feeds['feeds'][ $feed_id ]['last_run']    = time();
 	$feeds['feeds'][ $feed_id ]['last_result'] = $result;
 	update_option( 'newspack_lite_site_rss_importer', $feeds );
 	return true;
@@ -86,7 +83,7 @@ add_action(
 		add_action(
 			Newspack_Lite_Site\RSS_Importer::CRON_HOOK,
 			function ( $feed_id = '' ) {
-				if ( ! newspack_ls_screenshots_fake_import( (string) $feed_id, true ) ) {
+				if ( ! newspack_ls_screenshots_fake_import( (string) $feed_id ) ) {
 					Newspack_Lite_Site\RSS_Importer::run_scheduled_import( $feed_id );
 				}
 			}
@@ -108,7 +105,7 @@ add_filter(
 		if ( 'active' !== ( $feeds[ $feed_id ]['status'] ?? '' ) ) {
 			return $result;
 		}
-		if ( ! newspack_ls_screenshots_fake_import( $feed_id, false ) ) {
+		if ( ! newspack_ls_screenshots_fake_import( $feed_id ) ) {
 			return $result;
 		}
 		return Newspack_Lite_Site\RSS_Importer::rest_get_feeds();
