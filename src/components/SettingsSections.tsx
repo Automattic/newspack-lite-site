@@ -107,9 +107,9 @@ export const SettingsSections = ( {
 												) }
 											</Button>
 											{ ! canView && (
-												<span id="newspack-lite-view-help" className="newspack-lite-path-field__help">
+												<VisuallyHidden render={ <span id="newspack-lite-view-help" /> }>
 													{ __( 'Turn on Lite Site and save the settings to view it.', 'newspack-lite-site' ) }
-												</span>
+												</VisuallyHidden>
 											) }
 										</Stack>
 									</Stack>
