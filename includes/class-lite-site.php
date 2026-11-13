@@ -349,7 +349,7 @@ class Lite_Site {
 	 *
 	 * @return string CSS font-family value.
 	 */
-	public static function get_font_family() {
+	public static function get_font_family(): string {
 		$settings  = self::get_settings();
 		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
 
@@ -361,15 +361,15 @@ class Lite_Site {
 	/**
 	 * Turn a comma-separated list of font names into a valid CSS font-family value.
 	 *
-	 * Generic families stay unquoted, other names are double-quoted, and
-	 * characters that could end the declaration or the style element are
-	 * removed. Appends sans-serif when no generic family is present, matching
-	 * the default stack. Returns an empty string when no usable name remains.
+	 * Generic families and vendor keywords stay unquoted, other names are
+	 * double-quoted, and characters that could end the declaration or the style
+	 * element are removed. No fallback family is added. Returns an empty string
+	 * when no usable name remains.
 	 *
 	 * @param string $value Raw font setting.
 	 * @return string CSS font-family value, or an empty string.
 	 */
-	public static function build_font_family( string $value ): string {
+	private static function build_font_family( string $value ): string {
 		$generics = [
 			'serif',
 			'sans-serif',
@@ -388,22 +388,22 @@ class Lite_Site {
 			'blinkmacsystemfont',
 		];
 
-		$value = preg_replace( '/[;{}<>\x00-\x1F\x7F]/', '', $value );
+		$value = preg_replace( '/[\x00-\x1F\x7F]/', ' ', $value );
+		$value = preg_replace( '/[;{}<>]/', '', (string) $value );
 		preg_match_all( '/"[^"]*"|\'[^\']*\'|[^,]+/', (string) $value, $matches );
 
-		$families    = [];
-		$has_generic = false;
+		$families = [];
 		foreach ( $matches[0] as $name ) {
 			$name = trim( $name );
 			if ( strlen( $name ) >= 2 && ( ( '"' === $name[0] && '"' === substr( $name, -1 ) ) || ( "'" === $name[0] && "'" === substr( $name, -1 ) ) ) ) {
-				$name = trim( substr( $name, 1, -1 ) );
+				$name = substr( $name, 1, -1 );
 			}
+			$name = trim( preg_replace( '/\s+/', ' ', trim( $name, " \"'" ) ) );
 			if ( '' === $name ) {
 				continue;
 			}
 			if ( in_array( strtolower( $name ), $generics, true ) ) {
-				$has_generic = true;
-				$families[]  = $name;
+				$families[] = $name;
 				continue;
 			}
 			$families[] = '"' . str_replace( [ '\\', '"' ], [ '\\\\', '\\"' ], $name ) . '"';
@@ -412,10 +412,6 @@ class Lite_Site {
 		if ( empty( $families ) ) {
 			return '';
 		}
-		if ( ! $has_generic ) {
-			$families[] = 'sans-serif';
-		}
-
 		return implode( ', ', $families );
 	}
 

@@ -31,17 +31,11 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A name starting a token with a digit is quoted.
+	 * A single bare name is quoted, including one with a digit-leading token.
 	 */
-	public function test_name_with_digit_is_quoted() {
-		$this->assertSame( '"Source Serif 4", sans-serif', $this->family_for( 'Source Serif 4' ) );
-	}
-
-	/**
-	 * A single bare name is quoted and gets a generic fallback.
-	 */
-	public function test_single_name_gets_fallback() {
-		$this->assertSame( '"Georgia", sans-serif', $this->family_for( 'Georgia' ) );
+	public function test_single_name_is_quoted() {
+		$this->assertSame( '"Source Serif 4"', $this->family_for( 'Source Serif 4' ) );
+		$this->assertSame( '"Georgia"', $this->family_for( 'Georgia' ) );
 	}
 
 	/**
@@ -53,11 +47,28 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * Generic families stay unquoted and suppress the fallback.
+	 * A stray unmatched quote on either end of a name is dropped.
+	 */
+	public function test_unbalanced_quote_is_stripped() {
+		$this->assertSame( '"Source Serif 4"', $this->family_for( '"Source Serif 4' ) );
+		$this->assertSame( '"Source Serif 4"', $this->family_for( "Source Serif 4'" ) );
+	}
+
+	/**
+	 * Control characters become a space instead of joining the words.
+	 */
+	public function test_control_characters_become_spaces() {
+		$this->assertSame( '"Open Sans"', $this->family_for( "Open\tSans" ) );
+		$this->assertSame( '"Open Sans"', $this->family_for( "Open\n \r\nSans" ) );
+	}
+
+	/**
+	 * Generic families and vendor keywords stay unquoted and nothing is appended.
 	 */
 	public function test_generics_stay_unquoted() {
 		$this->assertSame( '"Inter", sans-serif', $this->family_for( 'Inter, sans-serif' ) );
 		$this->assertSame( 'system-ui, -apple-system, monospace', $this->family_for( 'system-ui, -apple-system, monospace' ) );
+		$this->assertSame( '-apple-system', $this->family_for( '-apple-system' ) );
 		$this->assertSame( 'SERIF', $this->family_for( 'SERIF' ) );
 	}
 
@@ -65,15 +76,15 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	 * Comma lists are split, trimmed and quoted per name.
 	 */
 	public function test_comma_list() {
-		$this->assertSame( '"Open Sans", "Noto Sans", sans-serif', $this->family_for( '  Open Sans ,Noto Sans,  ' ) );
+		$this->assertSame( '"Open Sans", "Noto Sans"', $this->family_for( '  Open Sans ,Noto Sans,  ' ) );
 	}
 
 	/**
 	 * Embedded quotes and backslashes are escaped.
 	 */
 	public function test_embedded_quote_and_backslash_are_escaped() {
-		$this->assertSame( '"Foo\\"Bar", sans-serif', $this->family_for( 'Foo"Bar' ) );
-		$this->assertSame( '"Foo\\\\Bar", sans-serif', $this->family_for( 'Foo\\Bar' ) );
+		$this->assertSame( '"Foo\\"Bar"', $this->family_for( 'Foo"Bar' ) );
+		$this->assertSame( '"Foo\\\\Bar"', $this->family_for( 'Foo\\Bar' ) );
 	}
 
 	/**
@@ -85,7 +96,7 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 		foreach ( [ ';', '{', '}', '<', '>', "\n" ] as $char ) {
 			$this->assertStringNotContainsString( $char, $value );
 		}
-		$this->assertSame( 1, preg_match( '/^"[^"]*", sans-serif$/', $value ) );
+		$this->assertSame( 1, preg_match( '/^"[^"]*"$/', $value ) );
 	}
 
 	/**
@@ -105,7 +116,7 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 		include dirname( __DIR__ ) . '/templates/lite-site-styles.php';
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'font-family: "Source Serif 4", sans-serif;', $output );
+		$this->assertStringContainsString( 'font-family: "Source Serif 4";', $output );
 		$this->assertStringNotContainsString( '&quot;', $output );
 	}
 }
