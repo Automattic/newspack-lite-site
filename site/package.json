@@ -1,0 +1,15 @@
+{
+	"name": "newspack-lite-site-docs",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"shot": "node screenshots/shot.mjs"
+	},
+	"devDependencies": {
+		"playwright-core": "^1.64.1",
+		"sharp": "^0.35.5"
+	}
+}
