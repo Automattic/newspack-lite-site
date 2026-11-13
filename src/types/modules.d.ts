@@ -8,7 +8,6 @@ declare module 'newspack-components/dist/esm/text-control';
 declare module 'newspack-components/dist/esm/hooks/use-unsaved-changes-dialog';
 declare module 'newspack-components/dist/esm/status-indicator';
 declare module 'newspack-components/dist/esm/dataviews';
-declare module 'newspack-components/dist/esm/empty-state';
 declare module 'newspack-components/dist/esm/waiting';
 declare module 'newspack-components/dist/esm/drawer';
 declare module 'newspack-components/dist/esm/tooltip-badge';

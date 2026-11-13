@@ -8,12 +8,11 @@
 import { Button, Notice, ExternalLink } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { rss } from '@wordpress/icons';
-import { Stack } from '@wordpress/ui';
+import { EmptyState, Stack } from '@wordpress/ui';
 
 /**
  * External dependencies.
  */
-import { EmptyState } from 'newspack-components/dist/esm/empty-state';
 import Waiting from 'newspack-components/dist/esm/waiting';
 
 /**
@@ -65,21 +64,23 @@ export const RssImportApp = ( {
 		);
 	} else if ( 0 === feeds.length ) {
 		content = (
-			<EmptyState.Root>
-				<EmptyState.Header
-					icon={ rss }
-					title={ __( 'No RSS feeds yet', 'newspack-lite-site' ) }
-					description={ __(
-						"Import posts from another site's RSS feed on a schedule. Each new item is published on the Lite Site as an RSS entry.",
-						'newspack-lite-site'
-					) }
-				/>
-				<EmptyState.Actions>
-					<Button variant="primary" onClick={ onAdd }>
-						{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
-					</Button>
-				</EmptyState.Actions>
-			</EmptyState.Root>
+			<Stack direction="column" align="center">
+				<EmptyState.Root>
+					<EmptyState.Icon icon={ rss } />
+					<EmptyState.Title>{ __( 'No RSS feeds yet', 'newspack-lite-site' ) }</EmptyState.Title>
+					<EmptyState.Description>
+						{ __(
+							"Import posts from another site's RSS feed on a schedule. Each new item is published on the Lite Site as an RSS entry.",
+							'newspack-lite-site'
+						) }
+					</EmptyState.Description>
+					<EmptyState.Actions>
+						<Button variant="primary" onClick={ onAdd }>
+							{ __( 'Add RSS Feed', 'newspack-lite-site' ) }
+						</Button>
+					</EmptyState.Actions>
+				</EmptyState.Root>
+			</Stack>
 		);
 	} else {
 		content = <FeedsList feeds={ feeds } onEdit={ onEdit } onDelete={ onDelete } countLabel={ feedsCountLabel } />;
