@@ -343,16 +343,80 @@ class Lite_Site {
 	/**
 	 * Get the font family for the lite site body text.
 	 *
+	 * Family names are quoted so names that are invalid as bare CSS identifiers,
+	 * such as "Source Serif 4", still apply. The value is safe to print inside a
+	 * style element without further escaping.
+	 *
 	 * @return string CSS font-family value.
 	 */
 	public static function get_font_family() {
-		$settings = self::get_settings();
+		$settings  = self::get_settings();
 		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
-		if ( ! empty( $font_body ) ) {
-			return $font_body;
+
+		$family = self::build_font_family( (string) $font_body );
+
+		return '' !== $family ? $family : 'system-ui, -apple-system, sans-serif';
+	}
+
+	/**
+	 * Turn a comma-separated list of font names into a valid CSS font-family value.
+	 *
+	 * Generic families stay unquoted, other names are double-quoted, and
+	 * characters that could end the declaration or the style element are
+	 * removed. Appends sans-serif when no generic family is present, matching
+	 * the default stack. Returns an empty string when no usable name remains.
+	 *
+	 * @param string $value Raw font setting.
+	 * @return string CSS font-family value, or an empty string.
+	 */
+	public static function build_font_family( string $value ): string {
+		$generics = [
+			'serif',
+			'sans-serif',
+			'monospace',
+			'cursive',
+			'fantasy',
+			'system-ui',
+			'ui-serif',
+			'ui-sans-serif',
+			'ui-monospace',
+			'ui-rounded',
+			'emoji',
+			'math',
+			'fangsong',
+			'-apple-system',
+			'blinkmacsystemfont',
+		];
+
+		$value = preg_replace( '/[;{}<>\x00-\x1F\x7F]/', '', $value );
+		preg_match_all( '/"[^"]*"|\'[^\']*\'|[^,]+/', (string) $value, $matches );
+
+		$families    = [];
+		$has_generic = false;
+		foreach ( $matches[0] as $name ) {
+			$name = trim( $name );
+			if ( strlen( $name ) >= 2 && ( ( '"' === $name[0] && '"' === substr( $name, -1 ) ) || ( "'" === $name[0] && "'" === substr( $name, -1 ) ) ) ) {
+				$name = trim( substr( $name, 1, -1 ) );
+			}
+			if ( '' === $name ) {
+				continue;
+			}
+			if ( in_array( strtolower( $name ), $generics, true ) ) {
+				$has_generic = true;
+				$families[]  = $name;
+				continue;
+			}
+			$families[] = '"' . str_replace( [ '\\', '"' ], [ '\\\\', '\\"' ], $name ) . '"';
 		}
 
-		return 'system-ui, -apple-system, sans-serif';
+		if ( empty( $families ) ) {
+			return '';
+		}
+		if ( ! $has_generic ) {
+			$families[] = 'sans-serif';
+		}
+
+		return implode( ', ', $families );
 	}
 
 	/**
