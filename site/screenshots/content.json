@@ -134,7 +134,7 @@
 			"last_name": "Okafor",
 			"email": "dokafor@example.com",
 			"role": "editor",
-			"avatar": "dana.svg"
+			"avatar": "dana-okafor.png"
 		},
 		{
 			"login": "mreilly",
@@ -142,7 +142,7 @@
 			"last_name": "Reilly",
 			"email": "mreilly@example.com",
 			"role": "author",
-			"avatar": "marcus.svg"
+			"avatar": "marcus-reilly.png"
 		},
 		{
 			"login": "ethorne",
@@ -150,7 +150,7 @@
 			"last_name": "Thorne",
 			"email": "ethorne@example.com",
 			"role": "author",
-			"avatar": "ellis.svg"
+			"avatar": "ellis-thorne.png"
 		},
 		{
 			"login": "pverma",
@@ -158,7 +158,7 @@
 			"last_name": "Verma",
 			"email": "pverma@example.com",
 			"role": "author",
-			"avatar": "priya.svg"
+			"avatar": "priya-verma.png"
 		},
 		{
 			"login": "ndoyle",
@@ -166,7 +166,7 @@
 			"last_name": "Doyle",
 			"email": "ndoyle@example.com",
 			"role": "author",
-			"avatar": "nora.svg"
+			"avatar": "nora-doyle.png"
 		},
 		{
 			"login": "sadeyemi",
@@ -174,7 +174,7 @@
 			"last_name": "Adeyemi",
 			"email": "sadeyemi@example.com",
 			"role": "author",
-			"avatar": "simone.svg"
+			"avatar": "simone-adeyemi.png"
 		},
 		{
 			"login": "hbrennan",
@@ -182,15 +182,65 @@
 			"last_name": "Brennan",
 			"email": "hbrennan@example.com",
 			"role": "author",
-			"avatar": "hal.svg"
+			"avatar": "hal-brennan.png"
 		}
 	],
 	"media": [
 		{
 			"file": "flood-street.jpg",
-			"title": "Flooded street",
+			"title": "Floodwater on Water Street",
 			"alt": "Two cars drive through brown floodwater running across a city street.",
-			"caption": "Floodwater crosses Water Street at the Depot Street low point as the river rose."
+			"caption": "Cars push through floodwater on Water Street, where the river came over the curb at the low point near Depot Street.",
+			"credit": "Sveta K",
+			"credit_org": "Pexels"
+		},
+		{
+			"file": "flooded-field.jpg",
+			"title": "Flooded field",
+			"alt": "Floodwater covers a grassy field up to its fence posts, with bare willows standing in the water under a blue sky.",
+			"caption": "Floodwater covers fields beside the Kettle Greenway north of the city.",
+			"credit": "Toon de Vos",
+			"credit_org": "Pexels"
+		},
+		{
+			"file": "flooded-riverside-walkway.jpg",
+			"title": "Flooded riverside walkway",
+			"alt": "Brown water covers a riverside walkway up to the seat of a bench, beside an iron railing under heavy gray clouds.",
+			"caption": "The river covers the walkway at the Rivermill end of the Mill Race Footbridge.",
+			"credit": "Andrey Karpov",
+			"credit_org": "Pexels"
+		},
+		{
+			"file": "kettle-river-sunset.jpg",
+			"title": "River at sunset",
+			"alt": "The sun sets behind bare trees on the far bank of a wide, calm river, with gravel bars at the water's edge.",
+			"caption": "The Kettle River below Pilcher Park as the water starts to fall.",
+			"credit": "azxa661",
+			"credit_org": "Flickr"
+		},
+		{
+			"file": "water-main-trench.jpg",
+			"title": "Water main trench",
+			"alt": "A deep trench cuts through the soil beside a road, with a length of pipe in the dirt and a safety railing along the edge.",
+			"caption": "A trench opened for water main work. On Grove Avenue, crews will dig at night and plate over the trench by day.",
+			"credit": "Lav Ulv",
+			"credit_org": "Flickr"
+		},
+		{
+			"file": "road-works.jpg",
+			"title": "Road crew with a jackhammer",
+			"alt": "A road worker in orange high-visibility trousers breaks up asphalt with a jackhammer beside a traffic cone and a truck.",
+			"caption": "A public works crew breaks up asphalt. On the Kettle River Bridge, crews will cut out four worn expansion joints.",
+			"credit": "Thomas Fuhrmann",
+			"credit_org": "Pexels"
+		},
+		{
+			"file": "reporters-notebook.jpg",
+			"title": "Notebook and pen",
+			"alt": "An open notebook of handwritten notes lies on a desk with a pen across the page.",
+			"caption": "A reporter's notes from a night on the flood desk.",
+			"credit": "neil conway",
+			"credit_org": "Flickr"
 		}
 	],
 	"posts": [
@@ -208,7 +258,7 @@
 			"age": 19800,
 			"sticky": true,
 			"image": "flood-street.jpg",
-			"content": "<!-- wp:paragraph -->\n<p>The Kettle River is falling, but much of the riverfront is still shut. The Bridge Street gauge read 19.8 feet this afternoon, and Halloway County Emergency Management expects the river to drop back under flood stage, 18 feet, by tomorrow morning. Here is what is closed, what has reopened and where to get help. We update this page as things change.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Still closed</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>The Kettle Greenway, from Pilcher Park to the South End. The parks department expects it to stay closed for several days while crews clear silt and check the boardwalks.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>The Mill Race Footbridge, until the river is back under flood stage. Cross on the Depot Street Bridge instead.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Fields in Northgate and along the greenway. High school games have been moved.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:image {\"id\":\"{{media-id:flood-street.jpg}}\",\"sizeSlug\":\"large\",\"linkDestination\":\"none\"} -->\n<figure class=\"wp-block-image size-large\"><img src=\"{{media-url:flood-street.jpg}}\" alt=\"Two cars drive through brown floodwater running across a city street.\" class=\"wp-image-{{media-id:flood-street.jpg}}\"/><figcaption class=\"wp-element-caption\">Floodwater crosses Water Street at the Depot Street low point as the river rose.</figcaption></figure>\n<!-- /wp:image -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Open again</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Water Street, between Bridge Street and Depot Street, after the river dropped back below the curb.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Grove Avenue, after crews cleared a fallen ash. Buses are back on their usual routes.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Power in Northgate. Anyone still without supply should call the utility's outage line.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Where to get help</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>The fairgrounds shelter on Route 9 stays open tonight for anyone who can't go home. Pets go in a separate barn. Bring medication, documents and phone chargers if you can.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>The main library on Courthouse Square is open until 9 p.m. for flooded households, with free coffee and phone charging.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Filled sandbags are free at the public works yard on Depot Street, up to 25 per household.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, asked people to stay off flooded roads until the warning is lifted. &quot;Two feet of moving water floats a car. Turn around and find another way,&quot; she said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Sign up for the county's text alerts at <a href=\"https://hallowaycounty.example/alerts/\">hallowaycounty.example/alerts</a>, and read our guide to <a href=\"{{post:flood-preparedness-guide}}\">what to do before the Kettle River rises</a>.</p>\n<!-- /wp:paragraph -->"
+			"content": "<!-- wp:paragraph -->\n<p>The Kettle River is falling, but much of the riverfront is still shut. The Bridge Street gauge read 19.8 feet this afternoon, and Halloway County Emergency Management expects the river to drop back under flood stage, 18 feet, by tomorrow morning. Here is what is closed, what has reopened and where to get help. We update this page as things change.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Still closed</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>The Kettle Greenway, from Pilcher Park to the South End. The parks department expects it to stay closed for several days while crews clear silt and check the boardwalks.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>The Mill Race Footbridge, until the river is back under flood stage. Cross on the Depot Street Bridge instead.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Fields in Northgate and along the greenway. High school games have been moved.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:image {\"id\":\"{{media-id:flooded-field.jpg}}\",\"sizeSlug\":\"large\",\"linkDestination\":\"none\"} -->\n<figure class=\"wp-block-image size-large\"><img src=\"{{media-url:flooded-field.jpg}}\" alt=\"Floodwater covers a grassy field up to its fence posts, with bare willows standing in the water under a blue sky.\" class=\"wp-image-{{media-id:flooded-field.jpg}}\"/><figcaption class=\"wp-element-caption\">Floodwater covers fields beside the Kettle Greenway north of the city.</figcaption></figure>\n<!-- /wp:image -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Open again</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Water Street, between Bridge Street and Depot Street, after the river dropped back below the curb.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Grove Avenue, after crews cleared a fallen ash. Buses are back on their usual routes.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Power in Northgate. Anyone still without supply should call the utility's outage line.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Where to get help</h2>\n<!-- /wp:heading -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>The fairgrounds shelter on Route 9 stays open tonight for anyone who can't go home. Pets go in a separate barn. Bring medication, documents and phone chargers if you can.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>The main library on Courthouse Square is open until 9 p.m. for flooded households, with free coffee and phone charging.</li>\n<!-- /wp:list-item -->\n<!-- wp:list-item -->\n<li>Filled sandbags are free at the public works yard on Depot Street, up to 25 per household.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, asked people to stay off flooded roads until the warning is lifted. &quot;Two feet of moving water floats a car. Turn around and find another way,&quot; she said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Sign up for the county's text alerts at <a href=\"https://hallowaycounty.example/alerts/\">hallowaycounty.example/alerts</a>, and read our guide to <a href=\"{{post:flood-preparedness-guide}}\">what to do before the Kettle River rises</a>.</p>\n<!-- /wp:paragraph -->"
 		},
 		{
 			"slug": "kettle-river-crests",
@@ -221,6 +271,7 @@
 			],
 			"excerpt": "The river peaked just after 6 p.m., 3.3 feet above flood stage, and the warning stays in place until it is back under 18 feet.",
 			"age": 183600,
+			"image": "kettle-river-sunset.jpg",
 			"content": "<!-- wp:paragraph -->\n<p>The Kettle River peaked at 21.3 feet at the Bridge Street gauge just after 6 p.m. and has started to fall. That is 3.3 feet above flood stage, and well short of the 25.1 feet the river reached in 2019.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The first sign the crest was close came in the afternoon, when the Kettle Watershed Institute's station at the Kettleford Lock showed the river upstream had stopped rising. The rain stopped soon after.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, said the flood warning stays in place until the river is back under 18 feet, which forecasters expect by the end of tomorrow. &quot;The water goes down slower than it came up, and the roads it leaves behind are not safe yet,&quot; Ambrose said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Water Street will stay closed overnight while public works crews check the storm drains and clear debris. Marla Deen, director of Riverbend Public Works, said her crews would start at the low point by Depot Street, where the river came over the curb in the afternoon.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The fairgrounds shelter on Route 9 is open through the night, with a nurse team from Riverbend Memorial on site.</p>\n<!-- /wp:paragraph -->"
 		},
 		{
@@ -234,6 +285,7 @@
 			],
 			"excerpt": "The footbridge stays shut until the river drops below flood stage, so people on foot and on bikes cross on the Depot Street Bridge.",
 			"age": 180000,
+			"image": "flooded-riverside-walkway.jpg",
 			"content": "<!-- wp:paragraph -->\n<p>The Mill Race Footbridge is closed. People walking or cycling should cross on the Depot Street Bridge, which has a protected lane on its downstream side.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The parks department shut the footbridge as the river rose toward its deck. Marla Deen, director of Riverbend Public Works, said it will stay closed until the river is back under flood stage and an engineer has checked the supports for debris.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;We would rather keep it shut a day longer than reopen it with a tree jammed against a pier,&quot; Deen said.</p>\n<!-- /wp:paragraph -->"
 		},
 		{
@@ -246,8 +298,10 @@
 				"Youth sport"
 			],
 			"excerpt": "Fields in Northgate and along the greenway are under water, so high school coaches spent the day finding new dates.",
+			"subtitle": "Northgate's home game moves to Ashgrove on Saturday, and the riverside practice fields will stay closed for at least a week after the water drops.",
 			"age": 194400,
-			"content": "<!-- wp:paragraph -->\n<p>Coaches across the county scrambled to find new dates for Friday's high school games as the Kettle River left fields in Northgate and along the greenway under water.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, said the river should crest by early evening, but Water Street and the greenway will stay closed through the night.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Residents in the floodplain were urged to stay at the fairgrounds shelter until officials confirm it is safe to return. Schools in Northgate will open late tomorrow.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Marla Deen, director of Riverbend Public Works, said her department will review the storm drains on Water Street once the water drops, starting with the low point at Depot Street.</p>\n<!-- /wp:paragraph -->"
+			"image": "flooded-field.jpg",
+			"content": "<!-- wp:paragraph -->\n<p>Coaches across the county scrambled to find new dates for Friday’s high school games as the Kettle River left fields in Northgate and along the greenway under water.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:newspack-rolling-coverage/rolling-coverage {\"coverageId\":\"{{coverage:live-kettle-river-flood}}\",\"layoutId\":\"{{layout:digest}}\",\"latestOnly\":true,\"latestCount\":3} /-->\n\n<!-- wp:paragraph -->\n<p>The Northgate Hawks’ home game against Kettleford will be played Saturday at 1 p.m. at Ashgrove High School, whose field sits well above the river. The Central Ravens’ game moves to next Thursday. The Ashgrove Bulldogs’ road game goes ahead as scheduled.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The Northgate field sits a block from Fell Creek, which went over Fell Street this afternoon for the fifth time since 2019. By the time the creek sensors sent their text alerts, water was standing across one end zone.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Tickets bought for Friday will be honored at the rescheduled games, and the visiting teams’ buses have been rebooked, the schools’ athletic offices said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Riverside fields closed for a week</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>The parks department has closed every field along the greenway, including the youth soccer fields below Pilcher Park. Silas Whitcomb, director of Riverbend Parks and Recreation, said they would stay closed for at least a week after the water drops, while crews clear silt and check for washouts.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>“A field that has been under the river is not a field yet. It’s a mud flat with goals on it,” Whitcomb said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Ruth Ambrose, director of Halloway County Emergency Management, said the river should crest by early evening, but Water Street and the greenway will stay closed through the night. Northgate High will open at 10 a.m. tomorrow, and its after-school practices are canceled.</p>\n<!-- /wp:paragraph -->"
 		},
 		{
 			"slug": "covering-the-river",
@@ -261,6 +315,7 @@
 			],
 			"excerpt": "The editor on gauge readings, checklists and why this paper writes about the Kettle like a utility to be watched rather than a drama to be narrated.",
 			"age": 446400,
+			"image": "reporters-notebook.jpg",
 			"content": "<!-- wp:paragraph -->\n<p>A reader wrote to ask, kindly, why our flood coverage is so boring. Where other outlets have drone shots and urgent music, we print a gauge number, a list of closed crossings and the sandbag pickup times. She wanted to know if we had considered being more exciting. We have. We decided against it, and this letter is the why.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>This newsroom has covered the Kettle for well over a century and has been flooded by it once. In 1957 the river put three feet of water into the press hall downstairs, and the paper printed from the fairgrounds for nine days without missing an edition. The front page from that week hangs on our wall. What strikes you, reading it now, is how calm it is: river stage, road closures, shelter hours, in that order. The people who produced it were standing in the building the water had just left. They still led with the number.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Drama is cheap and gauge readings are not</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>They led with the number because a flood is one of the few stories readers act on while it is happening. If we tell you the river is at 16 feet and rising, you know, because this paper has printed the thresholds for decades, that the greenway closes soon, that sandbags are worth collecting, and that 18 feet is the line. A photograph of brown water tells you the river is dramatic. The number tells you what to do before dinner.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Excitement also has a cost that shows up later. A reader alarmed by every high-water story stops being alarmable, and the year the river means it, the alarm has been spent. The county's emergency planners ration their urgency carefully, and we think a newspaper should ration in step. When our flood coverage changes tone, we want that change itself to carry information.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">What we promise, and what we ask</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>So here is the standing promise. When the Kettle rises, we will print the gauge reading and the forecast, every closed crossing, the shelter status and the sandbag hours, in words a tired person can act on, as often as the facts change. We will put nothing about a flood behind anything. We will name what officials did and did not do, afterward, when the water is down and the record is checkable. And we will keep the drone footage to a minimum, on the theory that nobody has ever moved a car to high ground because a video was beautiful.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>What we ask in return is that you act like the coverage is boring on purpose, because it is. Sign up for the county's alerts. Learn your own threshold, whether it is the basement, the bus detour or the block of Fell Street you park on. The river is a neighbor with a long memory and no malice, and the paper's job in flood season is to be its interpreter, not its publicist.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The reader who wrote in has our thanks, and a standing invitation to visit the wall with the 1957 front page. Boring, it turns out, is a tradition here. We intend to keep it.</p>\n<!-- /wp:paragraph -->"
 		},
 		{
@@ -386,6 +441,7 @@
 			],
 			"excerpt": "Crews will replace four worn expansion joints starting next week, and Riverbend Transit will send three bus routes over the Depot Street Bridge in the meantime.",
 			"age": 3564000,
+			"image": "road-works.jpg",
 			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — The Kettle River Bridge will close to traffic next week for two weeks while crews replace four worn expansion joints, the public works department said.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The 1936 steel truss carries Bridge Street across the river, a lane each way, and is the older of the city's two road crossings. The joints coming out were installed in 1994 and have been patched six times since 2021, most recently in March, when a failed seal let water reach the deck beams below.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;We can keep filling the gaps with asphalt every spring, or we can close it once and fix it,&quot; said Marla Deen, director of Riverbend Public Works. &quot;Two weeks now is cheaper than a lane closed all winter.&quot; The job costs $940,000 and comes out of the city's annual street maintenance fund.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Drivers should use the Depot Street Bridge, about a half mile downstream. Riverbend Transit will route the 2, the 5 and the 9 over Depot Street for the duration, adding roughly 10 minutes to each trip, said Lucia Amaro, the agency's general manager. Revised timetables are posted at Union Depot and on the agency's website.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The sidewalk on the north side of the span stays open to people walking or wheeling bikes across, though it will close for short stretches while crews work overhead. The bridge is scheduled to reopen in two weeks, weather permitting, and Deen said the department will post daily updates on the city's website.</p>\n<!-- /wp:paragraph -->"
 		},
 		{
@@ -399,6 +455,7 @@
 			],
 			"excerpt": "Crews will replace two blocks of 1948 cast-iron main under Ashgrove's commercial strip, working nights so the shops keep their daytime water and their customers.",
 			"age": 4154400,
+			"image": "water-main-trench.jpg",
 			"content": "<!-- wp:paragraph -->\n<p>RIVERBEND — Crews will begin replacing two blocks of water main under Grove Avenue on Monday, the public works department said, taking out a 1948 cast-iron pipe that has broken three times in the past two years.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>The work covers Grove Avenue's commercial strip in Ashgrove and will run for about three weeks. To keep the shops open, crews will work from 8 p.m. to 6 a.m., with steel plates over the trench during the day and daytime water service maintained throughout.</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>&quot;A 1948 main does not owe anybody anything, but it has started collecting its debts at random,&quot; said Marla Deen, director of Riverbend Public Works. &quot;Every break costs a day of emergency digging and a block of angry basements. Three weeks of planned night work is the cheap version of this.&quot;</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>Each property will get 48 hours' notice before its overnight service connection is switched, delivered by door hanger, and short overnight outages are expected only on switch nights. Parking on the west side of the avenue is suspended during the work, and the department will post progress updates on the city's website each Friday.</p>\n<!-- /wp:paragraph -->"
 		}
 	],

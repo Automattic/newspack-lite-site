@@ -28,6 +28,7 @@ const NEWSPACK_LS_SCREENSHOTS_SETTINGS_OPTION = 'newspack_lite_site_settings';
 const NEWSPACK_LS_SCREENSHOTS_FEEDS_OPTION    = 'newspack_lite_site_rss_importer';
 const NEWSPACK_LS_SCREENSHOTS_CRON_HOOK       = 'newspack_lite_site_rss_import';
 const NEWSPACK_LS_SCREENSHOTS_ENTRY_TYPE      = 'nls_rss_entry';
+const NEWSPACK_LS_SCREENSHOTS_SUBTITLE        = 'newspack_post_subtitle';
 
 /**
  * Entry point.
@@ -718,7 +719,8 @@ function newspack_ls_screenshots_insert_user( $user, $password ) {
 }
 
 /**
- * Adds photos to the media library.
+ * Adds photos to the media library, with their captions and the credits the
+ * Newspack plugin shows under them.
  *
  * @param array $media Media from content.json.
  * @return array<string, int> Attachment IDs by file name.
@@ -731,6 +733,16 @@ function newspack_ls_screenshots_seed_media( $media ) {
 		if ( ! empty( $file['error'] ) ) {
 			newspack_ls_screenshots_fail( sprintf( 'Could not upload %s', $item['file'] ), $file['error'] );
 		}
+		$meta = [
+			NEWSPACK_LS_SCREENSHOTS_MARK => 1,
+			'_wp_attachment_image_alt'   => $item['alt'],
+		];
+		if ( ! empty( $item['credit'] ) ) {
+			$meta['_media_credit'] = $item['credit'];
+		}
+		if ( ! empty( $item['credit_org'] ) ) {
+			$meta['_navis_media_credit_org'] = $item['credit_org'];
+		}
 		$attachment_id = wp_insert_attachment(
 			wp_slash(
 				[
@@ -738,10 +750,7 @@ function newspack_ls_screenshots_seed_media( $media ) {
 					'post_excerpt'   => $item['caption'],
 					'post_mime_type' => wp_check_filetype( $item['file'] )['type'],
 					'post_status'    => 'inherit',
-					'meta_input'     => [
-						NEWSPACK_LS_SCREENSHOTS_MARK => 1,
-						'_wp_attachment_image_alt'   => $item['alt'],
-					],
+					'meta_input'     => $meta,
 				]
 			),
 			$file['file'],
@@ -778,8 +787,9 @@ function newspack_ls_screenshots_term( $name, $taxonomy ) {
 }
 
 /**
- * Creates the posts, with their categories, tags, featured images and sticky
- * flags, then fills in the links between them.
+ * Creates the posts, with their categories, tags, standfirsts, featured images
+ * and sticky flags, then fills in the links between them. A post's standfirst
+ * is its excerpt unless content.json gives it a subtitle.
  *
  * @param array $posts Posts from content.json.
  * @param array $users User IDs by login.
@@ -815,6 +825,7 @@ function newspack_ls_screenshots_seed_posts( $posts, $users, $media ) {
 			],
 			$post['age']
 		);
+		update_post_meta( $post_id, NEWSPACK_LS_SCREENSHOTS_SUBTITLE, $post['subtitle'] ?? $post['excerpt'] );
 		if ( ! empty( $post['image'] ) ) {
 			set_post_thumbnail( $post_id, $media[ $post['image'] ] );
 		}

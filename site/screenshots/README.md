@@ -52,11 +52,11 @@ wp user update james --user_pass=<new password>
 
 The seed creates, and marks as its own:
 
-- Seven authors from the Gazette's newsroom, with fixed avatars: Dana Okafor, Marcus Reilly, Ellis Thorne, Priya Verma, Nora Doyle, Simone Adeyemi and Hal Brennan. James Smith, the editor-in-chief, writes the Opinion piece.
-- 15 posts, with their categories and tags. Four cover the flood itself, newest first: "Kettle River flood: what's closed and where to get help" (sticky, with a photo in the story for the tap-to-load image, an external link and a link to another post), "Mill Race Footbridge closes as the Kettle rises", "Kettle River crests at 21.3 feet and starts to fall" and "Friday night games moved as the Kettle River rises". The other 11 are Gazette stories about the river, flooding and the emergency services, from the last seven weeks. Dates are set relative to when you run the seed, so the order reads the same whenever you seed.
+- Seven authors from the Gazette's newsroom, with the Gazette's monogram avatars: Dana Okafor, Marcus Reilly, Ellis Thorne, Priya Verma, Nora Doyle, Simone Adeyemi and Hal Brennan. James Smith, the editor-in-chief, writes the Opinion piece.
+- 15 posts, with their categories, tags and standfirsts. Four cover the flood itself, newest first: "Kettle River flood: what's closed and where to get help" (sticky, with a photo in the story for the tap-to-load image, an external link and a link to another post), "Mill Race Footbridge closes as the Kettle rises", "Kettle River crests at 21.3 feet and starts to fall" and "Friday night games moved as the Kettle River rises". The other 11 are Gazette stories about the river, flooding and the emergency services, from the last seven weeks. Dates are set relative to when you run the seed, so the order reads the same whenever you seed. A post's standfirst, the subtitle the Newspack theme shows under the headline, is its excerpt unless `content.json` gives it a `subtitle`. Seven posts have a featured image, as they would in the paper; the stories that no photo in `assets/media/` fits have none.
 - Four RSS feeds from the county's partners, under Lite Site > RSS: Halloway County Emergency Management (every 10 minutes, Active), Riverbend Public Schools (hourly, Active), the Kettle Watershed Institute (every 30 minutes, Error: "Couldn't reach this RSS feed.") and Riverbend Transit (daily, Inactive). The feeds point at made-up `.example` addresses and nothing is fetched.
 - Nine RSS entries those feeds imported, one of them a draft.
-- The flood photo, the site logo and the site icon, in the media library, and the categories and tags the posts use that the site doesn't have yet.
+- Seven photos, with the captions and photographer credits the Newspack plugin shows under them, the site logo and the site icon, in the media library, and the categories and tags the posts use that the site doesn't have yet.
 - Three pages for the theme's menus: Donate, Newsletters and About Us, each with the first paragraph of the Gazette's own page.
 - The Gazette's menus: Primary (the six sections the posts use, in the Gazette's order), Secondary (Donate, Newsletters and About Us, in the green strip above the masthead) and Social (Facebook, Instagram, Bluesky and YouTube).
 - Block widgets: Support local reporting, Latest stories and Get it by email in the sidebar, and the Gazette's tagline in the footer.
@@ -244,9 +244,17 @@ Before you commit an image, look at it.
 
 ## Credits
 
-- **The flood photo**, `assets/media/flood-street.jpg`, is by Sveta K, from [Pexels](https://www.pexels.com/), free to use under the [Pexels license](https://www.pexels.com/license/).
+- **Photos** in `assets/media/` (all but the site logo and site icon). Their captions and credits are in `content.json`:
+  - From [Pexels](https://www.pexels.com/), free to use under the [Pexels license](https://www.pexels.com/license/): `flood-street.jpg` by Sveta K, and these three, resized to 1600 pixels on the long edge:
+    - `flooded-field.jpg`: "Flooded Field" by Toon de Vos, [Pexels](https://www.pexels.com/photo/flooded-field-6208447/).
+    - `flooded-riverside-walkway.jpg`: "Flooded Riverbank Walkway" by Andrey Karpov, [Pexels](https://www.pexels.com/photo/flooded-riverbank-walkway-7821835/).
+    - `road-works.jpg`: "Road Construction Worker with Jackhammer" by Thomas Fuhrmann, [Pexels](https://www.pexels.com/photo/road-construction-worker-with-jackhammer-33484883/).
+  - Found through [Openverse](https://openverse.org/), dedicated to the public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) or marked with the [Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/), so they need no credit, though the site credits each under its caption. Each is resized.
+    - `kettle-river-sunset.jpg`: "autumn sunset on the river" by azxa661, Public Domain Mark, [Flickr](https://www.flickr.com/photos/197207264@N02/52581985117).
+    - `reporters-notebook.jpg`: "Research" by neil conway, Public Domain Mark, [Flickr](https://www.flickr.com/photos/30934989@N06/5625707813).
+    - `water-main-trench.jpg`: "Bøgeskov Høvej 25, vejarbejde - DSC_2223_Balancer" by Lav Ulv, CC0, [Flickr](https://www.flickr.com/photos/99460566@N06/35776145673).
 - **The site logo and site icon**, `assets/media/riverbend-gazette-wordmark.png` and `assets/media/site-icon.png`, are The Riverbend Gazette's wordmark and icon, made for Newspack's demo sites. The icon is also the footer logo.
 - **Source Serif 4**, the variable WOFF2 files in `assets/fonts/source-serif-4/`, is by Adobe, from [adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif) release 4.005, under the [SIL Open Font License 1.1](https://openfontlicense.org/) (`assets/fonts/source-serif-4/LICENSE.md`). Lite Site pages and the theme on the screenshot site load it from this folder in place of Google Fonts.
 - **Inter**, the variable WOFF2 files in `assets/fonts/inter/`, is by The Inter Project Authors ([rsms/inter](https://github.com/rsms/inter)), the Latin files Google Fonts serves for version 20, under the [SIL Open Font License 1.1](https://openfontlicense.org/) (`assets/fonts/inter/LICENSE.md`). The theme on the screenshot site loads it from this folder in place of Google Fonts.
-- **Avatars** in `assets/avatars/` are flat colors made for this folder, one per seeded author.
+- **Avatars** in `assets/avatars/` are The Riverbend Gazette's monogram avatars, one per seeded author, made for Newspack's demo sites and resized to 192 pixels. `default.svg`, a flat blue square, is the avatar of James Smith and every other account.
 - **The stories** come from The Riverbend Gazette, the invented newspaper of Newspack's demo sites.
