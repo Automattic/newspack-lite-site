@@ -53,7 +53,7 @@ wp user update james --user_pass=<new password>
 The seed creates, and marks as its own:
 
 - Seven authors from the Gazette's newsroom, with the Gazette's monogram avatars: Dana Okafor, Marcus Reilly, Ellis Thorne, Priya Verma, Nora Doyle, Simone Adeyemi and Hal Brennan. James Smith, the editor-in-chief, writes the Opinion piece.
-- 15 posts, with their categories, tags and standfirsts. Four cover the flood itself, newest first: "Kettle River flood: what's closed and where to get help" (sticky, with a photo in the story for the tap-to-load image, an external link and a link to another post), "Mill Race Footbridge closes as the Kettle rises", "Kettle River crests at 21.3 feet and starts to fall" and "Friday night games moved as the Kettle River rises". The other 11 are Gazette stories about the river, flooding and the emergency services, from the last seven weeks. Dates are set relative to when you run the seed, so the order reads the same whenever you seed. A post's standfirst, the subtitle the Newspack theme shows under the headline, is its excerpt unless `content.json` gives it a `subtitle`. Seven posts have a featured image, as they would in the paper; the stories that no photo in `assets/media/` fits have none.
+- 15 posts, with their categories, tags, standfirsts and featured photos. Four cover the flood itself, newest first: "Kettle River flood: what's closed and where to get help" (sticky, with a photo in the story for the tap-to-load image, an external link and a link to another post), "Mill Race Footbridge closes as the Kettle rises", "Kettle River crests at 21.3 feet and starts to fall" and "Friday night games moved as the Kettle River rises". The other 11 are Gazette stories about the river, flooding and the emergency services, from the last seven weeks. Dates are set relative to when you run the seed, so the order reads the same whenever you seed. A post's standfirst, the subtitle the Newspack theme shows under the headline, is its excerpt unless `content.json` gives it a `subtitle`. Seven posts have a featured image, as they would in the paper; the stories that no photo in `assets/media/` fits have none.
 - Four RSS feeds from the county's partners, under Lite Site > RSS: Halloway County Emergency Management (every 10 minutes, Active), Riverbend Public Schools (hourly, Active), the Kettle Watershed Institute (every 30 minutes, Error: "Couldn't reach this RSS feed.") and Riverbend Transit (daily, Inactive). The feeds point at made-up `.example` addresses and nothing is fetched.
 - Nine RSS entries those feeds imported, one of them a draft.
 - Seven photos, with the captions and photographer credits the Newspack plugin shows under them, the site logo and the site icon, in the media library, and the categories and tags the posts use that the site doesn't have yet.
@@ -195,7 +195,7 @@ npm run shot -- guides/scratch-1 --site https://screenshots.local \
 | `--press <key>` | Presses a key, such as `Escape`, `Enter` or `Control+a`, using Playwright's key names. Repeat it for several keys. |
 | `--wait <ms>` | Waits that many milliseconds, for an animation or anything that takes longer to appear than the page takes to settle. Repeat it where you need it. |
 | `--eval <js>` | Runs JavaScript in the page and in each frame inside it, such as the editor canvas, for a step no other option covers. Errors in the main page are printed. Repeat it for several scripts. |
-| `--mouse <x,y>` | Leaves the pointer at this point in the window, in pixels from the top left of the 1512×982 viewport. By default it moves to the bottom right corner after a click or fill. |
+| `--mouse <x,y>` | Leaves the pointer at this point in the window, in pixels from the top left of the 1512×982 viewport. By default it moves to the bottom right corner after a click or fill, unless the last step is a `--hover`, which keeps the pointer where it is. Pass `--mouse` to move the pointer off a final hover. |
 | `--now` | Captures as soon as the page settles, without opening a window or waiting for Enter. Use it with the steps above and `--spotlight` for screens you can reach without help. Without a saved sign-in it needs `WP_USER` and `WP_PASSWORD`, since it can't ask. |
 | `--out <file>` | Writes the image somewhere else, for trying things out. A relative path starts from the folder you ran `npm run` in. |
 
@@ -217,7 +217,7 @@ The script also captures without waiting when it isn't run from a terminal.
 Signing in through wp-admin makes WordPress's Quick Draft create an auto-draft post. Delete the strays after a session:
 
 ```bash
-wp post delete $(wp post list --post_type=post --post_status=auto-draft --format=ids) --force
+ids=$(wp post list --post_type=post --post_status=auto-draft --format=ids); [ -n "$ids" ] && wp post delete $ids --force
 ```
 
 ## House settings
@@ -229,7 +229,7 @@ Every screenshot uses these, and the script applies them for you:
 - Signed in as James Smith, who has a flat blue avatar, for admin screens. Signed out for Lite Site pages and the full site as readers see them. Update notices, cookie banners, the Newspack debug notice and similar noise are hidden from the moment the page loads.
 - The reader sign-up prompt is closed on front-end pages.
 - The editor isn't in fullscreen mode and shows no block breadcrumbs, welcome guides or pattern chooser. Top toolbar is on, so a selected block's toolbar sits in the editor's header instead of over the page. These apply in the post, page, pattern and Site Editor alike, and the script saves them for the account you sign in with each time it runs.
-- At most one spotlight: everything outside the element and an 8px margin is dimmed with 45% black.
+- At most one spotlighted box, around one element or around all the `--spotlight` matches: everything outside it and an 8px margin is dimmed with 45% black.
 
 Before you commit an image, look at it.
 

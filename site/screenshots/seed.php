@@ -316,6 +316,17 @@ function newspack_ls_screenshots_preflight( $content ) {
 	foreach ( $content['fonts'] as $file ) {
 		$files[] = 'assets/' . $file;
 	}
+	foreach ( $content['users'] as $user ) {
+		if ( ! empty( $user['avatar'] ) ) {
+			$files[] = 'assets/avatars/' . $user['avatar'];
+		}
+	}
+	$media_files = array_column( $content['media'], 'file' );
+	foreach ( $content['posts'] as $post ) {
+		if ( ! empty( $post['image'] ) && ! in_array( $post['image'], $media_files, true ) ) {
+			$problems[] = sprintf( 'The post "%s" uses the image %s, which is not in the media list.', $post['slug'], $post['image'] );
+		}
+	}
 	foreach ( $files as $file ) {
 		if ( ! is_readable( __DIR__ . '/' . $file ) ) {
 			$problems[] = "Can't read {$file} next to this file.";
@@ -737,12 +748,6 @@ function newspack_ls_screenshots_seed_media( $media ) {
 			NEWSPACK_LS_SCREENSHOTS_MARK => 1,
 			'_wp_attachment_image_alt'   => $item['alt'],
 		];
-		if ( ! empty( $item['credit'] ) ) {
-			$meta['_media_credit'] = $item['credit'];
-		}
-		if ( ! empty( $item['credit_org'] ) ) {
-			$meta['_navis_media_credit_org'] = $item['credit_org'];
-		}
 		$attachment_id = wp_insert_attachment(
 			wp_slash(
 				[
@@ -761,6 +766,12 @@ function newspack_ls_screenshots_seed_media( $media ) {
 			newspack_ls_screenshots_fail( sprintf( 'Could not add %s to the media library', $item['file'] ), $attachment_id->get_error_message() );
 		}
 		wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $file['file'] ) );
+		if ( ! empty( $item['credit'] ) ) {
+			update_post_meta( $attachment_id, '_media_credit', wp_slash( $item['credit'] ) );
+		}
+		if ( ! empty( $item['credit_org'] ) ) {
+			update_post_meta( $attachment_id, '_navis_media_credit_org', wp_slash( $item['credit_org'] ) );
+		}
 		$ids[ $item['file'] ] = $attachment_id;
 	}
 	return $ids;
@@ -816,6 +827,7 @@ function newspack_ls_screenshots_seed_posts( $posts, $users, $media ) {
 				'post_content'  => strtr( $post['content'], $tokens ),
 				'post_author'   => $users[ $post['author'] ],
 				'post_category' => [ newspack_ls_screenshots_term( $post['category'], 'category' ) ],
+				'meta_input'    => [ NEWSPACK_LS_SCREENSHOTS_SUBTITLE => $post['subtitle'] ?? $post['excerpt'] ],
 				'tags_input'    => array_map(
 					function ( $tag ) {
 						return newspack_ls_screenshots_term( $tag, 'post_tag' );
@@ -825,7 +837,6 @@ function newspack_ls_screenshots_seed_posts( $posts, $users, $media ) {
 			],
 			$post['age']
 		);
-		update_post_meta( $post_id, NEWSPACK_LS_SCREENSHOTS_SUBTITLE, $post['subtitle'] ?? $post['excerpt'] );
 		if ( ! empty( $post['image'] ) ) {
 			set_post_thumbnail( $post_id, $media[ $post['image'] ] );
 		}
@@ -932,7 +943,7 @@ function newspack_ls_screenshots_insert_post( $postarr, $age ) {
 				[
 					'post_date'     => get_date_from_gmt( $date_gmt ),
 					'post_date_gmt' => $date_gmt,
-					'meta_input'    => [ NEWSPACK_LS_SCREENSHOTS_MARK => 1 ],
+					'meta_input'    => array_merge( $postarr['meta_input'] ?? [], [ NEWSPACK_LS_SCREENSHOTS_MARK => 1 ] ),
 				]
 			)
 		),
