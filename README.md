@@ -7,7 +7,7 @@
 | From | [Newspack](https://newspack.com/) and [Emergency Mode for News](https://emergencymode.news/) |
 | Requires at least | ![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg) |
 | Tested up to | ![WordPress](https://img.shields.io/badge/WordPress-7.1-blue.svg) |
-| Requires PHP | ![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue.svg) |
+| Requires PHP | ![PHP](https://img.shields.io/badge/PHP-8.0%2B-blue.svg) |
 | Requires Node.js (to build) | ![Node.js](https://img.shields.io/badge/Node.js-LTS-blue.svg) |
 | License | ![License](https://img.shields.io/badge/License-GPLv3-blue.svg) |
 | Stable tag | [(see package.json)](package.json#L3) |
