@@ -289,7 +289,7 @@ export function Home( props: SitePageProps ) {
 			</section>
 
 			<section aria-labelledby="home-article" className="site-container section-space">
-				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-(--newspack-ui-spacer-11)">
+				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-11)">
 					<div>
 						<h2 id="home-article" className="type-section text-foreground">
 							Each article, as plain text
@@ -307,7 +307,7 @@ export function Home( props: SitePageProps ) {
 							<Arrow className={ arrowMotion } />
 						</a>
 					</div>
-					<div className="grid gap-(--newspack-ui-spacer-5) md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:items-start">
+					<div className="grid gap-(--newspack-ui-spacer-5) md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:items-start lg:contents">
 						<Shot
 							src="/screenshots/home/lite-article.webp"
 							alt="The Lite Site article “Kettle River flood: what’s closed and where to get help”: links back to the Lite Site homepage and to the full version, the title, the byline, the date and the text."
