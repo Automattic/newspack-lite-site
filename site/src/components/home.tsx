@@ -440,12 +440,12 @@ export function Home( props: SitePageProps ) {
 						<Shot
 							src="/screenshots/home/full-article.webp"
 							alt="The article “Kettle River flood: what’s closed and where to get help” on the demo site’s main site, with the theme’s header, menus, a large photo and the byline."
-							caption="On the full site: the article with its theme, menus and photos."
+							caption="On the full site, with the theme, menus and photos."
 						/>
 						<Shot
 							src="/screenshots/home/lite-article-text.webp"
 							alt="The same article on the Lite Site: the title, the byline, the date and the opening paragraph."
-							caption="The same article on the Lite Site, as text, with links back to the homepage and to the full version."
+							caption="On the Lite Site, as text, with a link to the full version."
 						/>
 					</div>
 					<Weight />
