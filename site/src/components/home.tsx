@@ -324,7 +324,7 @@ export function Home( props: SitePageProps ) {
 			</div>
 
 			<section aria-labelledby="home-article" className="site-container section-space">
-				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-2)">
+				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-5)">
 					<div>
 						<h2 id="home-article" className="type-section text-foreground">
 							Each article, as plain text
@@ -364,7 +364,7 @@ export function Home( props: SitePageProps ) {
 				<p className="mt-(--newspack-ui-spacer-2) max-w-[60ch] type-lead text-muted-foreground">
 					One plugin on the site you already run. The guides cover each part.
 				</p>
-				<ul className="mt-(--newspack-ui-spacer-6) grid gap-(--newspack-ui-spacer-2) sm:grid-cols-2 lg:grid-cols-3">
+				<ul className="mt-(--newspack-ui-spacer-6) grid gap-(--newspack-ui-spacer-2) sm:grid-cols-2 sm:gap-(--newspack-ui-spacer-5) lg:grid-cols-3">
 					{ features.map( ( feature ) => (
 						<li key={ feature.href + feature.title }>
 							<a href={ feature.href } className="group block h-full rounded-(--newspack-ui-radius-surface)">
