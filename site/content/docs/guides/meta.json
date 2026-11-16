@@ -1,0 +1,14 @@
+{
+	"title": "Guides",
+	"pages": [
+		"index",
+		"settings",
+		"appearance",
+		"lite-homepage",
+		"lite-articles",
+		"rss-feeds",
+		"rss-entries",
+		"faq",
+		"troubleshooting"
+	]
+}
