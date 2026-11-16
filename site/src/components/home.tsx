@@ -167,21 +167,25 @@ function LiteHomepage() {
 
 function DemoFrame() {
 	return (
-		<figure aria-labelledby="home-demo-label">
+		<figure>
 			<div className="overflow-hidden rounded-(--newspack-ui-radius-surface) border border-border shadow-md">
-				<div className="flex flex-wrap items-center justify-between gap-x-(--newspack-ui-spacer-3) gap-y-(--newspack-ui-spacer-1) border-b border-border bg-(--newspack-ui-color-surface-subtle) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-1)">
-					<span className="inline-flex items-center rounded-(--newspack-ui-radius-pill) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-3) py-(--newspack-ui-spacer-half) type-small text-foreground">
-						<span className="sr-only">Address: </span>/lite/
+				<div className="flex items-center gap-(--newspack-ui-spacer-2) border-b border-border bg-(--newspack-ui-color-surface-subtle) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-1)">
+					<span aria-hidden="true" className="flex shrink-0 gap-(--newspack-ui-spacer-half)">
+						<span className="size-2 rounded-full bg-border" />
+						<span className="size-2 rounded-full bg-border" />
+						<span className="size-2 rounded-full bg-border" />
 					</span>
-					<span id="home-demo-label" className="type-small text-muted-foreground">
-						A demo newsroom, The Riverbend Gazette
+					<span className="min-w-0 flex-auto truncate rounded-(--newspack-ui-radius-control) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-half) type-small text-muted-foreground">
+						<span className="sr-only">Address: </span>yoursite.com
+						<span className="font-(weight:--newspack-ui-font-weight-strong) text-brand">/lite/</span>
 					</span>
 				</div>
 				<LiteHomepage />
 			</div>
 			<figcaption className="mt-(--newspack-ui-spacer-2) max-w-[62ch] type-small text-pretty text-muted-foreground">
-				The Lite Site homepage during a river flood. The sticky post is in bold. “Kettle River flood warning
-				remains in effect” came in from the county’s RSS feed and is listed with the posts. Try the page links.
+				The Lite Site homepage of a demo newsroom during a river flood. The sticky post is in bold. “Kettle River
+				flood warning remains in effect” came in from the county’s RSS feed and is listed with the posts. Try the
+				page links.
 			</figcaption>
 		</figure>
 	);
@@ -374,7 +378,7 @@ export function Home( props: SitePageProps ) {
 				>
 					<div className="lg:sticky lg:top-[calc(var(--site-header-height)+var(--section-space)/2)]">
 						<h1 id="home-title" className="type-display text-foreground lg:-mt-[0.17em] lg:text-(length:--newspack-ui-font-size-4xl) lg:leading-(--newspack-ui-line-height-4xl)">
-							Keep your news readable when connections fail
+							Keep your news <span className="text-brand">readable</span> when connections fail
 						</h1>
 						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
 						<div className="mt-(--newspack-ui-spacer-5)">
