@@ -289,7 +289,7 @@ export function Home( props: SitePageProps ) {
 			</section>
 
 			<section aria-labelledby="home-article" className="site-container section-space">
-				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-11)">
+				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-6)">
 					<div>
 						<h2 id="home-article" className="type-section text-foreground">
 							Each article, as plain text
