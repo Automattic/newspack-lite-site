@@ -50,6 +50,7 @@ function Arrow( { className = '' }: { className?: string } ) {
 	return (
 		<svg
 			aria-hidden="true"
+			focusable="false"
 			viewBox="0 0 16 16"
 			fill="none"
 			stroke="currentColor"
@@ -190,7 +191,7 @@ const features: { title: string; href: string; body: string; labels: string[] }[
 	{
 		title: 'One switch',
 		href: '/docs/getting-started/turn-on-lite-site/',
-		body: 'Lite Site is off until you check one box. Readers find it at /lite/, or at a path you choose, and nothing else on the site changes.',
+		body: 'Lite Site is off until you check one box. Readers find it at /lite/, or at a path you choose, and your posts, pages and theme stay as they are.',
 		labels: [ 'Enable Lite Site', 'Lite Site Path' ],
 	},
 	{

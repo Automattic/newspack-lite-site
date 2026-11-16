@@ -48,7 +48,7 @@ export function About( props: SitePageProps ) {
 							never finish loading.
 						</p>
 						<p>
-							Lite Site gives those readers the words. It serves each article as simple text, with images
+							Lite Site serves each article as simple text, with images
 							loaded only when a reader asks for them, so the page loads on a poor connection and the
 							newsroom’s reporting stays within reach.
 						</p>

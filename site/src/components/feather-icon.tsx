@@ -6,7 +6,7 @@ const PATH =
 /** The feather from newspack-icons, used as the Lite Site mark. */
 export function FeatherIcon( { className = '', ...props }: ComponentProps< 'svg' > ) {
 	return (
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={ className } { ...props }>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" className={ className } { ...props }>
 			<path d={ PATH } />
 		</svg>
 	);

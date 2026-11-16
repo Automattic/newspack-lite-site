@@ -131,7 +131,7 @@ const PAIRS = [
 	[ 'logo mark', '--newspack-ui-color-brand-text', surface, MARK ],
 	[ 'focus ring', '--newspack-ui-color-focus', surface, MARK ],
 	[ 'field border', '--newspack-ui-color-input-border', surface, MARK ],
-	[ 'error colour', '--newspack-ui-color-error', surface, MARK ],
+	[ 'error color', '--newspack-ui-color-error', surface, MARK ],
 	[ 'callout icon, warning', '--newspack-ui-color-warning-dot', '--newspack-ui-color-warning-tint', MARK ],
 	[ 'callout icon, info', '--newspack-ui-color-text-muted', '--newspack-ui-color-surface-subtle', MARK ],
 ];
