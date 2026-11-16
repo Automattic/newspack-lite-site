@@ -85,6 +85,38 @@ class Test_Lite_Site_Off_State extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * On a site that has never had Lite Site on, rewrite rules that hold no
+	 * Lite Site rule at its path are not flushed.
+	 *
+	 * @dataProvider data_saved_rules_without_lite_site
+	 *
+	 * @param array|null $saved_rules Rules to save first, or null to keep the rules the test started with.
+	 */
+	public function test_never_enabled_does_not_flush_rules_without_lite_site( $saved_rules ) {
+		if ( null !== $saved_rules ) {
+			update_option( 'rewrite_rules', $saved_rules );
+		}
+		delete_transient( 'nls_flush_rewrite_rules' );
+		$flushes = did_action( 'generate_rewrite_rules' );
+
+		Lite_Site::register_rewrite_rules();
+
+		$this->assertSame( $flushes, did_action( 'generate_rewrite_rules' ), 'The rules are not flushed.' );
+	}
+
+	/**
+	 * Saved rules with no Lite Site rule at its path.
+	 *
+	 * @return array[]
+	 */
+	public function data_saved_rules_without_lite_site() {
+		return [
+			'clean rules'                => [ null ],
+			'another rule at that regex' => [ [ '^lite/?$' => 'index.php?pagename=lite' ] ],
+		];
+	}
+
+	/**
 	 * While Lite Site is on, its addresses are routed to it as before.
 	 */
 	public function test_enabled_routes_lite_addresses() {
@@ -156,6 +188,102 @@ class Test_Lite_Site_Off_State extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Once Lite Site has been turned off, an article it left out still
+	 * redirects to its full version.
+	 *
+	 * @dataProvider data_left_out_articles
+	 *
+	 * @param array $post_args Arguments the post is created with, beyond its slug and status.
+	 * @param bool  $excluded  Whether the post's category is excluded.
+	 */
+	public function test_was_enabled_redirects_left_out_article_to_permalink( $post_args, $excluded ) {
+		$category_id = self::factory()->category->create();
+		$post_id     = self::factory()->post->create(
+			array_merge(
+				[
+					'post_status'   => 'publish',
+					'post_name'     => 'a-story',
+					'post_category' => [ $category_id ],
+				],
+				$post_args
+			)
+		);
+		$this->turn_off_after_enabling( $excluded ? [ 'excluded_categories' => [ $category_id ] ] : [] );
+
+		$this->assertNull( Lite_Site::resolve_post( 'a-story' ), 'Lite Site leaves the article out.' );
+		$this->assertSame( [ get_permalink( $post_id ), 302 ], $this->get_redirect( '/lite/a-story/' ), 'The article redirects to its full version.' );
+	}
+
+	/**
+	 * Articles Lite Site leaves out.
+	 *
+	 * @return array[]
+	 */
+	public function data_left_out_articles() {
+		return [
+			'excluded category'  => [ [], true ],
+			'password-protected' => [ [ 'post_password' => 'secret' ], false ],
+		];
+	}
+
+	/**
+	 * Once Lite Site has been turned off, an address whose cached lookup holds
+	 * an unpublished post redirects to the homepage.
+	 *
+	 * @dataProvider data_unpublished_statuses
+	 *
+	 * @param string $status Post status.
+	 */
+	public function test_was_enabled_redirects_unpublished_post_to_homepage( $status ) {
+		$post_id = self::factory()->post->create(
+			[
+				'post_status' => $status,
+				'post_name'   => 'a-story',
+			]
+		);
+		$this->turn_off_after_enabling();
+		$this->go_to( '/lite/a-story/' );
+		wp_cache_set( self::invoke_private( Lite_Site::class, 'get_post_lookup_cache_key', [ 'a-story' ] ), $post_id, 'newspack_lite_site' );
+
+		$this->assertSame( [ home_url( '/' ), 302 ], $this->capture_redirect(), 'The address redirects to the homepage.' );
+	}
+
+	/**
+	 * Statuses of posts readers can't open.
+	 *
+	 * @return array[]
+	 */
+	public function data_unpublished_statuses() {
+		return [
+			'private' => [ 'private' ],
+			'draft'   => [ 'draft' ],
+		];
+	}
+
+	/**
+	 * Once Lite Site has been turned off, an article whose permalink is on
+	 * another site redirects to the homepage.
+	 */
+	public function test_was_enabled_redirects_article_with_external_permalink_to_homepage() {
+		self::factory()->post->create(
+			[
+				'post_status' => 'publish',
+				'post_name'   => 'a-story',
+			]
+		);
+		$this->turn_off_after_enabling();
+		$external_permalink = function () {
+			return 'https://other-site.example.test/a-story/';
+		};
+		add_filter( 'post_link', $external_permalink );
+
+		$redirect = $this->get_redirect( '/lite/a-story/' );
+		remove_filter( 'post_link', $external_permalink );
+
+		$this->assertSame( [ home_url( '/' ), 302 ], $redirect, 'The address redirects to the homepage.' );
+	}
+
+	/**
 	 * Lite Site addresses that aren't articles.
 	 *
 	 * @return array[]
@@ -179,6 +307,26 @@ class Test_Lite_Site_Off_State extends Lite_Site_TestCase {
 
 		self::set_settings( [ 'enabled' => false ] );
 		$this->assertSame( 'theme-offline.php', apply_filters( 'offline_template', 'theme-offline.php' ), 'Once Lite Site is off, the offline template is left alone.' );
+	}
+
+	/**
+	 * The PWA plugin's precached offline page changes revision when Lite Site
+	 * is turned on or off, so readers' devices fetch it again.
+	 */
+	public function test_offline_precache_revision_varies_by_state() {
+		$entry = [
+			'url'      => home_url( '/?wp_error_template=offline' ),
+			'revision' => 'pwa',
+		];
+
+		$off_revision = apply_filters( 'wp_offline_error_precache_entry', $entry )['revision'];
+		self::set_settings( [ 'enabled' => true ] );
+		$on_revision = apply_filters( 'wp_offline_error_precache_entry', $entry )['revision'];
+
+		$this->assertStringStartsWith( 'pwa', $off_revision, 'The PWA plugin\'s revision is kept.' );
+		$this->assertNotSame( $off_revision, $on_revision, 'The revision differs between on and off.' );
+		$this->assertStringContainsString( md5_file( Lite_Site::get_offline_template() ), $on_revision, 'The revision includes the offline template.' );
+		$this->assertFalse( apply_filters( 'wp_offline_error_precache_entry', false ), 'Turning precaching off is kept.' );
 	}
 
 	/**
@@ -230,24 +378,35 @@ class Test_Lite_Site_Off_State extends Lite_Site_TestCase {
 
 	/**
 	 * Turn Lite Site on, register its rules, then turn it off.
+	 *
+	 * @param array $settings Other settings to save with Lite Site off.
 	 */
-	private function turn_off_after_enabling() {
+	private function turn_off_after_enabling( array $settings = [] ) {
 		self::set_settings( [ 'enabled' => true ] );
-		self::set_settings( [ 'enabled' => false ] );
+		self::set_settings( array_merge( $settings, [ 'enabled' => false ] ) );
 		Lite_Site::register_rewrite_rules();
 		self::flush_rules();
 	}
 
 	/**
 	 * Request a Lite Site address and capture the redirect the template
-	 * handler sends, without the exit that follows it.
+	 * handler sends.
 	 *
 	 * @param string $path Address requested.
 	 * @return array The redirect location and status.
 	 */
 	private function get_redirect( $path ) {
 		$this->go_to( $path );
+		return $this->capture_redirect();
+	}
 
+	/**
+	 * Capture the redirect the template handler sends for the current
+	 * request, without the exit that follows it.
+	 *
+	 * @return array The redirect location and status.
+	 */
+	private function capture_redirect() {
 		$redirect = null;
 		$capture  = function ( $location, $status ) use ( &$redirect ) {
 			$redirect = [ $location, $status ];

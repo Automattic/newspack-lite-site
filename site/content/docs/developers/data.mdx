@@ -37,9 +37,9 @@ Lite Site's addresses exist only once it has been turned on, so a site that neve
 
 - **Never turned on:** no rewrite rules or query vars are registered, so the path behaves like any other address on the site. If saved rewrite rules still hold the Lite Site path, they are refreshed once.
 - **On:** the rewrite rules and the query vars `is_lite`, `lite_path` and `lite_page` route the path to Lite Site.
-- **Turned off after being on:** the rules stay registered, and every Lite Site address gets a temporary (302) redirect to the main site. An article goes to its permalink, and any other address goes to the homepage. The redirect is never permanent, so browsers don't keep it after Lite Site is turned back on.
+- **Turned off after being on:** the rules stay registered, and Lite Site addresses end up on the main site through a temporary (302) redirect. A published article goes to its permalink, even one the Lite Site category, tag or password rules left out. Any other address goes to the homepage. The redirect is never permanent, so browsers don't keep it after Lite Site is turned back on.
 
-On a site with the PWA plugin, Lite Site replaces the offline page, through the `offline_template` filter, only while it is on.
+On a site with the PWA plugin, Lite Site replaces the offline page, through the `offline_template` filter, only while it is on. It also adds its on or off state, and a hash of its offline template, to the precached offline page's revision through `wp_offline_error_precache_entry`, so readers' devices fetch the page again when either changes.
 
 ## RSS entries
 
