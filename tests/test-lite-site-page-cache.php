@@ -14,11 +14,13 @@ use Newspack_Lite_Site\Lite_Site;
 class Test_Lite_Site_Page_Cache extends Lite_Site_TestCase {
 
 	/**
-	 * Pretty permalinks: WordPress routes a request, and sets the path the
-	 * request key is built from, only when rewrite rules are in use.
+	 * The lite rewrite rules, under pretty permalinks: WordPress routes a
+	 * request, and sets the path the request key is built from, only when
+	 * rewrite rules are in use.
 	 */
 	public function set_up() {
 		parent::set_up();
+		self::register_lite_rewrite_rules();
 		$this->set_permalink_structure( '/%postname%/' );
 	}
 

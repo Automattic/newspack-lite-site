@@ -3,7 +3,7 @@ title: Data
 description: What Lite Site stores, for queries, migrations, and reports, and how to remove all of it.
 ---
 
-Lite Site keeps its data in standard WordPress storage, so any tool that reads WordPress can read it. Settings and the RSS feed list sit in two options. Imported RSS items are posts of a custom post type. Short-lived caches are transients and object cache entries, and the RSS import runs on WordPress cron.
+Lite Site keeps its data in standard WordPress storage, so any tool that reads WordPress can read it. Settings, the RSS feed list and a record that Lite Site has been turned on sit in three options. Imported RSS items are posts of a custom post type. Short-lived caches are transients and object cache entries, and the RSS import runs on WordPress cron.
 
 This page lists the names to use when querying that data directly, in a migration or a report. Use the settings screens or the REST API when possible.
 
@@ -30,6 +30,16 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `font_body` | `string` | `''` | The body font name. |
 
 Turning Lite Site on or off, changing its path, or the option's first save marks the rewrite rules for a refresh, through the `nls_flush_rewrite_rules` transient.
+
+## Lite Site addresses
+
+Lite Site's addresses exist only once it has been turned on, so a site that never uses it keeps its path free for its own pages. The first time Lite Site is turned on, it sets the option `newspack_lite_site_was_enabled`, which is autoloaded and stays set when Lite Site is turned off. A site that is on when the plugin loads gets the option too.
+
+- **Never turned on:** no rewrite rules or query vars are registered, so the path behaves like any other address on the site. If saved rewrite rules still hold the Lite Site path, they are refreshed once.
+- **On:** the rewrite rules and the query vars `is_lite`, `lite_path` and `lite_page` route the path to Lite Site.
+- **Turned off after being on:** the rules stay registered, and every Lite Site address gets a temporary (302) redirect to the main site. An article goes to its permalink, and any other address goes to the homepage. The redirect is never permanent, so browsers don't keep it after Lite Site is turned back on.
+
+On a site with the PWA plugin, Lite Site replaces the offline page, through the `offline_template` filter, only while it is on.
 
 ## RSS entries
 
@@ -108,11 +118,12 @@ Deactivating or deleting the plugin leaves its data in place. Lite Site has no u
    wp cron event delete newspack_lite_site_rss_import
    ```
 
-4. Delete the two options.
+4. Delete the three options.
 
    ```bash
    wp option delete newspack_lite_site_settings
    wp option delete newspack_lite_site_rss_importer
+   wp option delete newspack_lite_site_was_enabled
    ```
 
 5. Delete the cached articles and the other transients, which all start with `nls_`. This matches the options table only.

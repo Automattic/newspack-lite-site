@@ -124,6 +124,8 @@ class Test_Bootstrap extends Lite_Site_TestCase {
 	 * The offline template resolves to a file that ships with the plugin.
 	 */
 	public function test_offline_template_path_exists() {
+		self::set_settings( [ 'enabled' => true ] );
+
 		$this->assertFileExists( Lite_Site::get_offline_template(), 'The offline template should ship with the plugin.' );
 	}
 }

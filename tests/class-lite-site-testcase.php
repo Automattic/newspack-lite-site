@@ -29,7 +29,32 @@ abstract class Lite_Site_TestCase extends WP_UnitTestCase {
 	public function tear_down() {
 		delete_option( Lite_Site_Settings::OPTION_NAME );
 		self::reset_settings_cache();
+		self::remove_lite_rewrite_rules();
 		parent::tear_down();
+	}
+
+	/**
+	 * Register the lite rewrite rules, as a site that has had Lite Site on does.
+	 *
+	 * The rules take effect at the next rewrite flush, such as the one
+	 * set_permalink_structure() runs.
+	 */
+	protected static function register_lite_rewrite_rules() {
+		update_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME, true );
+		Lite_Site::register_rewrite_rules();
+	}
+
+	/**
+	 * Take the lite rewrite rules back out of `$wp_rewrite`, which keeps the
+	 * rules added to it for the whole run.
+	 */
+	protected static function remove_lite_rewrite_rules() {
+		global $wp_rewrite;
+		foreach ( $wp_rewrite->extra_rules_top as $regex => $query ) {
+			if ( 0 === strpos( $query, 'index.php?is_lite=' ) ) {
+				unset( $wp_rewrite->extra_rules_top[ $regex ] );
+			}
+		}
 	}
 
 	/**

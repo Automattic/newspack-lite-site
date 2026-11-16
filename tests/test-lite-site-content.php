@@ -267,9 +267,11 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * Custom query vars are registered without dropping existing ones.
+	 * Custom query vars are registered without dropping existing ones once
+	 * Lite Site has been turned on.
 	 */
 	public function test_registers_query_vars() {
+		self::set_settings( [ 'enabled' => true ] );
 		$vars = Lite_Site::register_query_vars( [ 'existing_var' ] );
 
 		$this->assertContains( 'existing_var', $vars, 'Existing query vars should be preserved.' );

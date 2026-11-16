@@ -79,11 +79,15 @@ class Lite_Site {
 	}
 
 	/**
-	 * Return the path to the lite site offline template.
+	 * Use the lite site offline template while Lite Site is on.
 	 *
+	 * @param string $template The offline template found so far, which is kept while Lite Site is off.
 	 * @return string Absolute path to the offline template file.
 	 */
-	public static function get_offline_template() {
+	public static function get_offline_template( $template = '' ) {
+		if ( ! self::is_enabled() ) {
+			return $template;
+		}
 		return NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/offline.php';
 	}
 
@@ -95,6 +99,27 @@ class Lite_Site {
 	public static function is_enabled() {
 		$settings = self::get_settings();
 		return ! empty( $settings['enabled'] );
+	}
+
+	/**
+	 * Check whether Lite Site is on or has been turned on before.
+	 *
+	 * Its addresses exist only then: once it has been on, links shared while
+	 * it was on keep reaching the full site after it is turned off.
+	 *
+	 * @return bool
+	 */
+	public static function has_been_enabled(): bool {
+		return self::is_enabled() || (bool) get_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME );
+	}
+
+	/**
+	 * Record that Lite Site has been turned on.
+	 */
+	public static function remember_enabled() {
+		if ( ! get_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME ) ) {
+			update_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME, true, true );
+		}
 	}
 
 	/**
@@ -488,33 +513,46 @@ class Lite_Site {
 
 	/**
 	 * Register rewrite rules for lite site pages and flush if a settings change is pending.
+	 *
+	 * The rules exist only once Lite Site has been turned on. Until then,
+	 * rules saved while they were registered for every site are flushed once.
 	 */
 	public static function register_rewrite_rules() {
+		if ( self::is_enabled() ) {
+			self::remember_enabled();
+		}
+
 		$url_base = self::get_url_base();
+		$flush    = (bool) get_transient( 'nls_flush_rewrite_rules' );
 
-		// Archive: /{url_base}.
-		add_rewrite_rule(
-			'^' . $url_base . '/?$',
-			'index.php?is_lite=archive',
-			'top'
-		);
+		if ( self::has_been_enabled() ) {
+			// Archive: /{url_base}.
+			add_rewrite_rule(
+				'^' . $url_base . '/?$',
+				'index.php?is_lite=archive',
+				'top'
+			);
 
-		// Archive paginated: /{url_base}/page/{n}. Must come before the single post catch-all.
-		add_rewrite_rule(
-			'^' . $url_base . '/page/([0-9]+)/?$',
-			'index.php?is_lite=archive&lite_page=$matches[1]',
-			'top'
-		);
+			// Archive paginated: /{url_base}/page/{n}. Must come before the single post catch-all.
+			add_rewrite_rule(
+				'^' . $url_base . '/page/([0-9]+)/?$',
+				'index.php?is_lite=archive&lite_page=$matches[1]',
+				'top'
+			);
 
-		// Single: /{url_base}/{post-slug}.
-		add_rewrite_rule(
-			'^' . $url_base . '/(.+)/?$',
-			'index.php?is_lite=single&lite_path=$matches[1]',
-			'top'
-		);
+			// Single: /{url_base}/{post-slug}.
+			add_rewrite_rule(
+				'^' . $url_base . '/(.+)/?$',
+				'index.php?is_lite=single&lite_path=$matches[1]',
+				'top'
+			);
+		} else {
+			$saved_rules = get_option( 'rewrite_rules' );
+			$flush       = $flush || ( is_array( $saved_rules ) && isset( $saved_rules[ '^' . $url_base . '/?$' ] ) );
+		}
 
 		// Deferred flush: triggered by a settings change, runs here so rules are already in $wp_rewrite.
-		if ( get_transient( 'nls_flush_rewrite_rules' ) ) {
+		if ( $flush ) {
 			delete_transient( 'nls_flush_rewrite_rules' );
 			flush_rewrite_rules(); // phpcs:ignore
 		}
@@ -527,6 +565,10 @@ class Lite_Site {
 	 * @return array The modified array of query variables.
 	 */
 	public static function register_query_vars( $vars ) {
+		if ( ! self::has_been_enabled() ) {
+			return $vars;
+		}
+
 		return array_merge(
 			$vars,
 			[
@@ -539,12 +581,20 @@ class Lite_Site {
 
 	/**
 	 * Handle template routing for lite site pages.
+	 *
+	 * While Lite Site is off, its addresses redirect temporarily to the full
+	 * site, so they work again as soon as it is turned back on.
 	 */
 	public static function handle_lite_site_templates() {
 		$is_lite = get_query_var( 'is_lite' );
 
-		if ( ! $is_lite || ! self::is_enabled() ) {
+		if ( ! $is_lite ) {
 			return;
+		}
+
+		if ( ! self::is_enabled() ) {
+			wp_safe_redirect( self::get_full_version_url( $is_lite ), 302 );
+			exit;
 		}
 
 		// Disable all other output.
@@ -566,6 +616,22 @@ class Lite_Site {
 
 		echo self::cache_single_page( $cache_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 		exit;
+	}
+
+	/**
+	 * The full-site address a lite address leads to while Lite Site is off.
+	 *
+	 * @param string $is_lite The request's `is_lite` query var.
+	 * @return string The permalink of the article at the lite address, or the homepage for any other lite address.
+	 */
+	private static function get_full_version_url( $is_lite ): string {
+		if ( 'single' === $is_lite ) {
+			$post = self::resolve_post( get_query_var( 'lite_path' ) );
+			if ( $post && in_array( $post->post_type, self::get_supported_post_types(), true ) ) {
+				return get_permalink( $post );
+			}
+		}
+		return home_url( '/' );
 	}
 
 	/**
