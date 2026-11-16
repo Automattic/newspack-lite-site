@@ -215,6 +215,25 @@ class Lite_Site {
 	}
 
 	/**
+	 * Print the custom CSS in a style element.
+	 *
+	 * The CSS prints as written. A style element is raw text, so HTML
+	 * escaping would turn `>` into an entity that is never decoded, and
+	 * stripping tags would cut CSS such as `content: "<"`. The element can
+	 * only end at `</style`, so each one becomes `<\/style`, which CSS reads
+	 * as the same text inside a string, a url() or a comment.
+	 */
+	public static function print_custom_css() {
+		$custom_css = preg_replace( '#</(?=style)#i', '<\\/', self::get_custom_css() );
+		if ( '' === $custom_css ) {
+			return;
+		}
+		?>
+		<style id="newspack-lite-site-custom-css"><?php echo $custom_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Every `</style` is escaped above, so the CSS can't end the style element; HTML escaping would break selectors such as `>`. ?></style>
+		<?php
+	}
+
+	/**
 	 * Get the footer HTML.
 	 *
 	 * @return string Footer HTML, or empty string if not set.

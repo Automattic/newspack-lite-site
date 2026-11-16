@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for the font stylesheet and GA4 tag printed in lite page heads.
+ * Tests for the font stylesheet, custom CSS and GA4 tag printed in lite page heads.
  *
  * @package newspack-lite-site
  */
@@ -8,7 +8,7 @@
 use Newspack_Lite_Site\Lite_Site;
 
 /**
- * Covers print_font_stylesheet() and print_analytics_tag().
+ * Covers print_font_stylesheet(), print_custom_css() and print_analytics_tag().
  */
 class Test_Lite_Site_Head_Assets extends Lite_Site_TestCase {
 
@@ -123,5 +123,72 @@ class Test_Lite_Site_Head_Assets extends Lite_Site_TestCase {
 		$output = get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) . get_echo( [ Lite_Site::class, 'print_analytics_tag' ] );
 
 		$this->assertStringNotContainsString( 'injected.js', $output );
+	}
+
+	/**
+	 * Custom CSS that contains `<` or `>` prints unchanged.
+	 *
+	 * @dataProvider data_custom_css_kept_as_written
+	 *
+	 * @param string $css Custom CSS.
+	 */
+	public function test_prints_custom_css_as_written( $css ) {
+		self::set_settings( [ 'custom_css' => $css ] );
+
+		$output = get_echo( [ Lite_Site::class, 'print_custom_css' ] );
+
+		$this->assertStringContainsString( '<style id="newspack-lite-site-custom-css">' . $css . '</style>', $output );
+	}
+
+	/**
+	 * CSS that must survive output unchanged.
+	 *
+	 * @return array[]
+	 */
+	public function data_custom_css_kept_as_written() {
+		return [
+			'child combinator' => [ 'main > p { color: red; }' ],
+			'media range'      => [ '@media (400px <= width <= 700px) { p { color: red; } } .z { color: blue; }' ],
+			'content string'   => [ 'p::before { content: "<"; } .z { color: blue; }' ],
+			'attribute value'  => [ '[data-x="<b>"] { color: red; }' ],
+			'tight combinator' => [ 'a>b { color: red; }' ],
+		];
+	}
+
+	/**
+	 * Custom CSS can't end the style element.
+	 *
+	 * @dataProvider data_custom_css_style_end_tags
+	 *
+	 * @param string $css Custom CSS.
+	 */
+	public function test_custom_css_cannot_end_style_element( $css ) {
+		self::set_settings( [ 'custom_css' => $css ] );
+
+		$output = get_echo( [ Lite_Site::class, 'print_custom_css' ] );
+
+		$this->assertSame( 1, preg_match_all( '#</style#i', $output ), 'Only the helper\'s own closing tag should print.' );
+		$this->assertStringEndsWith( '</style>', trim( $output ) );
+	}
+
+	/**
+	 * CSS that tries to end the style element.
+	 *
+	 * @return array[]
+	 */
+	public function data_custom_css_style_end_tags() {
+		return [
+			'script injection' => [ 'p { color: red; }</style><script>alert(1)</script><style>' ],
+			'unterminated'     => [ 'p { color: red; }</style' ],
+			'uppercase, space' => [ 'p { color: red; }</STYLE ><script>alert(1)</script>' ],
+			'tab'              => [ "p { color: red; }</style\t><script>alert(1)</script>" ],
+		];
+	}
+
+	/**
+	 * Nothing prints without custom CSS.
+	 */
+	public function test_prints_no_custom_css_when_unset() {
+		$this->assertSame( '', get_echo( [ Lite_Site::class, 'print_custom_css' ] ) );
 	}
 }
