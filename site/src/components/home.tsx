@@ -170,8 +170,16 @@ function DemoFrame() {
 		<figure aria-labelledby="home-demo-label">
 			<div className="overflow-hidden rounded-(--newspack-ui-radius-surface) border border-border shadow-md">
 				<div className="flex flex-wrap items-center justify-between gap-x-(--newspack-ui-spacer-3) gap-y-(--newspack-ui-spacer-1) border-b border-border bg-(--newspack-ui-color-surface-subtle) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-1)">
-					<span className="inline-flex items-center rounded-(--newspack-ui-radius-pill) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-3) py-(--newspack-ui-spacer-half) type-small text-foreground">
-						<span className="sr-only">Address: </span>/lite/
+					<span className="flex min-w-0 flex-1 items-center gap-(--newspack-ui-spacer-2)">
+						<span aria-hidden="true" className="flex gap-(--newspack-ui-spacer-half)">
+							<span className="size-2 rounded-full bg-border" />
+							<span className="size-2 rounded-full bg-border" />
+							<span className="size-2 rounded-full bg-border" />
+						</span>
+						<span className="flex min-w-0 flex-1 items-center rounded-(--newspack-ui-radius-control) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-half) type-small text-muted-foreground">
+							<span className="sr-only">Address: </span>yoursite.com
+							<span className="font-(weight:--newspack-ui-font-weight-strong) text-brand">/lite/</span>
+						</span>
 					</span>
 					<span id="home-demo-label" className="type-small text-muted-foreground">
 						A demo newsroom, The Riverbend Gazette
