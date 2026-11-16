@@ -1,0 +1,54 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import defaultMdxComponents from 'fumadocs-ui/mdx';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import type { TOCItemType } from 'fumadocs-core/toc';
+import { Card, Cards } from '@/components/mdx-card';
+import { Footer } from '@/components/brand';
+import { Docs } from '@/components/docs';
+import { docsMdxComponents } from '@/components/docs/mdx';
+import Layout from '@/components/layout.astro';
+import { SITE_NAME } from '@/lib/site';
+import { source } from '@/lib/source';
+
+interface Props {
+	page: CollectionEntry< 'docs' >;
+}
+
+export async function getStaticPaths() {
+	return source.getPages().map( ( page ) => ( {
+		params: { slug: page.slugs.length > 0 ? page.slugs.join( '/' ) : undefined },
+		props: { page: page.data._raw },
+	} ) );
+}
+
+const { page } = Astro.props;
+const { Content, headings } = await render( page );
+
+const toc: TOCItemType[] = headings.map( ( heading ) => ( {
+	depth: heading.depth,
+	title: heading.text,
+	url: '#' + heading.slug,
+} ) );
+---
+
+<Layout title={ `${ page.data.title } | ${ SITE_NAME }` } description={ page.data.description }>
+	<Docs
+		tree={ source.getPageTree() }
+		pathname={ Astro.url.pathname }
+		params={ Astro.params }
+		page={ { toc } }
+		client:load
+	>
+		<h1 class="docs-title">{ page.data.title }</h1>
+		<p class="docs-lead">{ page.data.description }</p>
+		<div class="prose docs-prose flex-1">
+			<Content components={ { ...defaultMdxComponents, ...docsMdxComponents, Card, Cards, Step, Steps } } />
+		</div>
+	</Docs>
+	<Footer />
+</Layout>
+
+<script>
+	import '@/components/docs/copy-buttons';
+</script>
