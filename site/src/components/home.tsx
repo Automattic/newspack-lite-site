@@ -203,7 +203,7 @@ const features: { title: string; href: string; body: string; labels: string[] }[
 	{
 		title: 'Images on request',
 		href: '/docs/guides/lite-articles/',
-		body: 'Article images wait as a box with its alt text and caption, until the reader asks for it.',
+		body: 'Article images wait as a box with their alt text and caption, until the reader asks for it.',
 		labels: [ 'Load image' ],
 	},
 	{
