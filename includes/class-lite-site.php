@@ -220,8 +220,8 @@ class Lite_Site {
 	 * The CSS prints as written. A style element is raw text, so HTML
 	 * escaping would turn `>` into an entity that is never decoded, and
 	 * stripping tags would cut CSS such as `content: "<"`. The element can
-	 * only end at `</style`, so each one becomes `<\/style`: the same string
-	 * inside a CSS string, and never valid CSS outside one.
+	 * only end at `</style`, so each one becomes `<\/style`, which CSS reads
+	 * as the same text inside a string, a url() or a comment.
 	 */
 	public static function print_custom_css() {
 		$custom_css = preg_replace( '#</(?=style)#i', '<\\/', self::get_custom_css() );
