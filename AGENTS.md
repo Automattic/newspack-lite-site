@@ -57,7 +57,7 @@ cd site
 npm ci
 npm run dev           # Local site at http://localhost:4321
 npm run build         # Static build in site/dist/
-npm test              # Content and color contrast checks
+npm test              # Content and color contrast checks, plus the WordPress.org asset tests (test:wporg), which need Chrome
 npm run check:build   # Checks site/dist/ after a build
 npm run shot -- <section>/<name>-<n> --site <url>   # Retakes a screenshot
 ```

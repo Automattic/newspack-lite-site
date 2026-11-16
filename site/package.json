@@ -10,8 +10,10 @@
 		"build": "astro build",
 		"preview": "astro preview",
 		"check:build": "node scripts/check-build.mjs",
-		"test": "node scripts/check-content.mjs && node scripts/check-contrast.mjs",
-		"shot": "node screenshots/shot.mjs"
+		"test": "node scripts/check-content.mjs && node scripts/check-contrast.mjs && npm run test:wporg",
+		"shot": "node screenshots/shot.mjs",
+		"test:wporg": "node --test \"wporg/*.test.mjs\"",
+		"wporg": "node wporg/render.mjs"
 	},
 	"devDependencies": {
 		"@tailwindcss/vite": "^4.3.3",

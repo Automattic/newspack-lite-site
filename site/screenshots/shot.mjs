@@ -1,6 +1,6 @@
 import { chmodSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { createInterface } from 'node:readline';
@@ -74,7 +74,10 @@ const USAGE = `Usage: npm run shot -- <section>/<name>-<n> --site <url> [options
   --mouse <x,y>          Leave the pointer at this point in the window
                          instead of the bottom right corner
   --now                  Capture without waiting for you (headless)
-  --out <file>           Write the image somewhere else
+  --boxes <selector>     Write the box of an element, in CSS pixels, to
+                         <out>.boxes.json (repeatable)
+  --out <file>           Write the image somewhere else. A .png file is
+                         lossless; anything else is WebP
 
 Sign in as James Smith: from WP_USER and WP_PASSWORD, or a prompt.`;
 
@@ -102,6 +105,7 @@ function parse() {
 			eval: { type: 'string', multiple: true, default: [] },
 			mouse: { type: 'string' },
 			now: { type: 'boolean', default: false },
+			boxes: { type: 'string', multiple: true, default: [] },
 			out: { type: 'string' },
 			help: { type: 'boolean', default: false },
 		},
@@ -177,6 +181,7 @@ function parse() {
 		target: new URL( values.url.replace( /^\/+/, '' ), site ),
 		loggedOut: values[ 'logged-out' ],
 		spotlight: values.spotlight,
+		boxes: values.boxes,
 		mouse,
 		steps,
 		interactive:
@@ -790,14 +795,39 @@ async function main() {
 		await nextFrames( page );
 		await page.waitForTimeout( 300 );
 
+		const elementBoxes = {};
+		for ( const selector of options.boxes ) {
+			const locator = await findInFrames( page, selector );
+			const found = locator ? await locator.boundingBox() : null;
+			if ( ! found || ! found.width || ! found.height ) {
+				fail( `--boxes found nothing for ${ selector }` );
+			}
+			elementBoxes[ selector ] = {
+				x: found.x,
+				y: found.y,
+				width: found.width,
+				height: found.height,
+			};
+		}
+
 		const png = await page.screenshot( { type: 'png' } );
 		mkdirSync( dirname( options.out ), { recursive: true } );
-		const { width, height } = await sharp( png )
-			.webp( { quality: 85 } )
-			.toFile( options.out );
+		const isPng = '.png' === extname( options.out ).toLowerCase();
+		const image = sharp( png );
+		const { width, height } = await (
+			isPng ? image.png( { compressionLevel: 9 } ) : image.webp( { quality: 85 } )
+		).toFile( options.out );
 		console.log( `Saved ${ options.out }` );
+		if ( options.boxes.length ) {
+			const boxesFile = `${ options.out }.boxes.json`;
+			writeFileSync(
+				boxesFile,
+				`${ JSON.stringify( elementBoxes, null, 2 ) }\n`
+			);
+			console.log( `Saved ${ boxesFile }` );
+		}
 		const inPublic = relative( PUBLIC_DIR, options.out );
-		if ( ! inPublic.startsWith( '..' ) ) {
+		if ( ! isPng && ! inPublic.startsWith( '..' ) ) {
 			const src = `/${ inPublic.split( '\\' ).join( '/' ) }`;
 			console.log(
 				`<Screenshot label="..." src="${ src }" width={${ width }} height={${ height }} />`

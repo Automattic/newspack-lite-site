@@ -124,6 +124,8 @@ Write the label as alt text that says what the image shows and what is highlight
 
 [`SHOTS.md`](SHOTS.md) has the command for every existing screenshot. Set `SHOT_SITE` to your site's address, and you can run them as they are.
 
+The WordPress.org listing screenshots in `.wordpress-org/` are retaken with the commands under "WordPress.org assets" in [`SHOTS.md`](SHOTS.md).
+
 ### Examples
 
 An admin screen, with the Error status of a feed spotlighted:
@@ -197,7 +199,8 @@ npm run shot -- guides/scratch-1 --site https://screenshots.local \
 | `--eval <js>` | Runs JavaScript in the page and in each frame inside it, such as the editor canvas, for a step no other option covers. Errors in the main page are printed. Repeat it for several scripts. |
 | `--mouse <x,y>` | Leaves the pointer at this point in the window, in pixels from the top left of the 1512×982 viewport. By default it moves to the bottom right corner after a click or fill, unless the last step is a `--hover`, which keeps the pointer where it is. Pass `--mouse` to move the pointer off a final hover. |
 | `--now` | Captures as soon as the page settles, without opening a window or waiting for Enter. Use it with the steps above and `--spotlight` for screens you can reach without help. Without a saved sign-in it needs `WP_USER` and `WP_PASSWORD`, since it can't ask. |
-| `--out <file>` | Writes the image somewhere else, for trying things out. A relative path starts from the folder you ran `npm run` in. |
+| `--boxes <selector>` | Writes the box of the first element that matches, in CSS pixels from the top left of the viewport, to `<out>.boxes.json`, as `{ "<selector>": { "x", "y", "width", "height" } }`. Repeat it for several elements. The boxes are read just before the capture. When a selector matches nothing visible, the script fails and writes no files. |
+| `--out <file>` | Writes the image somewhere else, for trying things out. A relative path starts from the folder you ran `npm run` in. A `.png` file is written as a lossless PNG, for assets that get cropped later; any other name is written as WebP. |
 
 Clicks, fills, hovers, scrolls, key presses, waits and scripts all run in the order you give them, whichever options they use.
 

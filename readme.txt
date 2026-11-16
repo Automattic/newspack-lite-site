@@ -64,6 +64,13 @@ Yes. Lite Site caches each article for 15 minutes and clears it when the article
 
 Lite Site addresses stop working. The rest of your site is not affected.
 
+== Screenshots ==
+
+1. The Lite Site homepage: a plain, text-only list of your newest stories, with a link back to the full site.
+2. A Lite Site article. Each image becomes a placeholder with its alt text, caption and credit, and a Load image button.
+3. Lite Site > Settings > General, where you check Enable Lite Site, set the Lite Site Path and choose which content appears.
+4. Lite Site > RSS > Feeds, listing each feed with its status, frequency, author and next run.
+
 == External services ==
 
 Lite Site connects to these services only when you set them up:
