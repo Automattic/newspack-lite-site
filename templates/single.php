@@ -37,10 +37,10 @@ if ( $is_liveblog ) {
 	<?php
 	Lite_Site::print_font_stylesheet();
 	require __DIR__ . '/lite-site-styles.php';
-	Lite_Site::print_custom_css();
 	if ( $is_liveblog ) :
 		require __DIR__ . '/liveblog-styles.php';
 	endif;
+	Lite_Site::print_custom_css();
 	Lite_Site::print_analytics_tag();
 	?>
 </head>
