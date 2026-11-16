@@ -1,0 +1,115 @@
+---
+title: Data
+description: What Lite Site stores, for queries, migrations, and reports, and how to remove all of it.
+---
+
+Lite Site keeps its data in standard WordPress storage, so any tool that reads WordPress can read it. Settings and the RSS feed list sit in two options. Imported RSS items are posts of a custom post type. Short-lived caches are transients and object cache entries, and the RSS import runs on WordPress cron.
+
+This page lists the names to use when querying that data directly, in a migration or a report. Use the settings screens or the REST API when possible.
+
+## Settings
+
+All settings are one option, `newspack_lite_site_settings`, stored as an array. It is also registered with the REST API, so it is readable and writable at `/wp/v2/settings` by users who can manage options. Every save is sanitized.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | `bool` | `false` | Whether the Lite Site is on. |
+| `url_base` | `string` | `lite` | The path the Lite Site lives at. |
+| `posts_per_page` | `int` | `10` | Articles per homepage page. Kept between 1 and 100. |
+| `categories` | `int[]` | `[]` | Category IDs to include. Empty means all. |
+| `include_subcategories` | `bool` | `true` | Whether the included categories bring their child categories. |
+| `tags` | `int[]` | `[]` | Tag IDs to include. Empty means all. |
+| `excluded_categories` | `int[]` | `[]` | Category IDs to leave out. |
+| `excluded_tags` | `int[]` | `[]` | Tag IDs to leave out. |
+| `footer_html` | `string` | `''` | Footer HTML, filtered with `wp_kses_post()`. |
+| `custom_css` | `string` | `''` | CSS added to every page. |
+| `external_links_new_tab` | `bool` | `true` | Whether links to other sites open in a new tab. |
+| `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
+| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color. |
+| `font_import_url` | `string` | `''` | The address of a font stylesheet. |
+| `font_body` | `string` | `''` | The body font name. |
+
+Saving the option marks the rewrite rules for a refresh, through the short-lived `nls_flush_rewrite_rules` transient.
+
+## RSS entries
+
+An imported RSS item is a post of type `nls_rss_entry`.
+
+- Not public in the usual sense: `public` is `false`, but the type is queryable on the front end and shows in the admin under the Lite Site menu.
+- REST base: `nls_rss_entry`, with `show_in_rest` on. Rewrite slug: `rss-entry`.
+- Supports title, editor, author, featured image, excerpt, and custom fields.
+- Taxonomies: `category` and `post_tag`.
+- Imported posts are created with the status `publish`.
+
+### Entry post meta
+
+| Key | Description |
+| --- | --- |
+| `_rss_import_guid` | The item's unique ID from the feed. The importer uses it to skip an item it already has. |
+| `_rss_import_source_url` | The item's link on the original site. Stored only when the feed gives one. |
+| `_rss_import_feed_url` | The address of the feed the item came from. |
+
+## RSS feeds and the scheduled import
+
+The list of feeds is one option, `newspack_lite_site_rss_importer`, stored as `[ 'feeds' => [ ... ] ]`. Each feed is keyed by the MD5 hash of its URL and holds these keys.
+
+| Key | Description |
+| --- | --- |
+| `feed_url` | The feed's address. |
+| `interval` | `every_5_minutes`, `every_10_minutes`, `every_30_minutes`, `hourly`, `twicedaily`, `daily`, or `weekly`. |
+| `author_id` | The user ID that imported posts are assigned to. |
+| `status` | `active` or `paused`. |
+| `last_run` | The time of the last import, or `null`. |
+| `last_result` | The counts from the last import, or the error it hit. |
+
+Each active feed has its own recurring WP-Cron event on the hook `newspack_lite_site_rss_import`, and the feed's ID is the event's only argument. A paused feed has no event. Each run imports at most 50 new items.
+
+While a feed imports, a transient named `nls_rss_importing_` plus the feed ID holds a lock for up to 5 minutes, so two runs can't overlap.
+
+Feeds are managed through the REST API in the `newspack-lite-site/v1` namespace, at `/rss-feeds` and `/rss-feeds/<id>`. Both need the `manage_options` capability.
+
+## Caches
+
+Lite Site keeps two short-lived copies so a busy site doesn't render the same page again and again.
+
+- **Article cache.** The finished HTML of an article is stored as a transient named `nls_page_` plus the MD5 hash of its path, for 15 minutes. It is stored only for ordinary requests to the site's own address, so a request with a query string or a login cookie doesn't fill it. The homepage is not stored.
+- **Address lookup cache.** The post an address belongs to is kept in the object cache, group `newspack_lite_site`, under a key that starts with `nls_post_`. A found post is kept for 3 hours. An address that finds nothing is kept for 5 minutes.
+
+Saving a post clears both for its Lite Site address, including the address it had before the save. Deleting a post clears them too. Changing a setting doesn't, so a new footer or color can take up to 15 minutes to show on an article that was recently opened.
+
+If the site has a persistent object cache, transients live there and not in the options table, and they expire on their own.
+
+## Remove everything
+
+Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. The first one deletes every imported RSS entry.
+
+1. Delete the imported entries. Their meta (`_rss_import_*`) goes with them. The type isn't registered once the plugin is gone, but WP-CLI can still find the posts.
+
+   ```bash
+   wp post delete $(wp post list --post_type=nls_rss_entry --post_status=any --format=ids) --force
+   ```
+
+2. Remove the scheduled imports.
+
+   ```bash
+   wp cron event delete newspack_lite_site_rss_import
+   ```
+
+3. Delete the two options.
+
+   ```bash
+   wp option delete newspack_lite_site_settings
+   wp option delete newspack_lite_site_rss_importer
+   ```
+
+4. Delete the cached articles and the other transients, which all start with `nls_`. This matches the options table only. A site with a persistent object cache can flush it with `wp cache flush`, or wait for the 15 minutes to pass.
+
+   ```bash
+   wp db query "DELETE FROM $(wp db prefix)options WHERE option_name LIKE '\_transient\_nls\_%' OR option_name LIKE '\_transient\_timeout\_nls\_%'"
+   ```
+
+5. Refresh the rewrite rules so the Lite Site address stops resolving.
+
+   ```bash
+   wp rewrite flush
+   ```

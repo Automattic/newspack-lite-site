@@ -1,0 +1,52 @@
+---
+title: Build from source
+description: Compile Lite Site from the repository, then install it on a local or remote site.
+---
+
+Use this to change the code or try something that hasn't been released. To run Lite Site on a site, install the release ZIP instead; see [Install the plugin](/docs/getting-started/install-the-plugin/).
+
+The repository can't be installed as it is. The admin screens are React and must be compiled first, and the plugin loads a Composer autoloader that doesn't exist until you generate it.
+
+## What you need
+
+- [Node.js](https://nodejs.org/), the current LTS release. The repository's `.nvmrc` is set to `lts/*`, so `nvm use` picks it.
+- [Composer](https://getcomposer.org/download/). The plugin has no PHP libraries to download, but Composer still generates `vendor/autoload.php`, which the plugin requires on load.
+- [Git](https://git-scm.com/downloads), or the repository's ZIP download from GitHub.
+
+## Build the plugin
+
+Clone the repository, then install and build.
+
+```bash
+git clone https://github.com/Automattic/newspack-lite-site.git
+cd newspack-lite-site
+composer install --no-dev
+npm ci
+npm run build
+```
+
+`composer install --no-dev` creates `vendor/autoload.php`. `npm run build` compiles the admin screens into `dist/`. Leave out `--no-dev` if you also plan to run the linters or PHP tests, so the development tools install too.
+
+If you downloaded the ZIP instead, unzip it and rename the folder from `newspack-lite-site-trunk` to `newspack-lite-site`. WordPress expects that name.
+
+## Install it on a site
+
+On a site that runs on the same computer, put the built folder in `wp-content/plugins/` under the name `newspack-lite-site`. Copy it, or link it so every edit shows at once.
+
+```bash
+# Copy
+cp -r newspack-lite-site /path/to/wordpress/wp-content/plugins/
+
+# Or link it, so WordPress reads your working folder
+ln -s /path/to/newspack-lite-site /path/to/wordpress/wp-content/plugins/newspack-lite-site
+```
+
+Then activate **Newspack Lite Site** under **Plugins**. Some hosts and some Windows setups don't allow links; copy the folder there. While you work on the admin screens, `npm run watch` rebuilds `dist/` when a file changes.
+
+For a site on another server, build a ZIP and upload it as you would a release.
+
+```bash
+npm run release:archive
+```
+
+That writes `release/newspack-lite-site.zip`. Upload it under **Plugins > Add New > Upload Plugin**, then activate it.
