@@ -33,7 +33,7 @@ export function About( props: SitePageProps ) {
 					<p className="type-small font-(weight:--newspack-ui-font-weight-medium) text-muted-foreground">About</p>
 					<h1 className="mt-(--newspack-ui-spacer-2) type-headline text-foreground">Why we built Lite Site</h1>
 					<p className="mt-(--newspack-ui-spacer-3) type-lead text-muted-foreground">
-						Lite Site is a free, open-source WordPress plugin that serves a fast, text-only copy of a site. Newspack
+						Lite Site is a free, open-source WordPress plugin that serves a fast, text-only copy of a news site. Newspack
 						builds it as part of{ ' ' }
 						<a href={ EMERGENCY_MODE_URL } className={ linkClassName }>
 							Emergency Mode for News
@@ -43,13 +43,14 @@ export function About( props: SitePageProps ) {
 
 					<Section id="about-networks" title="Reporting that stays reachable">
 						<p>
-							During a storm, a fire, or a power cut, networks slow down or fail. Readers still look for
+							During a storm, a fire, or a power outage, networks slow down or fail. Readers still look for
 							local news, often on a weak mobile connection, and a full page with images and scripts may
 							never finish loading.
 						</p>
 						<p>
-							Lite Site gives those readers the words. It serves each article as plain text, so the page
-							loads on a poor connection, and the newsroom’s reporting stays within reach.
+							Lite Site gives those readers the words. It serves each article as simple text, with images
+							loaded only when a reader asks for them, so the page loads on a poor connection and the
+							newsroom’s reporting stays within reach.
 						</p>
 					</Section>
 
@@ -58,11 +59,11 @@ export function About( props: SitePageProps ) {
 							<li>Keep readers informed when local networks fail.</li>
 							<li>Add as little work as possible for the newsroom.</li>
 							<li>Put essential information before visual design.</li>
-							<li>Stay fast when traffic is heavy.</li>
-							<li>Stay open source and free for any WordPress site.</li>
+							<li>Keep pages small, so they still load when many readers arrive at once.</li>
+							<li>Work on any WordPress site, with or without Newspack.</li>
 						</ul>
 						<p>
-							The size of the saving depends on the site. In our tests, a typical article fell from about
+							Savings depend on the site. In our tests, a typical article fell from about
 							3 MB to under 50 KB.
 						</p>
 					</Section>
@@ -81,8 +82,8 @@ export function About( props: SitePageProps ) {
 							<a href={ ROLLING_COVERAGE_URL } className={ linkClassName }>
 								Rolling Coverage
 							</a>
-							, the liveblog tool from the same project. Rolling Coverage covers a story as it unfolds. Lite
-							Site keeps the site readable while it does.
+							, the liveblog tool from the same program. Rolling Coverage lets a newsroom report a story as it
+							unfolds, and Lite Site shows those updates as text to readers on a weak connection.
 						</p>
 						<p>
 							The code is on{ ' ' }
