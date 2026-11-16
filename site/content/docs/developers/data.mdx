@@ -22,10 +22,10 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `excluded_categories` | `int[]` | `[]` | Category IDs to leave out. |
 | `excluded_tags` | `int[]` | `[]` | Tag IDs to leave out. |
 | `footer_html` | `string` | `''` | Footer HTML, filtered with `wp_kses_post()`. |
-| `custom_css` | `string` | `''` | CSS added to every page. |
+| `custom_css` | `string` | `''` | CSS added to every page except the offline page. Rules with `>` are dropped. |
 | `external_links_new_tab` | `bool` | `true` | Whether links to other sites open in a new tab. |
 | `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
-| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color. |
+| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's primary color, or the text color (`currentcolor`) if the theme has none. |
 | `font_import_url` | `string` | `''` | The address of a font stylesheet. |
 | `font_body` | `string` | `''` | The body font name. |
 
@@ -79,11 +79,11 @@ Saving a post clears both for its Lite Site address, including the address it ha
 
 A second object cache group, `newspack-lite-site`, holds lookups for the admin screens, under keys that start with `entry_tags:` and `entry_feed_urls:`.
 
-If the site has a persistent object cache, transients live there and not in the options table. Not everything expires: the rewrite flag, the 3-hour lookups, and the `newspack-lite-site` group can outlast a clean-up. `wp cache flush` clears the whole site's object cache.
+If the site has a persistent object cache, transients live there and not in the options table. Not everything expires: the rewrite flag, the address lookups (up to 3 hours), and the `newspack-lite-site` group can outlast a clean-up by up to that long. `wp cache flush` clears the whole site's object cache.
 
 ## Remove everything
 
-Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. Step 2 deletes every imported RSS entry and its images.
+Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. Step 2 deletes every imported RSS entry and its images. Run it before anyone deletes entries in the dashboard, because images of deleted entries are left unattached and can't be found again.
 
 1. Deactivate the plugin, so nothing re-adds its rewrite rules or imports more entries while you clean up.
 
@@ -124,10 +124,10 @@ Deactivating or deleting the plugin leaves its data in place. Lite Site has no u
    On a host without a MySQL client, use WP-CLI's transient commands instead. They only reach transients stored in the database, so they do nothing on a site with a persistent object cache. Step 6 covers that case.
 
    ```bash
-   wp transient list --search='nls_*' --fields=name --format=csv | tail -n +2 | xargs -n1 wp transient delete
+   wp transient list --search='nls_*' --fields=name --format=csv | tail -n +2 | xargs -r -n1 wp transient delete
    ```
 
-6. Clear the object cache, then refresh the rewrite rules so the Lite Site address stops resolving.
+6. Clear the object cache, which clears it for the whole site, then refresh the rewrite rules so the Lite Site address stops resolving.
 
    ```bash
    wp cache flush

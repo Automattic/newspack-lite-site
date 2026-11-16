@@ -46,15 +46,21 @@ If imports still do not run, ask your host or a developer to check that schedule
 
 ## A feed shows an error
 
-An **Error** status means the last import failed. Hover over it, or select **Edit**, to read the message. **Last Run** shows the result of every import. These are the common messages.
+An **Error** status means the last import failed. Hover over it, or select **Edit**, to read the message. These are the common ones.
 
-- **A valid RSS feed URL is required.** The address is not a full web address, or the site name cannot be found. It also appears for a feed on a private network, such as a test site on a local computer, which Lite Site does not import from. Open the feed address in a browser to check it. Use **Open Feed URL** in the drawer.
+- **A valid RSS feed URL is required.** The feed's site can no longer be found, or its address now leads to a private network. Open the feed address in a browser to check it. Use **Open Feed URL** in the drawer.
 - **Couldn't reach this RSS feed.** The source did not answer, blocked your site, or returned an error. If the address opens in a browser, wait for the next run or select **Retry Now**.
-- **The RSS feed contains no items**. The feed loaded but has nothing to import. This is not an error on your side; it clears when the source publishes.
 - **The author set for this feed can no longer publish posts.** Select **Edit** and choose another author.
-- **This RSS feed is already importing.** Wait a few minutes and try again.
-- **Resume the RSS feed to import it.** The feed is paused. Set **Status** to **Active**.
+
+**Last Run** shows the result of every import, even when the status is not **Error**.
+
+- **The RSS feed contains no items**. The feed loaded but has nothing to import. This is not an error on your side; it clears when the source publishes.
 - **2 imported, 1 failed**. Some items could not be saved. The others came in. The next import tries the failed items again.
+
+Two messages appear after you select **Retry Now**.
+
+- **This RSS feed is already importing. Try again in a few minutes.** Wait a few minutes and try again.
+- **Resume the RSS feed to import it.** The feed's status is **Inactive**. Set **Status** to **Active**.
 
 For the full steps, see [RSS feeds](/docs/guides/rss-feeds/#fix-a-feed-that-shows-an-error).
 

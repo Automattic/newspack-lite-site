@@ -46,7 +46,8 @@ Then activate **Newspack Lite Site** under **Plugins**. Some hosts and some Wind
 For a site on another server, build a ZIP from a `--no-dev` install and upload it as you would a release.
 
 ```bash
+composer install --no-dev
 npm run release:archive
 ```
 
-That writes `release/newspack-lite-site.zip`. Upload it under **Plugins > Add New > Upload Plugin**, then activate it.
+That writes `release/newspack-lite-site.zip`. Upload it under **Plugins > Add Plugin** with **Upload Plugin**, then activate it.

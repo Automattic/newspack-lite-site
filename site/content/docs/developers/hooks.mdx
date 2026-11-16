@@ -15,7 +15,7 @@ These two filters control what a Lite Site article keeps from the post.
 
 Runs the post's content through the same kind of pipeline as `the_content`, without the callbacks other plugins add to `the_content`. Use it to change the content before Lite Site strips it down to text.
 
-It runs first in the cleaning step, before comments, scripts, styles, and figures are removed. By default it runs `do_blocks` (Lite Site's own copy), `wptexturize`, `convert_smilies`, `wpautop`, `shortcode_unautop`, `prepend_attachment`, `wp_filter_content_tags`, `wp_replace_insecure_home_url`, `do_shortcode`, and `capital_P_dangit`.
+It runs first in the cleaning step, before comments, scripts, styles, and figures are removed. By default it runs these callbacks in this order: `do_blocks` (Lite Site's own copy, priority 9); `wptexturize`, `wpautop`, `shortcode_unautop`, `prepend_attachment`, `wp_filter_content_tags`, and `wp_replace_insecure_home_url` (priority 10); `capital_P_dangit` and `do_shortcode` (priority 11); and `convert_smilies` (priority 20).
 
 | Argument | Type | Description |
 | --- | --- | --- |
@@ -86,7 +86,7 @@ add_action( 'newspack_lite_site_styles', function () {
 
 ### `newspack_lite_site_liveblog_styles`
 
-Runs at the end of the extra stylesheet that only articles with a liveblog print. It has no arguments.
+Runs at the end of the extra stylesheet that only posts from the Liveblog plugin print, while the liveblog is on or archived. It has no arguments. Rolling Coverage does not use it; use `newspack_lite_site_styles` for that.
 
 ```php
 add_action( 'newspack_lite_site_liveblog_styles', function () {

@@ -7,7 +7,7 @@ Short answers to the questions publishers ask most. If something is not working,
 
 ## Will Lite Site affect my search ranking?
 
-It should not. Search engines are told to list only your main site.
+It should not. Search engines are told to list only your main site. The one exception is imported RSS entries, which also have a page on the main site and show in its search.
 
 Each Lite Site article points search engines to the full version of the same article. Every Lite Site page, the homepage included, asks them not to list it. Links on these pages are still followed.
 
@@ -19,7 +19,7 @@ The savings come from what a Lite Site page leaves out:
 
 - The theme's styles and scripts.
 - Tracking and advertising scripts. Analytics is added only if you set a **GA4 Measurement ID** in [Settings](/docs/guides/settings/).
-- Images. A reader sees a placeholder with the alt text and caption, and loads the image only by selecting **Load image**.
+- Images. A reader sees a placeholder with the alt text and caption for each image in a figure, such as the Image block, and loads it only by selecting **Load image**. Other images are removed.
 - Fonts, unless you choose one in [Appearance](/docs/guides/appearance/).
 
 ## Can I use Lite Site with a caching plugin?
@@ -32,7 +32,9 @@ If you use a caching plugin, check how long it keeps pages. After an urgent upda
 
 Lite Site addresses stop working, and so do the main-site pages of imported RSS entries. Your posts, pages and theme are not affected. The **Lite Site** menu disappears, and RSS feeds stop importing.
 
-Your settings, feeds and imported RSS entries stay in the database. Activate the plugin again and Lite Site returns as you left it.
+On a site with the PWA plugin, the site's offline page becomes the Lite Site one from the moment Lite Site is activated, even while Lite Site is off.
+
+Your settings, feeds and imported RSS entries stay in the database. Activate the plugin again and Lite Site returns as you left it. If Lite Site addresses don't open after you reactivate, refresh the address list; see [Troubleshooting](/docs/guides/troubleshooting/#a-lite-site-address-shows-page-not-found).
 
 ## How do I remove Lite Site completely?
 
@@ -50,7 +52,7 @@ Go to the **Feeds** tab of **Lite Site > RSS** and delete each feed. See [RSS fe
 
 ### Delete the imported entries
 
-Go to the **Entries** tab, move the entries to the trash, then delete them for good. See [RSS entries](/docs/guides/rss-entries/).
+Go to the **Entries** tab, move the entries to the trash, then delete them for good. See [RSS entries](/docs/guides/rss-entries/). Images that came in with the entries stay in the Media Library. To remove them too, a developer should follow [Data](/docs/developers/data/#remove-everything) before the entries are deleted.
 
 </Step>
 <Step>
@@ -68,7 +70,7 @@ Deleting the plugin removes its files, not the settings you saved. They are smal
 
 ## Can I use Lite Site if my site doesn't run on WordPress?
 
-Yes, with a second site. Set up a separate WordPress site, on WordPress.com or on your own hosting, and install Lite Site there. [Add your own site's RSS feed](/docs/getting-started/add-an-rss-feed/) to it. Each item in your feed becomes an entry that shows in that site's Lite Site homepage and on its own Lite Site page. You keep publishing where you do now, and the second site is your text-only backup.
+Yes, with a second site. Set up a separate WordPress site, on WordPress.com or on your own hosting, and install Lite Site there. [Add your own site's RSS feed](/docs/getting-started/add-an-rss-feed/) to it. Each item in your feed becomes an entry that shows on that site's Lite Site homepage and on its own Lite Site page. Check that your feed carries the full article text, since many carry only a summary. Expect only items published after the feed is added, up to 50 per run, with no backfill of older articles. You keep publishing where you do now, and the second site is your text-only backup.
 
 Your hosting provider can tell you which kind of second site fits your budget and your team.
 

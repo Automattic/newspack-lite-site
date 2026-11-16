@@ -21,7 +21,7 @@ In **Lite Site > Settings**, select **Appearance**.
 
 ### Pick a primary color
 
-Use the **Primary Color** picker. The color is used for links in stories and the divider lines. Until you pick one, it uses the site's current primary color.
+Use the **Primary Color** picker. The color is used for links in stories and the divider lines. Until you pick one, it uses the site's primary color, or the text color if the theme has none.
 
 <Screenshot label="The Primary Color picker under Colors, picked out" src="/screenshots/guides/appearance-1.webp" width={3024} height={1964} />
 
@@ -65,7 +65,7 @@ In **Body Font**, enter the font name exactly as the provider lists it, for exam
 
 ### Add the rules
 
-In **Custom CSS**, under **Advanced**, add your own rules. They are added after the built-in styles, so they can override them. Every rule adds to page weight, so keep it short. Links that lead away from the Lite Site carry the `lite-site-external` class, so you can style them differently.
+In **Custom CSS**, under **Advanced**, add your own rules. They are added after the built-in styles, so they can override them. Every rule adds to page weight, so keep it short. Rules that use the `>` sign don't work, and Lite Site drops them. Custom CSS does not apply to the offline page. Links that lead away from the Lite Site carry the `lite-site-external` class, so you can style them differently.
 
 <Screenshot label="The Custom CSS field under Advanced, picked out" src="/screenshots/guides/appearance-3.webp" width={3024} height={1964} />
 
