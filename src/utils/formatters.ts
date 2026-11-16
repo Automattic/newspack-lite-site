@@ -49,6 +49,21 @@ export function formatLastResult( result: LastResult | null ): string {
 	if ( result.empty && 0 === imported ) {
 		return __( 'The RSS feed contains no items', 'newspack-lite-site' );
 	}
+	if ( failed > 0 ) {
+		if ( upToDate && 0 === imported ) {
+			return sprintf(
+				/* translators: %d: number of entries that failed */
+				_n( 'Up to date, %d failed', 'Up to date, %d failed', failed, 'newspack-lite-site' ),
+				failed
+			);
+		}
+		return sprintf(
+			/* translators: 1: number of entries imported, 2: number of entries that failed */
+			_n( '%1$d imported, %2$d failed', '%1$d imported, %2$d failed', failed, 'newspack-lite-site' ),
+			imported,
+			failed
+		);
+	}
 	if ( upToDate && 0 === imported ) {
 		return __( 'Up to date', 'newspack-lite-site' );
 	}
@@ -57,14 +72,6 @@ export function formatLastResult( result: LastResult | null ): string {
 			/* translators: %d: number of entries imported */
 			_n( '%d imported, up to date', '%d imported, up to date', imported, 'newspack-lite-site' ),
 			imported
-		);
-	}
-	if ( failed > 0 ) {
-		return sprintf(
-			/* translators: 1: number of entries imported, 2: number of entries that failed */
-			_n( '%1$d imported, %2$d failed', '%1$d imported, %2$d failed', imported, 'newspack-lite-site' ),
-			imported,
-			failed
 		);
 	}
 	return sprintf(
