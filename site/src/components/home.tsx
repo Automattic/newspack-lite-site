@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PARTNERS } from '@/components/partner-logos';
 import { SiteLayout, type SitePageProps } from '@/components/site-layout';
 
@@ -345,6 +345,24 @@ function Weight() {
 	);
 }
 
+const sections = [
+	{
+		title: 'Getting started',
+		description: 'Install the plugin, turn on Lite Site and add an RSS feed.',
+		href: '/docs/getting-started/',
+	},
+	{
+		title: 'Guides',
+		description: 'Settings, appearance, RSS feeds and what readers see.',
+		href: '/docs/guides/',
+	},
+	{
+		title: 'Developers',
+		description: 'Hooks, stored data and building from source.',
+		href: '/docs/developers/',
+	},
+];
+
 export function Home( props: SitePageProps ) {
 	return (
 		<SiteLayout { ...props }>
@@ -486,9 +504,29 @@ export function Home( props: SitePageProps ) {
 						</li>
 					) ) }
 				</ol>
-				<div className="mt-(--newspack-ui-spacer-8)">
-					<Actions />
-				</div>
+			</section>
+
+			<section aria-labelledby="home-docs" className="site-container section-space">
+				<h2 id="home-docs" className="type-section text-foreground">
+					Read the docs
+				</h2>
+				<ul className="mt-(--newspack-ui-spacer-6) grid gap-(--newspack-ui-spacer-2) sm:grid-cols-3">
+					{ sections.map( ( section ) => (
+						<li key={ section.href }>
+							<a href={ section.href } className="group block h-full rounded-(--newspack-ui-radius-surface)">
+								<Card className="h-full transition-colors duration-(--newspack-ui-duration-color) group-hover:border-(color:--newspack-ui-color-border-hover)">
+									<CardHeader>
+										<CardTitle className="flex items-center justify-between gap-(--newspack-ui-spacer-1)">
+											{ section.title }
+											<Arrow className={ arrowMotion } />
+										</CardTitle>
+										<CardDescription>{ section.description }</CardDescription>
+									</CardHeader>
+								</Card>
+							</a>
+						</li>
+					) ) }
+				</ul>
 			</section>
 		</SiteLayout>
 	);
