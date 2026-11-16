@@ -7,7 +7,7 @@ Short answers to the questions publishers ask most. If something is not working,
 
 ## Will Lite Site affect my search ranking?
 
-No. Search engines are told to list only your main site.
+It should not. Search engines are told to list only your main site.
 
 Each Lite Site article points search engines to the full version of the same article. Every Lite Site page, the homepage included, asks them not to list it. Links on these pages are still followed.
 
@@ -30,7 +30,7 @@ If you use a caching plugin, check how long it keeps pages. After an urgent upda
 
 ## What happens if I deactivate the plugin?
 
-Lite Site addresses stop working, and nothing else on the site changes. The **Lite Site** menu disappears, and RSS feeds stop importing.
+Lite Site addresses stop working, and so do the main-site pages of imported RSS entries. Your posts, pages and theme are not affected. The **Lite Site** menu disappears, and RSS feeds stop importing.
 
 Your settings, feeds and imported RSS entries stay in the database. Activate the plugin again and Lite Site returns as you left it.
 
@@ -68,7 +68,7 @@ Deleting the plugin removes its files, not the settings you saved. They are smal
 
 ## Is the Lite Site accessible?
 
-For many readers it is easier to use than the full site. Each page is plain text with a title, a main area, a footer and labeled page links, and none of the theme's scripts. Image alt text shows in the placeholder, so write it for every image.
+For many readers it is easier to use than the full site. Each page is plain text with a title, a main area, a footer and, on the homepage, labeled page links, and none of the theme's scripts. Image alt text shows in the placeholder, so write it for every image.
 
 Some things from your theme do not carry over. Accessibility labels added by blocks are removed, and so are theme features such as skip links. Treat the Lite Site as a fallback, not a replacement for the full site. A link to an accessibility policy in **Footer HTML** helps readers who need it.
 
@@ -86,7 +86,7 @@ They are reduced to text. The Lite Site keeps headings, paragraphs, lists, quote
 
 We have not tested them, so check before you rely on it.
 
-- **Membership and paywall plugins:** Password-protected posts never appear. Lite Site shows articles as a signed-out visitor sees them, but check that restricted articles do not show their full text on it.
+- **Membership and paywall plugins:** Password-protected posts never appear. Lite Site does not apply a membership plugin's restrictions, so a restricted article may show its full text there. Before you turn Lite Site on, open a restricted article through it. If the full text shows, leave those articles out with **Excluded Categories** or **Excluded Tags** in [Settings](/docs/guides/settings/).
 - **Translation plugins:** Switching language may not work on Lite Site addresses.
 - **Redirect plugins:** A plugin that rewrites addresses may stop Lite Site addresses from opening. See [Troubleshooting](/docs/guides/troubleshooting/).
 

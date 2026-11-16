@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Fix feeds that do not import, a feed that shows an error, and Lite Site addresses that show "Page not found".
 ---
 
-Start with the problem you see. Most fixes are a setting or a single click. A few need your host or a developer, and those pages say so.
+Start with the problem you see. Most fixes are a setting or a single click. A few need your host or a developer, and those steps say so.
 
 ## RSS feeds are not importing on schedule
 
@@ -19,9 +19,9 @@ Open the **Feeds** tab of **Lite Site > RSS**. If WP-Cron is turned off for the 
 </Step>
 <Step>
 
-### Try an import by hand
+### Check for an error
 
-Select **Edit** on the feed, then **Retry Now**. If the import works, the feed and its address are fine and the problem is the schedule. If it fails, go to [A feed shows an error](#a-feed-shows-an-error). **Retry Now** is not there for a paused feed; set it to **Active** first.
+If the feed's **Status** shows **Error**, the schedule is running but the import fails. Go to [A feed shows an error](#a-feed-shows-an-error). If there is no error, the schedule is the problem, so continue with the next steps.
 
 </Step>
 <Step>
@@ -50,11 +50,11 @@ An **Error** status means the last import failed. Hover over it, or select **Edi
 
 - **A valid RSS feed URL is required.** The address is not a full web address, or the site name cannot be found. It also appears for a feed on a private network, such as a test site on a local computer, which Lite Site does not import from. Open the feed address in a browser to check it. Use **Open Feed URL** in the drawer.
 - **Couldn't reach this RSS feed.** The source did not answer, blocked your site, or returned an error. If the address opens in a browser, wait for the next run or select **Retry Now**.
-- **The RSS feed contains no items.** The feed loaded but has nothing to import. This is not an error on your side; it clears when the source publishes.
+- **The RSS feed contains no items**. The feed loaded but has nothing to import. This is not an error on your side; it clears when the source publishes.
 - **The author set for this feed can no longer publish posts.** Select **Edit** and choose another author.
 - **This RSS feed is already importing.** Wait a few minutes and try again.
 - **Resume the RSS feed to import it.** The feed is paused. Set **Status** to **Active**.
-- **2 imported, 1 failed.** Some items could not be saved. The others came in. Try **Retry Now** again later.
+- **2 imported, 1 failed**. Some items could not be saved. The others came in. The next import tries the failed items again.
 
 For the full steps, see [RSS feeds](/docs/guides/rss-feeds/#fix-a-feed-that-shows-an-error).
 
@@ -73,7 +73,7 @@ Check the address first, then the settings.
 
 ### Check that Lite Site is on
 
-Go to **Lite Site > Settings** and check **Enable Lite Site** is on and saved. See [Turn on Lite Site](/docs/getting-started/turn-on-lite-site/).
+Go to **Lite Site > Settings** and check **Enable Lite Site** is on and saved. When Lite Site is off, its addresses open the main site's homepage instead. See [Turn on Lite Site](/docs/getting-started/turn-on-lite-site/).
 
 </Step>
 <Step>
@@ -87,21 +87,14 @@ Compare the address with **Lite Site Path**. If you changed the path from `lite`
 
 ### Check whether the post is left out
 
-An article shows "Page not found." when it is not published, is password protected, or is left out by your **Categories**, **Tags**, **Excluded Categories** or **Excluded Tags**. Open another published article through the Lite Site. If that works and one article does not, the post is the cause. If the homepage opens but no articles do, check the filters.
+An article shows "Page not found." when it is not published, is password protected, or is left out by your **Categories**, **Tags**, **Excluded Categories** or **Excluded Tags**. Open another published article through the Lite Site. If that works and one article does not, the post is the cause. If you just published the post, wait five minutes and try again. If the homepage opens but no articles do, refresh the address list in the next step.
 
 </Step>
 <Step>
 
 ### Refresh the address list
 
-WordPress keeps a list of addresses. It is refreshed when you turn Lite Site on or change the path, but a plugin or your host can leave it out of date. Go to **Settings > Permalinks** and select **Save Changes** without changing anything. Then open the address again.
-
-</Step>
-<Step>
-
-### Check the permalink setting
-
-On **Settings > Permalinks**, make sure a structure other than **Plain** is chosen. **Post name** is a good choice. Select **Save Changes**.
+WordPress keeps a list of addresses. It is refreshed when you turn Lite Site on or change the path, but a plugin or your host can leave it out of date. Go to **Settings > Permalinks**. Check that a structure other than **Plain** is chosen; **Post name** is a good choice. Then select **Save Changes**, even if you changed nothing, and open the address again.
 
 </Step>
 <Step>
