@@ -271,22 +271,57 @@ function Shot( { src, alt, caption }: { src: string; alt: string; caption: React
 export function Home( props: SitePageProps ) {
 	return (
 		<SiteLayout { ...props }>
-			<section
-				aria-labelledby="home-title"
-				className="site-container grid gap-(--newspack-ui-spacer-8) pt-[calc(var(--section-space)/2)] pb-[calc(var(--section-space)/2)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start lg:gap-(--newspack-ui-spacer-11)"
-			>
-				<div className="lg:sticky lg:top-(--newspack-ui-spacer-12)">
-					<h1 id="home-title" className="type-display text-foreground lg:-mt-[0.17em] lg:text-(length:--newspack-ui-font-size-4xl) lg:leading-(--newspack-ui-line-height-4xl)">
-						Keep your news readable when connections fail
-					</h1>
-					<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
-					<p className="mt-(--newspack-ui-spacer-3) text-pretty text-foreground">{ WEIGHT }</p>
-					<div className="mt-(--newspack-ui-spacer-5)">
-						<Actions />
+			<div className="relative mb-[calc(var(--section-space)/2)]">
+				<div aria-hidden="true" className="absolute inset-x-0 top-[38%] bottom-0 bg-linear-to-b from-transparent to-(--newspack-ui-color-surface-subtle)" />
+				<section
+					aria-labelledby="home-title"
+					className="site-container relative grid gap-(--newspack-ui-spacer-8) pt-[calc(var(--section-space)/2)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start lg:gap-(--newspack-ui-spacer-11)"
+				>
+					<div className="lg:sticky lg:top-(--newspack-ui-spacer-12)">
+						<h1 id="home-title" className="type-display text-foreground lg:-mt-[0.17em] lg:text-(length:--newspack-ui-font-size-4xl) lg:leading-(--newspack-ui-line-height-4xl)">
+							Keep your news readable when connections fail
+						</h1>
+						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
+						<p className="mt-(--newspack-ui-spacer-3) text-pretty text-foreground">{ WEIGHT }</p>
+						<div className="mt-(--newspack-ui-spacer-5)">
+							<Actions />
+						</div>
 					</div>
-				</div>
-				<DemoFrame />
-			</section>
+					<DemoFrame />
+				</section>
+				<section
+					aria-labelledby="home-partners"
+					className="site-container relative flex flex-col gap-(--newspack-ui-spacer-5) pt-(--newspack-ui-spacer-9) pb-[calc(var(--section-space)/2)] lg:flex-row lg:items-end lg:justify-between lg:gap-(--newspack-ui-spacer-11)"
+				>
+					<div className="max-w-[34ch]">
+						<h2 id="home-partners" className="type-small font-(weight:--newspack-ui-font-weight-medium) text-foreground">
+							Part of{ ' ' }
+							<a href={ EMERGENCY_MODE_URL } className="text-link">
+								Emergency Mode for News
+							</a>
+						</h2>
+						<p className="mt-(--newspack-ui-spacer-half) type-small text-pretty text-muted-foreground">A program by OpenNews, Newspack and NC Local.</p>
+						<a href="/about/" className="mt-(--newspack-ui-spacer-1) inline-flex min-h-6 items-center py-1 type-small text-link">
+							Why we built it
+						</a>
+					</div>
+					<ul className="flex flex-wrap items-center gap-x-(--newspack-ui-spacer-8) gap-y-(--newspack-ui-spacer-4) lg:gap-x-(--newspack-ui-spacer-11)">
+						{ PARTNERS.map( ( partner ) => (
+							<li key={ partner.url }>
+								<a
+									href={ partner.url }
+									aria-label={ partner.name }
+									className="flex text-muted-foreground transition-colors duration-(--newspack-ui-duration-color) hover:text-foreground"
+								>
+									<svg aria-hidden="true" viewBox={ partner.viewBox } className={ `w-auto ${ partner.className }` }>
+										<path fill="currentColor" fillRule={ partner.evenOdd ? 'evenodd' : undefined } d={ partner.path } />
+									</svg>
+								</a>
+							</li>
+						) ) }
+					</ul>
+				</section>
+			</div>
 
 			<section aria-labelledby="home-article" className="site-container section-space">
 				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-2)">
@@ -382,42 +417,6 @@ export function Home( props: SitePageProps ) {
 					<Actions />
 				</div>
 			</section>
-
-			<section
-				aria-labelledby="home-partners"
-				className="site-container section-space flex flex-col gap-(--newspack-ui-spacer-5) lg:flex-row lg:items-end lg:justify-between lg:gap-(--newspack-ui-spacer-11)"
-			>
-				<div className="max-w-[44ch]">
-					<h2 id="home-partners" className="type-small font-(weight:--newspack-ui-font-weight-medium) text-foreground">
-						Part of{ ' ' }
-						<a href={ EMERGENCY_MODE_URL } className="text-link">
-							Emergency Mode for News
-						</a>
-					</h2>
-					<p className="mt-(--newspack-ui-spacer-half) type-small text-pretty text-muted-foreground">A program by OpenNews, Newspack and NC Local.</p>
-					<a href="/about/" className="mt-(--newspack-ui-spacer-1) inline-flex min-h-6 items-center py-1 type-small text-link">
-						Why we built it
-					</a>
-				</div>
-				<ul className="flex flex-wrap items-center gap-x-(--newspack-ui-spacer-8) gap-y-(--newspack-ui-spacer-4) lg:gap-x-(--newspack-ui-spacer-11)">
-					{ PARTNERS.map( ( partner ) => (
-						<li key={ partner.url }>
-							<a
-								href={ partner.url }
-								aria-label={ partner.name }
-								className="flex text-muted-foreground transition-colors duration-(--newspack-ui-duration-color) hover:text-foreground"
-							>
-								<svg aria-hidden="true" viewBox={ partner.viewBox } className={ `w-auto ${ partner.className }` }>
-									<path fill="currentColor" fillRule={ partner.evenOdd ? 'evenodd' : undefined } d={ partner.path } />
-								</svg>
-							</a>
-						</li>
-					) ) }
-				</ul>
-			</section>
-			<div className="site-container">
-				<hr className="m-0 border-0 border-t border-border" />
-			</div>
 		</SiteLayout>
 	);
 }
