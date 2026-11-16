@@ -36,8 +36,17 @@ if ( ! searchIndex ) {
 		const troubleshooting = records.find(
 			( record ) => record.type === 'page' && record.url.replace( /\/?$/, '/' ) === '/docs/guides/troubleshooting/',
 		);
-		if ( ! troubleshooting || ! /WP-Cron/.test( JSON.stringify( troubleshooting ) ) ) {
-			failures.push( 'search index has no troubleshooting page record mentioning WP-Cron' );
+		const inBody =
+			troubleshooting &&
+			records.some(
+				( record ) =>
+					record.page_id === troubleshooting.page_id &&
+					record.type !== 'page' &&
+					record.id !== `${ troubleshooting.page_id }-0` &&
+					record.content?.includes( 'WP-Cron' ),
+			);
+		if ( ! inBody ) {
+			failures.push( 'search index has no troubleshooting body record mentioning WP-Cron' );
 		}
 		const indexed = new Set(
 			records
@@ -74,12 +83,12 @@ if ( existsSync( join( dist, 'docs' ) ) ) {
 
 const pages = walk( dist ).filter( ( path ) => path.endsWith( '.html' ) );
 for ( const page of pages ) {
-	for ( const [ , href, fragment ] of readFileSync( page, 'utf8' ).matchAll( /href="(\/[^"#?]*)[^"#]*(?:#([^"]*))?"/g ) ) {
+	for ( const [ , href, fragment ] of readFileSync( page, 'utf8' ).matchAll( /(?<![\w-])href="(\/(?!\/)[^"#?]*)[^"#]*(?:#([^"]*))?"/g ) ) {
 		if ( href.startsWith( '/_astro/' ) || href === '/favicon.svg' ) {
 			continue;
 		}
 		const target = join( dist, href.replace( /\/?$/, '/' ), 'index.html' );
-		const file = existsSync( target ) ? target : join( dist, href );
+		const file = [ target, join( dist, `${ href.replace( /\/$/, '' ) }.html` ), join( dist, href ) ].find( ( path ) => existsSync( path ) && statSync( path ).isFile() ) ?? join( dist, href );
 		if ( ! existsSync( file ) || ! statSync( file ).isFile() ) {
 			failures.push( `${ relative( dist, page ) } links to ${ href }, which doesn't exist` );
 		} else if ( fragment && file.endsWith( '.html' ) ) {
