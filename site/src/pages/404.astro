@@ -1,0 +1,9 @@
+---
+import Layout from '@/components/layout.astro';
+import { SITE_NAME } from '@/lib/site';
+import { NotFound, NOT_FOUND_DESCRIPTION } from '@/components/not-found';
+---
+
+<Layout title={ `Page not found | ${ SITE_NAME }` } description={ NOT_FOUND_DESCRIPTION }>
+	<NotFound pathname={ Astro.url.pathname } params={ Astro.params } client:load />
+</Layout>

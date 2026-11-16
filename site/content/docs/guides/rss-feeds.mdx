@@ -1,0 +1,127 @@
+---
+title: RSS feeds
+description: Fix a feed that shows an error, pause it, or delete it.
+---
+
+By the end of this page, you will know how to read a feed's status, fix one that shows an error, pause it, and delete it.
+
+If you have not added a feed yet, see [Add an RSS feed](/docs/getting-started/add-an-rss-feed/). Everything below is on the **Feeds** tab of **Lite Site > RSS**. Managing feeds requires an Administrator.
+
+## What the Feeds tab shows
+
+Each feed is a row with its **RSS Feed** address, **Status**, **Frequency**, **Author**, **Last Run** and **Next Run**. **Last Run** says **Never** until the first import, then shows when it ran and the result, such as **3 imported** or **Up to date**. A feed can bring in up to 50 new items per run. An item is not imported again while its entry is still on the site, the trash included.
+
+The status is one of three:
+
+- **Active**: The feed imports on its schedule.
+- **Inactive**: The feed is paused.
+- **Error**: The last import failed.
+
+## Fix a feed that shows an error
+
+<Steps>
+<Step>
+
+### Find the error
+
+An **Error** status means the last import failed.
+
+<Screenshot label="The Error status of a feed, picked out" src="/screenshots/guides/rss-feeds-1.webp" width={3024} height={1964} />
+
+</Step>
+<Step>
+
+### Read the message
+
+Hover over **Error**. A tooltip gives the reason and says **Edit the feed for options.**
+
+<Screenshot label="The tooltip on the Error status, showing the error message" src="/screenshots/guides/rss-feeds-2.webp" width={3024} height={1964} />
+
+</Step>
+<Step>
+
+### Open the feed
+
+Select **Edit** on the row. The **Edit RSS Feed** drawer opens with the error at the top.
+
+<Screenshot label="The Edit RSS Feed drawer for the failing feed, with the error and Retry Now picked out" src="/screenshots/guides/rss-feeds-3.webp" width={3024} height={1964} />
+
+</Step>
+<Step>
+
+### Check the address
+
+Select **Open Feed URL** to open the feed in a new tab. If the page does not load, or is not a feed, the problem is at the source.
+
+</Step>
+<Step>
+
+### Try again
+
+Select **Retry Now**. The button is there for active feeds. If the import works, a message such as **Up to date** shows and the error is gone.
+
+<Screenshot label="Retry Now after the feed recovers: the error is gone and the Up to date message shows" src="/screenshots/guides/rss-feeds-6.webp" width={3024} height={1964} />
+
+</Step>
+</Steps>
+
+<Callout title="Still failing?">
+Feeds import on a schedule that depends on the site's host. If imports never run, see [Troubleshooting](/docs/guides/troubleshooting/). The **Feeds** tab also shows a warning when scheduled imports are turned off for the site.
+</Callout>
+
+## Pause or resume a feed
+
+<Steps>
+<Step>
+
+### Open the feed
+
+Select **Edit** on the row.
+
+</Step>
+<Step>
+
+### Change the status
+
+Under **Status**, choose **Inactive** to pause the feed, or **Active** to resume it. An inactive feed stops importing until you set it back to **Active**. An import that is already running finishes.
+
+<Screenshot label="The Edit RSS Feed drawer with Status picked out" src="/screenshots/guides/rss-feeds-4.webp" width={3024} height={1964} />
+
+</Step>
+<Step>
+
+### Save
+
+Select **Save**.
+
+</Step>
+</Steps>
+
+You can also change **Frequency** or **Author** here. The feed's address cannot be changed. To use a different address, add a new feed and delete the old one.
+
+## Delete a feed
+
+<Steps>
+<Step>
+
+### Select Delete
+
+Select **Delete** on the row. A confirmation opens.
+
+</Step>
+<Step>
+
+### Confirm
+
+The message says the feed stops importing and the entries it already imported stay on the site. Select **Delete**.
+
+<Screenshot label="The Delete RSS Feed confirmation for a feed" src="/screenshots/guides/rss-feeds-5.webp" width={3024} height={1964} />
+
+</Step>
+</Steps>
+
+To remove the entries too, see [RSS entries](/docs/guides/rss-entries/).
+
+## Next
+
+[RSS entries](/docs/guides/rss-entries/).

@@ -1,0 +1,136 @@
+---
+title: Settings
+description: Set the Lite Site address, choose which posts appear, and add a footer and analytics.
+---
+
+By the end of this page, you will have set the Lite Site address and the number of posts per page, chosen which posts appear, and added a footer.
+
+All of these settings are on the **General** tab of **Lite Site > Settings**. Changing them requires an Administrator. Nothing changes for readers until you select **Save**.
+
+## Set the address and page size
+
+<Steps>
+<Step>
+
+### Choose the path
+
+In **Lite Site Path**, enter the path the Lite Site is served from. The default is `lite`, so a site at `example.com` has its Lite Site at `example.com/lite/`. You can use any word, such as `text`. Choose one that no page, section or address on the site already uses. The path takes over those addresses, even while Lite Site is off.
+
+<Screenshot label="The Lite Site Path field, picked out" src="/screenshots/guides/settings-1.webp" width={3024} height={1964} />
+
+</Step>
+<Step>
+
+### Check the address
+
+Select **View Lite Site**, next to the field. It opens the saved address in a new tab. The button works once Lite Site is saved as on.
+
+</Step>
+<Step>
+
+### Choose how many posts a page lists
+
+In **Posts per Page**, enter how many posts each page of the Lite Site homepage lists. Readers use the page links at the bottom to see older posts. If you leave the field empty, the Lite Site uses the number set in the site's reading settings.
+
+<Screenshot label="The Posts per Page field, picked out" src="/screenshots/guides/settings-2.webp" width={3024} height={1964} />
+
+</Step>
+</Steps>
+
+<Callout title="If you change the path">
+Links to the old address stop working. Update any links to the Lite Site, such as the one in your header or footer.
+</Callout>
+
+## Choose which posts appear
+
+The **Content** section filters the posts the Lite Site lists. A post must match every filter you set to appear. Exclusions override inclusions. With no filters, all posts appear. The filters apply to RSS entries too, and a post they leave out has no Lite Site page at all, so readers who open its address see "Page not found."
+
+<Callout title="RSS entries">
+If you set **Categories** or **Tags**, an RSS entry appears only when it has one you selected. Entries come in without any, so add them to each entry, or leave these filters empty.
+</Callout>
+
+<Steps>
+<Step>
+
+### Pick categories
+
+In **Categories**, select the categories to show. Only posts in these categories appear. Leave it empty to include all categories.
+
+<Screenshot label="The Categories list open under the Content filters, picked out" src="/screenshots/guides/settings-3.webp" width={3024} height={1964} />
+
+</Step>
+<Step>
+
+### Include subcategories
+
+Keep **Include subcategories** checked to also show posts from the children of each category you picked. It is checked by default.
+
+</Step>
+<Step>
+
+### Pick tags
+
+In **Tags**, select the tags to show. Only posts with at least one of these tags appear. Leave it empty to include all posts.
+
+</Step>
+<Step>
+
+### Exclude what should never appear
+
+In **Excluded Categories** and **Excluded Tags**, select what to keep out. Posts in these categories or with these tags never appear, even if they match the filters above.
+
+</Step>
+</Steps>
+
+## Set links and the footer
+
+<Steps>
+<Step>
+
+### Choose how external links open
+
+Check **Open external links in a new tab** to open links to other sites in a new tab. Links to this site always open in the same tab.
+
+</Step>
+<Step>
+
+### Add a footer
+
+In **Footer HTML**, add what shows at the bottom of every Lite Site page. Good uses are links to your accessibility and privacy policies, your address and a phone number. Basic HTML only; scripts are removed.
+
+<Screenshot label="The Footer HTML field under Links and Footer, picked out" src="/screenshots/guides/settings-4.webp" width={3024} height={1964} />
+
+</Step>
+</Steps>
+
+## Add analytics
+
+Lite Site pages do not load the site's usual scripts, so visits are not tracked until you add a Google Analytics measurement ID.
+
+<Steps>
+<Step>
+
+### Enter the ID
+
+In **GA4 Measurement ID**, paste the measurement ID for your Google Analytics property. It looks like `G-XXXXXXXXXX`.
+
+<Screenshot label="The GA4 Measurement ID field under Analytics, picked out" src="/screenshots/guides/settings-5.webp" width={3024} height={1964} />
+
+</Step>
+</Steps>
+
+<Callout title="Keep it light">
+Adding an ID adds one small script to every Lite Site page. Leave the field empty to keep pages as light as possible.
+</Callout>
+
+## Save
+
+Select **Save** at the top of the screen. **Settings saved.** confirms it.
+
+<Callout type="info" title="Changes can take a few minutes on articles">
+The Lite Site does not keep a copy of the homepage, so changes usually show there sooner. Article pages are kept for 15 minutes, so a change to the footer, links, analytics or filters can take up to 15 minutes to show on an article that was recently opened.
+</Callout>
+
+## Next
+
+[Appearance](/docs/guides/appearance/).

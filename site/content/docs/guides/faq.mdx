@@ -1,0 +1,103 @@
+---
+title: FAQ
+description: Answers on search ranking, data use, caching, turning Lite Site off, accessibility and what it can't show.
+---
+
+Short answers to the questions publishers ask most. If something is not working, see [Troubleshooting](/docs/guides/troubleshooting/).
+
+## Will Lite Site affect my search ranking?
+
+It should not. Search engines are told to list only your main site. Imported RSS entries also have a page on your main site, which shows in your site's own search and which search engines can list.
+
+Each Lite Site article points search engines to the full version of the same article. Every Lite Site page, the homepage included, asks them not to list it. Links on these pages are still followed.
+
+## How much data does a Lite Site page save?
+
+A lot. In our tests, a typical article fell from about 3 MB to under 50 KB. Your own pages will differ with the theme, the number of images and the scripts the site loads.
+
+The savings come from what a Lite Site page leaves out:
+
+- The theme's styles and scripts.
+- Tracking and advertising scripts. Analytics is added only if you set a **GA4 Measurement ID** in [Settings](/docs/guides/settings/).
+- Images. A reader sees a placeholder with the alt text and caption for each image in a figure, such as the Image block, and loads it only by selecting **Load image**. Other images are removed.
+- Fonts, unless you choose one in [Appearance](/docs/guides/appearance/).
+
+## Can I use Lite Site with a caching plugin?
+
+Yes, with one thing to watch. Lite Site keeps each article page for 15 minutes itself, and clears it when you save the post. It does not tell a caching plugin to clear its own copy.
+
+If you use a caching plugin, check how long it keeps pages. After an urgent update, clear its cache so readers see the change at once. We have not tested specific caching plugins.
+
+## What happens if I deactivate the plugin?
+
+Lite Site addresses stop working, and so do the main-site pages of imported RSS entries. Your posts, pages and theme are not affected. The **Lite Site** menu disappears, and RSS feeds stop importing.
+
+On a site with the PWA plugin, the site's offline page becomes the Lite Site one from the moment the plugin is activated, even before Lite Site is turned on. Deactivating the plugin brings back the site's own offline page.
+
+Your settings, feeds and imported RSS entries stay in the database. Activate the plugin again and Lite Site returns as you left it. If Lite Site addresses don't open after you reactivate, refresh the address list; see [Troubleshooting](/docs/guides/troubleshooting/#refresh-the-address-list).
+
+## How do I remove Lite Site completely?
+
+Remove what you added first, then delete the plugin.
+
+<Steps>
+<Step>
+
+### Delete your feeds
+
+Go to the **Feeds** tab of **Lite Site > RSS** and delete each feed. See [RSS feeds](/docs/guides/rss-feeds/).
+
+</Step>
+<Step>
+
+### Delete the imported entries
+
+Go to the **Entries** tab, move the entries to the trash, then delete them for good. See [RSS entries](/docs/guides/rss-entries/). Images that came in with the entries stay in the Media Library. To remove them too, a developer should follow [Data](/docs/developers/data/#remove-everything) before the entries are deleted.
+
+</Step>
+<Step>
+
+### Deactivate and delete the plugin
+
+In **Plugins**, deactivate Lite Site, then select **Delete**.
+
+</Step>
+</Steps>
+
+<Callout title="Settings stay behind">
+Deleting the plugin removes its files, not the settings you saved. They are small and do no harm. A developer can remove them; see [Developers](/docs/developers/).
+</Callout>
+
+## Can I use Lite Site if my site doesn't run on WordPress?
+
+Yes, with a second site. Set up a separate WordPress site, on WordPress.com or on your own hosting, and install Lite Site there. [Add your own site's RSS feed](/docs/getting-started/add-an-rss-feed/) to it. Each item in your feed becomes an entry that shows on that site's Lite Site homepage and on its own Lite Site page. Check that your feed carries the full article text, since many carry only a summary. The first import brings in what the feed lists at that time, up to 50 items. Older articles that have already dropped off the feed don't come in. You keep publishing where you do now, and the second site is your text-only backup.
+
+Your hosting provider can tell you which kind of second site fits your budget and your team.
+
+## Is the Lite Site accessible?
+
+For many readers it is easier to use than the full site. Each page is plain text with a title, a main area, a footer and, on the homepage, labeled page links, and none of the theme's scripts. Image alt text shows in the placeholder, so write it for every image.
+
+Some things from your theme do not carry over. Accessibility labels added by blocks are removed, and so are theme features such as skip links. Treat the Lite Site as a fallback, not a replacement for the full site. A link to an accessibility policy in **Footer HTML** helps readers who need it.
+
+## What does the Lite Site show?
+
+Posts, pages and imported RSS entries have a Lite Site page. The homepage lists posts and RSS entries, not pages. Other content types, such as events or products, do not appear. A developer can add them; see [Developers](/docs/developers/).
+
+A post also has no Lite Site page when it is not published, is password protected, or is left out by your filters in [Settings](/docs/guides/settings/). Readers who open its address see "Page not found."
+
+## What happens to blocks, embeds and page layouts?
+
+They are reduced to text. The Lite Site keeps headings, paragraphs, lists, quotes, links, bold and italic text. Other blocks keep their text and links, and scripts are removed. Content built with a page builder loses its layout, so check a few pages after you turn Lite Site on. See [Lite Site articles](/docs/guides/lite-articles/).
+
+## Does it work with membership, translation or redirect plugins?
+
+We have not tested them, so check before you rely on it.
+
+- **Membership and paywall plugins:** Password-protected posts never appear. Lite Site does not apply a membership plugin's restrictions, so a restricted article can show its full text there. Right after you turn Lite Site on, open a restricted article through it. If the full text shows, leave those articles out with **Excluded Categories** or **Excluded Tags** in [Settings](/docs/guides/settings/).
+- **Translation plugins:** Switching language may not work on Lite Site addresses.
+- **Redirect plugins:** A plugin that rewrites addresses may stop Lite Site addresses from opening. See [Troubleshooting](/docs/guides/troubleshooting/).
+
+## Why don't my RSS entries show?
+
+When **Categories** or **Tags** are set, an entry appears only if it has one you selected, and imported entries come in without any. See the note about RSS entries in [Settings](/docs/guides/settings/#choose-which-posts-appear).

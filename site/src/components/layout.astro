@@ -1,0 +1,35 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '@/styles/global.css';
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import ThemeScript from '@/components/site/theme-script.astro';
+
+interface Props {
+	title: string;
+	description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<html lang="en" suppressHydrationWarning>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<title>{ title }</title>
+		<meta name="description" content={ description } />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="preload" href={ interLatin } as="font" type="font/woff2" crossorigin />
+		<ThemeScript />
+		<ClientRouter />
+	</head>
+	<body
+		class="newspack-ui flex flex-col min-h-screen"
+		transition:persist
+		transition:animate="none"
+		transition:name="page-layout"
+	>
+		<slot />
+	</body>
+</html>

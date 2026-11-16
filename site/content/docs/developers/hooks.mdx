@@ -1,0 +1,138 @@
+---
+title: Hooks
+description: Filters and actions that change what Lite Site pages keep, which content types they cover, and what they print.
+---
+
+Hooks are the standard WordPress way to add to a plugin without editing it. A filter hands code a value, such as the list of post types, and uses whatever comes back. An action runs code at a point in a page, such as after the footer.
+
+Put hook callbacks in a small plugin or in the theme's `functions.php`. Every hook name below is exact and starts with `newspack_lite_site_`.
+
+## Content
+
+These two filters control what a Lite Site article keeps from the post.
+
+### `newspack_lite_site_post_content`
+
+Runs the post's content through the same kind of pipeline as `the_content`, without the callbacks other plugins add to `the_content`. Use it to change the content before Lite Site strips it down to text.
+
+It runs first in the cleaning step, before comments, scripts, styles, and figures are removed. By default it runs these callbacks in this order: `do_blocks` (Lite Site's own copy, priority 9); `wptexturize`, `wpautop`, `shortcode_unautop`, `prepend_attachment`, `wp_filter_content_tags`, and `wp_replace_insecure_home_url` (priority 10); `capital_P_dangit` and `do_shortcode` (priority 11); and `convert_smilies` (priority 20).
+
+| Argument | Type | Description |
+| --- | --- | --- |
+| `$content` | `string` | The post content so far. Return the changed content. |
+
+```php
+add_filter( 'newspack_lite_site_post_content', function ( $content ) {
+	return str_replace( '[ad-slot]', '', $content );
+}, 5 );
+```
+
+Lite Site removes `wpautop` for content that has blocks, so don't rely on paragraph tags being added after your callback.
+
+### `newspack_lite_site_allowed_html`
+
+Sets which elements and attributes a Lite Site article keeps. Everything else is stripped. Use it when a block's markup depends on a tag or a data attribute that the default list removes, for example a script of its own that reads `data-` attributes.
+
+It runs just before `wp_kses()`, after scripts and styles are removed and figures that hold an image become placeholders. Additions can't bring those back. The article template also passes the result through `wp_kses_post()`, so that function sets the outer limit of what reaches a page.
+
+| Argument | Type | Description |
+| --- | --- | --- |
+| `$allowed_html` | `array` | Allowed elements and their attributes, in `wp_kses()` form. Return the changed array. |
+
+By default the list keeps `p` (with `class`), `h1` to `h6`, `ul`, `ol`, `li`, `blockquote`, `strong`, `em`, `b`, `i`, `br`, `a` (with `href` and `title`), `div` (with `class` and the image placeholder's `data-src`, `data-srcset`, `data-alt`, and `data-caption`), and `button` (with `class` and `type`).
+
+```php
+add_filter( 'newspack_lite_site_allowed_html', function ( $allowed_html ) {
+	$allowed_html['div']['data-widget'] = true;
+	$allowed_html['span']               = [ 'class' => true ];
+	return $allowed_html;
+} );
+```
+
+## Content types
+
+### `newspack_lite_site_supported_post_types`
+
+Sets which post types can have a Lite Site article page. A post of any other type shows "Page not found." at its Lite Site address. Use it to add a content type, such as events or a custom story format, or to remove one.
+
+The default is `[ 'post', 'page', 'nls_rss_entry' ]`, so posts, pages, and imported RSS entries. This is also the list the single article template checks.
+
+| Argument | Type | Description |
+| --- | --- | --- |
+| `$types` | `string[]` | Post type slugs. Return the changed list. |
+
+```php
+add_filter( 'newspack_lite_site_supported_post_types', function ( $types ) {
+	$types[] = 'event';
+	return $types;
+} );
+```
+
+Adding a type gives its posts an article page only. The Lite Site homepage queries posts and RSS entries (`post` and `nls_rss_entry`) and ignores this filter, so an added type, pages included, is reachable by its link but never listed there. A type also needs a public address that WordPress can match to a post. The category and tag filters in Settings apply to an added type only if it uses those taxonomies.
+
+## Styles
+
+These two actions print into the `<style>` tag of a Lite Site page. Print CSS only, with no `<style>` tags of your own. Use them for rules that depend on PHP, such as a value read from an option. For fixed rules, the **Custom CSS** setting is simpler.
+
+### `newspack_lite_site_styles`
+
+Runs at the end of the stylesheet that the homepage, every article, and the offline page share. It has no arguments.
+
+```php
+add_action( 'newspack_lite_site_styles', function () {
+	echo '.site-footer { font-size: 0.9em; }';
+} );
+```
+
+### `newspack_lite_site_liveblog_styles`
+
+Runs at the end of the extra stylesheet that only posts from the Liveblog plugin print, while the liveblog is on or archived. It has no arguments. Rolling Coverage does not use it; use `newspack_lite_site_styles` for that.
+
+```php
+add_action( 'newspack_lite_site_liveblog_styles', function () {
+	echo '.liveblog-entry { border-left: 2px solid currentColor; }';
+} );
+```
+
+## Footers
+
+These three actions run after the footer on each kind of page, so they are the place to add a notice, a link, or a tracking pixel. Whatever a callback prints is part of the page. Keep it small, since the point of Lite Site is a light page.
+
+### `newspack_lite_site_single_after_footer`
+
+Runs after the footer of a Lite Site article.
+
+| Argument | Type | Description |
+| --- | --- | --- |
+| `$current_post` | `WP_Post` | The post the page shows. |
+
+The page is stored for 15 minutes and served to every reader, so callbacks run as a signed-out reader. Don't print anything specific to the person who is viewing it.
+
+```php
+add_action( 'newspack_lite_site_single_after_footer', function ( $current_post ) {
+	printf(
+		'<p><a href="%s">Read the full version of this article</a></p>',
+		esc_url( get_permalink( $current_post ) )
+	);
+} );
+```
+
+### `newspack_lite_site_archive_after_footer`
+
+Runs after the footer of the Lite Site homepage. It has no arguments.
+
+```php
+add_action( 'newspack_lite_site_archive_after_footer', function () {
+	echo '<p>Send tips to tips@example.com.</p>';
+} );
+```
+
+### `newspack_lite_site_offline_after_footer`
+
+Runs after the footer of the offline page. Lite Site serves that page when a reader is offline and the page they asked for isn't saved on their device, through the PWA plugin's service worker. It has no arguments.
+
+```php
+add_action( 'newspack_lite_site_offline_after_footer', function () {
+	echo '<p>Saved articles still open while you are offline.</p>';
+} );
+```
