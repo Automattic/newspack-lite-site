@@ -65,6 +65,11 @@ wp eval-file wp-content/plugins/newspack-lite-site/site/screenshots/seed.php
 - `guides/lite-articles-6.webp`: The full version of the same article on the main site, in the Newspack theme, which the Lite Site links to: its standfirst, Marcus Reilly's monogram byline and the top of the featured photo.<br>`npm run shot -- guides/lite-articles-6 --url lite/ --logged-out --click 'text=Kettle River flood:' --click 'text=View full version'`
 - `guides/lite-articles-7.webp`: The View Lite Site link in the admin bar, spotlighted on Lite Site > Settings.<br>`npm run shot -- guides/lite-articles-7 --url 'wp-admin/admin.php?page=newspack-lite-site' --spotlight '#wp-admin-bar-view-lite-site'`
 
+## Homepage
+
+- `home/lite-article.webp`: The flood article on the Lite Site, with no spotlight.<br>`npm run shot -- home/lite-article --url lite/ --logged-out --click 'text=Kettle River flood:'`
+- `home/full-article.webp`: The same flood article on the full site, with no spotlight.<br>`npm run shot -- home/full-article --url lite/ --logged-out --click 'text=Kettle River flood:' --click 'text=View full version'`
+
 ## A feed that recovers
 
 On the full demo, let Retry Now work for the failing feed first. Rerun the seed afterward to bring its error back.
