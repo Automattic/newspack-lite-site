@@ -45,6 +45,7 @@ class Lite_Site {
 		add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
 		add_action( 'template_redirect', [ __CLASS__, 'handle_lite_site_templates' ] );
 		add_filter( 'offline_template', [ __CLASS__, 'get_offline_template' ] );
+		add_filter( 'wp_offline_error_precache_entry', [ __CLASS__, 'vary_offline_precache_entry' ] );
 		add_action( 'pre_post_update', [ __CLASS__, 'remember_lite_path' ] );
 		// Not save_post: a block-editor save stores the post's terms after
 		// save_post fires, and a %category% permalink depends on them.
@@ -79,12 +80,39 @@ class Lite_Site {
 	}
 
 	/**
-	 * Return the path to the lite site offline template.
+	 * Use the lite site offline template while Lite Site is on.
 	 *
+	 * @param string $template The offline template found so far, which is kept while Lite Site is off.
 	 * @return string Absolute path to the offline template file.
 	 */
-	public static function get_offline_template() {
+	public static function get_offline_template( $template = '' ) {
+		if ( ! self::is_enabled() ) {
+			return $template;
+		}
 		return NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/offline.php';
+	}
+
+	/**
+	 * Vary the PWA plugin's precached offline page by whether Lite Site is on
+	 * and by its offline template, so readers' devices fetch it again when
+	 * either changes.
+	 *
+	 * @param array|false $entry The precache entry, with `url` and `revision`, or false when nothing is precached.
+	 * @return array|false
+	 */
+	public static function vary_offline_precache_entry( $entry ) {
+		if ( ! is_array( $entry ) ) {
+			return $entry;
+		}
+
+		$revision = ';newspack-lite-site=' . ( self::is_enabled() ? 'on' : 'off' );
+		if ( self::is_enabled() ) {
+			$template  = NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/offline.php';
+			$revision .= ',' . md5_file( $template );
+		}
+		$entry['revision'] = ( $entry['revision'] ?? '' ) . $revision;
+
+		return $entry;
 	}
 
 	/**
@@ -95,6 +123,27 @@ class Lite_Site {
 	public static function is_enabled() {
 		$settings = self::get_settings();
 		return ! empty( $settings['enabled'] );
+	}
+
+	/**
+	 * Check whether Lite Site is on or has been turned on before.
+	 *
+	 * Its addresses exist only then: once it has been on, links shared while
+	 * it was on keep reaching the full site after it is turned off.
+	 *
+	 * @return bool
+	 */
+	public static function has_been_enabled(): bool {
+		return self::is_enabled() || (bool) get_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME );
+	}
+
+	/**
+	 * Record that Lite Site has been turned on.
+	 */
+	public static function remember_enabled() {
+		if ( ! get_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME ) ) {
+			update_option( Lite_Site_Settings::WAS_ENABLED_OPTION_NAME, true, true );
+		}
 	}
 
 	/**
@@ -488,33 +537,51 @@ class Lite_Site {
 
 	/**
 	 * Register rewrite rules for lite site pages and flush if a settings change is pending.
+	 *
+	 * The rules exist only once Lite Site has been turned on. Until then,
+	 * rules saved while they were registered for every site are flushed once.
 	 */
 	public static function register_rewrite_rules() {
+		if ( self::is_enabled() ) {
+			self::remember_enabled();
+		}
+
 		$url_base = self::get_url_base();
+		$flush    = (bool) get_transient( 'nls_flush_rewrite_rules' );
 
-		// Archive: /{url_base}.
-		add_rewrite_rule(
-			'^' . $url_base . '/?$',
-			'index.php?is_lite=archive',
-			'top'
-		);
+		if ( self::has_been_enabled() ) {
+			// Archive: /{url_base}.
+			add_rewrite_rule(
+				'^' . $url_base . '/?$',
+				'index.php?is_lite=archive',
+				'top'
+			);
 
-		// Archive paginated: /{url_base}/page/{n}. Must come before the single post catch-all.
-		add_rewrite_rule(
-			'^' . $url_base . '/page/([0-9]+)/?$',
-			'index.php?is_lite=archive&lite_page=$matches[1]',
-			'top'
-		);
+			// Archive paginated: /{url_base}/page/{n}. Must come before the single post catch-all.
+			add_rewrite_rule(
+				'^' . $url_base . '/page/([0-9]+)/?$',
+				'index.php?is_lite=archive&lite_page=$matches[1]',
+				'top'
+			);
 
-		// Single: /{url_base}/{post-slug}.
-		add_rewrite_rule(
-			'^' . $url_base . '/(.+)/?$',
-			'index.php?is_lite=single&lite_path=$matches[1]',
-			'top'
-		);
+			// Single: /{url_base}/{post-slug}.
+			add_rewrite_rule(
+				'^' . $url_base . '/(.+)/?$',
+				'index.php?is_lite=single&lite_path=$matches[1]',
+				'top'
+			);
+		} else {
+			$saved_rules = get_option( 'rewrite_rules' );
+			$saved_query = is_array( $saved_rules ) ? ( $saved_rules[ '^' . $url_base . '/?$' ] ?? '' ) : '';
+			// The lock keeps requests that arrive together, before the first flush is saved, from each flushing.
+			if ( is_string( $saved_query ) && 0 === strpos( $saved_query, 'index.php?is_lite=' ) && ! get_transient( 'nls_flush_lock' ) ) {
+				set_transient( 'nls_flush_lock', 1, MINUTE_IN_SECONDS );
+				$flush = true;
+			}
+		}
 
 		// Deferred flush: triggered by a settings change, runs here so rules are already in $wp_rewrite.
-		if ( get_transient( 'nls_flush_rewrite_rules' ) ) {
+		if ( $flush ) {
 			delete_transient( 'nls_flush_rewrite_rules' );
 			flush_rewrite_rules(); // phpcs:ignore
 		}
@@ -527,6 +594,10 @@ class Lite_Site {
 	 * @return array The modified array of query variables.
 	 */
 	public static function register_query_vars( $vars ) {
+		if ( ! self::has_been_enabled() ) {
+			return $vars;
+		}
+
 		return array_merge(
 			$vars,
 			[
@@ -539,12 +610,20 @@ class Lite_Site {
 
 	/**
 	 * Handle template routing for lite site pages.
+	 *
+	 * While Lite Site is off, its addresses redirect temporarily to the full
+	 * site, so they work again as soon as it is turned back on.
 	 */
 	public static function handle_lite_site_templates() {
 		$is_lite = get_query_var( 'is_lite' );
 
-		if ( ! $is_lite || ! self::is_enabled() ) {
+		if ( ! $is_lite ) {
 			return;
+		}
+
+		if ( ! self::is_enabled() ) {
+			wp_safe_redirect( self::get_full_version_url( $is_lite ), 302 );
+			exit;
 		}
 
 		// Disable all other output.
@@ -566,6 +645,29 @@ class Lite_Site {
 
 		echo self::cache_single_page( $cache_key ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 		exit;
+	}
+
+	/**
+	 * The full-site address a lite address leads to while Lite Site is off.
+	 *
+	 * @param string $is_lite The request's `is_lite` query var.
+	 * @return string The permalink of the article at the lite address, or the homepage for any other lite address.
+	 */
+	private static function get_full_version_url( $is_lite ): string {
+		if ( 'single' !== $is_lite ) {
+			return home_url( '/' );
+		}
+
+		$path    = get_query_var( 'lite_path' );
+		$post_id = is_string( $path ) && '' !== $path ? self::lookup_post_id( $path ) : 0;
+		$post    = $post_id ? get_post( $post_id ) : null;
+
+		if ( ! $post || 'publish' !== $post->post_status || ! in_array( $post->post_type, self::get_supported_post_types(), true ) ) {
+			return home_url( '/' );
+		}
+
+		$permalink = get_permalink( $post );
+		return $permalink && ! self::is_external_url( $permalink ) ? $permalink : home_url( '/' );
 	}
 
 	/**
@@ -941,6 +1043,34 @@ class Lite_Site {
 	}
 
 	/**
+	 * Find the ID of the post at a path, through the post lookup cache.
+	 *
+	 * The ID is cached by path for every visitor, whatever the post's status,
+	 * so callers check the post themselves.
+	 *
+	 * @param string $path URL path without leading slash.
+	 * @return int The post ID, or 0 when no post is at the path.
+	 */
+	private static function lookup_post_id( string $path ): int {
+		$cache_key = self::get_post_lookup_cache_key( $path );
+		$post_id   = wp_cache_get( $cache_key, 'newspack_lite_site' );
+
+		if ( false === $post_id ) {
+			$post_id = url_to_postid( home_url( '/' . ltrim( $path, '/' ) ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
+			if ( $post_id ) {
+				wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
+			} else {
+				// A miss is kept for minutes: saving the post can't clear a
+				// miss written after it, such as a lookup that read the post
+				// just before it was published, or one for a variant of its URL.
+				wp_cache_set( $cache_key, 0, 'newspack_lite_site', 5 * MINUTE_IN_SECONDS );
+			}
+		}
+
+		return (int) $post_id;
+	}
+
+	/**
 	 * Resolve a URL path to a published WP_Post.
 	 *
 	 * @param mixed $path URL path without leading slash. Anything but a non-empty string resolves to nothing.
@@ -951,21 +1081,7 @@ class Lite_Site {
 			return null;
 		}
 
-		$url       = home_url( '/' . ltrim( $path, '/' ) );
-		$cache_key = self::get_post_lookup_cache_key( $path );
-		$post_id   = wp_cache_get( $cache_key, 'newspack_lite_site' );
-
-		if ( false === $post_id ) {
-			$post_id = url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.url_to_postid_url_to_postid
-			if ( $post_id ) {
-				wp_cache_set( $cache_key, (int) $post_id, 'newspack_lite_site', 3 * HOUR_IN_SECONDS );
-			} else {
-				// A miss is kept for minutes: saving the post can't clear a
-				// miss written after it, such as a lookup that read the post
-				// just before it was published, or one for a variant of its URL.
-				wp_cache_set( $cache_key, 0, 'newspack_lite_site', 5 * MINUTE_IN_SECONDS );
-			}
-		}
+		$post_id = self::lookup_post_id( $path );
 
 		if ( ! $post_id ) {
 			return null;

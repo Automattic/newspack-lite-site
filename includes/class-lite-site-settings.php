@@ -20,6 +20,11 @@ class Lite_Site_Settings {
 	const OPTION_NAME = 'newspack_lite_site_settings';
 
 	/**
+	 * The option that records Lite Site has been turned on at least once.
+	 */
+	const WAS_ENABLED_OPTION_NAME = 'newspack_lite_site_was_enabled';
+
+	/**
 	 * Slug of the RSS admin page, which holds the Entries and Feeds tabs.
 	 */
 	const RSS_PAGE_SLUG = 'newspack-lite-site-rss';
@@ -753,7 +758,8 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Schedule a rewrite rule flush when the lite site is enabled/disabled or the URL base (Lite Site Suffix) changes.
+	 * Schedule a rewrite rule flush when the lite site is enabled/disabled or the URL base (Lite Site Suffix) changes,
+	 * and record that Lite Site has been turned on.
 	 *
 	 * @param string $option    Option name.
 	 * @param mixed  $old_value Previous option value.
@@ -762,6 +768,10 @@ class Lite_Site_Settings {
 	public static function handle_updated_option( $option, $old_value, $new_value ) {
 		if ( self::OPTION_NAME !== $option ) {
 			return;
+		}
+
+		if ( ! empty( $new_value['enabled'] ) ) {
+			Lite_Site::remember_enabled();
 		}
 
 		$url_base_changed = ( $old_value['url_base'] ?? '' ) !== ( $new_value['url_base'] ?? '' );
@@ -773,7 +783,8 @@ class Lite_Site_Settings {
 	}
 
 	/**
-	 * Schedule a rewrite rule flush when the option is created for the first time.
+	 * Schedule a rewrite rule flush when the option is created for the first time,
+	 * and record that Lite Site has been turned on if it is created on.
 	 *
 	 * Covers the first-save case where update_option() falls back to add_option()
 	 * and updated_option does not fire.
@@ -784,6 +795,9 @@ class Lite_Site_Settings {
 	public static function handle_added_option( $option, $value ) {
 		if ( self::OPTION_NAME !== $option ) {
 			return;
+		}
+		if ( ! empty( $value['enabled'] ) ) {
+			Lite_Site::remember_enabled();
 		}
 		set_transient( 'nls_flush_rewrite_rules', true );
 	}

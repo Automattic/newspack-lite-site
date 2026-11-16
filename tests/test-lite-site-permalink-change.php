@@ -15,10 +15,12 @@ use Newspack_Lite_Site\Lite_Site;
 class Test_Lite_Site_Permalink_Change extends Lite_Site_TestCase {
 
 	/**
-	 * Pretty permalinks, so url_to_postid() can resolve paths.
+	 * The lite rewrite rules, and pretty permalinks, so url_to_postid() can
+	 * resolve paths.
 	 */
 	public function set_up() {
 		parent::set_up();
+		self::register_lite_rewrite_rules();
 		$this->set_permalink_structure( '/%postname%/' );
 	}
 
