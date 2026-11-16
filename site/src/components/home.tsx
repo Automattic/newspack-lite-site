@@ -218,7 +218,7 @@ const features: { title: string; href: string; body: string; labels: string[] }[
 		labels: [ 'Primary Color', 'Body Font' ],
 	},
 	{
-		title: 'Search engines list the main site',
+		title: 'Search stays on your main site',
 		href: '/docs/guides/faq/',
 		body: 'Lite Site pages ask search engines not to list them, and each article points them to its full version.',
 		labels: [],
@@ -339,15 +339,15 @@ export function Home( props: SitePageProps ) {
 							Why we built it
 						</a>
 					</div>
-					<ul className="flex flex-wrap items-center gap-x-(--newspack-ui-spacer-8) gap-y-(--newspack-ui-spacer-4) lg:gap-x-(--newspack-ui-spacer-11)">
+					<ul className="grid grid-cols-3 items-center gap-x-(--newspack-ui-spacer-3) sm:flex sm:flex-wrap sm:gap-x-(--newspack-ui-spacer-8) sm:gap-y-(--newspack-ui-spacer-4) lg:gap-x-(--newspack-ui-spacer-11)">
 						{ PARTNERS.map( ( partner ) => (
-							<li key={ partner.url }>
+							<li key={ partner.url } className="min-w-0">
 								<a
 									href={ partner.url }
 									aria-label={ partner.name }
 									className="flex text-muted-foreground transition-colors duration-(--newspack-ui-duration-color) hover:text-foreground"
 								>
-									<svg aria-hidden="true" viewBox={ partner.viewBox } className={ `w-auto ${ partner.className }` }>
+									<svg aria-hidden="true" viewBox={ partner.viewBox } className={ `w-auto max-w-full ${ partner.className }` }>
 										<path fill="currentColor" fillRule={ partner.evenOdd ? 'evenodd' : undefined } d={ partner.path } />
 									</svg>
 								</a>
@@ -378,8 +378,8 @@ export function Home( props: SitePageProps ) {
 					</div>
 					<div className="grid gap-(--newspack-ui-spacer-5) md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:items-start lg:contents">
 						<Shot
-							src="/screenshots/home/lite-article.webp"
-							alt="The Lite Site article “Kettle River flood: what’s closed and where to get help”: links back to the Lite Site homepage and to the full version, the title, the byline, the date and the text."
+							src="/screenshots/home/lite-article-text.webp"
+							alt="The Lite Site article “Kettle River flood: what’s closed and where to get help”: the title, the byline, the date and the opening paragraph."
 							caption="On the Lite Site: the article as text, with links back to the homepage and to the full version."
 						/>
 						<Shot
@@ -402,11 +402,12 @@ export function Home( props: SitePageProps ) {
 					{ features.map( ( feature ) => (
 						<li
 							key={ feature.href + feature.title }
-							className="grid gap-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-5) first:pt-0 last:pb-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-x-(--newspack-ui-spacer-8) lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,16rem)]"
+							className="grid gap-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-5) first:pt-0 last:pb-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-x-(--newspack-ui-spacer-8) lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)_minmax(0,16rem)]"
 						>
 							<h3 className="type-title text-foreground">
-								<a href={ feature.href } className="rounded-(--newspack-ui-border-radius-xs) underline-offset-3 hover:underline">
+								<a href={ feature.href } className="group inline-flex items-baseline gap-(--newspack-ui-spacer-half) rounded-(--newspack-ui-border-radius-xs) text-link">
 									{ feature.title }
+									<Arrow className={ `self-center ${ arrowMotion }` } />
 								</a>
 							</h3>
 							<p className="max-w-[62ch] text-pretty text-muted-foreground">{ feature.body }</p>

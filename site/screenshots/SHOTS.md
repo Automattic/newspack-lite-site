@@ -68,6 +68,7 @@ wp eval-file wp-content/plugins/newspack-lite-site/site/screenshots/seed.php
 ## Homepage
 
 - `home/lite-article.webp`: The flood article on the Lite Site, with no spotlight.<br>`npm run shot -- home/lite-article-1 --out public/screenshots/home/lite-article.webp --url lite/ --logged-out --click 'text=Kettle River flood:'`
+- `home/lite-article-text.webp`: A tighter crop of the Lite Site flood article above, showing only the text column (title, byline, divider and first paragraph), so the type stays readable at a third of the page width. Run it after retaking `home/lite-article.webp`.<br>`node -e "require('sharp')('public/screenshots/home/lite-article.webp').extract({left:762,top:0,width:1500,height:974}).webp({quality:90}).toFile('public/screenshots/home/lite-article-text.webp')"`
 - `home/full-article.webp`: The same flood article on the full site, with no spotlight.<br>`npm run shot -- home/full-article-1 --out public/screenshots/home/full-article.webp --url lite/ --logged-out --click 'text=Kettle River flood:' --click 'text=View full version'`
 
 ## A feed that recovers
