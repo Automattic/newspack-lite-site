@@ -291,7 +291,7 @@ function watchWeight( figure: Element | null ) {
 				root.dataset.lsWeight = 'play';
 			}
 		},
-		{ threshold: [ 0, 0.25, 0.5, 0.75, 1 ] },
+		{ threshold: Array.from( { length: 21 }, ( _, i ) => i / 20 ) },
 	);
 	observer.observe( figure );
 }
