@@ -25,6 +25,19 @@ class Post_Type {
 		add_filter( 'rest_' . self::POST_TYPE . '_collection_params', [ __CLASS__, 'add_feed_collection_param' ] );
 		add_filter( 'rest_' . self::POST_TYPE . '_query', [ __CLASS__, 'filter_rest_query_by_feed' ], 10, 2 );
 		add_action( 'transition_post_status', [ __CLASS__, 'clear_trash_meta_on_restore' ], 10, 3 );
+		add_filter( 'wp_robots', [ __CLASS__, 'noindex_entries' ] );
+	}
+
+	/**
+	 * Asks search engines not to list the main-site page of an RSS entry, which republishes partner coverage.
+	 *
+	 * The post type is not public, so core sitemaps already leave it out, and it has no archive.
+	 *
+	 * @param array $robots Robots directives.
+	 * @return array
+	 */
+	public static function noindex_entries( array $robots ): array {
+		return is_singular( self::POST_TYPE ) ? wp_robots_no_robots( $robots ) : $robots;
 	}
 
 	/**
