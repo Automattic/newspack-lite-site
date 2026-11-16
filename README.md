@@ -30,7 +30,7 @@ Lite Site is a WordPress plugin developed by Newspack and released to all WordPr
 ## Installation
 
 1. Download [newspack-lite-site.zip](https://github.com/Automattic/newspack-lite-site/releases/latest/download/newspack-lite-site.zip), which always points to the latest release.
-2. In WordPress, go to **Plugins > Add Plugin**, choose the ZIP and click **Install Now**, then **Activate Plugin**.
+2. In WordPress, go to **Plugins > Add Plugin** and select **Upload Plugin**, choose the ZIP and click **Install Now**, then **Activate Plugin**.
 3. Go to **Lite Site > Settings**, check **Enable Lite Site** and click **Save**.
 
 The [documentation](https://lite-site.space.fast/docs/getting-started/install-the-plugin/) has the full steps with screenshots, and the next steps for settings, appearance and RSS feeds.
