@@ -300,7 +300,7 @@ export function Home( props: SitePageProps ) {
 								Emergency Mode for News
 							</a>
 						</h2>
-						<p className="mt-(--newspack-ui-spacer-half) type-small text-pretty text-muted-foreground">A program by OpenNews, Newspack and NC Local.</p>
+						<p className="mt-(--newspack-ui-spacer-half) type-small text-pretty text-muted-foreground">A collaboration between OpenNews, Newspack, and NC Local, supported by Press Forward.</p>
 						<a href="/about/" className="mt-(--newspack-ui-spacer-1) inline-flex min-h-6 items-center py-1 type-small text-link">
 							Why we built it
 						</a>
