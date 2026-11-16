@@ -3,6 +3,7 @@
 - [ ] Have you followed the [Newspack Contributing guidelines](https://github.com/Automattic/newspack-workspace/blob/main/.github/CONTRIBUTING.md)?
 - [ ] Does your code follow the [WordPress coding standards](https://make.wordpress.org/core/handbook/best-practices/coding-standards/) and [VIP Go coding standards](https://vip.wordpress.com/documentation/vip-go/code-review-blockers-warnings-notices/)?
 - [ ] Have you checked to ensure there aren't other open [Pull Requests](../../pulls) for the same update/change?
+- [ ] If this changes something publishers see, have you updated the docs site (`site/`) and retaken its screenshots?
 
 ## Changes proposed in this Pull Request
 
