@@ -43,7 +43,7 @@ ln -s /path/to/newspack-lite-site /path/to/wordpress/wp-content/plugins/newspack
 
 Then activate **Newspack Lite Site** under **Plugins**. Some hosts and some Windows setups don't allow links; copy the folder there. While you work on the admin screens, `npm run watch` rebuilds `dist/` when a file changes.
 
-For a site on another server, build a ZIP and upload it as you would a release.
+For a site on another server, build a ZIP from a `--no-dev` install and upload it as you would a release.
 
 ```bash
 npm run release:archive

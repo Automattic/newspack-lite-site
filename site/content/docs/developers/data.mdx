@@ -29,7 +29,7 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `font_import_url` | `string` | `''` | The address of a font stylesheet. |
 | `font_body` | `string` | `''` | The body font name. |
 
-Saving the option marks the rewrite rules for a refresh, through the short-lived `nls_flush_rewrite_rules` transient.
+Turning Lite Site on or off, changing its path, or the option's first save marks the rewrite rules for a refresh, through the `nls_flush_rewrite_rules` transient.
 
 ## RSS entries
 
@@ -66,7 +66,7 @@ Each active feed has its own recurring WP-Cron event on the hook `newspack_lite_
 
 While a feed imports, a transient named `nls_rss_importing_` plus the feed ID holds a lock for up to 5 minutes, so two runs can't overlap.
 
-Feeds are managed through the REST API in the `newspack-lite-site/v1` namespace, at `/rss-feeds` and `/rss-feeds/<id>`. Both need the `manage_options` capability.
+Feeds are managed through the REST API in the `newspack-lite-site/v1` namespace, under `/rss-feeds`. They need the `manage_options` capability.
 
 ## Caches
 
@@ -77,39 +77,59 @@ Lite Site keeps two short-lived copies so a busy site doesn't render the same pa
 
 Saving a post clears both for its Lite Site address, including the address it had before the save. Deleting a post clears them too. Changing a setting doesn't, so a new footer or color can take up to 15 minutes to show on an article that was recently opened.
 
-If the site has a persistent object cache, transients live there and not in the options table, and they expire on their own.
+A second object cache group, `newspack-lite-site`, holds lookups for the admin screens, under keys that start with `entry_tags:` and `entry_feed_urls:`.
+
+If the site has a persistent object cache, transients live there and not in the options table. Not everything expires: the rewrite flag, the 3-hour lookups, and the `newspack-lite-site` group can outlast a clean-up. `wp cache flush` clears the whole site's object cache.
 
 ## Remove everything
 
-Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. The first one deletes every imported RSS entry.
+Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. Step 2 deletes every imported RSS entry and its images.
 
-1. Delete the imported entries. Their meta (`_rss_import_*`) goes with them. The type isn't registered once the plugin is gone, but WP-CLI can still find the posts.
+1. Deactivate the plugin, so nothing re-adds its rewrite rules or imports more entries while you clean up.
 
    ```bash
-   wp post delete $(wp post list --post_type=nls_rss_entry --post_status=any --format=ids) --force
+   wp plugin deactivate newspack-lite-site
    ```
 
-2. Remove the scheduled imports.
+2. Delete the imported entries and the featured images imported with them, including entries in the trash. Their meta (`_rss_import_*`) goes with them. An image an editor has since reused elsewhere is deleted too, so check the list first if that may have happened. Keep the `-n` checks: an empty parent list would select every unattached image.
+
+   ```bash
+   ENTRIES=$(wp post list --post_type=nls_rss_entry --post_status=any,trash --format=ids)
+   if [ -n "$ENTRIES" ]; then
+     IMAGES=$(wp post list --post_type=attachment --post_parent__in="$(echo $ENTRIES | tr ' ' ',')" --format=ids)
+     if [ -n "$IMAGES" ]; then wp post delete $IMAGES --force; fi
+     wp post delete $ENTRIES --force
+   fi
+   ```
+
+3. Remove the scheduled imports.
 
    ```bash
    wp cron event delete newspack_lite_site_rss_import
    ```
 
-3. Delete the two options.
+4. Delete the two options.
 
    ```bash
    wp option delete newspack_lite_site_settings
    wp option delete newspack_lite_site_rss_importer
    ```
 
-4. Delete the cached articles and the other transients, which all start with `nls_`. This matches the options table only. A site with a persistent object cache can flush it with `wp cache flush`, or wait for the 15 minutes to pass.
+5. Delete the cached articles and the other transients, which all start with `nls_`. This matches the options table only.
 
    ```bash
    wp db query "DELETE FROM $(wp db prefix)options WHERE option_name LIKE '\_transient\_nls\_%' OR option_name LIKE '\_transient\_timeout\_nls\_%'"
    ```
 
-5. Refresh the rewrite rules so the Lite Site address stops resolving.
+   On a host without a MySQL client, use WP-CLI's transient commands instead. They only reach transients stored in the database, so they do nothing on a site with a persistent object cache. Step 6 covers that case.
 
    ```bash
+   wp transient list --search='nls_*' --fields=name --format=csv | tail -n +2 | xargs -n1 wp transient delete
+   ```
+
+6. Clear the object cache, then refresh the rewrite rules so the Lite Site address stops resolving.
+
+   ```bash
+   wp cache flush
    wp rewrite flush
    ```
