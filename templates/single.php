@@ -37,12 +37,7 @@ if ( $is_liveblog ) {
 	<?php
 	Lite_Site::print_font_stylesheet();
 	require __DIR__ . '/lite-site-styles.php';
-	$custom_css = Lite_Site::get_custom_css();
-	if ( $custom_css ) :
-		?>
-		<style><?php echo wp_kses( $custom_css, [] ); ?></style>
-		<?php
-	endif;
+	Lite_Site::print_custom_css();
 	if ( $is_liveblog ) :
 		require __DIR__ . '/liveblog-styles.php';
 	endif;

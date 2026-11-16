@@ -1,14 +1,15 @@
 <?php
 /**
- * Tests for the font stylesheet and GA4 tag printed in lite page heads.
+ * Tests for the font stylesheet, custom CSS and GA4 tag printed in lite page heads.
  *
  * @package newspack-lite-site
  */
 
 use Newspack_Lite_Site\Lite_Site;
+use Newspack_Lite_Site\Lite_Site_Settings;
 
 /**
- * Covers print_font_stylesheet() and print_analytics_tag().
+ * Covers print_font_stylesheet(), print_custom_css() and print_analytics_tag().
  */
 class Test_Lite_Site_Head_Assets extends Lite_Site_TestCase {
 
@@ -123,5 +124,37 @@ class Test_Lite_Site_Head_Assets extends Lite_Site_TestCase {
 		$output = get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) . get_echo( [ Lite_Site::class, 'print_analytics_tag' ] );
 
 		$this->assertStringNotContainsString( 'injected.js', $output );
+	}
+
+	/**
+	 * Custom CSS prints as written, so child combinators keep working.
+	 */
+	public function test_prints_custom_css_with_child_combinator() {
+		self::set_settings( [ 'custom_css' => 'main > p { color: red; }' ] );
+
+		$output = get_echo( [ Lite_Site::class, 'print_custom_css' ] );
+
+		$this->assertStringContainsString( '<style id="newspack-lite-site-custom-css">main > p { color: red; }</style>', $output );
+	}
+
+	/**
+	 * Custom CSS can't close the style element and add markup.
+	 */
+	public function test_custom_css_cannot_break_out_of_style_element() {
+		remove_all_filters( 'sanitize_option_' . Lite_Site_Settings::OPTION_NAME );
+		self::set_settings( [ 'custom_css' => 'p { color: red; }</style><script>alert(1)</script><style>' ] );
+
+		$output = get_echo( [ Lite_Site::class, 'print_custom_css' ] );
+
+		$this->assertSame( 1, substr_count( $output, '</style>' ), 'Only the helper\'s own closing tag should print.' );
+		$this->assertStringNotContainsString( '<script', $output );
+		$this->assertStringContainsString( 'p { color: red; }', $output );
+	}
+
+	/**
+	 * Nothing prints without custom CSS.
+	 */
+	public function test_prints_no_custom_css_when_unset() {
+		$this->assertSame( '', get_echo( [ Lite_Site::class, 'print_custom_css' ] ) );
 	}
 }

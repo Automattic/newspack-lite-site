@@ -22,7 +22,7 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `excluded_categories` | `int[]` | `[]` | Category IDs to leave out. |
 | `excluded_tags` | `int[]` | `[]` | Tag IDs to leave out. |
 | `footer_html` | `string` | `''` | Footer HTML, filtered with `wp_kses_post()`. |
-| `custom_css` | `string` | `''` | CSS added to every page except the offline page. Rules with `>` are dropped. |
+| `custom_css` | `string` | `''` | CSS added to every page, including the offline page. HTML tags are stripped on save and again on output. |
 | `external_links_new_tab` | `bool` | `true` | Whether links to other sites open in a new tab. |
 | `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
 | `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color: on a block theme, the first color of the palette (custom, then theme, then WordPress's default); on a classic theme, the Newspack theme's primary color, otherwise the text color. |

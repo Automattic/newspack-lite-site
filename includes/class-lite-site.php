@@ -215,6 +215,23 @@ class Lite_Site {
 	}
 
 	/**
+	 * Print the custom CSS in a style element.
+	 *
+	 * Mirrors core's wp_custom_css_cb(): tags are stripped rather than the
+	 * value being HTML-escaped, since a style element is raw text and an
+	 * entity such as `&gt;` would never be decoded back into a selector.
+	 */
+	public static function print_custom_css() {
+		$custom_css = wp_strip_all_tags( self::get_custom_css() );
+		if ( '' === $custom_css ) {
+			return;
+		}
+		?>
+		<style id="newspack-lite-site-custom-css"><?php echo $custom_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Tags are stripped above, so the CSS can't close the style element; HTML escaping would break selectors such as `>`. ?></style>
+		<?php
+	}
+
+	/**
 	 * Get the footer HTML.
 	 *
 	 * @return string Footer HTML, or empty string if not set.

@@ -810,7 +810,7 @@ class Lite_Site_Settings {
 			'excluded_categories'    => ! empty( $settings['excluded_categories'] ) ? array_map( 'intval', $settings['excluded_categories'] ) : [],
 			'excluded_tags'          => ! empty( $settings['excluded_tags'] ) ? array_map( 'intval', $settings['excluded_tags'] ) : [],
 			'footer_html'            => wp_kses_post( trim( $settings['footer_html'] ?? '' ) ),
-			'custom_css'             => $settings['custom_css'] ?? '',
+			'custom_css'             => wp_strip_all_tags( $settings['custom_css'] ?? '' ),
 			'external_links_new_tab' => isset( $settings['external_links_new_tab'] ) ? (bool) $settings['external_links_new_tab'] : true,
 			'ga4_measurement_id'     => sanitize_text_field( $settings['ga4_measurement_id'] ?? '' ),
 			'primary_color'          => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',

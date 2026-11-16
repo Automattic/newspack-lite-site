@@ -21,6 +21,7 @@ defined( 'ABSPATH' ) || exit;
 	<title><?php esc_html_e( 'You\'re offline', 'newspack-lite-site' ); ?> - <?php bloginfo( 'name' ); ?></title>
 	<?php Lite_Site::print_font_stylesheet(); ?>
 	<?php require __DIR__ . '/lite-site-styles.php'; ?>
+	<?php Lite_Site::print_custom_css(); ?>
 </head>
 <body>
 	<header class="back">

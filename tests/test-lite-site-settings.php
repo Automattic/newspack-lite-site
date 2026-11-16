@@ -130,6 +130,15 @@ class Test_Lite_Site_Settings extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Custom CSS keeps its selectors but loses any markup.
+	 */
+	public function test_strips_markup_from_custom_css() {
+		$css = $this->sanitize( [ 'custom_css' => 'main > p { color: red; }</style><script>alert(1)</script>' ] )['custom_css'];
+
+		$this->assertSame( 'main > p { color: red; }', $css );
+	}
+
+	/**
 	 * Only valid hex colours are stored.
 	 */
 	public function test_sanitizes_primary_color() {
