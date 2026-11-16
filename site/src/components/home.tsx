@@ -10,7 +10,7 @@ const LEAD =
 
 const WEIGHT = 'In our tests, a typical article fell from about 3 MB to under 50 KB.';
 
-export const SITE_DESCRIPTION = `${ LEAD } ${ WEIGHT }`;
+export const SITE_DESCRIPTION = LEAD;
 
 const EMERGENCY_MODE_URL = 'https://emergencymode.news/';
 
@@ -87,16 +87,10 @@ const demoLink = 'underline decoration-1 underline-offset-[0.15em]';
 
 const pagerButton = `${ demoLink } cursor-pointer px-1 rounded-[2px] outline-offset-2 focus-visible:outline-2 focus-visible:outline-black`;
 
-/**
- * The demo site's Lite Site homepage, drawn with the markup and styles the plugin prints: the
- * View full site link, the site name, a divider in the site's primary color, the post list with
- * the sticky post in bold, the page links, and the footer. It stays a light page in both themes,
- * as the real one does. Headlines are not links, since the demo articles have no address here.
- * The page links work, and show the same pages the demo site lists.
- */
+/** Headlines are not links because the demo articles have no address here. */
 function LiteHomepage() {
 	const [ page, setPage ] = useState( 0 );
-	const navRef = useRef<HTMLElement>( null );
+	const navRef = useRef<HTMLDivElement>( null );
 	const listRef = useRef<HTMLUListElement>( null );
 	const [ listHeight, setListHeight ] = useState<number>();
 	const moved = useRef( false );
@@ -121,7 +115,7 @@ function LiteHomepage() {
 	};
 
 	return (
-		<div className="bg-white px-4 py-8 font-serif text-[1.125rem] leading-[1.6] text-black [color-scheme:light] [font-variant-numeric:lining-nums]">
+		<div className="bg-white px-4 py-8 font-serif text-[1.125rem] leading-[1.6] text-black [color-scheme:light]">
 			<div className="mx-auto max-w-[39.5rem]">
 				<p className="mb-2 text-base leading-normal">
 					<span className={ demoLink }>View full site</span>
@@ -139,7 +133,7 @@ function LiteHomepage() {
 						</li>
 					) ) }
 				</ul>
-				<nav ref={ navRef } aria-label="Pagination" className="mt-8 flex flex-wrap justify-center gap-2 text-base">
+				<div ref={ navRef } role="group" aria-label="Demo page links" className="mt-8 flex flex-wrap justify-center gap-2 text-base">
 					{ page > 0 && (
 						<button type="button" className={ pagerButton } onClick={ () => go( page - 1 ) }>
 							« Previous
@@ -147,7 +141,7 @@ function LiteHomepage() {
 					) }
 					{ DEMO_PAGES.map( ( _, index ) =>
 						index === page ? (
-							<span key={ index } aria-current="page" tabIndex={ -1 } className="px-1 outline-none">
+							<span key={ index } aria-current="page" tabIndex={ -1 } className="rounded-[2px] px-1 outline-offset-2 focus-visible:outline-2 focus-visible:outline-black">
 								{ index + 1 }
 							</span>
 						) : (
@@ -161,11 +155,11 @@ function LiteHomepage() {
 							Next »
 						</button>
 					) }
-				</nav>
+				</div>
 				<div aria-hidden="true" className="my-8 border-[0.125rem] border-[#117644]" />
 				<div className="mt-8 space-y-4 text-base leading-normal">
 					<p>The Riverbend Gazette, 118 Water Street, Riverbend. Newsroom line: (555) 555-0140.</p>
-					<p>Riverbend’s newsroom since 1897. Reader-funded, and nothing here sits behind a paywall.</p>
+					<p>Riverbend&apos;s newsroom since 1897. Reader-funded, and nothing here sits behind a paywall.</p>
 				</div>
 			</div>
 		</div>
@@ -177,7 +171,7 @@ function DemoFrame() {
 		<figure aria-labelledby="home-demo-label">
 			<div className="overflow-hidden rounded-(--newspack-ui-radius-surface) border border-border shadow-md">
 				<div className="flex flex-wrap items-center justify-between gap-x-(--newspack-ui-spacer-3) gap-y-(--newspack-ui-spacer-1) border-b border-border bg-(--newspack-ui-color-surface-subtle) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-1)">
-					<span className="inline-flex min-w-[8rem] items-center rounded-(--newspack-ui-radius-pill) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-2) py-[2px] type-small text-foreground">
+					<span className="inline-flex items-center rounded-(--newspack-ui-radius-pill) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-3) py-(--newspack-ui-spacer-half) type-small text-foreground">
 						<span className="sr-only">Address: </span>/lite/
 					</span>
 					<span id="home-demo-label" className="type-small text-muted-foreground">
@@ -281,12 +275,12 @@ export function Home( props: SitePageProps ) {
 				aria-labelledby="home-title"
 				className="site-container grid gap-(--newspack-ui-spacer-8) pt-[calc(var(--section-space)/2)] pb-[calc(var(--section-space)/2)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start lg:gap-(--newspack-ui-spacer-11)"
 			>
-				<div className="lg:sticky lg:top-(--newspack-ui-spacer-12) lg:pt-(--newspack-ui-spacer-9)">
-					<h1 id="home-title" className="max-w-[12em] type-headline text-foreground">
+				<div className="lg:sticky lg:top-(--newspack-ui-spacer-12)">
+					<h1 id="home-title" className="type-display text-foreground lg:-mt-[0.17em] lg:text-(length:--newspack-ui-font-size-4xl) lg:leading-(--newspack-ui-line-height-4xl)">
 						Keep your news readable when connections fail
 					</h1>
 					<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
-					<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] text-pretty text-foreground">{ WEIGHT }</p>
+					<p className="mt-(--newspack-ui-spacer-3) text-pretty text-foreground">{ WEIGHT }</p>
 					<div className="mt-(--newspack-ui-spacer-5)">
 						<Actions />
 					</div>
@@ -301,7 +295,7 @@ export function Home( props: SitePageProps ) {
 							Each article, as plain text
 						</h2>
 						<p className="mt-(--newspack-ui-spacer-2) max-w-[46ch] type-lead text-muted-foreground">
-							The title, the byline, the date and the words. Nothing from the theme, no ads, no scripts.
+							The title, the byline, the date and the words. Nothing from the theme and no ads.
 						</p>
 						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] text-pretty text-muted-foreground">
 							Images wait as a box with their alt text and caption until a reader selects{ ' ' }
