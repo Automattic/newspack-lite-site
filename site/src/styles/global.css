@@ -806,3 +806,7 @@ p.docs-lead {
 	line-height: var(--newspack-ui-line-height-body);
 }
 
+
+.docs-prose :where(h2, h3, h4) code {
+	overflow-wrap: anywhere;
+}
