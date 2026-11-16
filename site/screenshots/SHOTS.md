@@ -67,8 +67,8 @@ wp eval-file wp-content/plugins/newspack-lite-site/site/screenshots/seed.php
 
 ## Homepage
 
-- `home/lite-article.webp`: The flood article on the Lite Site, with no spotlight.<br>`npm run shot -- home/lite-article --url lite/ --logged-out --click 'text=Kettle River flood:'`
-- `home/full-article.webp`: The same flood article on the full site, with no spotlight.<br>`npm run shot -- home/full-article --url lite/ --logged-out --click 'text=Kettle River flood:' --click 'text=View full version'`
+- `home/lite-article.webp`: The flood article on the Lite Site, with no spotlight.<br>`npm run shot -- home/lite-article-1 --out public/screenshots/home/lite-article.webp --url lite/ --logged-out --click 'text=Kettle River flood:'`
+- `home/full-article.webp`: The same flood article on the full site, with no spotlight.<br>`npm run shot -- home/full-article-1 --out public/screenshots/home/full-article.webp --url lite/ --logged-out --click 'text=Kettle River flood:' --click 'text=View full version'`
 
 ## A feed that recovers
 
