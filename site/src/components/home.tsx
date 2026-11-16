@@ -436,16 +436,16 @@ export function Home( props: SitePageProps ) {
 							<Arrow className={ arrowMotion } />
 						</a>
 					</div>
-					<div className="grid gap-(--newspack-ui-spacer-5) md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:items-start lg:contents">
-						<Shot
-							src="/screenshots/home/lite-article-text.webp"
-							alt="The Lite Site article “Kettle River flood: what’s closed and where to get help”: the title, the byline, the date and the opening paragraph."
-							caption="On the Lite Site: the article as text, with links back to the homepage and to the full version."
-						/>
+					<div className="grid gap-(--newspack-ui-spacer-5) md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] md:items-start lg:contents">
 						<Shot
 							src="/screenshots/home/full-article.webp"
-							alt="The same article on the demo site’s main site, with the theme’s header, menus, a large photo and the byline."
-							caption="The same article on the full site, with its theme, menus and photos."
+							alt="The article “Kettle River flood: what’s closed and where to get help” on the demo site’s main site, with the theme’s header, menus, a large photo and the byline."
+							caption="On the full site, with the theme, menus and photos."
+						/>
+						<Shot
+							src="/screenshots/home/lite-article-text.webp"
+							alt="The same article on the Lite Site: the title, the byline, the date and the opening paragraph."
+							caption="On the Lite Site, as text, with a link to the full version."
 						/>
 					</div>
 					<Weight />
