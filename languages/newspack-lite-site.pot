@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T15:01:52+00:00\n"
+"POT-Creation-Date: 2026-11-16T15:06:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -83,73 +83,73 @@ msgstr ""
 msgid "Load image"
 msgstr ""
 
-#: includes/class-post-type.php:38
+#: includes/class-post-type.php:51
 msgid "RSS Entries"
 msgstr ""
 
-#: includes/class-post-type.php:39
+#: includes/class-post-type.php:52
 msgid "RSS Entry"
 msgstr ""
 
-#: includes/class-post-type.php:40
-#: includes/class-post-type.php:41
+#: includes/class-post-type.php:53
+#: includes/class-post-type.php:54
 #: dist/index.js:23
 msgid "Add RSS Entry"
 msgstr ""
 
-#: includes/class-post-type.php:42
+#: includes/class-post-type.php:55
 msgid "Edit RSS Entry"
 msgstr ""
 
-#: includes/class-post-type.php:43
+#: includes/class-post-type.php:56
 msgid "New RSS Entry"
 msgstr ""
 
-#: includes/class-post-type.php:44
+#: includes/class-post-type.php:57
 msgid "View RSS Entry"
 msgstr ""
 
-#: includes/class-post-type.php:45
+#: includes/class-post-type.php:58
 msgid "Search RSS Entries"
 msgstr ""
 
-#: includes/class-post-type.php:46
+#: includes/class-post-type.php:59
 msgid "No RSS entries found."
 msgstr ""
 
-#: includes/class-post-type.php:47
+#: includes/class-post-type.php:60
 msgid "No RSS entries found in the trash."
 msgstr ""
 
-#: includes/class-post-type.php:48
+#: includes/class-post-type.php:61
 msgid "RSS entry published."
 msgstr ""
 
-#: includes/class-post-type.php:49
+#: includes/class-post-type.php:62
 msgid "RSS entry published privately."
 msgstr ""
 
-#: includes/class-post-type.php:50
+#: includes/class-post-type.php:63
 msgid "RSS entry updated."
 msgstr ""
 
-#: includes/class-post-type.php:51
+#: includes/class-post-type.php:64
 msgid "RSS entry reverted to draft."
 msgstr ""
 
-#: includes/class-post-type.php:52
+#: includes/class-post-type.php:65
 msgid "RSS entry scheduled."
 msgstr ""
 
-#: includes/class-post-type.php:53
+#: includes/class-post-type.php:66
 msgid "RSS entry moved to the trash."
 msgstr ""
 
-#: includes/class-post-type.php:55
+#: includes/class-post-type.php:68
 msgid "Posts imported from other sites' RSS feeds by Lite Site."
 msgstr ""
 
-#: includes/class-post-type.php:272
+#: includes/class-post-type.php:285
 msgid "Limit results to entries imported from the feed with this ID."
 msgstr ""
 
