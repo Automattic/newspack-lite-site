@@ -6,7 +6,7 @@
 | --- | --- |
 | From | [Newspack](https://newspack.com/) and [Emergency Mode for News](https://emergencymode.news/) |
 | Requires at least | ![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg) |
-| Tested up to | ![WordPress](https://img.shields.io/badge/WordPress-7.0.3-blue.svg) |
+| Tested up to | ![WordPress](https://img.shields.io/badge/WordPress-7.1-blue.svg) |
 | Requires PHP | ![PHP](https://img.shields.io/badge/PHP-7.2%2B-blue.svg) |
 | Requires Node.js (to build) | ![Node.js](https://img.shields.io/badge/Node.js-LTS-blue.svg) |
 | License | ![License](https://img.shields.io/badge/License-GPLv3-blue.svg) |
@@ -30,8 +30,8 @@ Lite Site is a WordPress plugin developed by Newspack and released to all WordPr
 ## Installation
 
 1. Download [newspack-lite-site.zip](https://github.com/Automattic/newspack-lite-site/releases/latest/download/newspack-lite-site.zip), which always points to the latest release.
-2. In WordPress, go to **Plugins → Add New → Upload Plugin**, choose the ZIP and click **Install Now**, then **Activate Plugin**.
-3. Go to **Lite Site → Settings**, check **Enable Lite Site** and click **Save**.
+2. In WordPress, go to **Plugins > Add Plugin**, choose the ZIP and click **Install Now**, then **Activate Plugin**.
+3. Go to **Lite Site > Settings**, check **Enable Lite Site** and click **Save**.
 
 The [documentation](https://lite-site.space.fast/docs/getting-started/install-the-plugin/) has the full steps with screenshots, and the next steps for settings, appearance and RSS feeds.
 
@@ -55,7 +55,7 @@ npm run fix:php   # PHPCBF autofix
 - Coding standards: WordPress and VIP (`phpcs.xml`), extending the `newspack-scripts` ESLint and Stylelint configs.
 - The documentation site lives in [`site/`](site/). A change publishers can see updates the matching page there and retakes its screenshots in the same pull request. [`AGENTS.md`](AGENTS.md) has the details.
 
-Check the open [issues](https://github.com/Automattic/newspack-lite-site/issues) first, then open a pull request against `trunk` with a clear description and test steps.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) and check the open [issues](https://github.com/Automattic/newspack-lite-site/issues) first, then open a pull request against `trunk` with a clear description and test steps.
 
 ## Testing
 
