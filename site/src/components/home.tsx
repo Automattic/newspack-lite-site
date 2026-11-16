@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { PARTNERS } from '@/components/partner-logos';
 import { SiteLayout, type SitePageProps } from '@/components/site-layout';
 
@@ -398,29 +398,25 @@ export function Home( props: SitePageProps ) {
 				<p className="mt-(--newspack-ui-spacer-2) max-w-[60ch] type-lead text-muted-foreground">
 					One plugin on the site you already run. The guides cover each part.
 				</p>
-				<ul className="mt-(--newspack-ui-spacer-6) grid gap-(--newspack-ui-spacer-2) sm:grid-cols-2 sm:gap-(--newspack-ui-spacer-5) lg:grid-cols-3">
+				<ul className="mt-(--newspack-ui-spacer-6) divide-y divide-border">
 					{ features.map( ( feature ) => (
-						<li key={ feature.href + feature.title }>
-							<a href={ feature.href } className="group block h-full rounded-(--newspack-ui-radius-surface)">
-								<Card className="h-full transition-colors duration-(--newspack-ui-duration-color) group-hover:border-(color:--newspack-ui-color-border-hover)">
-									<CardHeader>
-										<CardTitle className="flex items-center justify-between gap-(--newspack-ui-spacer-1)">
-											{ feature.title }
-											<Arrow className={ arrowMotion } />
-										</CardTitle>
-										<CardDescription className="text-pretty">{ feature.body }</CardDescription>
-									</CardHeader>
-									{ feature.labels.length > 0 && (
-										<div className="mt-auto flex flex-wrap gap-(--newspack-ui-spacer-1)">
-											{ feature.labels.map( ( name ) => (
-												<Badge key={ name } variant="secondary">
-													{ name }
-												</Badge>
-											) ) }
-										</div>
-									) }
-								</Card>
-							</a>
+						<li
+							key={ feature.href + feature.title }
+							className="grid gap-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-5) first:pt-0 last:pb-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-x-(--newspack-ui-spacer-8) lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,16rem)]"
+						>
+							<h3 className="type-title text-foreground">
+								<a href={ feature.href } className="rounded-(--newspack-ui-border-radius-xs) underline-offset-3 hover:underline">
+									{ feature.title }
+								</a>
+							</h3>
+							<p className="max-w-[62ch] text-pretty text-muted-foreground">{ feature.body }</p>
+							<div className="flex flex-wrap content-start gap-(--newspack-ui-spacer-1) md:col-start-2 lg:col-start-auto">
+								{ feature.labels.map( ( name ) => (
+									<Badge key={ name } variant="secondary">
+										{ name }
+									</Badge>
+								) ) }
+							</div>
 						</li>
 					) ) }
 				</ul>
