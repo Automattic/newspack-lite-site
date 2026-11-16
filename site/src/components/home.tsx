@@ -277,7 +277,7 @@ export function Home( props: SitePageProps ) {
 					aria-labelledby="home-title"
 					className="site-container relative grid gap-(--newspack-ui-spacer-8) pt-[calc(var(--section-space)/2)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start lg:gap-(--newspack-ui-spacer-11)"
 				>
-					<div className="lg:sticky lg:top-(--newspack-ui-spacer-12)">
+					<div className="lg:sticky lg:top-[calc(var(--site-header-height)+var(--section-space)/2)]">
 						<h1 id="home-title" className="type-display text-foreground lg:-mt-[0.17em] lg:text-(length:--newspack-ui-font-size-4xl) lg:leading-(--newspack-ui-line-height-4xl)">
 							Keep your news readable when connections fail
 						</h1>
