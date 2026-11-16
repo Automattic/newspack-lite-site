@@ -58,10 +58,18 @@ export function formatLastResult( result: LastResult | null ): string {
 			);
 		}
 		return sprintf(
-			/* translators: 1: number of entries imported, 2: number of entries that failed */
-			_n( '%1$d imported, %2$d failed', '%1$d imported, %2$d failed', failed, 'newspack-lite-site' ),
-			imported,
-			failed
+			/* translators: 1: number of entries imported, such as "3 imported", 2: number of entries that failed, such as "1 failed" */
+			__( '%1$s, %2$s', 'newspack-lite-site' ),
+			sprintf(
+				/* translators: %d: number of entries imported */
+				_n( '%d imported', '%d imported', imported, 'newspack-lite-site' ),
+				imported
+			),
+			sprintf(
+				/* translators: %d: number of entries that failed */
+				_n( '%d failed', '%d failed', failed, 'newspack-lite-site' ),
+				failed
+			)
 		);
 	}
 	if ( upToDate && 0 === imported ) {
