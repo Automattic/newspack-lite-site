@@ -7,16 +7,16 @@
 | From | [Newspack](https://newspack.com/) and [Emergency Mode for News](https://emergencymode.news/) |
 | Requires at least | ![WordPress](https://img.shields.io/badge/WordPress-6.6%2B-blue.svg) |
 | Tested up to | ![WordPress](https://img.shields.io/badge/WordPress-7.1-blue.svg) |
-| Requires PHP | ![PHP](https://img.shields.io/badge/PHP-7.2%2B-blue.svg) |
+| Requires PHP | ![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue.svg) |
 | Requires Node.js (to build) | ![Node.js](https://img.shields.io/badge/Node.js-LTS-blue.svg) |
 | License | ![License](https://img.shields.io/badge/License-GPLv3-blue.svg) |
 | Stable tag | [(see package.json)](package.json#L3) |
 | Changelog | [Changelog](https://github.com/Automattic/newspack-lite-site/blob/trunk/CHANGELOG.md) |
 | Sponsor | [Press Forward](https://www.pressforward.news/infrastructure25/) |
 
-Documentation: https://lite-site.space.fast/
+Documentation: https://lite-site.space.fast/ (open to invited publishers for now, and password protected)
 
-Lite Site is a WordPress plugin developed by Newspack and released to all WordPress users through the [Emergency Mode for News](https://emergencymode.news/) initiative. It creates a stripped-down, text-only version of your website that loads quickly when bandwidth is severely limited, so critical information stays accessible during network failures, disasters, breaking-news traffic spikes and other emergencies. Pages are plain HTML with inline CSS: no theme, no scripts, and no images unless the reader taps to load one. An optional RSS import lets a Lite Site republish coverage from partner newsrooms.
+Lite Site is a WordPress plugin developed by Newspack and released to all WordPress users through the [Emergency Mode for News](https://emergencymode.news/) initiative. It creates a stripped-down, text-only version of your website that loads quickly when bandwidth is severely limited, so critical information stays accessible during network failures, disasters, breaking-news traffic spikes and other emergencies. Pages are plain HTML with inline CSS: no theme, none of the theme's scripts, and no images unless the reader taps to load one. An optional RSS import lets a Lite Site republish coverage from partner newsrooms.
 
 ## Table of contents
 
