@@ -8,8 +8,6 @@ import { SiteLayout, type SitePageProps } from '@/components/site-layout';
 const LEAD =
 	'Lite Site adds a text-only copy of your WordPress site at its own address, so readers on weak or overloaded connections can still load your reporting when a disaster hits.';
 
-const WEIGHT = 'In our tests, a typical article fell from about 3 MB to under 50 KB.';
-
 export const SITE_DESCRIPTION = LEAD;
 
 const EMERGENCY_MODE_URL = 'https://emergencymode.news/';
@@ -268,6 +266,42 @@ function Shot( { src, alt, caption }: { src: string; alt: string; caption: React
 	);
 }
 
+function Weight() {
+	const rows = [
+		{ label: 'Full version', value: 'about 3 MB', width: '100%' },
+		{ label: 'Lite Site', value: 'under 50 KB', width: '1.7%' },
+	];
+	return (
+		<figure className="mt-(--newspack-ui-spacer-3) max-w-[46ch]">
+			<Card className="gap-(--newspack-ui-spacer-4) p-(--newspack-ui-spacer-5)">
+				{ rows.map( ( row ) => (
+					<div key={ row.label }>
+						<div className="flex items-baseline justify-between gap-(--newspack-ui-spacer-2) type-small">
+							<span className="text-muted-foreground">{ row.label }</span>
+							<span className="font-(weight:--newspack-ui-font-weight-strong) text-foreground tabular-nums">
+								{ row.value }
+							</span>
+						</div>
+						<div
+							aria-hidden="true"
+							className="mt-(--newspack-ui-spacer-1) h-(--newspack-ui-spacer-2) rounded-(--newspack-ui-border-radius-s) bg-(--newspack-ui-color-surface-sunken)"
+						>
+							<div
+								className="h-full min-w-1 rounded-(--newspack-ui-border-radius-s) bg-foreground"
+								style={ { width: row.width } }
+							/>
+						</div>
+					</div>
+				) ) }
+			</Card>
+			<figcaption className="mt-(--newspack-ui-spacer-1) type-small text-muted-foreground">
+				In our tests, a typical article fell from about 3 MB to under 50 KB. Your own pages will differ with the
+				theme, the number of images and the scripts the site loads.
+			</figcaption>
+		</figure>
+	);
+}
+
 export function Home( props: SitePageProps ) {
 	return (
 		<SiteLayout { ...props }>
@@ -282,7 +316,7 @@ export function Home( props: SitePageProps ) {
 							Keep your news readable when connections fail
 						</h1>
 						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
-						<p className="mt-(--newspack-ui-spacer-3) text-pretty text-foreground">{ WEIGHT }</p>
+						<Weight />
 						<div className="mt-(--newspack-ui-spacer-5)">
 							<Actions />
 						</div>
