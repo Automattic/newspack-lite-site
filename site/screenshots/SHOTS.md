@@ -80,3 +80,26 @@ wp option update newspack_ls_screenshots_retry_works 1
 ```
 
 - `guides/rss-feeds-6.webp`: Retry Now on the failing feed after it recovers: the drawer has closed its error and the Up to date confirmation shows.<br>`npm run shot -- guides/rss-feeds-6 --url 'wp-admin/admin.php?page=newspack-lite-site-rss#/feeds' --click 'tr:has-text("kettlewatershed.example") button:has-text("Edit")' --click 'button:has-text("Retry Now")' --spotlight .newspack-lite-snackbar-container`
+
+## WordPress.org assets
+
+The screenshots for the WordPress.org listing live in `.wordpress-org/` at the repository root, outside `site/`. They are lossless PNGs at 3024×1964, taken with the commands of the docs shots above but without `--spotlight`, so nothing is dimmed. Seed the full demo first, and run the commands from `site/`.
+
+- `../.wordpress-org/screenshot-1.png`: The Lite Site homepage at /lite/, as a signed-out reader sees it. Same as `guides/lite-homepage-1`.<br>`npm run shot -- guides/lite-homepage-1 --out ../.wordpress-org/screenshot-1.png --url lite/ --logged-out`
+- `../.wordpress-org/screenshot-2.png`: A Lite Site article, scrolled 530 pixels so the top edge lands on the "Still closed" heading, with the image placeholder, its alt text, caption, photo credit and Load image button below it. Retakes `guides/lite-articles-2` with a fixed scroll and no spotlight.<br>`npm run shot -- guides/lite-articles-2 --out ../.wordpress-org/screenshot-2.png --url lite/ --logged-out --click 'text=Kettle River flood:' --scroll=530`
+- `../.wordpress-org/screenshot-3.png`: Lite Site > Settings > General, with Enable Lite Site checked. Same as `guides/settings-1`.<br>`npm run shot -- guides/settings-1 --out ../.wordpress-org/screenshot-3.png --url 'wp-admin/admin.php?page=newspack-lite-site'`
+- `../.wordpress-org/screenshot-4.png`: Lite Site > RSS > Feeds with the four demo feeds. Same as `guides/rss-feeds-1`.<br>`npm run shot -- guides/rss-feeds-1 --out ../.wordpress-org/screenshot-4.png --url 'wp-admin/admin.php?page=newspack-lite-site-rss#/feeds'`
+
+The full and lite versions of an article are two separate pages, so no single frame shows both; the screenshots show the lite one.
+
+- `../.wordpress-org/banner-772x250.png`, `banner-1544x500.png`, `icon.svg`, `icon-128x128.png` and `icon-256x256.png`: The listing banner and icon. The banner shows the top of the same Lite Site article inside a browser window drawn by the banner template. Capture the article logged out into a temporary file, recording the box of `body`, the article column, then render the five files from it. The renderer widens the crop past the column (`crop.margin` in `site/wporg/config.mjs`), so the window shows the opening paragraph as well as the title.<br>`npm run shot -- home/wporg-banner-1 --url lite/ --logged-out --click 'text=Kettle River flood:' --now --out "${TMPDIR:-/tmp}/ls-article.png" --boxes body`<br>`npm run wporg -- --capture "${TMPDIR:-/tmp}/ls-article.png"`
+
+The release workflow does not upload these files. Whenever they change, copy the files in `.wordpress-org/` into the `assets/` folder of the plugin's SVN checkout, then run these from the checkout's root before committing:
+
+```bash
+svn add --force assets
+svn propset svn:mime-type image/png assets/*.png
+svn propset svn:mime-type image/svg+xml assets/icon.svg
+```
+
+WordPress.org shows the new assets once they are committed, without a release. Screenshot captions come from the `== Screenshots ==` list in `readme.txt`, matched by number, so update that list in the same pass when you add, remove or reorder a screenshot.
