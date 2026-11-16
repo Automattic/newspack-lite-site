@@ -7,7 +7,7 @@ Short answers to the questions publishers ask most. If something is not working,
 
 ## Will Lite Site affect my search ranking?
 
-It should not. Search engines are told to list only your main site. The one exception is imported RSS entries, which also have a page on the main site and show in its search.
+It should not. Search engines are told to list only your main site. Imported RSS entries also have a page on your main site, which shows in your site's own search and which search engines can list.
 
 Each Lite Site article points search engines to the full version of the same article. Every Lite Site page, the homepage included, asks them not to list it. Links on these pages are still followed.
 
@@ -32,9 +32,9 @@ If you use a caching plugin, check how long it keeps pages. After an urgent upda
 
 Lite Site addresses stop working, and so do the main-site pages of imported RSS entries. Your posts, pages and theme are not affected. The **Lite Site** menu disappears, and RSS feeds stop importing.
 
-On a site with the PWA plugin, the site's offline page becomes the Lite Site one from the moment Lite Site is activated, even while Lite Site is off.
+On a site with the PWA plugin, the site's offline page becomes the Lite Site one from the moment the plugin is activated, even before Lite Site is turned on. Deactivating the plugin brings back the site's own offline page.
 
-Your settings, feeds and imported RSS entries stay in the database. Activate the plugin again and Lite Site returns as you left it. If Lite Site addresses don't open after you reactivate, refresh the address list; see [Troubleshooting](/docs/guides/troubleshooting/#a-lite-site-address-shows-page-not-found).
+Your settings, feeds and imported RSS entries stay in the database. Activate the plugin again and Lite Site returns as you left it. If Lite Site addresses don't open after you reactivate, refresh the address list; see [Troubleshooting](/docs/guides/troubleshooting/#refresh-the-address-list).
 
 ## How do I remove Lite Site completely?
 
@@ -70,7 +70,7 @@ Deleting the plugin removes its files, not the settings you saved. They are smal
 
 ## Can I use Lite Site if my site doesn't run on WordPress?
 
-Yes, with a second site. Set up a separate WordPress site, on WordPress.com or on your own hosting, and install Lite Site there. [Add your own site's RSS feed](/docs/getting-started/add-an-rss-feed/) to it. Each item in your feed becomes an entry that shows on that site's Lite Site homepage and on its own Lite Site page. Check that your feed carries the full article text, since many carry only a summary. Expect only items published after the feed is added, up to 50 per run, with no backfill of older articles. You keep publishing where you do now, and the second site is your text-only backup.
+Yes, with a second site. Set up a separate WordPress site, on WordPress.com or on your own hosting, and install Lite Site there. [Add your own site's RSS feed](/docs/getting-started/add-an-rss-feed/) to it. Each item in your feed becomes an entry that shows on that site's Lite Site homepage and on its own Lite Site page. Check that your feed carries the full article text, since many carry only a summary. The first import brings in what the feed lists at that time, up to 50 items. Older articles that have already dropped off the feed don't come in. You keep publishing where you do now, and the second site is your text-only backup.
 
 Your hosting provider can tell you which kind of second site fits your budget and your team.
 

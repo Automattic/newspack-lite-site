@@ -25,7 +25,7 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `custom_css` | `string` | `''` | CSS added to every page except the offline page. Rules with `>` are dropped. |
 | `external_links_new_tab` | `bool` | `true` | Whether links to other sites open in a new tab. |
 | `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
-| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's primary color, or the text color (`currentcolor`) if the theme has none. |
+| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's primary color, or a default color if the theme has none (a palette color on a block theme, the text color on a classic theme). |
 | `font_import_url` | `string` | `''` | The address of a font stylesheet. |
 | `font_body` | `string` | `''` | The body font name. |
 
@@ -79,11 +79,11 @@ Saving a post clears both for its Lite Site address, including the address it ha
 
 A second object cache group, `newspack-lite-site`, holds lookups for the admin screens, under keys that start with `entry_tags:` and `entry_feed_urls:`.
 
-If the site has a persistent object cache, transients live there and not in the options table. Not everything expires: the rewrite flag, the address lookups (up to 3 hours), and the `newspack-lite-site` group can outlast a clean-up by up to that long. `wp cache flush` clears the whole site's object cache.
+If the site has a persistent object cache, transients live there and not in the options table. With a persistent object cache, the rewrite flag and the `newspack-lite-site` group entries never expire, and address lookups last up to 3 hours (5 minutes when nothing was found). The `wp cache flush` in step 6 clears them, along with the whole site's object cache.
 
 ## Remove everything
 
-Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. Step 2 deletes every imported RSS entry and its images. Run it before anyone deletes entries in the dashboard, because images of deleted entries are left unattached and can't be found again.
+Deactivating or deleting the plugin leaves its data in place. Lite Site has no uninstall step. Run these commands with WP-CLI, in this order, only when the site will not use Lite Site again. Step 2 deletes every imported RSS entry and its images. Run it before anyone deletes entries in the dashboard, because images of deleted entries stay in the Media Library unattached, and step 2 can't find them.
 
 1. Deactivate the plugin, so nothing re-adds its rewrite rules or imports more entries while you clean up.
 

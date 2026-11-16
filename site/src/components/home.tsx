@@ -203,7 +203,7 @@ const features: { title: string; href: string; body: string; labels: string[] }[
 	{
 		title: 'Images on request',
 		href: '/docs/guides/lite-articles/',
-		body: 'Each image waits as a box with its alt text and caption, until the reader asks for it.',
+		body: 'Article images wait as a box with its alt text and caption, until the reader asks for it.',
 		labels: [ 'Load image' ],
 	},
 	{
@@ -368,7 +368,7 @@ export function Home( props: SitePageProps ) {
 							The title, the byline, the date and the words. Nothing from the theme and no ads.
 						</p>
 						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] text-pretty text-muted-foreground">
-							Images wait as a box with their alt text and caption until a reader selects{ ' ' }
+							Article images wait as a box with their alt text and caption until a reader selects{ ' ' }
 							<strong className={ label }>Load image</strong>. <strong className={ label }>View full version</strong>,
 							above the title, opens the same article on the main site.
 						</p>
