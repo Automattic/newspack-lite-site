@@ -673,4 +673,27 @@ class Test_RSS_Entries_Admin extends Lite_Site_TestCase {
 		$GLOBALS['parent_file'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		$this->assertFalse( user_can_access_admin_page() );
 	}
+
+	/**
+	 * A singular RSS entry page is marked noindex.
+	 */
+	public function test_rss_entry_page_is_noindex() {
+		$this->set_permalink_structure( '/%postname%/' );
+		$id = self::factory()->post->create( [ 'post_type' => Post_Type::POST_TYPE ] );
+		$this->go_to( get_permalink( $id ) );
+		$robots = apply_filters( 'wp_robots', [] );
+		$this->assertTrue( $robots['noindex'] );
+		$this->assertTrue( $robots['follow'] );
+	}
+
+	/**
+	 * A regular post page is left alone.
+	 */
+	public function test_regular_post_page_is_not_noindex() {
+		$this->set_permalink_structure( '/%postname%/' );
+		$id = self::factory()->post->create();
+		$this->go_to( get_permalink( $id ) );
+		$robots = apply_filters( 'wp_robots', [] );
+		$this->assertArrayNotHasKey( 'noindex', $robots );
+	}
 }
