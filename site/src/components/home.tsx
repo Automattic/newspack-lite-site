@@ -439,12 +439,11 @@ export function Home( props: SitePageProps ) {
 					{ features.map( ( feature ) => (
 						<li
 							key={ feature.href + feature.title }
-							className="grid gap-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-5) first:pt-0 last:pb-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-x-(--newspack-ui-spacer-8) lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)_minmax(0,16rem)]"
+							className="grid gap-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-5) first:pt-0 last:pb-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-x-(--newspack-ui-spacer-8) lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,16rem)]"
 						>
 							<h3 className="type-title text-foreground">
-								<a href={ feature.href } className="group inline-flex items-baseline gap-(--newspack-ui-spacer-half) rounded-(--newspack-ui-border-radius-xs) text-link">
+								<a href={ feature.href } className="rounded-(--newspack-ui-border-radius-xs) underline-offset-3 hover:underline">
 									{ feature.title }
-									<Arrow className={ `self-center ${ arrowMotion }` } />
 								</a>
 							</h3>
 							<p className="max-w-[62ch] text-pretty text-muted-foreground">{ feature.body }</p>
