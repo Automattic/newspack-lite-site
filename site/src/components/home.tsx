@@ -267,17 +267,51 @@ function Shot( { src, alt, caption }: { src: string; alt: string; caption: React
 	);
 }
 
+function watchWeight( figure: Element | null ) {
+	const root = document.documentElement;
+	if (
+		! figure ||
+		root.dataset.lsWeight === 'play' ||
+		! ( 'IntersectionObserver' in window ) ||
+		! window.matchMedia( '(prefers-reduced-motion: no-preference)' ).matches
+	) {
+		return;
+	}
+	root.dataset.lsWeight = 'armed';
+	const observer = new IntersectionObserver(
+		( entries ) => {
+			if ( entries.some( ( entry ) => entry.isIntersecting ) ) {
+				observer.disconnect();
+				root.dataset.lsWeight = 'play';
+			}
+		},
+		{ threshold: 0.75 },
+	);
+	observer.observe( figure );
+}
+
+const WATCH_WEIGHT_SCRIPT = `(${ watchWeight.toString() })(document.currentScript.parentElement)`;
+
 function Weight() {
+	const figureRef = useRef<HTMLElement>( null );
 	const rows = [
-		{ label: 'Full version', value: 'about 3 MB', width: '100%' },
-		{ label: 'Lite Site', value: 'under 50 KB', width: '1.7%' },
+		{ id: 'full', label: 'Full version', value: 'about 3 MB', width: '100%' },
+		{ id: 'lite', label: 'Lite Site', value: 'under 50 KB', width: '1.7%' },
 	];
+
+	// The inline script arms the bars while the page parses; this re-observes if hydration replaced the figure.
+	useEffect( () => {
+		if ( document.documentElement.dataset.lsWeight === 'armed' ) {
+			watchWeight( figureRef.current );
+		}
+	}, [] );
+
 	return (
-		<figure className="mt-(--newspack-ui-spacer-3) max-w-[46ch]">
+		<figure ref={ figureRef } className="lg:col-span-2 lg:col-start-2">
 			<Card className="gap-(--newspack-ui-spacer-4) p-(--newspack-ui-spacer-5)">
 				{ rows.map( ( row ) => (
-					<div key={ row.label }>
-						<div className="flex items-baseline justify-between gap-(--newspack-ui-spacer-2) type-small">
+					<div key={ row.id }>
+						<div className="flex items-baseline gap-(--newspack-ui-spacer-2) type-small">
 							<span className="text-muted-foreground">{ row.label }</span>
 							<span className="font-(weight:--newspack-ui-font-weight-strong) text-foreground tabular-nums">
 								{ row.value }
@@ -288,17 +322,19 @@ function Weight() {
 							className="mt-(--newspack-ui-spacer-1) h-(--newspack-ui-spacer-2) rounded-(--newspack-ui-border-radius-s) bg-(--newspack-ui-color-surface-sunken)"
 						>
 							<div
-								className="h-full min-w-1 rounded-(--newspack-ui-border-radius-s) bg-foreground"
+								data-weight-bar={ row.id }
+								className="h-full min-w-1 origin-left rounded-(--newspack-ui-border-radius-s) bg-foreground"
 								style={ { width: row.width } }
 							/>
 						</div>
 					</div>
 				) ) }
 			</Card>
-			<figcaption className="mt-(--newspack-ui-spacer-1) type-small text-muted-foreground">
+			<figcaption className="mt-(--newspack-ui-spacer-2) max-w-[62ch] type-small text-pretty text-muted-foreground">
 				In our tests, a typical article fell from about 3 MB to under 50 KB. Your own pages will differ with the
 				theme, the number of images and the scripts the site loads.
 			</figcaption>
+			<script suppressHydrationWarning dangerouslySetInnerHTML={ { __html: WATCH_WEIGHT_SCRIPT } } />
 		</figure>
 	);
 }
@@ -317,7 +353,6 @@ export function Home( props: SitePageProps ) {
 							Keep your news readable when connections fail
 						</h1>
 						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
-						<Weight />
 						<div className="mt-(--newspack-ui-spacer-5)">
 							<Actions />
 						</div>
@@ -360,7 +395,7 @@ export function Home( props: SitePageProps ) {
 
 			<section aria-labelledby="home-article" className="site-container section-space">
 				<div className="grid gap-(--newspack-ui-spacer-6) lg:grid-cols-3 lg:items-start lg:gap-(--newspack-ui-spacer-5)">
-					<div>
+					<div className="lg:row-span-2">
 						<h2 id="home-article" className="type-section text-foreground">
 							Each article, as plain text
 						</h2>
@@ -389,6 +424,7 @@ export function Home( props: SitePageProps ) {
 							caption="The same article on the full site, with its theme, menus and photos."
 						/>
 					</div>
+					<Weight />
 				</div>
 			</section>
 

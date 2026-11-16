@@ -784,6 +784,69 @@ html:not([data-astro-transition]) body {
 	}
 }
 
+@keyframes ls-weight-lite {
+	from {
+		transform: scaleX(0);
+	}
+}
+
+@keyframes ls-weight-full {
+	0% {
+		transform: scaleX(0);
+	}
+
+	10% {
+		transform: scaleX(0.14);
+	}
+
+	24% {
+		transform: scaleX(0.16);
+	}
+
+	33% {
+		transform: scaleX(0.38);
+	}
+
+	52% {
+		transform: scaleX(0.43);
+	}
+
+	61% {
+		transform: scaleX(0.67);
+	}
+
+	79% {
+		transform: scaleX(0.71);
+	}
+
+	89% {
+		transform: scaleX(0.93);
+	}
+
+	100% {
+		transform: scaleX(1);
+	}
+}
+
+[data-ls-weight='armed'] [data-weight-bar] {
+	transform: scaleX(0);
+}
+
+[data-ls-weight='play'] [data-weight-bar='lite'] {
+	animation: ls-weight-lite var(--newspack-ui-duration-indicator) var(--newspack-ui-ease-out) 400ms both;
+}
+
+[data-ls-weight='play'] [data-weight-bar='full'] {
+	animation: ls-weight-full 2400ms var(--newspack-ui-ease-out) 400ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-ls-weight] [data-weight-bar] {
+		transform: none;
+		animation: none;
+	}
+}
+
 .docs-prose {
 	font-size: var(--newspack-ui-font-size-body);
 	line-height: var(--ls-line-height-prose);
