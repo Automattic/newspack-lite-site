@@ -38,5 +38,6 @@ export default defineConfig( {
 	],
 	vite: {
 		plugins: [ tailwindcss() ],
+		tsconfig: './tsconfig.json',
 	},
 } );
