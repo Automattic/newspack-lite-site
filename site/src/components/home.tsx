@@ -280,12 +280,18 @@ function watchWeight( figure: Element | null ) {
 	root.dataset.lsWeight = 'armed';
 	const observer = new IntersectionObserver(
 		( entries ) => {
-			if ( entries.some( ( entry ) => entry.isIntersecting ) ) {
+			const seen = entries.some(
+				( entry ) =>
+					entry.isIntersecting &&
+					( entry.intersectionRatio >= 0.75 ||
+						( !! entry.rootBounds && entry.intersectionRect.height >= entry.rootBounds.height * 0.75 ) )
+			);
+			if ( seen ) {
 				observer.disconnect();
 				root.dataset.lsWeight = 'play';
 			}
 		},
-		{ threshold: 0.75 },
+		{ threshold: [ 0, 0.25, 0.5, 0.75, 1 ] },
 	);
 	observer.observe( figure );
 }
@@ -319,11 +325,11 @@ function Weight() {
 						</div>
 						<div
 							aria-hidden="true"
-							className="mt-(--newspack-ui-spacer-1) h-(--newspack-ui-spacer-2) rounded-(--newspack-ui-border-radius-s) bg-(--newspack-ui-color-surface-sunken)"
+							className="mt-(--newspack-ui-spacer-1) h-(--newspack-ui-spacer-2) rounded-(--newspack-ui-border-radius-s) bg-(--newspack-ui-color-surface-sunken) forced-colors:border forced-colors:border-[CanvasText]"
 						>
 							<div
 								data-weight-bar={ row.id }
-								className="h-full min-w-1 origin-left rounded-(--newspack-ui-border-radius-s) bg-foreground"
+								className="h-full min-w-1 origin-left rounded-(--newspack-ui-border-radius-s) bg-foreground forced-colors:bg-[CanvasText]"
 								style={ { width: row.width } }
 							/>
 						</div>

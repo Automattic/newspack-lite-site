@@ -847,6 +847,13 @@ html:not([data-astro-transition]) body {
 	}
 }
 
+@media print {
+	[data-ls-weight] [data-weight-bar] {
+		transform: none;
+		animation: none;
+	}
+}
+
 .docs-prose {
 	font-size: var(--newspack-ui-font-size-body);
 	line-height: var(--ls-line-height-prose);
