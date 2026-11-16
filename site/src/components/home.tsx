@@ -374,7 +374,7 @@ export function Home( props: SitePageProps ) {
 				>
 					<div className="lg:sticky lg:top-[calc(var(--site-header-height)+var(--section-space)/2)]">
 						<h1 id="home-title" className="type-display text-foreground lg:-mt-[0.17em] lg:text-(length:--newspack-ui-font-size-4xl) lg:leading-(--newspack-ui-line-height-4xl)">
-							Keep your news readable when connections fail
+							Keep your news <span className="text-brand">readable</span> when connections fail
 						</h1>
 						<p className="mt-(--newspack-ui-spacer-3) max-w-[46ch] type-lead text-muted-foreground">{ LEAD }</p>
 						<div className="mt-(--newspack-ui-spacer-5)">
