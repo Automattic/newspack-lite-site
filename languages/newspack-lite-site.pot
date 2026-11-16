@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-13T20:13:15+00:00\n"
+"POT-Creation-Date: 2026-11-16T15:01:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: newspack-lite-site\n"
@@ -36,18 +36,18 @@ msgstr ""
 
 #: includes/class-lite-site-settings.php:324
 #: includes/class-lite-site-settings.php:325
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "RSS"
 msgstr ""
 
 #: includes/class-lite-site-settings.php:333
 #: includes/class-lite-site-settings.php:334
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Settings"
 msgstr ""
 
 #: includes/class-lite-site-settings.php:427
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "View Lite Site"
 msgstr ""
 
@@ -93,7 +93,7 @@ msgstr ""
 
 #: includes/class-post-type.php:40
 #: includes/class-post-type.php:41
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Add RSS Entry"
 msgstr ""
 
@@ -301,256 +301,271 @@ msgstr ""
 msgid "The RSS feed contains no items"
 msgstr ""
 
-#: dist/index.js:5
-msgid "Up to date"
+#. translators: %d: number of entries that failed
+#: dist/index.js:6
+#, js-format
+msgid "Up to date, %d failed"
+msgid_plural "Up to date, %d failed"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: number of entries imported, such as "3 imported", 2: number of entries that failed, such as "1 failed"
+#: dist/index.js:7
+#, js-format
+msgid "%1$s, %2$s"
 msgstr ""
 
 #. translators: %d: number of entries imported
-#: dist/index.js:6
-#, js-format
-msgid "%d imported, up to date"
-msgid_plural "%d imported, up to date"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: 1: number of entries imported, 2: number of entries that failed
-#: dist/index.js:7
-#, js-format
-msgid "%1$d imported, %2$d failed"
-msgid_plural "%1$d imported, %2$d failed"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: number of entries imported
 #: dist/index.js:8
+#: dist/index.js:11
 #, js-format
 msgid "%d imported"
 msgid_plural "%d imported"
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:8
+#. translators: %d: number of entries that failed
+#: dist/index.js:9
+#, js-format
+msgid "%d failed"
+msgid_plural "%d failed"
+msgstr[0] ""
+msgstr[1] ""
+
+#: dist/index.js:9
+msgid "Up to date"
+msgstr ""
+
+#. translators: %d: number of entries imported
+#: dist/index.js:10
+#, js-format
+msgid "%d imported, up to date"
+msgid_plural "%d imported, up to date"
+msgstr[0] ""
+msgstr[1] ""
+
 #: dist/index.js:11
-#: dist/index.js:20
+#: dist/index.js:14
+#: dist/index.js:23
 msgid "Categories"
 msgstr ""
 
-#: dist/index.js:8
+#: dist/index.js:11
 msgid "Only posts in these categories appear on the Lite Site. Leave empty to include all categories."
 msgstr ""
 
-#: dist/index.js:8
 #: dist/index.js:11
+#: dist/index.js:14
 msgid "Primary Color"
 msgstr ""
 
-#: dist/index.js:8
+#: dist/index.js:11
 msgid "Reset"
 msgstr ""
 
 #. translators: %s: product name, Lite Site.
-#: dist/index.js:10
+#: dist/index.js:13
 #, js-format
 msgid "Enable %s"
 msgstr ""
 
-#: dist/index.js:10
+#: dist/index.js:13
 msgid "Lite Site Path"
 msgstr ""
 
 #. translators: %s: example Lite Site URL.
-#: dist/index.js:11
+#: dist/index.js:14
 #, js-format
 msgid "The path your Lite Site is served from, for example %s."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Posts per Page"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "How many posts each page of the Lite Site homepage lists. Readers use the page links at the bottom to see older posts."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Include subcategories"
 msgstr ""
 
-#: dist/index.js:11
-#: dist/index.js:20
+#: dist/index.js:14
+#: dist/index.js:23
 msgid "Tags"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Only posts with at least one of these tags appear on the Lite Site. Leave empty to include all posts."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Excluded Categories"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Posts in these categories never appear on the Lite Site, even if they match the filters above."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Excluded Tags"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Posts with these tags never appear on the Lite Site, even if they match the filters above."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Open external links in a new tab"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Links to this site always open in the same tab."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Footer HTML"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Shown at the bottom of every Lite Site page. Add links to your accessibility and privacy policies and other essential information. Basic HTML only; scripts are removed."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "GA4 Measurement ID"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Lite Site pages don't load your site's usual scripts, so analytics stays off unless you add an ID here. Paste a Measurement ID, such as G-XXXXXXXXXX, to track visits with Google Analytics. This adds one script to every page."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Font Embed Code or URL"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Paste the embed code or stylesheet URL from a font provider such as Google Fonts. Each extra font or weight makes pages slower to load, so add only what you need."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Body Font"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Enter the font name exactly as the provider lists it, for example Open Sans. Leave empty to use each reader's system font."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Custom CSS"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Added after the built-in styles, so your rules can override them. Every rule adds to page weight."
 msgstr ""
 
-#: dist/index.js:11
-#: dist/index.js:26
+#: dist/index.js:14
+#: dist/index.js:29
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Turn on Lite Site and save the settings to view it."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Set its address and how many posts each homepage page lists."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Content"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "A post must match every filter you set here to appear. Exclusions override inclusions."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Links and Footer"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Set how external links open and what the footer shows."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Analytics"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Track Lite Site visits with Google Analytics 4."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Colors"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Used for links in stories and the divider lines."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Typography"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Load a web font for body text, or keep the reader’s system font."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Advanced"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Add your own CSS to every Lite Site page."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "General"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Turn on Lite Site and choose the content it shows."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Appearance"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Set colors and fonts. Keep it light so pages load fast on slow connections."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Couldn't load settings. Reload the page to try again."
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Couldn't save settings. Try again."
 msgstr ""
 
-#: dist/index.js:11
-#: dist/index.js:26
+#: dist/index.js:14
+#: dist/index.js:29
 msgid "Save"
 msgstr ""
 
-#: dist/index.js:11
-#: dist/index.js:20
+#: dist/index.js:14
 #: dist/index.js:23
+#: dist/index.js:26
 msgid "Fetching…"
 msgstr ""
 
-#: dist/index.js:11
+#: dist/index.js:14
 msgid "Settings saved."
 msgstr ""
 
 #. translators: %d: number of entries
-#: dist/index.js:12
+#: dist/index.js:15
 #, js-format
 msgid "%d entry moved to the trash."
 msgid_plural "%d entries moved to the trash."
@@ -558,7 +573,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of entries
-#: dist/index.js:13
+#: dist/index.js:16
 #, js-format
 msgid "%d entry restored."
 msgid_plural "%d entries restored."
@@ -566,7 +581,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of entries
-#: dist/index.js:14
+#: dist/index.js:17
 #, js-format
 msgid "%d entry permanently deleted."
 msgid_plural "%d entries permanently deleted."
@@ -574,53 +589,53 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of items on this page, 2: total number of items with their name, e.g. "616 newsletters".
-#: dist/index.js:15
+#: dist/index.js:18
 #, js-format
 msgid "%1$s of %2$s"
 msgstr ""
 
-#: dist/index.js:15
+#: dist/index.js:18
 msgid "Permanently delete this entry? This can't be undone."
 msgstr ""
 
 #. translators: %d: number of entries
-#: dist/index.js:16
+#: dist/index.js:19
 #, js-format
 msgid "Permanently delete %d entry? This can't be undone."
 msgid_plural "Permanently delete these %d entries? This can't be undone."
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:16
-#: dist/index.js:20
+#: dist/index.js:19
+#: dist/index.js:23
 msgid "(no title)"
 msgstr ""
 
-#: dist/index.js:16
-#: dist/index.js:21
-#: dist/index.js:26
+#: dist/index.js:19
+#: dist/index.js:24
+#: dist/index.js:29
 msgid "Cancel"
 msgstr ""
 
-#: dist/index.js:16
-#: dist/index.js:20
+#: dist/index.js:19
+#: dist/index.js:23
 msgid "Delete Permanently"
 msgstr ""
 
 #. translators: %s: number of RSS entries.
-#: dist/index.js:17
+#: dist/index.js:20
 #, js-format
 msgid "%s RSS entry"
 msgid_plural "%s RSS entries"
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:17
+#: dist/index.js:20
 msgid "Couldn't load RSS entries. Reload the page to try again."
 msgstr ""
 
 #. translators: 1: number of entries that failed, 2: total number of entries
-#: dist/index.js:18
+#: dist/index.js:21
 #, js-format
 msgid "%1$d of %2$d entry couldn't be moved to the trash."
 msgid_plural "%1$d of %2$d entries couldn't be moved to the trash."
@@ -628,7 +643,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of entries that failed, 2: total number of entries
-#: dist/index.js:19
+#: dist/index.js:22
 #, js-format
 msgid "%1$d of %2$d entry couldn't be restored."
 msgid_plural "%1$d of %2$d entries couldn't be restored."
@@ -636,159 +651,159 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: number of entries that failed, 2: total number of entries
-#: dist/index.js:20
+#: dist/index.js:23
 #, js-format
 msgid "%1$d of %2$d entry couldn't be deleted."
 msgid_plural "%1$d of %2$d entries couldn't be deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Undo"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Published"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Draft"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Pending"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Scheduled"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Private"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Trash"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Title"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Feed"
 msgstr ""
 
-#: dist/index.js:20
-#: dist/index.js:21
-#: dist/index.js:26
+#: dist/index.js:23
+#: dist/index.js:24
+#: dist/index.js:29
 msgid "Author"
 msgstr ""
 
-#: dist/index.js:20
-#: dist/index.js:21
-#: dist/index.js:26
+#: dist/index.js:23
+#: dist/index.js:24
+#: dist/index.js:29
 msgid "Status"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Date"
 msgstr ""
 
-#: dist/index.js:20
-#: dist/index.js:21
+#: dist/index.js:23
+#: dist/index.js:24
 msgid "Edit"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "View on Lite Site"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "View Original"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Move to Trash"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Restore"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Entries appear here after the first import."
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Go to Feeds"
 msgstr ""
 
-#: dist/index.js:20
+#: dist/index.js:23
 msgid "Delete this RSS feed? It stops importing, and the entries it already imported stay on the site."
 msgstr ""
 
 #. translators: %d: number of RSS feeds
-#: dist/index.js:21
+#: dist/index.js:24
 #, js-format
 msgid "Delete %d RSS feed? It stops importing, and the entries it already imported stay on the site."
 msgid_plural "Delete %d RSS feeds? They stop importing, and the entries they already imported stay on the site."
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Delete"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "RSS Feed"
 msgstr ""
 
-#: dist/index.js:21
-#: dist/index.js:26
+#: dist/index.js:24
+#: dist/index.js:29
 msgid "Active"
 msgstr ""
 
-#: dist/index.js:21
-#: dist/index.js:26
+#: dist/index.js:24
+#: dist/index.js:29
 msgid "Inactive"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Error"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Edit the feed for options."
 msgstr ""
 
-#: dist/index.js:21
-#: dist/index.js:26
+#: dist/index.js:24
+#: dist/index.js:29
 msgid "Frequency"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Author Name"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Last Run"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Never"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Next Run"
 msgstr ""
 
-#: dist/index.js:21
+#: dist/index.js:24
 msgid "Delete RSS Feed"
 msgstr ""
 
 #. translators: %d: number of RSS feeds.
-#: dist/index.js:22
+#: dist/index.js:25
 #, js-format
 msgid "Delete %d RSS Feed"
 msgid_plural "Delete %d RSS Feeds"
@@ -796,136 +811,136 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: number of RSS feeds.
-#: dist/index.js:23
+#: dist/index.js:26
 #, js-format
 msgid "%s RSS feed"
 msgid_plural "%s RSS feeds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:23
+#: dist/index.js:26
 msgid "No RSS feeds yet"
 msgstr ""
 
-#: dist/index.js:23
+#: dist/index.js:26
 msgid "Import posts from another site's RSS feed on a schedule. Each new item is published on the Lite Site as an RSS entry."
 msgstr ""
 
-#: dist/index.js:23
 #: dist/index.js:26
-#: dist/index.js:27
+#: dist/index.js:29
+#: dist/index.js:30
 msgid "Add RSS Feed"
 msgstr ""
 
-#: dist/index.js:23
+#: dist/index.js:26
 msgid "WP-Cron is turned off on this site, so RSS feeds import on schedule only when a server cron job runs WordPress scheduled events. If you're not sure one is set up, ask your host."
 msgstr ""
 
-#: dist/index.js:23
+#: dist/index.js:26
 msgid "Learn more about WP-Cron"
 msgstr ""
 
 #. translators: %s: the drawer's title.
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Choose an author"
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "RSS Feed URL"
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "How often new items are imported from this RSS feed."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "The previous author can no longer be assigned. Choose another author."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Imported entries are published under this author."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Inactive feeds stop importing until you set them back to Active. An import that's already running will finish."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Retry Now"
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Open Feed URL"
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Edit RSS Feed"
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Couldn't load RSS feeds. Reload the page to try again."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "RSS feed added."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Couldn't add the RSS feed. Try again."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "RSS feed updated."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "Couldn't update the RSS feed. Try again."
 msgstr ""
 
-#: dist/index.js:26
+#: dist/index.js:29
 msgid "RSS feed deleted."
 msgstr ""
 
 #. translators: %d: number of RSS feeds deleted.
-#: dist/index.js:27
+#: dist/index.js:30
 #, js-format
 msgid "%d RSS feed deleted."
 msgid_plural "%d RSS feeds deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Couldn't delete the RSS feed. Try again."
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Couldn't delete the RSS feeds. Try again."
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "RSS feed imported."
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Couldn't import the RSS feed. Try again."
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "This RSS feed no longer exists."
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Entries"
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Feeds"
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Review, edit and remove the posts imported from RSS feeds."
 msgstr ""
 
-#: dist/index.js:27
+#: dist/index.js:30
 msgid "Set which RSS feeds to import and how often each one runs."
 msgstr ""
