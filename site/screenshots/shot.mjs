@@ -50,6 +50,9 @@ const HIDE = `
 #wp-admin-bar-woocommerce-site-visibility-badge,
 #wp-admin-bar-wpseo-menu { display: none !important; }`;
 
+const PLACEHOLDER_HOST = 'yourgroovydomain.com';
+const SWAP_PASSES = 5;
+
 const USAGE = `Usage: npm run shot -- <section>/<name>-<n> --site <url> [options]
 
   <section>/<name>-<n>   Where the image goes, e.g. guides/rss-feeds-2
@@ -458,6 +461,73 @@ async function nextFrames( page ) {
 	);
 }
 
+function swapSiteAddress( { host, placeholder } ) {
+	const swap = ( text ) =>
+		text
+			.replaceAll( `https://${ host }`, `https://${ placeholder }` )
+			.replaceAll( `http://${ host }`, `https://${ placeholder }` )
+			.replaceAll( host, placeholder );
+	let swapped = 0;
+	const update = ( before, write ) => {
+		if ( before && before.includes( host ) ) {
+			write( swap( before ) );
+			swapped++;
+		}
+	};
+	document.querySelectorAll( 'input, textarea' ).forEach( ( field ) =>
+		update( field.value, ( after ) => ( field.value = after ) )
+	);
+	document
+		.querySelectorAll( '[placeholder]' )
+		.forEach( ( element ) =>
+			update( element.getAttribute( 'placeholder' ), ( after ) =>
+				element.setAttribute( 'placeholder', after )
+			)
+		);
+	const skip = [ 'SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'TEXTAREA' ];
+	const walker = document.createTreeWalker(
+		document.documentElement,
+		NodeFilter.SHOW_TEXT,
+		{
+			acceptNode: ( node ) =>
+				skip.includes( node.parentNode?.nodeName )
+					? NodeFilter.FILTER_REJECT
+					: NodeFilter.FILTER_ACCEPT,
+		}
+	);
+	for ( let node = walker.nextNode(); node; node = walker.nextNode() ) {
+		update( node.nodeValue, ( after ) => ( node.nodeValue = after ) );
+	}
+	return swapped;
+}
+
+// Runs only once the steps are done, so nothing a step types or saves carries
+// the placeholder, and again until a pass finds nothing, in case the page
+// re-rendered the address in between.
+async function hideSiteAddress( page, site ) {
+	if ( site.host === PLACEHOLDER_HOST ) {
+		return;
+	}
+	for ( let pass = 0; pass < SWAP_PASSES; pass++ ) {
+		let swapped = 0;
+		for ( const frame of page.frames() ) {
+			swapped += await frame
+				.evaluate( swapSiteAddress, {
+					host: site.host,
+					placeholder: PLACEHOLDER_HOST,
+				} )
+				.catch( () => 0 );
+		}
+		if ( ! swapped ) {
+			return;
+		}
+		await nextFrames( page );
+	}
+	fail(
+		`the page kept showing ${ site.host } after ${ SWAP_PASSES } passes, so nothing was saved.`
+	);
+}
+
 async function closeGuides( page ) {
 	const close = page.locator(
 		'.components-guide button[aria-label="Close"], .newspack-lightbox__close'
@@ -751,6 +821,7 @@ async function main() {
 			);
 			clearInterval( watcher );
 		}
+		await hideSiteAddress( page, options.site );
 
 		let box = null;
 		if ( options.spotlight.length ) {
@@ -810,6 +881,7 @@ async function main() {
 			};
 		}
 
+		await hideSiteAddress( page, options.site );
 		const png = await page.screenshot( { type: 'png' } );
 		mkdirSync( dirname( options.out ), { recursive: true } );
 		const isPng = '.png' === extname( options.out ).toLowerCase();
