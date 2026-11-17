@@ -574,7 +574,7 @@ function swapSiteAddress( swaps ) {
 		NodeFilter.SHOW_TEXT,
 		{
 			acceptNode: ( node ) =>
-				skip.includes( node.parentNode?.nodeName )
+				skip.includes( node.parentNode?.nodeName.toUpperCase() )
 					? NodeFilter.FILTER_REJECT
 					: NodeFilter.FILTER_ACCEPT,
 		}
