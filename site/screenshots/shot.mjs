@@ -461,16 +461,76 @@ async function nextFrames( page ) {
 	);
 }
 
-function swapSiteAddress( { host, placeholder } ) {
+function escapeRegExp( text ) {
+	return text.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
+}
+
+// Full addresses swap before origins and hosts, longest first, so a site in a
+// folder loses its folder and a www host swaps before the bare one. A
+// single-label host such as localhost swaps only with its scheme or port, where
+// it can't be an ordinary word.
+function addressSwaps( addresses ) {
+	const placeholder = `https://${ PLACEHOLDER_HOST }`;
+	const hostEnd = '(?![A-Za-z0-9-]|\\.[A-Za-z0-9])';
+	const scheme = 'https?://';
+	const urls = [];
+	const origins = [];
+	const hosts = [];
+	for ( const url of addresses ) {
+		if ( url.hostname === PLACEHOLDER_HOST ) {
+			continue;
+		}
+		const path = url.pathname.replace( /\/+$/, '' );
+		if ( path ) {
+			urls.push(
+				`${ scheme }${ escapeRegExp(
+					url.host + path
+				) }(?![A-Za-z0-9_~%-]|\\.[A-Za-z0-9])`
+			);
+		}
+		origins.push( `${ scheme }${ escapeRegExp( url.host ) }${ hostEnd }` );
+		const named = [ url.hostname.includes( '.' ) && url.hostname ];
+		if ( url.port ) {
+			named.push( url.host );
+		}
+		named
+			.filter( Boolean )
+			.forEach( ( host ) =>
+				hosts.push(
+					`(?<![A-Za-z0-9-])${ escapeRegExp( host ) }${ hostEnd }`
+				)
+			);
+	}
+	const longestFirst = ( list ) =>
+		[ ...new Set( list ) ].sort( ( a, b ) => b.length - a.length );
+	return [
+		...longestFirst( urls ).map( ( source ) => ( { source, to: placeholder } ) ),
+		...longestFirst( origins ).map( ( source ) => ( {
+			source,
+			to: placeholder,
+		} ) ),
+		...longestFirst( hosts ).map( ( source ) => ( {
+			source,
+			to: PLACEHOLDER_HOST,
+		} ) ),
+	];
+}
+
+function swapSiteAddress( swaps ) {
+	const patterns = swaps.map( ( { source, to } ) => [
+		new RegExp( source, 'g' ),
+		to,
+	] );
 	const swap = ( text ) =>
-		text
-			.replaceAll( `https://${ host }`, `https://${ placeholder }` )
-			.replaceAll( `http://${ host }`, `https://${ placeholder }` )
-			.replaceAll( host, placeholder );
+		patterns.reduce(
+			( result, [ pattern, to ] ) => result.replace( pattern, to ),
+			text
+		);
 	let swapped = 0;
 	const update = ( before, write ) => {
-		if ( before && before.includes( host ) ) {
-			write( swap( before ) );
+		const after = before ? swap( before ) : before;
+		if ( after !== before ) {
+			write( after );
 			swapped++;
 		}
 	};
@@ -504,18 +564,15 @@ function swapSiteAddress( { host, placeholder } ) {
 // Runs only once the steps are done, so nothing a step types or saves carries
 // the placeholder, and again until a pass finds nothing, in case the page
 // re-rendered the address in between.
-async function hideSiteAddress( page, site ) {
-	if ( site.host === PLACEHOLDER_HOST ) {
+async function hideSiteAddress( page, swaps ) {
+	if ( ! swaps.length ) {
 		return;
 	}
 	for ( let pass = 0; pass < SWAP_PASSES; pass++ ) {
 		let swapped = 0;
 		for ( const frame of page.frames() ) {
 			swapped += await frame
-				.evaluate( swapSiteAddress, {
-					host: site.host,
-					placeholder: PLACEHOLDER_HOST,
-				} )
+				.evaluate( swapSiteAddress, swaps )
 				.catch( () => 0 );
 		}
 		if ( ! swapped ) {
@@ -524,7 +581,7 @@ async function hideSiteAddress( page, site ) {
 		await nextFrames( page );
 	}
 	fail(
-		`the page kept showing ${ site.host } after ${ SWAP_PASSES } passes, so nothing was saved.`
+		`the page kept showing the site's address after ${ SWAP_PASSES } passes, so nothing was saved.`
 	);
 }
 
@@ -796,6 +853,7 @@ async function main() {
 		);
 		await goto( page, options.target.href );
 		await settle( page );
+		const swaps = addressSwaps( [ options.site ] );
 		await closeGuides( page );
 		for ( const step of options.steps ) {
 			await runStep( page, step );
@@ -821,7 +879,7 @@ async function main() {
 			);
 			clearInterval( watcher );
 		}
-		await hideSiteAddress( page, options.site );
+		await hideSiteAddress( page, swaps );
 
 		let box = null;
 		if ( options.spotlight.length ) {
@@ -881,7 +939,7 @@ async function main() {
 			};
 		}
 
-		await hideSiteAddress( page, options.site );
+		await hideSiteAddress( page, swaps );
 		const png = await page.screenshot( { type: 'png' } );
 		mkdirSync( dirname( options.out ), { recursive: true } );
 		const isPng = '.png' === extname( options.out ).toLowerCase();
