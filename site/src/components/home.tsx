@@ -176,7 +176,7 @@ function DemoFrame() {
 						<span className="size-2 rounded-full bg-border" />
 					</span>
 					<span className="min-w-0 flex-auto truncate rounded-(--newspack-ui-radius-control) border border-border bg-(--newspack-ui-color-surface) px-(--newspack-ui-spacer-2) py-(--newspack-ui-spacer-half) type-small text-muted-foreground">
-						<span className="sr-only">Address: </span>yoursite.com
+						<span className="sr-only">Address: </span>yourgroovydomain.com
 						<span className="font-(weight:--newspack-ui-font-weight-strong) text-brand">/lite/</span>
 					</span>
 				</div>

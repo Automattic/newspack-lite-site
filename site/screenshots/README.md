@@ -229,6 +229,7 @@ Every screenshot uses these, and the script applies them for you:
 
 - A 1512×982 viewport at twice the pixel density, saved as a 3024×1964 WebP at quality 85, without metadata.
 - Light mode, the visible viewport only (never the full page), and no scrollbars.
+- The site's own address, in fields and text, shows as `yourgroovydomain.com`, whatever address you captured from. The swap happens before `--spotlight` and `--boxes` find their elements, so a selector that matches the address by its text has to use `yourgroovydomain.com`.
 - Signed in as James Smith, who has a flat blue avatar, for admin screens. Signed out for Lite Site pages and the full site as readers see them. Update notices, cookie banners, the Newspack debug notice and similar noise are hidden from the moment the page loads.
 - The reader sign-up prompt is closed on front-end pages.
 - The editor isn't in fullscreen mode and shows no block breadcrumbs, welcome guides or pattern chooser. Top toolbar is on, so a selected block's toolbar sits in the editor's header instead of over the page. These apply in the post, page, pattern and Site Editor alike, and the script saves them for the account you sign in with each time it runs.
