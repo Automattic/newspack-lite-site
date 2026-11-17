@@ -465,6 +465,30 @@ function escapeRegExp( text ) {
 	return text.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
 }
 
+// Pages print WordPress's own home and site addresses, which can differ from
+// --site behind a proxy, a port mapping or a www redirect.
+async function siteAddresses( page, site ) {
+	const index = await page
+		.evaluate(
+			( url ) => fetch( url ).then( ( response ) => response.json() ),
+			new URL( '?rest_route=/', site ).href
+		)
+		.catch( () => null );
+	if ( ! index ) {
+		console.warn(
+			"shot: couldn't read the site's addresses from its REST API, so only the --site address is hidden."
+		);
+	}
+	const addresses = [ site ];
+	[ index?.home, index?.url ].forEach( ( value ) => {
+		const url = URL.canParse( value ) && new URL( value );
+		if ( url && [ 'http:', 'https:' ].includes( url.protocol ) ) {
+			addresses.push( url );
+		}
+	} );
+	return addresses;
+}
+
 // Full addresses swap before origins and hosts, longest first, so a site in a
 // folder loses its folder and a www host swaps before the bare one. A
 // single-label host such as localhost swaps only with its scheme or port, where
@@ -853,7 +877,9 @@ async function main() {
 		);
 		await goto( page, options.target.href );
 		await settle( page );
-		const swaps = addressSwaps( [ options.site ] );
+		const swaps = addressSwaps(
+			await siteAddresses( page, options.site )
+		);
 		await closeGuides( page );
 		for ( const step of options.steps ) {
 			await runStep( page, step );
