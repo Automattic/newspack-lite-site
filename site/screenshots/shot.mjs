@@ -597,7 +597,16 @@ async function hideSiteAddress( page, swaps ) {
 		for ( const frame of page.frames() ) {
 			swapped += await frame
 				.evaluate( swapSiteAddress, swaps )
-				.catch( () => 0 );
+				.catch( ( error ) => {
+					if ( frame === page.mainFrame() ) {
+						fail(
+							`couldn't hide the site's address, so nothing was saved: ${
+								error.message.split( '\n' )[ 0 ]
+							}`
+						);
+					}
+					return 0;
+				} );
 		}
 		if ( ! swapped ) {
 			return;
