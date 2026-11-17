@@ -46,7 +46,7 @@ async function fixture( ground = '#ffffff' ) {
 		headlineSize: 32,
 		description: 'A text-only version of your site for slow connections, traffic spikes and emergencies.',
 		leftWidth: 320,
-		frame: { x: 372, y: 30, width: 360, window: { host: 'yoursite.com', path: '/lite/' } },
+		frame: { x: 372, y: 30, width: 360, window: { host: 'yourgroovydomain.com', path: '/lite/' } },
 		crop: { left: 'L', right: 'R', top: 'page', drawWidth: 360, frameHeight: 186 },
 	};
 	return { dir, capture, config };
@@ -88,7 +88,7 @@ test( 'the window draws the capture inside its border', async () => {
 	assert.equal( await pixel( join( out, 'banner-772x250.png' ), 720, 125 ), 'cccccc' );
 } );
 
-test( 'the address field shows yoursite.com/lite/ on one line', async () => {
+test( 'the address field shows yourgroovydomain.com/lite/ on one line', async () => {
 	const { config } = await fixture();
 	const html = bannerHtml( config, { cropDataUri: 'data:image/png;base64,', cropDrawHeight: 100 } );
 	const browser = await chromium.launch( {
@@ -103,7 +103,7 @@ test( 'the address field shows yoursite.com/lite/ on one line', async () => {
 			const el = document.querySelector( '.url' );
 			return { text: el.textContent, scroll: el.scrollWidth, client: el.clientWidth, height: el.clientHeight };
 		} );
-		assert.equal( field.text, 'yoursite.com/lite/' );
+		assert.equal( field.text, 'yourgroovydomain.com/lite/' );
 		assert.ok( field.scroll <= field.client, `scrollWidth ${ field.scroll } > clientWidth ${ field.client }` );
 		assert.equal( field.height, 22 );
 	} finally {

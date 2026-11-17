@@ -14,7 +14,7 @@ export default {
 	headlineSize: 32,
 	description: 'A text-only version of your site for slow connections, traffic spikes and emergencies.',
 	leftWidth: 320,
-	frame: { x: 372, y: 30, width: 360, window: { host: 'yoursite.com', path: '/lite/' } },
+	frame: { x: 372, y: 30, width: 360, window: { host: 'yourgroovydomain.com', path: '/lite/' } },
 	crop: {
 		left: 'body',
 		right: 'body',
