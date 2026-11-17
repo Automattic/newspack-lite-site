@@ -45,7 +45,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertFalse( Lite_Site::is_external_url( '/relative/path' ), 'A relative path is internal.' );
 		$this->assertFalse( Lite_Site::is_external_url( '#anchor' ), 'An anchor is internal.' );
 		$this->assertFalse( Lite_Site::is_external_url( '' ), 'An empty string is internal.' );
-		$this->assertFalse( Lite_Site::is_external_url( 'mailto:someone@example.com' ), 'A mailto link is not external.' );
+		$this->assertFalse( Lite_Site::is_external_url( 'mailto:someone@yourgroovydomain.com' ), 'A mailto link is not external.' );
 	}
 
 	/**

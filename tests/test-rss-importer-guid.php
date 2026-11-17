@@ -33,20 +33,20 @@ class Test_RSS_Importer_Guid extends Lite_Site_TestCase {
 	public function test_uses_feed_guid_when_present() {
 		$guid = $this->guid_for(
 			[
-				'id'        => 'https://example.com/?p=123',
-				'permalink' => 'https://example.com/a-post/',
+				'id'        => 'https://yourgroovydomain.com/?p=123',
+				'permalink' => 'https://yourgroovydomain.com/a-post/',
 				'title'     => 'A post',
 			]
 		);
 
-		$this->assertSame( 'https://example.com/?p=123', $guid, 'The feed GUID should win outright.' );
+		$this->assertSame( 'https://yourgroovydomain.com/?p=123', $guid, 'The feed GUID should win outright.' );
 	}
 
 	/**
 	 * Without a GUID the permalink is hashed.
 	 */
 	public function test_falls_back_to_permalink() {
-		$permalink = 'https://example.com/a-post/';
+		$permalink = 'https://yourgroovydomain.com/a-post/';
 
 		$guid = $this->guid_for(
 			[
@@ -105,7 +105,7 @@ class Test_RSS_Importer_Guid extends Lite_Site_TestCase {
 	public function test_guid_is_stable_across_calls() {
 		$props = [
 			'id'        => '',
-			'permalink' => 'https://example.com/stable/',
+			'permalink' => 'https://yourgroovydomain.com/stable/',
 		];
 
 		$this->assertSame(
