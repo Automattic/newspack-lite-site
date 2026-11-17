@@ -125,14 +125,14 @@
 		"login": "james",
 		"first_name": "James",
 		"last_name": "Smith",
-		"email": "james.smith@example.com"
+		"email": "james.smith@yourgroovydomain.com"
 	},
 	"users": [
 		{
 			"login": "dokafor",
 			"first_name": "Dana",
 			"last_name": "Okafor",
-			"email": "dokafor@example.com",
+			"email": "dokafor@yourgroovydomain.com",
 			"role": "editor",
 			"avatar": "dana-okafor.png"
 		},
@@ -140,7 +140,7 @@
 			"login": "mreilly",
 			"first_name": "Marcus",
 			"last_name": "Reilly",
-			"email": "mreilly@example.com",
+			"email": "mreilly@yourgroovydomain.com",
 			"role": "author",
 			"avatar": "marcus-reilly.png"
 		},
@@ -148,7 +148,7 @@
 			"login": "ethorne",
 			"first_name": "Ellis",
 			"last_name": "Thorne",
-			"email": "ethorne@example.com",
+			"email": "ethorne@yourgroovydomain.com",
 			"role": "author",
 			"avatar": "ellis-thorne.png"
 		},
@@ -156,7 +156,7 @@
 			"login": "pverma",
 			"first_name": "Priya",
 			"last_name": "Verma",
-			"email": "pverma@example.com",
+			"email": "pverma@yourgroovydomain.com",
 			"role": "author",
 			"avatar": "priya-verma.png"
 		},
@@ -164,7 +164,7 @@
 			"login": "ndoyle",
 			"first_name": "Nora",
 			"last_name": "Doyle",
-			"email": "ndoyle@example.com",
+			"email": "ndoyle@yourgroovydomain.com",
 			"role": "author",
 			"avatar": "nora-doyle.png"
 		},
@@ -172,7 +172,7 @@
 			"login": "sadeyemi",
 			"first_name": "Simone",
 			"last_name": "Adeyemi",
-			"email": "sadeyemi@example.com",
+			"email": "sadeyemi@yourgroovydomain.com",
 			"role": "author",
 			"avatar": "simone-adeyemi.png"
 		},
@@ -180,7 +180,7 @@
 			"login": "hbrennan",
 			"first_name": "Hal",
 			"last_name": "Brennan",
-			"email": "hbrennan@example.com",
+			"email": "hbrennan@yourgroovydomain.com",
 			"role": "author",
 			"avatar": "hal-brennan.png"
 		}
