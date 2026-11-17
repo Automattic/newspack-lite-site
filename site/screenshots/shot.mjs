@@ -494,50 +494,53 @@ async function siteAddresses( page, site ) {
 // single-label host such as localhost swaps only with its scheme or port, where
 // it can't be an ordinary word.
 function addressSwaps( addresses ) {
-	const placeholder = `https://${ PLACEHOLDER_HOST }`;
-	const hostEnd = '(?![A-Za-z0-9-]|\\.[A-Za-z0-9])';
+	const origin = `https://${ PLACEHOLDER_HOST }`;
 	const scheme = 'https?://';
-	const urls = [];
-	const origins = [];
-	const hosts = [];
+	const hostStart = '(?<![A-Za-z0-9-])';
+	const hostEnd = '(?![A-Za-z0-9-]|\\.[A-Za-z0-9])';
+	const pathEnd = '(?![A-Za-z0-9_~%-]|\\.[A-Za-z0-9])';
+	const groups = [ [], [], [], [] ];
 	for ( const url of addresses ) {
 		if ( url.hostname === PLACEHOLDER_HOST ) {
 			continue;
 		}
 		const path = url.pathname.replace( /\/+$/, '' );
+		const named = [
+			url.port && url.host,
+			url.hostname.includes( '.' ) && url.hostname,
+		].filter( Boolean );
 		if ( path ) {
-			urls.push(
-				`${ scheme }${ escapeRegExp(
-					url.host + path
-				) }(?![A-Za-z0-9_~%-]|\\.[A-Za-z0-9])`
+			groups[ 0 ].push( {
+				source: `${ scheme }${ escapeRegExp( url.host + path ) }${ pathEnd }`,
+				to: origin,
+			} );
+			named.forEach( ( host ) =>
+				groups[ 1 ].push( {
+					source: `${ hostStart }${ escapeRegExp( host + path ) }${ pathEnd }`,
+					to: PLACEHOLDER_HOST,
+				} )
 			);
 		}
-		origins.push( `${ scheme }${ escapeRegExp( url.host ) }${ hostEnd }` );
-		const named = [ url.hostname.includes( '.' ) && url.hostname ];
-		if ( url.port ) {
-			named.push( url.host );
-		}
-		named
-			.filter( Boolean )
-			.forEach( ( host ) =>
-				hosts.push(
-					`(?<![A-Za-z0-9-])${ escapeRegExp( host ) }${ hostEnd }`
-				)
-			);
+		groups[ 2 ].push( {
+			source: `${ scheme }${ escapeRegExp( url.host ) }${ hostEnd }`,
+			to: origin,
+		} );
+		named.forEach( ( host ) =>
+			groups[ 3 ].push( {
+				source: `${ hostStart }${ escapeRegExp( host ) }${ hostEnd }`,
+				to: PLACEHOLDER_HOST,
+			} )
+		);
 	}
-	const longestFirst = ( list ) =>
-		[ ...new Set( list ) ].sort( ( a, b ) => b.length - a.length );
-	return [
-		...longestFirst( urls ).map( ( source ) => ( { source, to: placeholder } ) ),
-		...longestFirst( origins ).map( ( source ) => ( {
-			source,
-			to: placeholder,
-		} ) ),
-		...longestFirst( hosts ).map( ( source ) => ( {
-			source,
-			to: PLACEHOLDER_HOST,
-		} ) ),
-	];
+	return groups.flatMap( ( group ) =>
+		group
+			.filter(
+				( swap, index ) =>
+					group.findIndex( ( other ) => other.source === swap.source ) ===
+					index
+			)
+			.sort( ( a, b ) => b.source.length - a.source.length )
+	);
 }
 
 function swapSiteAddress( swaps ) {
