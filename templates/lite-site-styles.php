@@ -57,6 +57,28 @@ defined( 'ABSPATH' ) || exit;
 		font-size: 0.875rem;
 		margin-top: 0.5rem;
 	}
+	.content table {
+		border-collapse: collapse;
+		display: block;
+		margin: 0 0 1.5rem;
+		max-width: 100%;
+		overflow-x: auto;
+	}
+	.content caption {
+		font-size: 0.875rem;
+		margin-bottom: 0.5rem;
+		text-align: left;
+	}
+	.content th,
+	.content td {
+		border: 1px solid currentcolor;
+		padding: 0.375rem 0.5rem;
+		text-align: left;
+		vertical-align: top;
+	}
+	.content th {
+		font-weight: 700;
+	}
 	.lite-image-placeholder {
 		border: 1px solid currentcolor;
 		margin: 0 0 1.5rem;

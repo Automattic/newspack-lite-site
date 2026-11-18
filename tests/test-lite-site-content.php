@@ -132,11 +132,38 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	 * Markup outside the allowlist is removed.
 	 */
 	public function test_clean_content_strips_disallowed_markup() {
-		$content = Lite_Site::clean_content( '<p>Before</p><iframe src="https://some-other-domain.test/embed"></iframe><table><tr><td>Cell</td></tr></table>' );
+		$content = Lite_Site::clean_content( '<p>Before</p><iframe src="https://some-other-domain.test/embed"></iframe><video src="movie.mp4"></video>' );
 
 		$this->assertStringNotContainsString( '<iframe', $content, 'Iframes should be stripped.' );
-		$this->assertStringNotContainsString( '<table', $content, 'Tables should be stripped.' );
+		$this->assertStringNotContainsString( '<video', $content, 'Video elements should be stripped.' );
 		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * Tables keep their structure. A results table, a list of closures or a
+	 * set of evacuation zones is the reason a reader is on the lite site at
+	 * all, and without the table elements every cell runs into the next.
+	 */
+	public function test_clean_content_keeps_tables() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-table"><table><caption>Zones</caption><thead><tr><th scope="col">Zone</th><th scope="col">Status</th></tr></thead><tbody><tr><td>North</td><td>Evacuate</td></tr></tbody></table></figure>'
+		);
+
+		$this->assertStringContainsString( '<table>', $content, 'The table survives.' );
+		$this->assertStringContainsString( '<caption>Zones</caption>', $content, 'The caption survives.' );
+		$this->assertStringContainsString( '<th scope="col">Zone</th>', $content, 'Header cells keep their scope.' );
+		$this->assertStringContainsString( '<td>North</td>', $content, 'Body cells survive.' );
+		$this->assertStringNotContainsString( 'ZoneStatus', wp_strip_all_tags( $content ), 'Cells do not run together.' );
+	}
+
+	/**
+	 * A table cell may span rows and columns.
+	 */
+	public function test_clean_content_keeps_table_cell_spans() {
+		$content = Lite_Site::clean_content( '<table><tr><td colspan="2" rowspan="3">Cell</td></tr></table>' );
+
+		$this->assertStringContainsString( 'colspan="2"', $content, 'Column spans survive.' );
+		$this->assertStringContainsString( 'rowspan="3"', $content, 'Row spans survive.' );
 	}
 
 	/**

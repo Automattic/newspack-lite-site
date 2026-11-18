@@ -671,6 +671,26 @@ class Lite_Site {
 	}
 
 	/**
+	 * Whether the page being rendered is a lite not-found page.
+	 *
+	 * A not-found page must never be stored in the page cache: the post it
+	 * asked for may be published a moment later, and the cached 404 would
+	 * outlive it.
+	 *
+	 * @var bool
+	 */
+	private static $is_not_found = false;
+
+	/**
+	 * Record that the page being rendered is a lite not-found page.
+	 *
+	 * Called by the templates, which render the page themselves.
+	 */
+	public static function mark_not_found(): void {
+		self::$is_not_found = true;
+	}
+
+	/**
 	 * Render a lite single page and, when the request allows, store it in the page cache.
 	 *
 	 * The page renders as a signed-out reader sees it whether or not this
@@ -694,7 +714,7 @@ class Lite_Site {
 			wp_set_current_user( $reader_id );
 		}
 
-		if ( '' !== $cache_key && self::can_fill_page_cache() ) {
+		if ( '' !== $cache_key && ! self::$is_not_found && self::can_fill_page_cache() ) {
 			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 		}
 
@@ -1372,6 +1392,21 @@ class Lite_Site {
 				'title' => true,
 			],
 			'br'         => [],
+			'table'      => [],
+			'thead'      => [],
+			'tbody'      => [],
+			'tfoot'      => [],
+			'tr'         => [],
+			'th'         => [
+				'colspan' => true,
+				'rowspan' => true,
+				'scope'   => true,
+			],
+			'td'         => [
+				'colspan' => true,
+				'rowspan' => true,
+			],
+			'caption'    => [],
 			'div'        => [
 				'class'        => true,
 				'data-src'     => true,

@@ -15,7 +15,8 @@ $current_post = Lite_Site::resolve_post( get_query_var( 'lite_path' ) );
 
 if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_supported_post_types(), true ) ) {
 	status_header( 404 );
-	exit( esc_html__( 'Page not found.', 'newspack-lite-site' ) );
+	require __DIR__ . '/not-found.php';
+	return;
 }
 
 $is_liveblog  = Lite_Site::is_liveblog( $current_post );

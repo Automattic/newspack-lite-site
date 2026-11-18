@@ -38,9 +38,19 @@ if ( ! empty( $excluded_tags ) ) {
 	$query_args['tag__not_in'] = $excluded_tags;
 }
 
-$query        = new \WP_Query( $query_args );
-$total_pages  = max( 1, (int) $query->max_num_pages );
-$current_page = min( $current_page, $total_pages );
+$query       = new \WP_Query( $query_args );
+$total_pages = max( 1, (int) $query->max_num_pages );
+
+// A page number past the end has no posts to show. Serving it as an empty
+// page leaves a reader unable to tell a stale link from a broken site, so
+// answer the way the rest of the web does.
+if ( $current_page > $total_pages ) {
+	status_header( 404 );
+	require __DIR__ . '/not-found.php';
+	return;
+}
+
+$has_posts = ! empty( $query->posts );
 
 ?>
 <!DOCTYPE html>
@@ -64,9 +74,16 @@ $current_page = min( $current_page, $total_pages );
 	<main>
 		<h1><?php bloginfo( 'name' ); ?></h1>
 		<hr class="separator">
-		<ul class="post-list">
-			<?php require __DIR__ . '/post-list.php'; ?>
-		</ul>
+		<?php if ( $has_posts ) : ?>
+			<ul class="post-list">
+				<?php require __DIR__ . '/post-list.php'; ?>
+			</ul>
+		<?php else : ?>
+			<div class="content">
+				<p><?php esc_html_e( 'Nothing to show here yet.', 'newspack-lite-site' ); ?></p>
+				<p><?php esc_html_e( 'If this site filters the Lite Site by category or tag, no published post matches those filters right now.', 'newspack-lite-site' ); ?></p>
+			</div>
+		<?php endif; ?>
 
 		<?php
 		$pagination = paginate_links(
