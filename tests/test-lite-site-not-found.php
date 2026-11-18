@@ -20,6 +20,16 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 	public function set_up() {
 		parent::set_up();
 		self::set_settings( [ 'enabled' => true ] );
+
+		// test_missing_article_is_not_cached asserts a transient is absent, which
+		// is only meaningful while this request could have filled the cache.
+		// WP_UnitTestCase does not reset these between tests.
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$_SERVER['REQUEST_URI']    = '/';
+		$_SERVER['HTTP_HOST']      = wp_parse_url( home_url(), PHP_URL_HOST );
+		$_GET                      = [];
+		$_POST                     = [];
+		$_COOKIE                   = []; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Test setup: the cache check this file relies on reads cookie keys.
 	}
 
 	/**
@@ -41,10 +51,10 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 	 * and an empty page served as 200 — so the status is asserted, not assumed.
 	 *
 	 * @param string $template Template file name.
-	 * @return array{page:string,status:int} The rendered page and the status sent, 200 when none was.
+	 * @return array{page:string,status:int} The rendered page and the status sent, 0 when none was.
 	 */
 	private function render_with_status( $template ) {
-		$status  = 200;
+		$status  = 0;
 		$capture = function ( $header, $code ) use ( &$status ) {
 			$status = $code;
 			return $header;
@@ -118,6 +128,36 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A not-found render nested inside a successful one does not stop the outer
+	 * page being cached.
+	 */
+	public function test_a_nested_not_found_does_not_block_the_outer_page() {
+		$post = self::factory()->post->create( [ 'post_title' => 'The outer article' ] );
+		$path = ltrim( wp_make_link_relative( get_permalink( $post ) ), '/' );
+
+		$nested = function () {
+			$outer = get_query_var( 'lite_path' );
+			set_query_var( 'lite_path', '2026/01/01/no-such-article' );
+			Lite_Site::cache_single_page( 'nls_page_test_nested_inner' );
+			set_query_var( 'lite_path', $outer );
+		};
+
+		add_action( 'newspack_lite_site_single_after_footer', $nested );
+		set_query_var( 'lite_path', $path );
+		$cache_key = 'nls_page_test_nested_outer';
+
+		try {
+			$page = Lite_Site::cache_single_page( $cache_key );
+		} finally {
+			remove_action( 'newspack_lite_site_single_after_footer', $nested );
+		}
+
+		$this->assertStringContainsString( 'The outer article', $page, 'The outer page renders.' );
+		$this->assertNotFalse( get_transient( $cache_key ), 'The outer page is still cached.' );
+		$this->assertFalse( get_transient( 'nls_page_test_nested_inner' ), 'The nested not-found page is not cached.' );
+	}
+
+	/**
 	 * A page number past the end of the list answers as not found instead of
 	 * rendering an empty page.
 	 */
@@ -147,9 +187,9 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 
 		$rendered = $this->render_with_status( 'archive.php' );
 
-		$this->assertSame( 200, $rendered['status'], 'An empty first page is not a 404.' );
+		$this->assertSame( 0, $rendered['status'], 'An empty first page sends no error status.' );
 		$this->assertStringContainsString( 'Nothing to show here yet.', $rendered['page'], 'The empty list explains itself.' );
-		$this->assertStringContainsString( 'categories or tags', $rendered['page'], 'The message points at the filters.' );
+		$this->assertStringContainsString( 'filtered to', $rendered['page'], 'The message points at the filters.' );
 	}
 
 	/**
@@ -160,7 +200,7 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 		$rendered = $this->render_with_status( 'archive.php' );
 
 		$this->assertStringContainsString( 'Nothing to show here yet.', $rendered['page'], 'The empty list still explains itself.' );
-		$this->assertStringNotContainsString( 'categories or tags', $rendered['page'], 'No filter is mentioned when none is set.' );
+		$this->assertStringNotContainsString( 'filter', $rendered['page'], 'No filter of any wording is mentioned when none is set.' );
 	}
 
 	/**
@@ -171,7 +211,7 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 
 		$rendered = $this->render_with_status( 'archive.php' );
 
-		$this->assertSame( 200, $rendered['status'], 'A populated archive is a 200.' );
+		$this->assertSame( 0, $rendered['status'], 'A populated archive sends no error status.' );
 		$this->assertStringContainsString( '<ul class="post-list">', $rendered['page'], 'The list is rendered.' );
 		$this->assertStringContainsString( 'A listed article', $rendered['page'], 'The post appears in the list.' );
 		$this->assertStringNotContainsString( 'Nothing to show here yet.', $rendered['page'], 'No empty state when there are posts.' );

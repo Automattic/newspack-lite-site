@@ -154,6 +154,18 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A table gets its own horizontal scroller, so a wide table can overflow
+	 * without the whole article column becoming a scroll container, and stays
+	 * a table so assistive technology still reads it as one.
+	 */
+	public function test_clean_content_wraps_a_table_in_a_scroller() {
+		$content = Lite_Site::clean_content( $this->table_block() );
+
+		$this->assertStringContainsString( '<div class="lite-table-scroll" tabindex="0" role="group"><table>', $content, 'The table is wrapped in its own scroller.' );
+		$this->assertStringContainsString( '</table></div>', $content, 'The wrapper closes around the table.' );
+	}
+
+	/**
 	 * A table's caption survives. The block editor saves it as a figcaption
 	 * beside the table, not as a caption inside it.
 	 */

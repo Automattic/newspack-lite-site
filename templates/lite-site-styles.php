@@ -57,22 +57,29 @@ defined( 'ABSPATH' ) || exit;
 		font-size: 0.875rem;
 		margin-top: 0.5rem;
 	}
-	.content,
-	.liveblog-entry-content {
+	.lite-table-scroll {
+		margin: 0 0 1.5rem;
 		overflow-x: auto;
 	}
 	.content table,
 	.liveblog-entry-content table {
 		border-collapse: collapse;
-		margin: 0 0 1.5rem;
-		max-width: 100%;
+		margin: 0;
+		width: max-content;
 	}
 	.content caption,
-	.liveblog-entry-content caption,
-	.liveblog-entry-content figcaption {
+	.liveblog-entry-content caption {
 		font-size: 0.875rem;
 		margin-bottom: 0.5rem;
 		text-align: left;
+	}
+	.liveblog-entry-content figcaption {
+		font-size: 0.875rem;
+		margin-top: 0.5rem;
+	}
+	.liveblog-entry-content figure img {
+		display: block;
+		max-width: 100%;
 	}
 	.content th,
 	.content td,
