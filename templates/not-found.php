@@ -17,16 +17,36 @@ defined( 'ABSPATH' ) || exit;
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from the lite templates, so these variables are local to the method that includes them.
 
 Lite_Site::mark_not_found();
+status_header( 404 );
+
+/*
+ * A page cache in front of PHP would otherwise store this answer: a reader who
+ * asks for an article seconds before it publishes would pin a 404 at the edge
+ * that outlives the post. The transient guard above only covers this plugin's
+ * own cache.
+ */
+nocache_headers();
 
 $lite_home = home_url( Lite_Site::get_url_base() . '/' );
 ?>
 <!DOCTYPE html>
 <html lang="<?php bloginfo( 'language' ); ?>">
 <head>
-	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta charset="<?php echo esc_attr( get_bloginfo( 'charset' ) ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="robots" content="noindex, follow">
-	<title><?php echo esc_html( sprintf( '%1$s – %2$s', __( 'Page not found', 'newspack-lite-site' ), get_bloginfo( 'name' ) ) ); ?></title>
+	<title>
+		<?php
+		echo esc_html(
+			sprintf(
+				/* translators: 1: "Page not found", 2: the site's name. */
+				__( '%1$s - %2$s', 'newspack-lite-site' ),
+				__( 'Page not found', 'newspack-lite-site' ),
+				get_bloginfo( 'name' )
+			)
+		);
+		?>
+	</title>
 	<?php
 	Lite_Site::print_font_stylesheet();
 	require __DIR__ . '/lite-site-styles.php';
@@ -63,5 +83,12 @@ $lite_home = home_url( Lite_Site::get_url_base() . '/' );
 			<?php echo wp_kses_post( $footer_html ); ?>
 		</footer>
 	<?php endif; ?>
+
+	<?php
+	/**
+	 * Fires after the footer of the lite site not-found page.
+	 */
+	do_action( 'newspack_lite_site_not_found_after_footer' );
+	?>
 </body>
 </html>

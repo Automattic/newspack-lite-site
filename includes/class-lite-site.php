@@ -679,7 +679,7 @@ class Lite_Site {
 	 *
 	 * @var bool
 	 */
-	private static $is_not_found = false;
+	private static bool $is_not_found = false;
 
 	/**
 	 * Record that the page being rendered is a lite not-found page.
@@ -703,7 +703,8 @@ class Lite_Site {
 	 * @return string The page HTML.
 	 */
 	public static function cache_single_page( string $cache_key ): string {
-		$reader_id = get_current_user_id();
+		$reader_id          = get_current_user_id();
+		self::$is_not_found = false;
 		wp_set_current_user( 0 );
 
 		ob_start();
@@ -1417,6 +1418,7 @@ class Lite_Site {
 				'rowspan' => true,
 			],
 			'caption'    => [],
+			'figcaption' => [],
 			'div'        => [
 				'class'        => true,
 				'data-src'     => true,
@@ -1462,7 +1464,14 @@ class Lite_Site {
 	 */
 	private static function figure_to_placeholder( $matches ) {
 		$figure_html = $matches[0];
-		$image       = self::parse_image_attrs( $figure_html );
+
+		// The block editor wraps a table in a figure. An image in any cell would
+		// otherwise turn the whole table, cell text and all, into one placeholder.
+		if ( preg_match( '/<table\b/i', $figure_html ) ) {
+			return $figure_html;
+		}
+
+		$image = self::parse_image_attrs( $figure_html );
 
 		if ( ! $image['src'] ) {
 			return $figure_html;
