@@ -167,6 +167,47 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * An image with no figure around it still becomes a placeholder, so the
+	 * reader is told an image is there and can load it.
+	 */
+	public function test_clean_content_converts_bare_image_to_placeholder() {
+		$content = Lite_Site::clean_content(
+			'<p>Before</p><p><img src="https://some-other-domain.test/map.jpg" alt="A map of road closures"></p><p>After</p>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'A placeholder should be emitted.' );
+		$this->assertStringContainsString( 'A map of road closures', $content, 'The alt text should survive.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/map.jpg"', $content, 'The source should be kept for loading on demand.' );
+		$this->assertStringNotContainsString( '<img', $content, 'No image should be downloaded on first load.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+		$this->assertStringContainsString( 'After', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * An image marked decorative with an empty alt stays out of the way: a
+	 * box with no label would tell the reader nothing.
+	 */
+	public function test_clean_content_drops_decorative_images() {
+		$content = Lite_Site::clean_content(
+			'<p>Before</p><img class="wp-block-cover__image-background" src="https://some-other-domain.test/cover.jpg" alt="">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A decorative image needs no placeholder.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * An image tag with nothing to load leaves nothing behind.
+	 */
+	public function test_clean_content_drops_image_without_a_source() {
+		$content = Lite_Site::clean_content( '<p>Before</p><img alt="No source">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No placeholder without a source.' );
+		$this->assertStringNotContainsString( '<img', $content, 'The empty image tag is removed.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
 	 * A plugin can keep more markup through the allowlist filter, and without
 	 * the filter that markup is stripped.
 	 */

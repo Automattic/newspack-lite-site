@@ -1365,6 +1365,16 @@ class Lite_Site {
 			$content
 		);
 
+		// Any <img> left is one no figure wrapped, from the classic editor, a
+		// custom HTML block or an imported feed item. Without this it would be
+		// stripped by wp_kses() below, taking its alt text with it, and the
+		// reader would never know an image had been there.
+		$content = preg_replace_callback(
+			'/<img\b[^>]*>/i',
+			[ __CLASS__, 'img_to_placeholder' ],
+			$content
+		);
+
 		// Remove script and style tags along with their contents — wp_kses
 		// would strip the tags but leave raw CSS/JS behind as text.
 		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
@@ -1448,29 +1458,13 @@ class Lite_Site {
 	 * Convert a <figure> element into a lazy-load image placeholder.
 	 *
 	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
-	 * @return string Placeholder div HTML, or empty string if no image src found.
+	 * @return string Placeholder div HTML, or the figure unchanged if it holds no image.
 	 */
 	private static function figure_to_placeholder( $matches ) {
 		$figure_html = $matches[0];
+		$image       = self::parse_image_attrs( $figure_html );
 
-		$src    = '';
-		$srcset = '';
-		$alt    = '';
-
-		if ( preg_match( '/<img\b([^>]*)>/i', $figure_html, $img_match ) ) {
-			$attrs = $img_match[1];
-			if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-				$src = $m[1];
-			}
-			if ( preg_match( '/\bsrcset=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-				$srcset = $m[1];
-			}
-			if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
-				$alt = $m[1];
-			}
-		}
-
-		if ( ! $src ) {
+		if ( ! $image['src'] ) {
 			return $figure_html;
 		}
 
@@ -1479,6 +1473,79 @@ class Lite_Site {
 			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
 		}
 
+		return self::build_image_placeholder( $image['src'], $image['srcset'], $image['alt'], $caption );
+	}
+
+	/**
+	 * Convert a bare <img> element into a lazy-load image placeholder.
+	 *
+	 * Runs after the figure pass, so every image this sees is one no figure
+	 * wrapped: the classic editor, a custom HTML block, or an imported feed
+	 * item. Without it wp_kses() would drop the image and its alt text, and
+	 * the page would give no sign that an image had been there at all.
+	 *
+	 * @param array $matches Regex match array; $matches[0] is the full <img> tag.
+	 * @return string Placeholder div HTML, or an empty string if the tag has no src.
+	 */
+	private static function img_to_placeholder( $matches ) {
+		$image = self::parse_image_attrs( $matches[0] );
+
+		if ( ! $image['src'] ) {
+			return '';
+		}
+
+		// alt="" marks an image as decorative, such as a Cover block's
+		// background. A box reading "Image" with nothing after it tells a
+		// reader nothing, so those are still dropped.
+		if ( preg_match( '/\balt=(["\'])\s*\1/', $matches[0] ) ) {
+			return '';
+		}
+
+		return self::build_image_placeholder( $image['src'], $image['srcset'], $image['alt'], '' );
+	}
+
+	/**
+	 * Read the src, srcset and alt of the first <img> in a chunk of HTML.
+	 *
+	 * @param string $html HTML holding an <img> tag.
+	 * @return array{src:string,srcset:string,alt:string} The attributes found, each an empty string when absent.
+	 */
+	private static function parse_image_attrs( string $html ): array {
+		$image = [
+			'src'    => '',
+			'srcset' => '',
+			'alt'    => '',
+		];
+
+		if ( ! preg_match( '/<img\b([^>]*)>/i', $html, $img_match ) ) {
+			return $image;
+		}
+
+		$attrs = $img_match[1];
+
+		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/', $attrs, $m ) ) {
+			$image['src'] = $m[1];
+		}
+		if ( preg_match( '/\bsrcset=["\']([^"\']+)["\']/', $attrs, $m ) ) {
+			$image['srcset'] = $m[1];
+		}
+		if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
+			$image['alt'] = $m[1];
+		}
+
+		return $image;
+	}
+
+	/**
+	 * Build the placeholder a reader taps to load an image.
+	 *
+	 * @param string $src     Image source.
+	 * @param string $srcset  Image srcset, or an empty string.
+	 * @param string $alt     Image alt text, or an empty string.
+	 * @param string $caption Caption text, or an empty string.
+	 * @return string Placeholder div HTML.
+	 */
+	private static function build_image_placeholder( string $src, string $srcset, string $alt, string $caption ): string {
 		$label = ! empty( $alt )
 			? sprintf(
 				/* translators: %s: image alt text. */
