@@ -726,6 +726,8 @@ class Lite_Site {
 		self::$is_not_found = false;
 		wp_set_current_user( 0 );
 
+		$is_not_found = true;
+
 		ob_start();
 		try {
 			self::include_single_template();
@@ -736,7 +738,7 @@ class Lite_Site {
 			wp_set_current_user( $reader_id );
 		}
 
-		if ( '' !== $cache_key && empty( $is_not_found ) && self::can_fill_page_cache() ) {
+		if ( '' !== $cache_key && ! $is_not_found && self::can_fill_page_cache() ) {
 			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 		}
 
@@ -1378,12 +1380,15 @@ class Lite_Site {
 		// Remove HTML comments. The single-token `.` with the `s` modifier stays
 		// linear on an unclosed `<!--`, where alternation-based patterns
 		// backtrack catastrophically and preg_replace returns null.
-		$content = preg_replace( '/<!--.*?-->/s', '', $content );
+		$content = self::or_original( preg_replace( '/<!--.*?-->/s', '', $content ), $content );
 
 		// Replace figures with lazy-load placeholders before stripping.
-		$content = preg_replace_callback(
-			'/<figure\b[^>]*>(?:(?!<\/?figure\b).)*<\/figure>/is',
-			[ __CLASS__, 'figure_to_placeholder' ],
+		$content = self::or_original(
+			preg_replace_callback(
+				'/<figure\b[^>]*>.*?<\/figure>/is',
+				[ __CLASS__, 'figure_to_placeholder' ],
+				$content
+			),
 			$content
 		);
 
@@ -1399,8 +1404,8 @@ class Lite_Site {
 
 		// Remove script and style tags along with their contents — wp_kses
 		// would strip the tags but leave raw CSS/JS behind as text.
-		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
-		$content = preg_replace( '/<style.*?>.*?<\/style>/is', '', $content );
+		$content = self::or_original( preg_replace( '/<script.*?>.*?<\/script>/is', '', $content ), $content );
+		$content = self::or_original( preg_replace( '/<style.*?>.*?<\/style>/is', '', $content ), $content );
 
 		// Define allowed HTML elements for text-only content.
 		$allowed_html = [
@@ -1442,8 +1447,6 @@ class Lite_Site {
 			'figcaption' => [],
 			'div'        => [
 				'class'        => true,
-				'role'         => true,
-				'tabindex'     => true,
 				'data-src'     => true,
 				'data-srcset'  => true,
 				'data-alt'     => true,
@@ -1474,30 +1477,90 @@ class Lite_Site {
 		$content = wp_kses( $content, $allowed_html );
 
 		// Clean up any empty paragraphs.
-		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
-
-		$content = self::wrap_tables_for_scrolling( $content );
+		$content = self::or_original( preg_replace( '/<p>\s*<\/p>/', '', $content ), $content );
 
 		return self::add_external_link_attrs( $content );
 	}
 
 	/**
-	 * Put each table in its own horizontal scroller.
+	 * Put each top-level table in its own horizontal scroller.
 	 *
-	 * A wide table has to be able to overflow its column, and the table itself
-	 * must stay a table so assistive technology still reads it as one. Scoping
-	 * the scroller to the table keeps the scrollbar beside the data rather than
-	 * on the whole article, and makes it reachable from the keyboard.
+	 * Called by the templates on already-sanitized markup, so the wrapper's own
+	 * attributes do not depend on what a kses allowlist happens to permit. A
+	 * wide table has to be able to overflow its column while staying a table,
+	 * so assistive technology still reads it as one, and the scroller is
+	 * focusable so it can be scrolled from the keyboard.
 	 *
-	 * @param string $content Cleaned content.
+	 * Only outermost tables are wrapped: wrapping a nested one would close the
+	 * div inside the outer table, which the HTML parser drops, leaving the
+	 * wrapper open over the rest of the article.
+	 *
+	 * @param string $html Sanitized markup.
 	 * @return string
 	 */
-	private static function wrap_tables_for_scrolling( string $content ): string {
-		return preg_replace(
-			'/<table\b[^>]*>.*?<\/table>/is',
-			'<div class="lite-table-scroll" tabindex="0" role="group">$0</div>',
-			$content
-		);
+	public static function wrap_tables_for_scrolling( string $html ): string {
+		if ( ! preg_match_all( '/<\/?table\b[^>]*>/i', $html, $matches, PREG_OFFSET_CAPTURE ) ) {
+			return $html;
+		}
+
+		$depth  = 0;
+		$spans  = [];
+		$opened = 0;
+
+		foreach ( $matches[0] as $match ) {
+			$is_close = '/' === $match[0][1];
+
+			// <table /> survives sanitization and closes nothing, so counting it
+			// as an open would strand the walk and unwrap every later table.
+			if ( ! $is_close && preg_match( '/\/\s*>$/', $match[0] ) ) {
+				continue;
+			}
+
+			if ( ! $is_close ) {
+				if ( 0 === $depth ) {
+					$opened = $match[1];
+				}
+				++$depth;
+				continue;
+			}
+
+			if ( 0 === $depth ) {
+				continue;
+			}
+
+			--$depth;
+			if ( 0 === $depth ) {
+				$spans[] = [ $opened, $match[1] + strlen( $match[0] ) ];
+			}
+		}
+
+		foreach ( array_reverse( $spans ) as $span ) {
+			list( $from, $to ) = $span;
+			$html              = substr( $html, 0, $from )
+				. sprintf(
+					'<div class="lite-table-scroll" tabindex="0" role="group" aria-label="%s">',
+					esc_attr__( 'Table, scrolls sideways', 'newspack-lite-site' )
+				)
+				. substr( $html, $from, $to - $from )
+				. '</div>'
+				. substr( $html, $to );
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Fall back to the original string when a preg_* call fails.
+	 *
+	 * A pattern that hits a PCRE limit returns null, and passing that on blanks
+	 * the article — on the page a reader reaches when everything else is down.
+	 *
+	 * @param string|null $result   The preg_* result.
+	 * @param string      $original The string passed in.
+	 * @return string
+	 */
+	private static function or_original( $result, string $original ): string {
+		return is_string( $result ) ? $result : $original;
 	}
 
 	/**

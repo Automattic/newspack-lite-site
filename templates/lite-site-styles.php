@@ -64,8 +64,18 @@ defined( 'ABSPATH' ) || exit;
 	.content table,
 	.liveblog-entry-content table {
 		border-collapse: collapse;
+		margin: 0 0 1.5rem;
+		max-width: 100%;
+	}
+	/* Inside a scroller the table lays out at its natural width and the
+	wrapper scrolls; anywhere else it stays within the column. */
+	.lite-table-scroll table {
 		margin: 0;
-		width: max-content;
+		max-width: none;
+	}
+	.lite-table-scroll:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
 	}
 	.content caption,
 	.liveblog-entry-content caption {

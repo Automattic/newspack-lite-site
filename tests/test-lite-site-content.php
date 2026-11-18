@@ -158,11 +158,88 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	 * without the whole article column becoming a scroll container, and stays
 	 * a table so assistive technology still reads it as one.
 	 */
-	public function test_clean_content_wraps_a_table_in_a_scroller() {
-		$content = Lite_Site::clean_content( $this->table_block() );
+	public function test_wraps_a_table_in_a_scroller_the_reader_can_use() {
+		// Through the same sanitizer the template applies, so the test cannot
+		// pass on markup the page never serves.
+		$html = Lite_Site::wrap_tables_for_scrolling( wp_kses_post( Lite_Site::clean_content( $this->table_block() ) ) );
 
-		$this->assertStringContainsString( '<div class="lite-table-scroll" tabindex="0" role="group"><table>', $content, 'The table is wrapped in its own scroller.' );
-		$this->assertStringContainsString( '</table></div>', $content, 'The wrapper closes around the table.' );
+		$this->assertStringContainsString( 'class="lite-table-scroll"', $html, 'The table is wrapped in its own scroller.' );
+		$this->assertStringContainsString( 'tabindex="0"', $html, 'The scroller carries the attribute the keyboard needs.' );
+		$this->assertStringContainsString( 'aria-label=', $html, 'The scroller is named, so a keyboard stop is explained.' );
+		$this->assertStringContainsString( '</table></div>', $html, 'The wrapper closes around the table.' );
+	}
+
+	/**
+	 * Only the outermost table is wrapped. Wrapping a nested one would close
+	 * the div inside the outer table, where the parser drops it, leaving the
+	 * wrapper open over the rest of the article.
+	 */
+	public function test_wraps_only_the_outermost_of_nested_tables() {
+		$html = Lite_Site::wrap_tables_for_scrolling(
+			'<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table><p>After.</p>'
+		);
+
+		$this->assertSame( 1, substr_count( $html, 'lite-table-scroll' ), 'Only one scroller is emitted.' );
+		$this->assertStringStartsWith( '<div class="lite-table-scroll"', $html, 'The scroller opens before the outer table.' );
+		$this->assertStringContainsString( '</table></div><p>After.</p>', $html, 'The scroller closes after the outer table.' );
+	}
+
+	/**
+	 * A table whose closing tag never arrives is left alone rather than being
+	 * wrapped by an unbalanced div.
+	 */
+	public function test_an_unclosed_table_does_not_swallow_what_follows() {
+		$html = Lite_Site::wrap_tables_for_scrolling(
+			'<table><tr><td>orphan</td></tr><p>Between.</p><table><tr><td>good</td></tr></table>'
+		);
+
+		$this->assertStringNotContainsString( '<div class="lite-table-scroll" tabindex="0" role="group" aria-label="Table, scrolls sideways"><table><tr><td>orphan', $html, 'The wrapper does not open at the unclosed table.' );
+		$this->assertStringContainsString( '<p>Between.</p>', $html, 'The paragraph between the tables is left where it was.' );
+	}
+
+	/**
+	 * Only one table is involved, and the wrapper closes around it.
+	 */
+	public function test_wraps_a_single_closed_table() {
+		$html = Lite_Site::wrap_tables_for_scrolling( '<p>Before.</p><table><tr><td>North</td></tr></table><p>After.</p>' );
+
+		$this->assertStringContainsString( '<p>Before.</p><div class="lite-table-scroll"', $html, 'The wrapper opens at the table.' );
+		$this->assertStringContainsString( '</table></div><p>After.</p>', $html, 'The wrapper closes at the table.' );
+	}
+
+	/**
+	 * A self-closing table tag closes nothing, so it must not strand the walk
+	 * and leave every later table unwrapped.
+	 */
+	public function test_a_self_closing_table_tag_does_not_strand_the_walk() {
+		$html = Lite_Site::wrap_tables_for_scrolling( '<table /><p>Text.</p><table><tr><td>North</td></tr></table>' );
+
+		$this->assertSame( 1, substr_count( $html, 'lite-table-scroll' ), 'The real table is still wrapped.' );
+	}
+
+	/**
+	 * A failed preg_* call falls back to its input rather than passing null on,
+	 * which would blank the article.
+	 */
+	public function test_a_failed_pattern_falls_back_to_the_original() {
+		$this->assertSame( 'original', self::invoke_private( Lite_Site::class, 'or_original', [ null, 'original' ] ), 'A null result falls back.' );
+		$this->assertSame( 'replaced', self::invoke_private( Lite_Site::class, 'or_original', [ 'replaced', 'original' ] ), 'A string result is kept.' );
+	}
+
+	/**
+	 * A large figure must not defeat the content pipeline. A pattern that hits
+	 * a PCRE limit returns null, which would blank the article and cache the
+	 * blank — on a results table during an election, say.
+	 */
+	public function test_clean_content_survives_a_very_large_figure() {
+		$rows = '';
+		for ( $i = 0; $i < 400; $i++ ) {
+			$rows .= '<tr><td>Precinct ' . $i . '</td><td>Reporting</td><td>Turnout steady through the afternoon</td></tr>';
+		}
+		$content = Lite_Site::clean_content( '<figure class="wp-block-table"><table>' . $rows . '</table></figure>' );
+
+		$this->assertNotSame( '', $content, 'A large figure does not blank the article.' );
+		$this->assertStringContainsString( 'Precinct 399', $content, 'The last row survives.' );
 	}
 
 	/**

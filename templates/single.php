@@ -64,7 +64,7 @@ if ( $is_liveblog ) {
 
 			<?php if ( $post_content ) : ?>
 				<div class="content">
-					<?php echo wp_kses_post( $post_content ); ?>
+					<?php echo Lite_Site::wrap_tables_for_scrolling( wp_kses_post( $post_content ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized above; the wrapper adds only balanced div tags and an esc_attr__() label. ?>
 				</div>
 				<?php if ( $is_liveblog ) : ?>
 					<hr class="separator">
@@ -95,7 +95,7 @@ if ( $is_liveblog ) {
 									<?php endif; ?>
 								</div>
 								<div class="liveblog-entry-content">
-									<?php echo wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ); ?>
+									<?php echo Lite_Site::wrap_tables_for_scrolling( wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized above; the wrapper adds only balanced div tags and an esc_attr__() label. ?>
 								</div>
 							</div>
 						<?php endforeach; ?>
