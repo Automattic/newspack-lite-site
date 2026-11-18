@@ -671,14 +671,15 @@ class Lite_Site {
 	}
 
 	/**
-	 * Matches an <img> tag, including attribute values that contain ">".
+	 * Matches an <img> tag, the same way wp_kses_split() does.
 	 *
-	 * A plain [^>]* stops at the first ">" inside a value such as
-	 * alt="a > b", which truncates the tag and leaves its tail as body text.
+	 * This only locates the tag. Its attributes are read with
+	 * WP_HTML_Tag_Processor, which handles attribute case, quoting styles and
+	 * the difference between an absent and an empty alt.
 	 *
 	 * @var string
 	 */
-	const IMG_TAG_PATTERN = '<img\b(?:[^>"\\\']|"[^"]*"|\\\'[^\\\']*\\\')*>';
+	const IMG_TAG_PATTERN = '<img\b[^>]*>';
 
 	/**
 	 * The largest declared edge, in pixels, an image can have and still be
@@ -1419,9 +1420,12 @@ class Lite_Site {
 		// custom HTML block or an imported feed item. Without this it would be
 		// stripped by wp_kses() below, taking its alt text with it, and the
 		// reader would never know an image had been there.
-		$content = preg_replace_callback(
-			'/' . self::IMG_TAG_PATTERN . '/i',
-			[ __CLASS__, 'img_to_placeholder' ],
+		$content = self::or_original(
+			preg_replace_callback(
+				'/' . self::IMG_TAG_PATTERN . '/i',
+				[ __CLASS__, 'img_to_placeholder' ],
+				$content
+			),
 			$content
 		);
 
@@ -1469,6 +1473,9 @@ class Lite_Site {
 			'caption'    => [],
 			'figcaption' => [],
 			'div'        => [
+				'class' => true,
+			],
+			'span'       => [
 				'class'        => true,
 				'data-src'     => true,
 				'data-srcset'  => true,
@@ -1579,11 +1586,15 @@ class Lite_Site {
 	 * the article — on the page a reader reaches when everything else is down.
 	 *
 	 * @param string|null $result   The preg_* result.
-	 * @param string      $original The string passed in.
+	 * @param string|null $original The string passed in.
 	 * @return string
 	 */
-	private static function or_original( $result, string $original ): string {
-		return is_string( $result ) ? $result : $original;
+	private static function or_original( $result, ?string $original ): string {
+		if ( is_string( $result ) ) {
+			return $result;
+		}
+
+		return is_string( $original ) ? $original : '';
 	}
 
 	/**
@@ -1603,7 +1614,7 @@ class Lite_Site {
 
 		$image = self::parse_image_attrs( $figure_html );
 
-		if ( ! $image['src'] ) {
+		if ( '' === $image['src'] ) {
 			return $figure_html;
 		}
 
@@ -1612,7 +1623,7 @@ class Lite_Site {
 			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
 		}
 
-		return self::build_image_placeholder( $image['src'], $image['srcset'], $image['alt'], $caption );
+		return self::build_image_placeholder( $image['src'], $image['srcset'], (string) $image['alt'], $caption );
 	}
 
 	/**
@@ -1626,66 +1637,75 @@ class Lite_Site {
 	 * @param array $matches Regex match array; $matches[0] is the full <img> tag.
 	 * @return string Placeholder div HTML, or an empty string if the tag has no src.
 	 */
-	private static function img_to_placeholder( $matches ) {
+	private static function img_to_placeholder( array $matches ): string {
 		$image = self::parse_image_attrs( $matches[0] );
 
-		if ( ! $image['src'] ) {
+		if ( '' === $image['src'] ) {
 			return '';
 		}
 
-		// alt="" marks an image as decorative, such as a Cover block's
-		// background. A box reading "Image" with nothing after it tells a
-		// reader nothing, so those are still dropped.
-		if ( preg_match( '/\balt=(["\'])\s*\1/', $matches[0] ) ) {
+		// An alt that is present and empty marks an image as decorative, such
+		// as a Cover block's background. An absent alt means nobody described
+		// the image, which is not the same thing: that one still gets a box.
+		if ( '' === $image['alt'] ) {
 			return '';
 		}
 
-		// A tracking pixel is not content. Feed items routinely end with a 1x1
-		// beacon, and turning one into a Load image button would invite a
-		// reader to fetch a third party on a page that exists to fetch nothing.
+		// A beacon declares itself: both edges tiny. Requiring both keeps a
+		// real photograph that happens to carry one small dimension.
 		$tiny = self::TRACKING_PIXEL_MAX_SIZE;
-		if ( ( $image['width'] && $image['width'] <= $tiny ) || ( $image['height'] && $image['height'] <= $tiny ) ) {
+		if ( null !== $image['width'] && null !== $image['height']
+			&& $image['width'] <= $tiny && $image['height'] <= $tiny ) {
 			return '';
 		}
 
-		return self::build_image_placeholder( $image['src'], $image['srcset'], $image['alt'], '' );
+		return self::build_image_placeholder( $image['src'], $image['srcset'], (string) $image['alt'], '' );
 	}
 
 	/**
-	 * Read the src, srcset and alt of the first <img> in a chunk of HTML.
+	 * Read an <img>'s attributes with the HTML parser core ships.
+	 *
+	 * Hand-rolled patterns get this wrong in ways that cost a reader the
+	 * picture: an uppercase ALT, an apostrophe inside the alt text, or a
+	 * data-alt picked up instead of the alt itself. The parser also tells an
+	 * absent alt apart from an empty one, which decides whether an image is
+	 * decorative or merely undescribed.
 	 *
 	 * @param string $html HTML holding an <img> tag.
-	 * @return array{src:string,srcset:string,alt:string,width:int,height:int} The attributes found; strings are empty and sizes 0 when absent.
+	 * @return array{src:string,srcset:string,alt:?string,width:?int,height:?int} Attributes found; alt is null when absent, sizes null when not declared.
 	 */
 	private static function parse_image_attrs( string $html ): array {
 		$image = [
 			'src'    => '',
 			'srcset' => '',
-			'alt'    => '',
-			'width'  => 0,
-			'height' => 0,
+			'alt'    => null,
+			'width'  => null,
+			'height' => null,
 		];
 
-		if ( ! preg_match( '/' . self::IMG_TAG_PATTERN . '/i', $html, $img_match ) ) {
+		if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
 			return $image;
 		}
 
-		$attrs = $img_match[0];
+		$processor = new \WP_HTML_Tag_Processor( $html );
 
-		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-			$image['src'] = $m[1];
+		if ( ! $processor->next_tag( 'IMG' ) ) {
+			return $image;
 		}
-		if ( preg_match( '/\bsrcset=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-			$image['srcset'] = $m[1];
-		}
-		if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
-			$image['alt'] = $m[1];
-		}
-		if ( preg_match( '/\bwidth=["\']?(\d+)/', $attrs, $m ) ) {
-			$image['width'] = (int) $m[1];
-		}
-		if ( preg_match( '/\bheight=["\']?(\d+)/', $attrs, $m ) ) {
-			$image['height'] = (int) $m[1];
+
+		$src    = $processor->get_attribute( 'src' );
+		$srcset = $processor->get_attribute( 'srcset' );
+		$alt    = $processor->get_attribute( 'alt' );
+
+		$image['src']    = is_string( $src ) ? $src : '';
+		$image['srcset'] = is_string( $srcset ) ? $srcset : '';
+		$image['alt']    = is_string( $alt ) ? $alt : null;
+
+		foreach ( [ 'width', 'height' ] as $side ) {
+			$value = $processor->get_attribute( $side );
+			if ( is_string( $value ) && 1 === preg_match( '/^\s*(\d+)\s*$/', $value, $match ) ) {
+				$image[ $side ] = (int) $match[1];
+			}
 		}
 
 		return $image;
@@ -1722,7 +1742,7 @@ class Lite_Site {
 
 		$caption_html = $caption
 			? sprintf(
-				'<p class="lite-image-caption">%s</p>',
+				'<span class="lite-image-caption">%s</span>',
 				esc_html(
 					sprintf(
 						/* translators: %s: image caption text */
@@ -1734,7 +1754,7 @@ class Lite_Site {
 			: '';
 
 		return sprintf(
-			'<div class="lite-image-placeholder"%s><p class="lite-image-label">%s</p>%s<button class="lite-image-load-btn" type="button">%s</button></div>',
+			'<span class="lite-image-placeholder"%s><span class="lite-image-label">%s</span>%s<button class="lite-image-load-btn" type="button">%s</button></span>',
 			$attrs,
 			esc_html( $label ),
 			$caption_html,

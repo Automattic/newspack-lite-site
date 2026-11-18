@@ -276,7 +276,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertStringContainsString( '<table>', $content, 'The table survives an image in a cell.' );
 		$this->assertStringContainsString( 'Evacuate', $content, 'Cell text beside the image survives.' );
-		$this->assertStringContainsString( '<td><div class="lite-image-placeholder"', $content, 'The image becomes a placeholder inside its own cell, not in place of the table.' );
+		$this->assertStringContainsString( '<td><span class="lite-image-placeholder"', $content, 'The image becomes a placeholder inside its own cell, not in place of the table.' );
 	}
 
 	/**
@@ -319,6 +319,75 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Attribute names are not case sensitive in HTML, and syndicated or
+	 * migrated markup is full of uppercase ones.
+	 */
+	public function test_clean_content_reads_uppercase_attributes() {
+		$content = Lite_Site::clean_content( '<p>Story.</p><IMG SRC="https://some-other-domain.test/photo.jpg" ALT="Flood damage">' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'An uppercase tag still becomes a placeholder.' );
+		$this->assertStringContainsString( 'Flood damage', $content, 'Its alt text survives.' );
+	}
+
+	/**
+	 * Alt text with an apostrophe in it keeps the whole sentence.
+	 */
+	public function test_clean_content_keeps_alt_text_containing_an_apostrophe() {
+		$content = Lite_Site::clean_content( '<img src="https://some-other-domain.test/a.jpg" alt="Mayor\'s address to the council">' );
+
+		$this->assertStringContainsString( 'Mayor&#039;s address to the council', $content, 'The alt text is not truncated at the apostrophe.' );
+	}
+
+	/**
+	 * A lazy-loaded image carries its real description in alt and an empty
+	 * data-alt. Reading the wrong one would drop a described photograph.
+	 */
+	public function test_clean_content_does_not_confuse_data_attributes_with_their_own() {
+		$content = Lite_Site::clean_content(
+			'<img src="https://some-other-domain.test/photo.jpg" alt="A map of road closures" data-alt="" data-width="1" data-height="1" width="1600" height="900">'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The photograph is still offered.' );
+		$this->assertStringContainsString( 'A map of road closures', $content, 'Its own alt text is used.' );
+	}
+
+	/**
+	 * A malformed tag must not swallow the copy that follows it. An
+	 * unterminated quote used to let the match run past the tag and delete the
+	 * sentence after it.
+	 */
+	public function test_clean_content_does_not_swallow_copy_after_a_malformed_image() {
+		$content = Lite_Site::clean_content(
+			'<p>Lead.</p><img src="a.jpg" alt="Map of closures<p>Crews cleared 6" of snow overnight.</p><p>The road reopened.</p>'
+		);
+
+		$this->assertStringContainsString( 'The road reopened.', $content, 'Later copy survives.' );
+		$this->assertStringContainsString( 'Lead.', $content, 'Earlier copy survives.' );
+	}
+
+	/**
+	 * A very large image tag must not defeat the pipeline. A pattern that hits
+	 * a PCRE limit returns null, which would blank the article.
+	 */
+	public function test_clean_content_survives_a_very_large_image_tag() {
+		$content = Lite_Site::clean_content( '<p>Story.</p><img src=data:image/png;base64,' . str_repeat( 'A', 40000 ) . '>' );
+
+		$this->assertStringContainsString( 'Story.', $content, 'A huge tag does not blank the article.' );
+	}
+
+	/**
+	 * The placeholder replaces an image that can sit inside a paragraph, so it
+	 * has to be phrasing content rather than a block element.
+	 */
+	public function test_placeholder_is_inline_safe() {
+		$content = Lite_Site::clean_content( '<p>The chart <img src="https://some-other-domain.test/c.png" alt="Turnout"> shows turnout.</p>' );
+
+		$this->assertStringContainsString( '<span class="lite-image-placeholder"', $content, 'The placeholder is a span.' );
+		$this->assertStringNotContainsString( '<div class="lite-image-placeholder"', $content, 'It is not a block element inside a paragraph.' );
+		$this->assertStringContainsString( 'shows turnout.', $content, 'Copy after the image keeps its place.' );
+	}
+
+	/**
 	 * A tracking pixel never becomes a Load image button. Feed items routinely
 	 * end with a 1x1 beacon, and the lite page's promise is that nothing third
 	 * party is fetched unless a reader asks for it.
@@ -329,6 +398,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		);
 
 		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A 1x1 beacon is not offered to the reader.' );
+		$this->assertStringNotContainsString( 'feeds.some-other-domain.test', $content, 'Its URL does not reach the page.' );
 		$this->assertStringNotContainsString( 'feeds.some-other-domain.test', $content, 'The beacon URL does not reach the page.' );
 		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
 	}
