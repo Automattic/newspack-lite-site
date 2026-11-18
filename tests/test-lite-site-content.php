@@ -164,7 +164,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$html = Lite_Site::wrap_tables_for_scrolling( wp_kses_post( Lite_Site::clean_content( $this->table_block() ) ) );
 
 		$this->assertStringContainsString( 'class="lite-table-scroll"', $html, 'The table is wrapped in its own scroller.' );
-		$this->assertStringContainsString( 'tabindex="0"', $html, 'The scroller survives sanitization and can be reached from the keyboard.' );
+		$this->assertStringContainsString( 'tabindex="0"', $html, 'The scroller carries the attribute the keyboard needs.' );
 		$this->assertStringContainsString( 'aria-label=', $html, 'The scroller is named, so a keyboard stop is explained.' );
 		$this->assertStringContainsString( '</table></div>', $html, 'The wrapper closes around the table.' );
 	}
@@ -188,10 +188,42 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	 * A table whose closing tag never arrives is left alone rather than being
 	 * wrapped by an unbalanced div.
 	 */
-	public function test_leaves_an_unclosed_table_unwrapped() {
-		$html = Lite_Site::wrap_tables_for_scrolling( '<table><tr><td>North</td></tr>' );
+	public function test_an_unclosed_table_does_not_swallow_what_follows() {
+		$html = Lite_Site::wrap_tables_for_scrolling(
+			'<table><tr><td>orphan</td></tr><p>Between.</p><table><tr><td>good</td></tr></table>'
+		);
 
-		$this->assertStringNotContainsString( 'lite-table-scroll', $html, 'An unclosed table is not wrapped.' );
+		$this->assertStringNotContainsString( '<div class="lite-table-scroll" tabindex="0" role="group" aria-label="Table, scrolls sideways"><table><tr><td>orphan', $html, 'The wrapper does not open at the unclosed table.' );
+		$this->assertStringContainsString( '<p>Between.</p>', $html, 'The paragraph between the tables is left where it was.' );
+	}
+
+	/**
+	 * Only one table is involved, and the wrapper closes around it.
+	 */
+	public function test_wraps_a_single_closed_table() {
+		$html = Lite_Site::wrap_tables_for_scrolling( '<p>Before.</p><table><tr><td>North</td></tr></table><p>After.</p>' );
+
+		$this->assertStringContainsString( '<p>Before.</p><div class="lite-table-scroll"', $html, 'The wrapper opens at the table.' );
+		$this->assertStringContainsString( '</table></div><p>After.</p>', $html, 'The wrapper closes at the table.' );
+	}
+
+	/**
+	 * A self-closing table tag closes nothing, so it must not strand the walk
+	 * and leave every later table unwrapped.
+	 */
+	public function test_a_self_closing_table_tag_does_not_strand_the_walk() {
+		$html = Lite_Site::wrap_tables_for_scrolling( '<table /><p>Text.</p><table><tr><td>North</td></tr></table>' );
+
+		$this->assertSame( 1, substr_count( $html, 'lite-table-scroll' ), 'The real table is still wrapped.' );
+	}
+
+	/**
+	 * A failed preg_* call falls back to its input rather than passing null on,
+	 * which would blank the article.
+	 */
+	public function test_a_failed_pattern_falls_back_to_the_original() {
+		$this->assertSame( 'original', self::invoke_private( Lite_Site::class, 'or_original', [ null, 'original' ] ), 'A null result falls back.' );
+		$this->assertSame( 'replaced', self::invoke_private( Lite_Site::class, 'or_original', [ 'replaced', 'original' ] ), 'A string result is kept.' );
 	}
 
 	/**

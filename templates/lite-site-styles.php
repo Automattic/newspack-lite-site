@@ -72,7 +72,6 @@ defined( 'ABSPATH' ) || exit;
 	.lite-table-scroll table {
 		margin: 0;
 		max-width: none;
-		width: max-content;
 	}
 	.lite-table-scroll:focus-visible {
 		outline: 2px solid currentcolor;

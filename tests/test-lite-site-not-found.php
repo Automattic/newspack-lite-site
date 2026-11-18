@@ -43,7 +43,9 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 	 * Put the request globals back.
 	 */
 	public function tear_down() {
-		list( $_SERVER, $_COOKIE ) = $this->globals_backup; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Test teardown: restores what set_up() snapshotted.
+		if ( [] !== $this->globals_backup ) {
+			list( $_SERVER, $_COOKIE ) = $this->globals_backup; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Test teardown: restores what set_up() snapshotted.
+		}
 		parent::tear_down();
 	}
 

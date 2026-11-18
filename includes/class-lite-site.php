@@ -1482,6 +1482,12 @@ class Lite_Site {
 		foreach ( $matches[0] as $match ) {
 			$is_close = '/' === $match[0][1];
 
+			// <table /> survives sanitization and closes nothing, so counting it
+			// as an open would strand the walk and unwrap every later table.
+			if ( ! $is_close && preg_match( '/\/\s*>$/', $match[0] ) ) {
+				continue;
+			}
+
 			if ( ! $is_close ) {
 				if ( 0 === $depth ) {
 					$opened = $match[1];
@@ -1504,7 +1510,7 @@ class Lite_Site {
 			list( $from, $to ) = $span;
 			$html              = substr( $html, 0, $from )
 				. sprintf(
-					'<div class="lite-table-scroll" tabindex="0" role="region" aria-label="%s">',
+					'<div class="lite-table-scroll" tabindex="0" role="group" aria-label="%s">',
 					esc_attr__( 'Table, scrolls sideways', 'newspack-lite-site' )
 				)
 				. substr( $html, $from, $to - $from )
