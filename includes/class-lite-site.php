@@ -704,18 +704,21 @@ class Lite_Site {
 	 */
 	public static function cache_single_page( string $cache_key ): string {
 		$reader_id          = get_current_user_id();
+		$was_not_found      = self::$is_not_found;
 		self::$is_not_found = false;
 		wp_set_current_user( 0 );
 
 		ob_start();
 		try {
 			self::include_single_template();
+			$is_not_found = self::$is_not_found;
 		} finally {
-			$output = ob_get_clean();
+			$output             = ob_get_clean();
+			self::$is_not_found = $was_not_found;
 			wp_set_current_user( $reader_id );
 		}
 
-		if ( '' !== $cache_key && ! self::$is_not_found && self::can_fill_page_cache() ) {
+		if ( '' !== $cache_key && empty( $is_not_found ) && self::can_fill_page_cache() ) {
 			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 		}
 
@@ -1361,7 +1364,7 @@ class Lite_Site {
 
 		// Replace figures with lazy-load placeholders before stripping.
 		$content = preg_replace_callback(
-			'/<figure\b[^>]*>.*?<\/figure>/is',
+			'/<figure\b[^>]*>(?:(?!<\/?figure\b).)*<\/figure>/is',
 			[ __CLASS__, 'figure_to_placeholder' ],
 			$content
 		);
@@ -1421,6 +1424,8 @@ class Lite_Site {
 			'figcaption' => [],
 			'div'        => [
 				'class'        => true,
+				'role'         => true,
+				'tabindex'     => true,
 				'data-src'     => true,
 				'data-srcset'  => true,
 				'data-alt'     => true,
@@ -1453,7 +1458,28 @@ class Lite_Site {
 		// Clean up any empty paragraphs.
 		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
 
+		$content = self::wrap_tables_for_scrolling( $content );
+
 		return self::add_external_link_attrs( $content );
+	}
+
+	/**
+	 * Put each table in its own horizontal scroller.
+	 *
+	 * A wide table has to be able to overflow its column, and the table itself
+	 * must stay a table so assistive technology still reads it as one. Scoping
+	 * the scroller to the table keeps the scrollbar beside the data rather than
+	 * on the whole article, and makes it reachable from the keyboard.
+	 *
+	 * @param string $content Cleaned content.
+	 * @return string
+	 */
+	private static function wrap_tables_for_scrolling( string $content ): string {
+		return preg_replace(
+			'/<table\b[^>]*>.*?<\/table>/is',
+			'<div class="lite-table-scroll" tabindex="0" role="group">$0</div>',
+			$content
+		);
 	}
 
 	/**
