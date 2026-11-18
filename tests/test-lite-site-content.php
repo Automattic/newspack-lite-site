@@ -187,7 +187,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertStringContainsString( '<table>', $content, 'The table survives an image in a cell.' );
 		$this->assertStringContainsString( 'Evacuate', $content, 'Cell text beside the image survives.' );
-		$this->assertStringContainsString( '<td><div class="lite-image-placeholder"', preg_replace( '/\s+/', '', $content ), 'The image becomes a placeholder inside its own cell, not in place of the table.' );
+		$this->assertStringContainsString( '<td><div class="lite-image-placeholder"', $content, 'The image becomes a placeholder inside its own cell, not in place of the table.' );
 	}
 
 	/**
