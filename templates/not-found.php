@@ -41,9 +41,13 @@ $lite_home = home_url( Lite_Site::get_url_base() . '/' );
 	<main>
 		<h1><?php esc_html_e( 'Page not found', 'newspack-lite-site' ); ?></h1>
 		<hr class="separator">
-		<?php // Deliberately outside .content: that class colors links with the ?>
-		<?php // site's primary color, which a theme can resolve to its own    ?>
-		<?php // background, and this page's only link has to be visible.      ?>
+		<?php
+		/*
+		 * The copy below sits outside .content on purpose. That class colors
+		 * links with the site's primary color, which a theme can resolve to
+		 * its own background, and this page's only link has to be visible.
+		 */
+		?>
 		<p><?php esc_html_e( 'This page is not here. It may have been moved, or the address may be wrong.', 'newspack-lite-site' ); ?></p>
 		<p>
 			<a href="<?php echo esc_url( $lite_home ); ?>"><?php esc_html_e( 'Go to the latest updates', 'newspack-lite-site' ); ?></a>
