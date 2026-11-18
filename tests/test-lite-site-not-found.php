@@ -15,6 +15,13 @@ use Newspack_Lite_Site\Lite_Site;
 class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 
 	/**
+	 * The request globals as they were before this file changed them.
+	 *
+	 * @var array
+	 */
+	private $globals_backup = [];
+
+	/**
 	 * Turn Lite Site on for every test in this file.
 	 */
 	public function set_up() {
@@ -23,13 +30,21 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 
 		// test_missing_article_is_not_cached asserts a transient is absent, which
 		// is only meaningful while this request could have filled the cache.
-		// WP_UnitTestCase does not reset these between tests.
+		// $_SERVER and $_COOKIE survive between tests, so they are snapshotted
+		// here and put back in tear_down().
+		$this->globals_backup      = [ $_SERVER, $_COOKIE ]; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Test setup: the cache check this file relies on reads cookie keys.
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 		$_SERVER['REQUEST_URI']    = '/';
 		$_SERVER['HTTP_HOST']      = wp_parse_url( home_url(), PHP_URL_HOST );
-		$_GET                      = [];
-		$_POST                     = [];
 		$_COOKIE                   = []; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Test setup: the cache check this file relies on reads cookie keys.
+	}
+
+	/**
+	 * Put the request globals back.
+	 */
+	public function tear_down() {
+		list( $_SERVER, $_COOKIE ) = $this->globals_backup; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE -- Test teardown: restores what set_up() snapshotted.
+		parent::tear_down();
 	}
 
 	/**
