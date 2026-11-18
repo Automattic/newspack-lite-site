@@ -671,6 +671,24 @@ class Lite_Site {
 	}
 
 	/**
+	 * Matches an <img> tag, including attribute values that contain ">".
+	 *
+	 * A plain [^>]* stops at the first ">" inside a value such as
+	 * alt="a > b", which truncates the tag and leaves its tail as body text.
+	 *
+	 * @var string
+	 */
+	const IMG_TAG_PATTERN = '<img\b(?:[^>"\\\']|"[^"]*"|\\\'[^\\\']*\\\')*>';
+
+	/**
+	 * The largest declared edge, in pixels, an image can have and still be
+	 * treated as a tracking pixel rather than content.
+	 *
+	 * @var int
+	 */
+	const TRACKING_PIXEL_MAX_SIZE = 4;
+
+	/**
 	 * Whether the page being rendered is a lite not-found page.
 	 *
 	 * A not-found page must never be stored in the page cache: the post it
@@ -1374,7 +1392,7 @@ class Lite_Site {
 		// stripped by wp_kses() below, taking its alt text with it, and the
 		// reader would never know an image had been there.
 		$content = preg_replace_callback(
-			'/<img\b[^>]*>/i',
+			'/' . self::IMG_TAG_PATTERN . '/i',
 			[ __CLASS__, 'img_to_placeholder' ],
 			$content
 		);
@@ -1536,6 +1554,14 @@ class Lite_Site {
 			return '';
 		}
 
+		// A tracking pixel is not content. Feed items routinely end with a 1x1
+		// beacon, and turning one into a Load image button would invite a
+		// reader to fetch a third party on a page that exists to fetch nothing.
+		$tiny = self::TRACKING_PIXEL_MAX_SIZE;
+		if ( ( $image['width'] && $image['width'] <= $tiny ) || ( $image['height'] && $image['height'] <= $tiny ) ) {
+			return '';
+		}
+
 		return self::build_image_placeholder( $image['src'], $image['srcset'], $image['alt'], '' );
 	}
 
@@ -1543,20 +1569,22 @@ class Lite_Site {
 	 * Read the src, srcset and alt of the first <img> in a chunk of HTML.
 	 *
 	 * @param string $html HTML holding an <img> tag.
-	 * @return array{src:string,srcset:string,alt:string} The attributes found, each an empty string when absent.
+	 * @return array{src:string,srcset:string,alt:string,width:int,height:int} The attributes found; strings are empty and sizes 0 when absent.
 	 */
 	private static function parse_image_attrs( string $html ): array {
 		$image = [
 			'src'    => '',
 			'srcset' => '',
 			'alt'    => '',
+			'width'  => 0,
+			'height' => 0,
 		];
 
-		if ( ! preg_match( '/<img\b([^>]*)>/i', $html, $img_match ) ) {
+		if ( ! preg_match( '/' . self::IMG_TAG_PATTERN . '/i', $html, $img_match ) ) {
 			return $image;
 		}
 
-		$attrs = $img_match[1];
+		$attrs = $img_match[0];
 
 		if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/', $attrs, $m ) ) {
 			$image['src'] = $m[1];
@@ -1566,6 +1594,12 @@ class Lite_Site {
 		}
 		if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
 			$image['alt'] = $m[1];
+		}
+		if ( preg_match( '/\bwidth=["\']?(\d+)/', $attrs, $m ) ) {
+			$image['width'] = (int) $m[1];
+		}
+		if ( preg_match( '/\bheight=["\']?(\d+)/', $attrs, $m ) ) {
+			$image['height'] = (int) $m[1];
 		}
 
 		return $image;

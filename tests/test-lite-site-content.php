@@ -242,6 +242,32 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A tracking pixel never becomes a Load image button. Feed items routinely
+	 * end with a 1x1 beacon, and the lite page's promise is that nothing third
+	 * party is fetched unless a reader asks for it.
+	 */
+	public function test_clean_content_drops_tracking_pixels() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://feeds.some-other-domain.test/~r/site/~4/abc" height="1" width="1" border="0">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A 1x1 beacon is not offered to the reader.' );
+		$this->assertStringNotContainsString( 'feeds.some-other-domain.test', $content, 'The beacon URL does not reach the page.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
+	 * A real photograph with no alt attribute still earns a placeholder: the
+	 * size rule is for beacons, not for images an author simply did not
+	 * describe.
+	 */
+	public function test_clean_content_keeps_an_image_with_no_alt_attribute() {
+		$content = Lite_Site::clean_content( '<p>Story.</p><img src="https://some-other-domain.test/photo.jpg" width="1200" height="800">' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'An undescribed photograph is still offered.' );
+	}
+
+	/**
 	 * An image marked decorative with an empty alt stays out of the way: a
 	 * box with no label would tell the reader nothing.
 	 */
