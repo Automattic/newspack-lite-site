@@ -145,15 +145,61 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	 * all, and without the table elements every cell runs into the next.
 	 */
 	public function test_clean_content_keeps_tables() {
-		$content = Lite_Site::clean_content(
-			'<figure class="wp-block-table"><table><caption>Zones</caption><thead><tr><th scope="col">Zone</th><th scope="col">Status</th></tr></thead><tbody><tr><td>North</td><td>Evacuate</td></tr></tbody></table></figure>'
-		);
+		$content = Lite_Site::clean_content( $this->table_block() );
 
 		$this->assertStringContainsString( '<table>', $content, 'The table survives.' );
-		$this->assertStringContainsString( '<caption>Zones</caption>', $content, 'The caption survives.' );
 		$this->assertStringContainsString( '<th scope="col">Zone</th>', $content, 'Header cells keep their scope.' );
 		$this->assertStringContainsString( '<td>North</td>', $content, 'Body cells survive.' );
-		$this->assertStringNotContainsString( 'ZoneStatus', wp_strip_all_tags( $content ), 'Cells do not run together.' );
+		$this->assertStringContainsString( '<td>North</td><td>Evacuate</td>', preg_replace( '/\s+/', '', $content ), 'Each cell stays in its own element.' );
+	}
+
+	/**
+	 * A table's caption survives. The block editor saves it as a figcaption
+	 * beside the table, not as a caption inside it.
+	 */
+	public function test_clean_content_keeps_a_block_table_caption() {
+		$content = Lite_Site::clean_content( $this->table_block() );
+
+		$this->assertStringContainsString( '<figcaption', $content, 'The block editor caption survives as an element.' );
+		$this->assertStringContainsString( 'Evacuation zones', $content, 'The caption text survives.' );
+		$this->assertStringNotContainsString( '</table>Evacuation', preg_replace( '/\s+/', '', $content ), 'The caption is not left as bare text after the table.' );
+	}
+
+	/**
+	 * A caption written inside the table, as the classic editor and imported
+	 * markup do, survives too.
+	 */
+	public function test_clean_content_keeps_an_inline_table_caption() {
+		$content = Lite_Site::clean_content( '<table><caption>Zones</caption><tr><td>North</td></tr></table>' );
+
+		$this->assertStringContainsString( '<caption>Zones</caption>', $content, 'An inline caption survives.' );
+	}
+
+	/**
+	 * An image inside a table must not take the table with it. The figure pass
+	 * runs before the allowlist, and the block editor wraps a table in a figure,
+	 * so an unguarded match would replace the whole table with one placeholder.
+	 */
+	public function test_clean_content_keeps_a_table_that_contains_an_image() {
+		$content = Lite_Site::clean_content(
+			'<!-- wp:table --><figure class="wp-block-table"><table><tr><td><img src="https://some-other-domain.test/map.jpg" alt="Zone map"></td><td>Evacuate</td></tr></table></figure><!-- /wp:table -->'
+		);
+
+		$this->assertStringContainsString( '<table>', $content, 'The table survives an image in a cell.' );
+		$this->assertStringContainsString( 'Evacuate', $content, 'Cell text beside the image survives.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A table figure is not treated as an image figure.' );
+	}
+
+	/**
+	 * A core table block, as the editor saves it.
+	 *
+	 * Block delimiters matter: do_blocks() skips wpautop for block content, and
+	 * without them the cells are separated by newlines the real bug never had.
+	 *
+	 * @return string
+	 */
+	private function table_block() {
+		return '<!-- wp:table --><figure class="wp-block-table"><table><thead><tr><th scope="col">Zone</th><th scope="col">Status</th></tr></thead><tbody><tr><td>North</td><td>Evacuate</td></tr></tbody></table><figcaption class="wp-element-caption">Evacuation zones</figcaption></figure><!-- /wp:table -->';
 	}
 
 	/**

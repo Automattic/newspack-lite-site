@@ -45,7 +45,6 @@ $total_pages = max( 1, (int) $query->max_num_pages );
 // page leaves a reader unable to tell a stale link from a broken site, so
 // answer the way the rest of the web does.
 if ( $current_page > $total_pages ) {
-	status_header( 404 );
 	require __DIR__ . '/not-found.php';
 	return;
 }
@@ -81,7 +80,9 @@ $has_posts = ! empty( $query->posts );
 		<?php else : ?>
 			<div class="content">
 				<p><?php esc_html_e( 'Nothing to show here yet.', 'newspack-lite-site' ); ?></p>
-				<p><?php esc_html_e( 'If this site filters the Lite Site by category or tag, no published post matches those filters right now.', 'newspack-lite-site' ); ?></p>
+				<?php if ( $categories || $tags || $excluded_categories || $excluded_tags ) : ?>
+					<p><?php esc_html_e( 'No published post matches the categories or tags this Lite Site is filtered to.', 'newspack-lite-site' ); ?></p>
+				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 

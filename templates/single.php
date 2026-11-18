@@ -14,7 +14,6 @@ defined( 'ABSPATH' ) || exit;
 $current_post = Lite_Site::resolve_post( get_query_var( 'lite_path' ) );
 
 if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_supported_post_types(), true ) ) {
-	status_header( 404 );
 	require __DIR__ . '/not-found.php';
 	return;
 }
