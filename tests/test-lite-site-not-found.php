@@ -159,7 +159,14 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 			set_query_var( 'lite_path', $outer );
 		};
 
+		$status  = 0;
+		$capture = function ( $header, $code ) use ( &$status ) {
+			$status = $code;
+			return $header;
+		};
+
 		add_action( 'newspack_lite_site_single_after_footer', $nested );
+		add_filter( 'status_header', $capture, 10, 2 );
 		set_query_var( 'lite_path', $path );
 		$cache_key = 'nls_page_test_nested_outer';
 
@@ -167,8 +174,10 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 			$page = Lite_Site::cache_single_page( $cache_key );
 		} finally {
 			remove_action( 'newspack_lite_site_single_after_footer', $nested );
+			remove_filter( 'status_header', $capture, 10 );
 		}
 
+		$this->assertNotSame( 404, $status, 'The outer article does not inherit the nested render\'s 404.' );
 		$this->assertStringContainsString( 'The outer article', $page, 'The outer page renders.' );
 		$this->assertNotFalse( get_transient( $cache_key ), 'The outer page is still cached.' );
 		$this->assertFalse( get_transient( 'nls_page_test_nested_inner' ), 'The nested not-found page is not cached.' );

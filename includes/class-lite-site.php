@@ -700,6 +700,26 @@ class Lite_Site {
 	private static bool $is_not_found = false;
 
 	/**
+	 * How many renders are on the stack.
+	 *
+	 * Only the outermost render owns the response. A nested one — a shortcode
+	 * or an after-footer callback rendering another lite page — must not hand
+	 * its own status and cache headers to the page that contains it.
+	 *
+	 * @var int
+	 */
+	private static int $render_depth = 0;
+
+	/**
+	 * Whether the page being rendered sits inside another render.
+	 *
+	 * @return bool
+	 */
+	public static function is_nested_render(): bool {
+		return self::$render_depth > 1;
+	}
+
+	/**
 	 * Record that the page being rendered is a lite not-found page.
 	 *
 	 * Called by the templates, which render the page themselves.
@@ -728,6 +748,8 @@ class Lite_Site {
 
 		$is_not_found = true;
 
+		++self::$render_depth;
+
 		ob_start();
 		try {
 			self::include_single_template();
@@ -735,6 +757,7 @@ class Lite_Site {
 		} finally {
 			$output             = ob_get_clean();
 			self::$is_not_found = $was_not_found;
+			--self::$render_depth;
 			wp_set_current_user( $reader_id );
 		}
 

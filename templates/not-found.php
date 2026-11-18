@@ -17,15 +17,21 @@ defined( 'ABSPATH' ) || exit;
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from the lite templates, so these variables are local to the method that includes them.
 
 Lite_Site::mark_not_found();
-status_header( 404 );
 
 /*
- * A page cache in front of PHP would otherwise store this answer: a reader who
- * asks for an article seconds before it publishes would pin a 404 at the edge
- * that outlives the post. The transient guard above only covers this plugin's
- * own cache.
+ * Only the outermost render owns the response. A nested one — a shortcode or an
+ * after-footer callback rendering another lite page — would otherwise hand its
+ * 404 and its no-store headers to the successful article that contains it.
+ *
+ * At the top level both are needed: a page cache in front of PHP would store
+ * this answer, so a reader who asks for an article seconds before it publishes
+ * would pin a 404 at the edge that outlives the post. The transient guard only
+ * covers this plugin's own cache.
  */
-nocache_headers();
+if ( ! Lite_Site::is_nested_render() ) {
+	status_header( 404 );
+	nocache_headers();
+}
 
 $lite_home = home_url( Lite_Site::get_url_base() . '/' );
 ?>
