@@ -671,23 +671,45 @@ class Lite_Site {
 	}
 
 	/**
-	 * Matches an <img> tag, the same way wp_kses_split() does.
+	 * Locates an <img> tag so the parser can be pointed at it.
 	 *
-	 * This only locates the tag. Its attributes are read with
-	 * WP_HTML_Tag_Processor, which handles attribute case, quoting styles and
-	 * the difference between an absent and an empty alt.
+	 * Close to how wp_kses_split() finds a tag, but not identical: kses
+	 * tolerates a tag left unterminated at the end of the input and this
+	 * requires the '>'. Like kses, it stops at the first '>', so a '>' inside
+	 * a quoted attribute truncates the match -- img_to_placeholder() hands
+	 * such a tag back untouched rather than acting on half of it.
+	 *
+	 * Attributes are read with WP_HTML_Tag_Processor, which handles attribute
+	 * case, quoting styles, entities, and the difference between an absent
+	 * and an empty alt.
 	 *
 	 * @var string
 	 */
 	const IMG_TAG_PATTERN = '<img\b[^>]*>';
 
 	/**
-	 * The largest declared edge, in pixels, an image can have and still be
-	 * treated as a tracking pixel rather than content.
+	 * The largest declared edge, in pixels, at which an image is treated as a
+	 * tracking beacon rather than content.
+	 *
+	 * One edge is enough: no photograph is four pixels wide, and spacers and
+	 * rules come through as 1x100 or 100x1 as often as 1x1.
 	 *
 	 * @var int
 	 */
 	const TRACKING_PIXEL_MAX_SIZE = 4;
+
+	/**
+	 * The longest inline data: image, in characters, this page will carry.
+	 *
+	 * An inline image needs no request, but its bytes ride in the HTML whether
+	 * or not the reader ever taps Load image -- which is the one cost this page
+	 * exists to avoid. Below this an icon or a sparkline is cheaper than the
+	 * request a placeholder would invite; above it the blob is dropped rather
+	 * than pushed down a connection that is already struggling.
+	 *
+	 * @var int
+	 */
+	const DATA_IMAGE_MAX_LENGTH = 2048;
 
 	/**
 	 * Whether the page being rendered is a lite not-found page.
@@ -1586,24 +1608,20 @@ class Lite_Site {
 	 * the article — on the page a reader reaches when everything else is down.
 	 *
 	 * @param string|null $result   The preg_* result.
-	 * @param string|null $original The string passed in.
+	 * @param string      $original The string passed in.
 	 * @return string
 	 */
-	private static function or_original( $result, ?string $original ): string {
-		if ( is_string( $result ) ) {
-			return $result;
-		}
-
-		return is_string( $original ) ? $original : '';
+	private static function or_original( ?string $result, string $original ): string {
+		return is_string( $result ) ? $result : $original;
 	}
 
 	/**
 	 * Convert a <figure> element into a lazy-load image placeholder.
 	 *
 	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
-	 * @return string Placeholder div HTML, or the figure unchanged if it holds no image.
+	 * @return string Placeholder HTML, or the figure unchanged if it holds no image.
 	 */
-	private static function figure_to_placeholder( $matches ) {
+	private static function figure_to_placeholder( array $matches ): string {
 		$figure_html = $matches[0];
 
 		// The block editor wraps a table in a figure. An image in any cell would
@@ -1613,8 +1631,9 @@ class Lite_Site {
 		}
 
 		$image = self::parse_image_attrs( $figure_html );
+		$src   = self::pick_image_src( $image );
 
-		if ( '' === $image['src'] ) {
+		if ( '' === $src ) {
 			return $figure_html;
 		}
 
@@ -1623,7 +1642,7 @@ class Lite_Site {
 			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
 		}
 
-		return self::build_image_placeholder( $image['src'], $image['srcset'], (string) $image['alt'], $caption );
+		return self::build_image_placeholder( $src, $image['srcset'], (string) $image['alt'], $caption );
 	}
 
 	/**
@@ -1635,31 +1654,183 @@ class Lite_Site {
 	 * the page would give no sign that an image had been there at all.
 	 *
 	 * @param array $matches Regex match array; $matches[0] is the full <img> tag.
-	 * @return string Placeholder div HTML, or an empty string if the tag has no src.
+	 * @return string Placeholder HTML, the tag unchanged if it cannot be read,
+	 *                or an empty string if there is nothing a reader could load.
 	 */
 	private static function img_to_placeholder( array $matches ): string {
 		$image = self::parse_image_attrs( $matches[0] );
 
-		if ( '' === $image['src'] ) {
+		// IMG_TAG_PATTERN stops at the first '>', so a '>' inside a quoted
+		// attribute hands the parser a truncated tag it cannot read. Give the
+		// match back untouched and let wp_kses() deal with it, as it did
+		// before this pass existed. Returning '' here would delete the image
+		// and leave the rest of the tag in the prose as literal text.
+		if ( ! $image['found'] ) {
+			return $matches[0];
+		}
+
+		$src = self::pick_image_src( $image );
+
+		// Nothing a reader could load. Better no box than a button that
+		// fetches the page itself.
+		if ( '' === $src ) {
 			return '';
 		}
 
-		// An alt that is present and empty marks an image as decorative, such
-		// as a Cover block's background. An absent alt means nobody described
-		// the image, which is not the same thing: that one still gets a box.
-		if ( '' === $image['alt'] ) {
+		if ( self::is_decorative_image( $image ) ) {
 			return '';
 		}
 
-		// A beacon declares itself: both edges tiny. Requiring both keeps a
-		// real photograph that happens to carry one small dimension.
-		$tiny = self::TRACKING_PIXEL_MAX_SIZE;
-		if ( null !== $image['width'] && null !== $image['height']
-			&& $image['width'] <= $tiny && $image['height'] <= $tiny ) {
+		return self::build_image_placeholder( $src, $image['srcset'], (string) $image['alt'], '' );
+	}
+
+	/**
+	 * Decide whether an image is furniture rather than content.
+	 *
+	 * An empty alt does not qualify, though it is tempting. get_image_tag()
+	 * writes alt="" into every classic editor insert whose attachment has no
+	 * alt text, so an undescribed news photograph arrives here looking
+	 * exactly like a decorative one -- and deleting it is the bug this pass
+	 * exists to fix. What does qualify is a Cover block's background, which
+	 * the block draws itself, and a beacon, which gives away its size.
+	 *
+	 * @param array $image Attributes from parse_image_attrs().
+	 * @return bool Whether to leave the image out of the page.
+	 */
+	private static function is_decorative_image( array $image ): bool {
+		// A Cover block's background. The block prints its own markup, so a
+		// placeholder would sit on top of content the reader already has.
+		if ( false !== strpos( $image['class'], 'wp-block-cover__image-background' ) ) {
+			return true;
+		}
+
+		foreach ( [ 'width', 'height' ] as $side ) {
+			if ( null !== $image[ $side ] && $image[ $side ] <= self::TRACKING_PIXEL_MAX_SIZE ) {
+				return true;
+			}
+		}
+
+		// The same beacon with its size in a style attribute. Properties are
+		// compared whole: a min-width:0 reset is not a tracking pixel.
+		foreach ( explode( ';', $image['style'] ) as $declaration ) {
+			$parts = explode( ':', $declaration, 2 );
+			if ( count( $parts ) < 2 ) {
+				continue;
+			}
+
+			$property = strtolower( trim( $parts[0] ) );
+			$value    = trim( $parts[1] );
+
+			if ( ! in_array( $property, [ 'width', 'height' ], true ) ) {
+				continue;
+			}
+
+			if ( '' !== $value && ctype_digit( $value[0] ) && 0.0 === (float) $value ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Choose the source a reader should load, and escape it for an attribute.
+	 *
+	 * A lazy loader parks a one-pixel data: stub on src and puts the real URL
+	 * on data-src or in a srcset, so src alone is not enough: taking it would
+	 * hand the reader a transparent pixel where the photograph was. An inline
+	 * data: image comes last for the same reason -- it is real content when
+	 * it is all there is, and a stub when it is not.
+	 *
+	 * @param array $image Attributes from parse_image_attrs().
+	 * @return string Escaped source, or an empty string if none is usable.
+	 */
+	private static function pick_image_src( array $image ): string {
+		$src     = trim( $image['src'] );
+		$is_data = 0 === stripos( $src, 'data:' );
+
+		if ( '' !== $src && ! $is_data ) {
+			$safe = self::safe_image_src( $src );
+			if ( '' !== $safe ) {
+				return $safe;
+			}
+		}
+
+		$candidates = [
+			$image['data_src'],
+			self::first_srcset_url( $image['srcset'] ),
+			self::first_srcset_url( $image['data_srcset'] ),
+		];
+
+		foreach ( $candidates as $candidate ) {
+			$safe = self::safe_image_src( $candidate );
+			if ( '' !== $safe ) {
+				return $safe;
+			}
+		}
+
+		return $is_data ? self::safe_data_image_src( $src ) : '';
+	}
+
+	/**
+	 * Escape an image source for an attribute, or reject it.
+	 *
+	 * @param string $src Raw source value.
+	 * @return string Escaped source, or an empty string.
+	 */
+	private static function safe_image_src( string $src ): string {
+		$src = trim( $src );
+
+		if ( '' === $src ) {
 			return '';
 		}
 
-		return self::build_image_placeholder( $image['src'], $image['srcset'], (string) $image['alt'], '' );
+		// Relative to the document: no scheme, and no leading /, # or ?.
+		// esc_url() reads such a value as a host and turns images/flood.jpg
+		// into http://images/flood.jpg, a request to a host named "images".
+		// With no colon there is no scheme to smuggle, so escaping it as an
+		// attribute and letting the browser resolve it is safe and correct.
+		if ( false === strpos( $src, ':' ) && ! in_array( $src[0], [ '/', '#', '?' ], true ) ) {
+			return esc_attr( $src );
+		}
+
+		return esc_url( $src );
+	}
+
+	/**
+	 * Escape an inline data: image, which esc_url() will not pass.
+	 *
+	 * Because data: is not in wp_allowed_protocols(), esc_url() empties it. A
+	 * small inline raster image is worth keeping, since it needs no request
+	 * at all. A large one is not: see DATA_IMAGE_MAX_LENGTH. SVG is left out
+	 * whatever its size -- it is markup, and an <img> is not where this
+	 * plugin wants to discover how a given browser treats it.
+	 *
+	 * @param string $src Raw source value.
+	 * @return string Escaped source, or an empty string.
+	 */
+	private static function safe_data_image_src( string $src ): string {
+		if ( 0 !== stripos( $src, 'data:image/' ) || 0 === stripos( $src, 'data:image/svg' ) ) {
+			return '';
+		}
+
+		if ( strlen( $src ) > self::DATA_IMAGE_MAX_LENGTH ) {
+			return '';
+		}
+
+		return esc_attr( $src );
+	}
+
+	/**
+	 * Pull the first candidate URL out of a srcset.
+	 *
+	 * @param string $srcset Srcset value.
+	 * @return string First URL, or an empty string.
+	 */
+	private static function first_srcset_url( string $srcset ): string {
+		$first = trim( explode( ',', $srcset, 2 )[0] );
+
+		return substr( $first, 0, strcspn( $first, " \t\r\n" ) );
 	}
 
 	/**
@@ -1672,20 +1843,21 @@ class Lite_Site {
 	 * decorative or merely undescribed.
 	 *
 	 * @param string $html HTML holding an <img> tag.
-	 * @return array{src:string,srcset:string,alt:?string,width:?int,height:?int} Attributes found; alt is null when absent, sizes null when not declared.
+	 * @return array{found:bool,src:string,srcset:string,data_src:string,data_srcset:string,class:string,style:string,alt:?string,width:?int,height:?int} Attributes found; alt is null when absent, sizes null when not declared.
 	 */
 	private static function parse_image_attrs( string $html ): array {
 		$image = [
-			'src'    => '',
-			'srcset' => '',
-			'alt'    => null,
-			'width'  => null,
-			'height' => null,
+			'found'       => false,
+			'src'         => '',
+			'srcset'      => '',
+			'data_src'    => '',
+			'data_srcset' => '',
+			'class'       => '',
+			'style'       => '',
+			'alt'         => null,
+			'width'       => null,
+			'height'      => null,
 		];
-
-		if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
-			return $image;
-		}
 
 		$processor = new \WP_HTML_Tag_Processor( $html );
 
@@ -1693,18 +1865,29 @@ class Lite_Site {
 			return $image;
 		}
 
-		$src    = $processor->get_attribute( 'src' );
-		$srcset = $processor->get_attribute( 'srcset' );
-		$alt    = $processor->get_attribute( 'alt' );
+		$image['found'] = true;
 
-		$image['src']    = is_string( $src ) ? $src : '';
-		$image['srcset'] = is_string( $srcset ) ? $srcset : '';
-		$image['alt']    = is_string( $alt ) ? $alt : null;
+		foreach ( [ 'src', 'srcset', 'data-src', 'data-srcset', 'class', 'style' ] as $name ) {
+			$value = $processor->get_attribute( $name );
+
+			$image[ str_replace( '-', '_', $name ) ] = is_string( $value ) ? $value : '';
+		}
+
+		// An alt with no value at all is an empty alt, not an absent one: HTML
+		// treats `alt` and `alt=""` alike, and the parser reports the first as
+		// boolean true.
+		$alt = $processor->get_attribute( 'alt' );
+		if ( is_string( $alt ) ) {
+			$image['alt'] = $alt;
+		} elseif ( true === $alt ) {
+			$image['alt'] = '';
+		}
 
 		foreach ( [ 'width', 'height' ] as $side ) {
 			$value = $processor->get_attribute( $side );
-			if ( is_string( $value ) && 1 === preg_match( '/^\s*(\d+)\s*$/', $value, $match ) ) {
-				$image[ $side ] = (int) $match[1];
+
+			if ( is_string( $value ) && ctype_digit( trim( $value ) ) ) {
+				$image[ $side ] = (int) trim( $value );
 			}
 		}
 
@@ -1714,11 +1897,11 @@ class Lite_Site {
 	/**
 	 * Build the placeholder a reader taps to load an image.
 	 *
-	 * @param string $src     Image source.
+	 * @param string $src     Image source, already escaped by pick_image_src().
 	 * @param string $srcset  Image srcset, or an empty string.
 	 * @param string $alt     Image alt text, or an empty string.
 	 * @param string $caption Caption text, or an empty string.
-	 * @return string Placeholder div HTML.
+	 * @return string Placeholder HTML.
 	 */
 	private static function build_image_placeholder( string $src, string $srcset, string $alt, string $caption ): string {
 		$label = ! empty( $alt )
@@ -1729,7 +1912,7 @@ class Lite_Site {
 			)
 			: __( 'Image', 'newspack-lite-site' );
 
-		$attrs = sprintf( ' data-src="%s"', esc_url( $src ) );
+		$attrs = sprintf( ' data-src="%s"', $src );
 		if ( $srcset ) {
 			$attrs .= sprintf( ' data-srcset="%s"', esc_attr( $srcset ) );
 		}

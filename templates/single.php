@@ -130,27 +130,15 @@ if ( $is_liveblog ) {
 	?>
 	
 	<script>
-		class ImageLoader {
-			constructor() {
-				document.addEventListener( 'click', ( e ) => this.handleClick( e ) );
+		( function () {
+			// A single template can render inside another, so this block can
+			// be printed twice. A class declaration would throw on the second.
+			if ( window.liteImageLoaderReady ) {
+				return;
 			}
+			window.liteImageLoaderReady = true;
 
-			handleClick( e ) {
-				const btn = e.target.closest( '.lite-image-load-btn' );
-				if ( ! btn ) {
-					return;
-				}
-
-				const placeholder = btn.closest( '.lite-image-placeholder' );
-				if ( ! placeholder ) {
-					return;
-				}
-
-				const figure = this.buildFigure( placeholder );
-				placeholder.parentNode.replaceChild( figure, placeholder );
-			}
-
-			buildFigure( placeholder ) {
+			function buildFigure( placeholder ) {
 				const {
 					src,
 					srcset,
@@ -178,9 +166,36 @@ if ( $is_liveblog ) {
 
 				return figure;
 			}
-		}
 
-		new ImageLoader();
+			function handleClick( e ) {
+				// Only a button this plugin printed. Matching any element
+				// would let a Custom HTML block or an imported feed item
+				// forge a placeholder and have this fetch whatever host it
+				// named, from the page whose promise is that nothing
+				// third-party loads unasked.
+				const btn = e.target.closest( 'button.lite-image-load-btn' );
+				if ( ! btn ) {
+					return;
+				}
+
+				const placeholder = btn.closest( '.lite-image-placeholder' );
+				if ( ! placeholder || ! placeholder.dataset.src ) {
+					return;
+				}
+
+				// The classic editor links an image to the full-size original
+				// by default, so this button can sit inside an <a>. Without
+				// this the tap would navigate the reader to that file -- the
+				// heaviest asset on the site, over the connection this page
+				// exists to protect -- instead of inlining the smaller one.
+				// Once the image is in place the link works as it should.
+				e.preventDefault();
+
+				placeholder.parentNode.replaceChild( buildFigure( placeholder ), placeholder );
+			}
+
+			document.addEventListener( 'click', handleClick );
+		}() );
 	</script>
 </body>
 </html>
