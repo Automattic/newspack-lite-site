@@ -524,8 +524,10 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	 * A srcset longer than the budget is left off rather than shipped.
 	 */
 	public function test_clean_content_drops_an_oversized_srcset() {
+		// Just over SRCSET_MAX_LENGTH once escaped, so the test pins the
+		// constant rather than "some budget".
 		$candidates = [];
-		for ( $i = 0; $i < 80; $i++ ) {
+		for ( $i = 0; $i < 31; $i++ ) {
 			$candidates[] = 'https://some-other-domain.test/a-very-long-image-file-name-' . $i . '.jpg ' . ( $i + 1 ) . 'w';
 		}
 
@@ -553,6 +555,138 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 			remove_filter( 'newspack_lite_site_post_content', $callback, 99 );
 
 			$this->assertIsString( $content, 'clean_content() always returns a string.' );
+			$this->assertStringContainsString( 'Story.', $content, 'And the reader still gets the story, rather than a blank page.' );
 		}
+	}
+
+	/**
+	 * The HTML parser swallows a <textarea> whole, so the class walk never
+	 * sees inside one, and kses then drops the wrapper and keeps the
+	 * children. That let a forged placeholder through complete, from content
+	 * any contributor can write.
+	 *
+	 * @dataProvider atomic_wrapper_provider
+	 * @param string $open  Opening tag.
+	 * @param string $close Closing tag, or an empty string to leave it open.
+	 */
+	public function test_clean_content_clears_a_forgery_hidden_in_an_atomic_element( $open, $close ) {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p>' . $open
+			. '<div class="lite-image-placeholder" data-src="https://tracker.some-other-domain.test/p.gif?uid=1">'
+			. '<button class="lite-image-load-btn" type="button">Load image</button></div>' . $close
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The hook class does not survive.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'Nor does the button class.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
+	 * The elements WP_HTML_Tag_Processor consumes together with their
+	 * contents, closed and unclosed.
+	 *
+	 * @return array<string,array<int,string>>
+	 */
+	public function atomic_wrapper_provider() {
+		return [
+			'textarea'          => [ '<textarea>', '</textarea>' ],
+			'title'             => [ '<title>', '</title>' ],
+			'iframe'            => [ '<iframe>', '</iframe>' ],
+			'xmp'               => [ '<xmp>', '</xmp>' ],
+			'noembed'           => [ '<noembed>', '</noembed>' ],
+			'noframes'          => [ '<noframes>', '</noframes>' ],
+			'unclosed textarea' => [ '<textarea>', '' ],
+			'unclosed title'    => [ '<title>', '' ],
+		];
+	}
+
+	/**
+	 * A class value can spell a reserved name with character references, which
+	 * kses decodes back into the real name. A guard that looks for the literal
+	 * name is therefore evadable; one that looks for the attribute name is not.
+	 *
+	 * @dataProvider encoded_class_provider
+	 * @param string $class The class attribute value.
+	 */
+	public function test_clean_content_clears_an_entity_encoded_forgery( $class ) {
+		$content = Lite_Site::clean_content(
+			'<div class="' . $class . '" data-src="https://tracker.some-other-domain.test/p.gif">'
+			. '<button class="lite&#45;image-load-btn" type="button">Load image</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The decoded class does not reach the page.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'Nor does the button class.' );
+	}
+
+	/**
+	 * Ways of spelling the same reserved name.
+	 *
+	 * @return array<string,array<int,string>>
+	 */
+	public function encoded_class_provider() {
+		return [
+			'decimal hyphen' => [ 'lite&#45;image-placeholder' ],
+			'hex hyphen'     => [ 'lite&#x2D;image-placeholder' ],
+			'encoded letter' => [ '&#108;ite&#45;image-placeholder' ],
+		];
+	}
+
+	/**
+	 * The comment pass can join a class value back into a reserved name, so it
+	 * has to run before the walk rather than after it.
+	 */
+	public function test_clean_content_clears_a_forgery_split_by_a_comment() {
+		$content = Lite_Site::clean_content(
+			'<div class="lite-image-place<!---->holder" data-src="https://tracker.some-other-domain.test/p.gif">'
+			. '<button class="lite-image-load-btn" type="button">Load image</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The rejoined class does not reach the page.' );
+	}
+
+	/**
+	 * A document-relative candidate is not rejected by esc_url(), it is
+	 * rewritten to a host named after the first path segment.
+	 */
+	public function test_clean_content_drops_a_relative_srcset_candidate() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="photos/flood-800.jpg 800w" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'http://photos/', $content, 'A relative candidate is not relocated to a bogus host.' );
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The list is dropped rather than half filtered.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'The vetted source still loads.' );
+	}
+
+	/**
+	 * The srcset grammar tracks parentheses in a descriptor and this parser
+	 * does not, so a descriptor like 1x(,) used to split off a junk candidate
+	 * that esc_url() turned into http://) and passed.
+	 */
+	public function test_clean_content_drops_a_parenthesized_srcset_descriptor() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="https://some-other-domain.test/a.jpg 1x(,)" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'A descriptor that is not a width or a density drops the list.' );
+		$this->assertStringNotContainsString( 'http://)', $content, 'And no junk candidate is emitted.' );
+	}
+
+	/**
+	 * A pathological srcset is rejected on its length before every candidate
+	 * is parsed and escaped.
+	 */
+	public function test_clean_content_rejects_a_pathological_srcset_cheaply() {
+		// Comfortably past the early bound without building a string large
+		// enough to upset WordPress's own block parser.
+		$srcset  = implode( ', ', array_fill( 0, 1000, 'https://some-other-domain.test/a.jpg 1x' ) );
+		$started = microtime( true );
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="' . $srcset . '" alt="Flood"/></figure>'
+		);
+		$elapsed = microtime( true ) - $started;
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The oversized list is dropped.' );
+		$this->assertLessThan( 1.0, $elapsed, 'And it is dropped without parsing every candidate.' );
 	}
 }

@@ -146,7 +146,7 @@ if ( $is_liveblog ) {
 				}
 
 				const placeholder = btn.closest( '.lite-image-placeholder' );
-				if ( ! placeholder ) {
+				if ( ! placeholder || ! placeholder.dataset.src ) {
 					return;
 				}
 
