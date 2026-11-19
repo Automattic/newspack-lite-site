@@ -136,7 +136,11 @@ if ( $is_liveblog ) {
 			}
 
 			handleClick( e ) {
-				const btn = e.target.closest( '.lite-image-load-btn' );
+				// Only a button, and only one carrying a class that reached the
+				// page from this plugin rather than from post content. The
+				// class is cleared from incoming content before any pass adds
+				// it, which is what makes that true; see RESERVED_CLASSES.
+				const btn = e.target.closest( 'button.lite-image-load-btn' );
 				if ( ! btn ) {
 					return;
 				}

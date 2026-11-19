@@ -441,4 +441,118 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertContains( 'lite_path', $vars, 'The lite path should be registered.' );
 		$this->assertContains( 'lite_page', $vars, 'The lite page number should be registered.' );
 	}
+
+	/**
+	 * A placeholder written in post content is not one this plugin built.
+	 *
+	 * Every piece of markup a placeholder is made of passes wp_kses(), so a
+	 * custom HTML block or an imported feed item could write one and have a
+	 * reader's tap fetch an arbitrary host.
+	 */
+	public function test_clean_content_clears_a_forged_placeholder() {
+		$content = Lite_Site::clean_content(
+			'<div class="lite-image-placeholder" data-src="https://tracker.some-other-domain.test/p.gif?uid=1">'
+			. '<button class="lite-image-load-btn" type="button">Load image</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The hook class does not survive from content.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'Nor does the button class.' );
+	}
+
+	/**
+	 * The same holds for the table wrapper's class.
+	 */
+	public function test_clean_content_clears_a_forged_table_wrapper() {
+		$content = Lite_Site::clean_content( '<div class="lite-table-scroll"><p>Not a table.</p></div>' );
+
+		$this->assertStringNotContainsString( 'lite-table-scroll', $content, 'The wrapper class does not survive from content.' );
+		$this->assertStringContainsString( 'Not a table.', $content, 'The copy inside it does.' );
+	}
+
+	/**
+	 * A placeholder this plugin builds still gets its classes.
+	 */
+	public function test_clean_content_still_builds_its_own_placeholder() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-image"><img src="https://some-other-domain.test/photo.jpg" alt="Flood damage"/></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The plugin still emits a placeholder.' );
+		$this->assertStringContainsString( 'lite-image-load-btn', $content, 'With its button.' );
+	}
+
+	/**
+	 * A srcset candidate replaces src rather than supplementing it, so an
+	 * unvetted candidate is the image the browser would actually load.
+	 */
+	public function test_clean_content_drops_a_srcset_carrying_an_inline_payload() {
+		$blob    = str_repeat( 'A', 40000 );
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="data:image/png;base64,' . $blob . ' 1x" alt="Chart"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( $blob, $content, 'The payload is not carried in the page.' );
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The srcset is dropped rather than half filtered.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'The vetted source still loads.' );
+	}
+
+	/**
+	 * The same for a candidate pointing somewhere the source rules reject.
+	 */
+	public function test_clean_content_drops_a_srcset_with_a_rejected_candidate() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="https://some-other-domain.test/ok.jpg 1x, javascript:alert(1) 2x" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'One bad candidate drops the whole list.' );
+		$this->assertStringNotContainsString( 'javascript:', $content, 'And it does not reach the page.' );
+	}
+
+	/**
+	 * A CDN path can hold a transform with a comma in it. Splitting the list
+	 * on commas before whitespace truncated the URL.
+	 */
+	public function test_clean_content_keeps_a_srcset_url_containing_a_comma() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/flood.jpg" srcset="https://cdn.some-other-domain.test/upload/w_800,h_600/flood.jpg 800w" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringContainsString( 'w_800,h_600/flood.jpg 800w', $content, 'The whole URL survives with its descriptor.' );
+	}
+
+	/**
+	 * A srcset longer than the budget is left off rather than shipped.
+	 */
+	public function test_clean_content_drops_an_oversized_srcset() {
+		$candidates = [];
+		for ( $i = 0; $i < 80; $i++ ) {
+			$candidates[] = 'https://some-other-domain.test/a-very-long-image-file-name-' . $i . '.jpg ' . ( $i + 1 ) . 'w';
+		}
+
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="' . implode( ', ', $candidates ) . '" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'An oversized list is left off.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'The source still loads.' );
+	}
+
+	/**
+	 * The post content filter is public, so a third-party callback can hand
+	 * back something that is not a string. The page a reader reaches when
+	 * everything else is down must not be the one that fatals.
+	 */
+	public function test_clean_content_survives_a_filter_returning_a_non_string() {
+		foreach ( [ null, [ 'not', 'a', 'string' ] ] as $return_value ) {
+			$callback = function () use ( $return_value ) {
+				return $return_value;
+			};
+
+			add_filter( 'newspack_lite_site_post_content', $callback, 99 );
+			$content = Lite_Site::clean_content( '<p>Story.</p>' );
+			remove_filter( 'newspack_lite_site_post_content', $callback, 99 );
+
+			$this->assertIsString( $content, 'clean_content() always returns a string.' );
+		}
+	}
 }
