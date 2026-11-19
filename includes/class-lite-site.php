@@ -1820,10 +1820,10 @@ class Lite_Site {
 	 * @return bool Whether to leave the image out of the page.
 	 */
 	private static function is_decorative_image( array $image ): bool {
-		// A Cover block's background. This is the behavior the guide
-		// describes rather than a technical necessity: the lite page loads no
-		// block CSS, so a placeholder here would not sit on top of anything.
-		// Whether a Cover hero should become a box instead is a product call.
+		// A Cover block's background, dropped by decision rather than by
+		// necessity. The lite page loads no block CSS, so a placeholder here
+		// would not in fact sit on top of anything; a Cover hero simply does
+		// not get a box, which is what the guide tells publishers.
 		if ( $image['has_cover_class'] ) {
 			return true;
 		}
