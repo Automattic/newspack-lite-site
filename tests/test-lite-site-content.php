@@ -400,6 +400,95 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Places a source can be forged, and where the real one sits in the tag.
+	 *
+	 * @return array[]
+	 */
+	public function forged_source_provider(): array {
+		$real   = 'https://some-other-domain.test/real.jpg';
+		$forged = 'data-src="https://forger.test/p.jpg"';
+
+		return [
+			'forged inside title, real src first' => [
+				'<img src="' . $real . '" alt="Flood" title=\'x ' . $forged . ' y\'>',
+			],
+			'forged inside title, real src last'  => [
+				'<img title=\'x ' . $forged . ' y\' src="' . $real . '" alt="Flood">',
+			],
+			'forged inside data-caption'          => [
+				'<img src="' . $real . '" data-caption=\'' . $forged . '\' alt="Flood">',
+			],
+			'forged inside alt'                   => [
+				'<img alt=\'' . $forged . '\' src="' . $real . '">',
+			],
+		];
+	}
+
+	/**
+	 * An attribute value is text, not markup. A source written inside one is not
+	 * an attribute of the tag, so it cannot be the source the reader is offered:
+	 * the browser would load the real one, and the placeholder has to agree with
+	 * the browser or it sends the reader somewhere the page never pointed.
+	 *
+	 * @dataProvider forged_source_provider
+	 *
+	 * @param string $img The image tag to wrap in a figure.
+	 */
+	public function test_clean_content_ignores_a_source_forged_in_an_attribute_value( string $img ) {
+		$content = Lite_Site::clean_content( '<figure>' . $img . '</figure>' );
+
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/real.jpg"',
+			$content,
+			'The real source should be the one offered.'
+		);
+		$this->assertStringNotContainsString(
+			'data-src="https://forger.test/p.jpg"',
+			$content,
+			'A source written inside another attribute value should never be read as an attribute.'
+		);
+	}
+
+	/**
+	 * Attribute values need no quotes to be valid HTML, and a hand-written post
+	 * or an imported feed item may carry none. Reading them with a pattern that
+	 * required quotes dropped the whole figure.
+	 */
+	public function test_clean_content_reads_unquoted_image_attributes() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src=https://some-other-domain.test/real.jpg alt=Flood></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'An unquoted source should still be read.' );
+		$this->assertStringContainsString( 'data-alt="Flood"', $content, 'An unquoted alt should still be read.' );
+	}
+
+	/**
+	 * A tag name and an attribute name are case-insensitive in HTML.
+	 */
+	public function test_clean_content_reads_an_uppercase_image_tag() {
+		$content = Lite_Site::clean_content(
+			'<figure><IMG SRC="https://some-other-domain.test/real.jpg" ALT="Flood"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'An uppercase source should still be read.' );
+		$this->assertStringContainsString( 'data-alt="Flood"', $content, 'An uppercase alt should still be read.' );
+	}
+
+	/**
+	 * The alt text is the whole of what a placeholder can tell a reader about an
+	 * image they have not loaded, so a data-alt written first must not take its
+	 * place.
+	 */
+	public function test_clean_content_keeps_the_real_alt_beside_a_data_alt() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/real.jpg" data-alt="" alt="Flood damage on Mill Road"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-alt="Flood damage on Mill Road"', $content, 'The alt text should survive a data-alt.' );
+	}
+
+	/**
 	 * A srcset candidate replaces src rather than supplementing it, so a srcset
 	 * belonging to the stub must not travel with a source read from elsewhere.
 	 */

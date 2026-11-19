@@ -50,6 +50,22 @@ class Lite_Site {
 	];
 
 	/**
+	 * Every attribute of an <img> this class reads.
+	 *
+	 * @var array
+	 */
+	const IMAGE_ATTRIBUTES = [
+		'src',
+		'srcset',
+		'data-src',
+		'data-srcset',
+		'data-lazy-src',
+		'data-lazy-srcset',
+		'data-original',
+		'alt',
+	];
+
+	/**
 	 * Classes this plugin emits and the lite page's own script acts on.
 	 *
 	 * They are stripped from incoming content before any pass adds them, so a
@@ -1820,19 +1836,40 @@ class Lite_Site {
 	}
 
 	/**
-	 * Read one attribute out of an <img> tag's attribute text.
+	 * Read the attributes of the first <img> in a fragment.
 	 *
-	 * The lookbehind matters: a hyphen is a non-word character, so \bsrc= also
-	 * matches data-src=, and the value read would not be the one asked for.
+	 * The values come from the parser rather than from a pattern over the tag's
+	 * text. A pattern reads a literal data-src="..." written inside the value of
+	 * some other attribute as though it were an attribute of its own, so a
+	 * source forged in a title or a caption is chosen over the real one, and the
+	 * image the reader gets is not the image the browser would have loaded.
 	 *
-	 * @param string $attrs The attribute text of an <img> tag.
-	 * @param string $name  The attribute name to read.
-	 * @return string The attribute value, or '' when the tag has no such attribute.
+	 * A fragment with no img the parser can reach yields no source, and the
+	 * caller hands the figure back untouched, which is what it does for a figure
+	 * that never had an image.
+	 *
+	 * @param string $html A fragment expected to contain an <img> tag.
+	 * @return array The attributes in IMAGE_ATTRIBUTES, each '' when the tag does not carry it.
 	 */
-	private static function read_img_attr( string $attrs, string $name ): string {
-		$pattern = '/(?<![-\w])' . preg_quote( $name, '/' ) . '=["\']([^"\']+)["\']/i';
+	private static function read_img_attrs( string $html ): array {
+		$attributes = array_fill_keys( self::IMAGE_ATTRIBUTES, '' );
+		$processor  = new \WP_HTML_Tag_Processor( $html );
 
-		return preg_match( $pattern, $attrs, $match ) ? $match[1] : '';
+		if ( ! $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
+			return $attributes;
+		}
+
+		foreach ( self::IMAGE_ATTRIBUTES as $name ) {
+			$value = $processor->get_attribute( $name );
+
+			// An attribute written without a value reads as true, and one the tag
+			// does not carry as null. Only a string holds a source or a caption.
+			if ( is_string( $value ) ) {
+				$attributes[ $name ] = $value;
+			}
+		}
+
+		return $attributes;
 	}
 
 	/**
@@ -1847,17 +1884,17 @@ class Lite_Site {
 	 * than supplementing it, so taking the source from the real image and the
 	 * srcset from the stub would still load the stub.
 	 *
-	 * @param string $attrs The attribute text of an <img> tag.
+	 * @param array $attributes The attributes read by read_img_attrs().
 	 * @return array {
 	 *     @type string $src    The chosen source, not yet escaped, or ''.
 	 *     @type string $srcset The srcset belonging to it, already vetted, or ''.
 	 * }
 	 */
-	private static function pick_figure_source( string $attrs ): array {
+	private static function pick_figure_source( array $attributes ): array {
 		foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
 			list( $src_attr, $srcset_attr ) = $pair;
 
-			$src = self::read_img_attr( $attrs, $src_attr );
+			$src = $attributes[ $src_attr ];
 
 			if ( '' === $src ) {
 				continue;
@@ -1867,7 +1904,7 @@ class Lite_Site {
 				'src'    => $src,
 				'srcset' => '' === $srcset_attr
 					? ''
-					: self::safe_image_srcset( self::read_img_attr( $attrs, $srcset_attr ) ),
+					: self::safe_image_srcset( $attributes[ $srcset_attr ] ),
 			];
 		}
 
@@ -1892,20 +1929,11 @@ class Lite_Site {
 			return $figure_html;
 		}
 
-		$src    = '';
-		$srcset = '';
-		$alt    = '';
-
-		if ( preg_match( '/<img\b([^>]*)>/i', $figure_html, $img_match ) ) {
-			$attrs  = $img_match[1];
-			$source = self::pick_figure_source( $attrs );
-			$src    = $source['src'];
-			$srcset = $source['srcset'];
-
-			if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
-				$alt = $m[1];
-			}
-		}
+		$attributes = self::read_img_attrs( $figure_html );
+		$source     = self::pick_figure_source( $attributes );
+		$src        = $source['src'];
+		$srcset     = $source['srcset'];
+		$alt        = $attributes['alt'];
 
 		if ( ! $src ) {
 			return $figure_html;
