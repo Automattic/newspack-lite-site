@@ -106,13 +106,16 @@ defined( 'ABSPATH' ) || exit;
 	}
 	.lite-image-placeholder {
 		border: 1px solid currentcolor;
+		display: block;
 		margin: 0 0 1.5rem;
 		padding: 1rem;
 	}
 	.lite-image-label {
+		display: block;
 		margin: 0 0 0.5rem;
 	}
 	.lite-image-caption {
+		display: block;
 		font-size: 0.875rem;
 		margin: 0 0 1rem;
 	}

@@ -130,46 +130,44 @@ if ( $is_liveblog ) {
 	?>
 	
 	<script>
-		class ImageLoader {
-			constructor() {
-				document.addEventListener( 'click', ( e ) => this.handleClick( e ) );
+		( function () {
+			// A single template can render inside another, so this block can
+			// be printed twice. A class declaration would throw on the second.
+			if ( window.liteImageLoaderReady ) {
+				return;
 			}
+			window.liteImageLoaderReady = true;
 
-			handleClick( e ) {
-				// Only a button, and only one carrying a class that reached the
-				// page from this plugin rather than from post content. The
-				// class is cleared from incoming content before any pass adds
-				// it, which is what makes that true; see RESERVED_CLASSES.
-				const btn = e.target.closest( 'button.lite-image-load-btn' );
-				if ( ! btn ) {
-					return;
-				}
-
-				const placeholder = btn.closest( '.lite-image-placeholder' );
-				if ( ! placeholder ) {
-					return;
-				}
-
-				const figure = this.buildFigure( placeholder );
-				placeholder.parentNode.replaceChild( figure, placeholder );
-			}
-
-			buildFigure( placeholder ) {
+			function buildFigure( placeholder ) {
 				const {
 					src,
 					srcset,
 					alt = '',
 					caption = '',
+					width = '',
+					height = '',
 				} = placeholder.dataset;
 
 				const figure = document.createElement( 'figure' );
 				const img    = document.createElement( 'img' );
+
+				// Not in the tab order, but focusable by script, so focus can
+				// follow the image that replaces the button.
+				figure.setAttribute( 'tabindex', '-1' );
 
 				img.src = src;
 				img.alt = alt;
 
 				if ( srcset ) {
 					img.srcset = srcset;
+				}
+
+				// Declared so the browser can reserve the space before the
+				// bytes arrive. Without them the article reflows under the
+				// reader, on exactly the connections this page is for.
+				if ( width && height ) {
+					img.width  = width;
+					img.height = height;
 				}
 
 				figure.appendChild( img );
@@ -182,9 +180,45 @@ if ( $is_liveblog ) {
 
 				return figure;
 			}
-		}
 
-		new ImageLoader();
+			function handleClick( e ) {
+				// Only a button, and only one whose class reached the page
+				// from this plugin rather than from post content. A class is
+				// not provenance on its own: everything a placeholder is made
+				// of passes kses, so a Custom HTML block or an imported feed
+				// item could write one and have this fetch whatever host it
+				// named. What makes the class trustworthy is that it is
+				// cleared from incoming content before any pass adds it. See
+				// RESERVED_CLASSES.
+				const btn = e.target.closest( 'button.lite-image-load-btn' );
+				if ( ! btn ) {
+					return;
+				}
+
+				const placeholder = btn.closest( '.lite-image-placeholder' );
+				if ( ! placeholder || ! placeholder.dataset.src ) {
+					return;
+				}
+
+				// The classic editor links an image to the full-size original
+				// by default, so this button can sit inside an <a>. Without
+				// this the tap would navigate the reader to that file -- the
+				// heaviest asset on the site, over the connection this page
+				// exists to protect -- instead of inlining the smaller one.
+				// Once the image is in place the link works as it should.
+				e.preventDefault();
+
+				const figure = buildFigure( placeholder );
+				placeholder.parentNode.replaceChild( figure, placeholder );
+
+				// replaceChild destroys the button that was focused, which
+				// drops a keyboard or screen reader user back to the document
+				// with nothing announced. Move focus to what replaced it.
+				figure.focus();
+			}
+
+			document.addEventListener( 'click', handleClick );
+		}() );
 	</script>
 </body>
 </html>

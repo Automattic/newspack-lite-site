@@ -32,7 +32,7 @@ Images are not loaded until the reader asks for them. This keeps pages small on 
 
 Where an image was, the reader sees a box. It shows **Image:** followed by the image's alt text, and **Caption:** followed by the caption, including any photo credit written into it. Write alt text for every image, so the box tells readers what they would see.
 
-Only images placed in a figure, such as the Image block, become a box. Images placed without one, such as images inside a line of text and Cover block backgrounds, are removed. Classic editor images become boxes on most themes when they have a caption.
+Images become a box wherever they are: the Image block, a classic editor image, an image inside a line of text, and images in content imported from a feed. Two kinds are removed instead of becoming a box, because a box with nothing in it tells a reader nothing: a Cover block background, which the block draws for itself, and a tracking pixel, which a feed often leaves at the end of a story.
 
 <Screenshot label="An image placeholder with its alt text, caption and Load image button, picked out" src="/screenshots/guides/lite-articles-2.webp" width={3024} height={1964} />
 
