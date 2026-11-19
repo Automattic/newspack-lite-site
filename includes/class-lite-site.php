@@ -37,6 +37,19 @@ class Lite_Site {
 	const SRCSET_WHITESPACE = " \t\n\r\f";
 
 	/**
+	 * Image source attributes in the order a reader should get them, each
+	 * paired with the srcset belonging to the same image.
+	 *
+	 * @var array
+	 */
+	const IMAGE_SOURCE_PAIRS = [
+		[ 'data-src', 'data-srcset' ],
+		[ 'data-lazy-src', 'data-lazy-srcset' ],
+		[ 'data-original', '' ],
+		[ 'src', 'srcset' ],
+	];
+
+	/**
 	 * Classes this plugin emits and the lite page's own script acts on.
 	 *
 	 * They are stripped from incoming content before any pass adds them, so a
@@ -1807,6 +1820,64 @@ class Lite_Site {
 	}
 
 	/**
+	 * Read one attribute out of an <img> tag's attribute text.
+	 *
+	 * The lookbehind matters: a hyphen is a non-word character, so \bsrc= also
+	 * matches data-src=, and the value read would not be the one asked for.
+	 *
+	 * @param string $attrs The attribute text of an <img> tag.
+	 * @param string $name  The attribute name to read.
+	 * @return string The attribute value, or '' when the tag has no such attribute.
+	 */
+	private static function read_img_attr( string $attrs, string $name ): string {
+		$pattern = '/(?<![-\w])' . preg_quote( $name, '/' ) . '=["\']([^"\']+)["\']/i';
+
+		return preg_match( $pattern, $attrs, $match ) ? $match[1] : '';
+	}
+
+	/**
+	 * Choose which of an <img> tag's source attributes the reader should get.
+	 *
+	 * A lazy loader leaves the real image in a data attribute and puts a stub in
+	 * src, so the literal src is the last choice rather than the first. Reading
+	 * src alone drops a figure whose image carries no src at all, which is what
+	 * Jetpack Lazy Images and WP Rocket emit.
+	 *
+	 * The pair is chosen together because a srcset candidate replaces src rather
+	 * than supplementing it, so taking the source from the real image and the
+	 * srcset from the stub would still load the stub.
+	 *
+	 * @param string $attrs The attribute text of an <img> tag.
+	 * @return array {
+	 *     @type string $src    The chosen source, not yet escaped, or ''.
+	 *     @type string $srcset The srcset belonging to it, already vetted, or ''.
+	 * }
+	 */
+	private static function pick_figure_source( string $attrs ): array {
+		foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
+			list( $src_attr, $srcset_attr ) = $pair;
+
+			$src = self::read_img_attr( $attrs, $src_attr );
+
+			if ( '' === $src ) {
+				continue;
+			}
+
+			return [
+				'src'    => $src,
+				'srcset' => '' === $srcset_attr
+					? ''
+					: self::safe_image_srcset( self::read_img_attr( $attrs, $srcset_attr ) ),
+			];
+		}
+
+		return [
+			'src'    => '',
+			'srcset' => '',
+		];
+	}
+
+	/**
 	 * Convert a <figure> element into a lazy-load image placeholder.
 	 *
 	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
@@ -1826,16 +1897,11 @@ class Lite_Site {
 		$alt    = '';
 
 		if ( preg_match( '/<img\b([^>]*)>/i', $figure_html, $img_match ) ) {
-			$attrs = $img_match[1];
-			// Not \b: a hyphen is a non-word character, so \bsrc= also matches
-			// data-src=, and the value this vets would not be the one the
-			// browser uses.
-			if ( preg_match( '/(?<![-\w])src=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-				$src = $m[1];
-			}
-			if ( preg_match( '/(?<![-\w])srcset=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-				$srcset = $m[1];
-			}
+			$attrs  = $img_match[1];
+			$source = self::pick_figure_source( $attrs );
+			$src    = $source['src'];
+			$srcset = $source['srcset'];
+
 			if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
 				$alt = $m[1];
 			}
@@ -1858,8 +1924,7 @@ class Lite_Site {
 			)
 			: __( 'Image', 'newspack-lite-site' );
 
-		$attrs  = sprintf( ' data-src="%s"', esc_url( $src ) );
-		$srcset = self::safe_image_srcset( $srcset );
+		$attrs = sprintf( ' data-src="%s"', esc_url( $src ) );
 		if ( $srcset ) {
 			$attrs .= sprintf( ' data-srcset="%s"', $srcset );
 		}

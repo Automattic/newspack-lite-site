@@ -345,6 +345,86 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * Shapes a lazy loader leaves an <img> in, and the source a reader should get.
+	 *
+	 * @return array[]
+	 */
+	public function lazy_image_source_provider(): array {
+		return [
+			'data-src beside a stub src'  => [
+				'<img src="https://some-other-domain.test/1x1.gif" data-src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'a stub src written after it' => [
+				'<img data-src="https://some-other-domain.test/real.jpg" src="https://some-other-domain.test/1x1.gif">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'data-src with no src at all' => [
+				'<img data-src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'data-lazy-src'               => [
+				'<img src="https://some-other-domain.test/1x1.gif" data-lazy-src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'data-original'               => [
+				'<img data-original="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'an ordinary src on its own'  => [
+				'<img src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+		];
+	}
+
+	/**
+	 * A lazy loader puts a stub in src and the real image in a data attribute, so
+	 * reading src alone offers the reader a transparent pixel, and reading it
+	 * alone when there is no src at all offers them nothing.
+	 *
+	 * @dataProvider lazy_image_source_provider
+	 *
+	 * @param string $img      The image tag to wrap in a figure.
+	 * @param string $expected The source the placeholder should carry.
+	 */
+	public function test_clean_content_reads_the_source_a_lazy_loader_left( string $img, string $expected ) {
+		$content = Lite_Site::clean_content( '<figure>' . $img . '</figure>' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'A placeholder should be emitted.' );
+		$this->assertStringContainsString(
+			sprintf( 'data-src="%s"', $expected ),
+			$content,
+			'The placeholder should carry the image the browser would have loaded.'
+		);
+	}
+
+	/**
+	 * A srcset candidate replaces src rather than supplementing it, so a srcset
+	 * belonging to the stub must not travel with a source read from elsewhere.
+	 */
+	public function test_clean_content_pairs_a_srcset_with_the_source_it_belongs_to() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/1x1.gif" srcset="https://some-other-domain.test/1x1.gif 2x" data-src="https://some-other-domain.test/real.jpg"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'The real image should be the source.' );
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The stub\'s srcset should not travel with it.' );
+	}
+
+	/**
+	 * The srcset that belongs to the chosen source does travel with it.
+	 */
+	public function test_clean_content_keeps_the_srcset_belonging_to_the_chosen_source() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/1x1.gif" data-src="https://some-other-domain.test/real.jpg" data-srcset="https://some-other-domain.test/real-2x.jpg 2x"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'The real image should be the source.' );
+		$this->assertStringContainsString( 'data-srcset="https://some-other-domain.test/real-2x.jpg 2x"', $content, 'Its own srcset should be kept.' );
+	}
+
+	/**
 	 * A figure with no image is left as-is for kses to deal with.
 	 */
 	public function test_clean_content_ignores_figure_without_image() {
