@@ -144,16 +144,30 @@ if ( $is_liveblog ) {
 					srcset,
 					alt = '',
 					caption = '',
+					width = '',
+					height = '',
 				} = placeholder.dataset;
 
 				const figure = document.createElement( 'figure' );
 				const img    = document.createElement( 'img' );
+
+				// Not in the tab order, but focusable by script, so focus can
+				// follow the image that replaces the button.
+				figure.setAttribute( 'tabindex', '-1' );
 
 				img.src = src;
 				img.alt = alt;
 
 				if ( srcset ) {
 					img.srcset = srcset;
+				}
+
+				// Declared so the browser can reserve the space before the
+				// bytes arrive. Without them the article reflows under the
+				// reader, on exactly the connections this page is for.
+				if ( width && height ) {
+					img.width  = width;
+					img.height = height;
 				}
 
 				figure.appendChild( img );
@@ -168,11 +182,14 @@ if ( $is_liveblog ) {
 			}
 
 			function handleClick( e ) {
-				// Only a button this plugin printed. Matching any element
-				// would let a Custom HTML block or an imported feed item
-				// forge a placeholder and have this fetch whatever host it
-				// named, from the page whose promise is that nothing
-				// third-party loads unasked.
+				// Only a button, and only one whose class reached the page
+				// from this plugin rather than from post content. A class is
+				// not provenance on its own: everything a placeholder is made
+				// of passes kses, so a Custom HTML block or an imported feed
+				// item could write one and have this fetch whatever host it
+				// named. What makes the class trustworthy is that it is
+				// cleared from incoming content before any pass adds it. See
+				// RESERVED_CLASSES.
 				const btn = e.target.closest( 'button.lite-image-load-btn' );
 				if ( ! btn ) {
 					return;
@@ -191,7 +208,13 @@ if ( $is_liveblog ) {
 				// Once the image is in place the link works as it should.
 				e.preventDefault();
 
-				placeholder.parentNode.replaceChild( buildFigure( placeholder ), placeholder );
+				const figure = buildFigure( placeholder );
+				placeholder.parentNode.replaceChild( figure, placeholder );
+
+				// replaceChild destroys the button that was focused, which
+				// drops a keyboard or screen reader user back to the document
+				// with nothing announced. Move focus to what replaced it.
+				figure.focus();
 			}
 
 			document.addEventListener( 'click', handleClick );
