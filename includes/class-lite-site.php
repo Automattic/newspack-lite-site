@@ -23,6 +23,38 @@ class Lite_Site {
 	const MAX_DESCENDANTS_CLEARED = 100;
 
 	/**
+	 * The longest srcset, in characters, this page will carry.
+	 *
+	 * @var int
+	 */
+	const SRCSET_MAX_LENGTH = 2048;
+
+	/**
+	 * ASCII whitespace, as the HTML srcset grammar defines it.
+	 *
+	 * @var string
+	 */
+	const SRCSET_WHITESPACE = " \t\n\r\f";
+
+	/**
+	 * Classes this plugin emits and the lite page's own script acts on.
+	 *
+	 * They are stripped from incoming content before any pass adds them, so a
+	 * class in a post or an imported feed item cannot stand in for one of
+	 * ours. A class is not provenance, and kses allows every piece of markup a
+	 * placeholder is made of.
+	 *
+	 * @var string[]
+	 */
+	const RESERVED_CLASSES = [
+		'lite-image-placeholder',
+		'lite-image-label',
+		'lite-image-caption',
+		'lite-image-load-btn',
+		'lite-table-scroll',
+	];
+
+	/**
 	 * In-memory cache for the plugin settings option.
 	 *
 	 * @var array|null
@@ -1421,7 +1453,14 @@ class Lite_Site {
 	 */
 	public static function clean_content( $content ) {
 		// Apply the full WP content pipeline without plugin callbacks from the_content.
-		$content = apply_filters( 'newspack_lite_site_post_content', $content );
+		// A third-party callback on this public filter can return anything, and
+		// the rest of this method needs a string.
+		$filtered = apply_filters( 'newspack_lite_site_post_content', $content );
+		$content  = is_string( $filtered ) ? $filtered : (string) $content;
+
+		// Clear the classes this plugin's own script acts on, before any pass
+		// below adds them. See RESERVED_CLASSES.
+		$content = self::strip_reserved_classes( $content );
 
 		// Remove HTML comments. The single-token `.` with the `s` modifier stays
 		// linear on an unclosed `<!--`, where alternation-based patterns
@@ -1607,12 +1646,141 @@ class Lite_Site {
 	 * A pattern that hits a PCRE limit returns null, and passing that on blanks
 	 * the article — on the page a reader reaches when everything else is down.
 	 *
+	 * The parameters stay loosely typed on purpose. newspack_lite_site_post_content
+	 * is a public filter, so $original can be whatever a third-party callback
+	 * returned. A TypeError here would take down the page a reader reaches when
+	 * everything else is already down, which is the opposite of the point.
+	 *
 	 * @param string|null $result   The preg_* result.
-	 * @param string      $original The string passed in.
+	 * @param mixed       $original The string passed in.
 	 * @return string
 	 */
-	private static function or_original( ?string $result, string $original ): string {
-		return is_string( $result ) ? $result : $original;
+	private static function or_original( $result, $original ): string {
+		if ( is_string( $result ) ) {
+			return $result;
+		}
+
+		return is_string( $original ) ? $original : '';
+	}
+
+	/**
+	 * Remove this plugin's own control classes from incoming content.
+	 *
+	 * Everything a placeholder is made of -- a container with data-src, a
+	 * classed button -- passes wp_kses(), so post content and imported feed
+	 * items can write one. The lite page's script would then act on it and a
+	 * reader's tap would fetch whatever host it named, from the page whose
+	 * promise is that nothing third-party loads unasked.
+	 *
+	 * Scoping the script's selector cannot fix that: a class is not
+	 * provenance. Clearing these names before any pass adds them is what makes
+	 * a placeholder on the page one this plugin built.
+	 *
+	 * @param string $html Post content.
+	 * @return string Content with the reserved classes cleared.
+	 */
+	private static function strip_reserved_classes( string $html ): string {
+		if ( false === stripos( $html, 'lite-image-' ) && false === stripos( $html, 'lite-table-' ) ) {
+			return $html;
+		}
+
+		$processor = new \WP_HTML_Tag_Processor( $html );
+
+		while ( $processor->next_tag() ) {
+			foreach ( self::RESERVED_CLASSES as $class ) {
+				if ( true === $processor->has_class( $class ) ) {
+					$processor->remove_class( $class );
+				}
+			}
+		}
+
+		return $processor->get_updated_html();
+	}
+
+	/**
+	 * Rebuild a srcset from candidates this plugin would accept as a source.
+	 *
+	 * The placeholder's data-src is checked with esc_url(), but data-srcset was
+	 * copied through with nothing but attribute escaping. Per the HTML standard
+	 * a srcset candidate REPLACES src rather than supplementing it, so an
+	 * unvetted candidate here is the image the browser actually loads: a
+	 * tracker, or an inline payload of any size.
+	 *
+	 * One rejected candidate drops the whole list. A partly filtered set would
+	 * still change which image a given screen gets, and the reader still has
+	 * the vetted data-src to load.
+	 *
+	 * @param string $srcset Raw srcset value.
+	 * @return string Escaped srcset, or an empty string.
+	 */
+	private static function safe_image_srcset( string $srcset ): string {
+		$parts = [];
+
+		foreach ( self::parse_srcset( $srcset ) as $candidate ) {
+			$url = esc_url( $candidate['url'] );
+
+			if ( '' === $url ) {
+				return '';
+			}
+
+			$parts[] = '' === $candidate['descriptor']
+				? $url
+				: $url . ' ' . esc_attr( $candidate['descriptor'] );
+		}
+
+		if ( ! $parts ) {
+			return '';
+		}
+
+		$result = implode( ', ', $parts );
+
+		return strlen( $result ) > self::SRCSET_MAX_LENGTH ? '' : $result;
+	}
+
+	/**
+	 * Split a srcset into its candidates, the way the HTML grammar does.
+	 *
+	 * A URL is collected up to the first ASCII whitespace, not the first comma,
+	 * so a CDN path holding a transform like w_800,h_600 survives intact.
+	 *
+	 * @param string $srcset Raw srcset value.
+	 * @return array<int,array{url:string,descriptor:string}> Candidates, in order.
+	 */
+	private static function parse_srcset( string $srcset ): array {
+		$candidates = [];
+		$length     = strlen( $srcset );
+		$position   = 0;
+
+		while ( $position < $length ) {
+			$position += strspn( $srcset, self::SRCSET_WHITESPACE . ',', $position );
+
+			if ( $position >= $length ) {
+				break;
+			}
+
+			$url_length = strcspn( $srcset, self::SRCSET_WHITESPACE, $position );
+			$url        = substr( $srcset, $position, $url_length );
+			$position  += $url_length;
+			$descriptor = '';
+
+			if ( str_ends_with( $url, ',' ) ) {
+				$url = rtrim( $url, ',' );
+			} else {
+				$position         += strspn( $srcset, self::SRCSET_WHITESPACE, $position );
+				$descriptor_length = strcspn( $srcset, ',', $position );
+				$descriptor        = trim( substr( $srcset, $position, $descriptor_length ) );
+				$position         += $descriptor_length + 1;
+			}
+
+			if ( '' !== $url ) {
+				$candidates[] = [
+					'url'        => $url,
+					'descriptor' => $descriptor,
+				];
+			}
+		}
+
+		return $candidates;
 	}
 
 	/**
@@ -1914,7 +2082,7 @@ class Lite_Site {
 
 		$attrs = sprintf( ' data-src="%s"', $src );
 		if ( $srcset ) {
-			$attrs .= sprintf( ' data-srcset="%s"', esc_attr( $srcset ) );
+			$attrs .= sprintf( ' data-srcset="%s"', $srcset );
 		}
 		if ( $alt ) {
 			$attrs .= sprintf( ' data-alt="%s"', esc_attr( $alt ) );
