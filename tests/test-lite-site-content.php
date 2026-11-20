@@ -132,11 +132,173 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	 * Markup outside the allowlist is removed.
 	 */
 	public function test_clean_content_strips_disallowed_markup() {
-		$content = Lite_Site::clean_content( '<p>Before</p><iframe src="https://some-other-domain.test/embed"></iframe><table><tr><td>Cell</td></tr></table>' );
+		$content = Lite_Site::clean_content( '<p>Before</p><iframe src="https://some-other-domain.test/embed"></iframe><video src="movie.mp4"></video>' );
 
 		$this->assertStringNotContainsString( '<iframe', $content, 'Iframes should be stripped.' );
-		$this->assertStringNotContainsString( '<table', $content, 'Tables should be stripped.' );
+		$this->assertStringNotContainsString( '<video', $content, 'Video elements should be stripped.' );
 		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * Tables keep their structure. A results table, a list of closures or a
+	 * set of evacuation zones is the reason a reader is on the lite site at
+	 * all, and without the table elements every cell runs into the next.
+	 */
+	public function test_clean_content_keeps_tables() {
+		$content = Lite_Site::clean_content( $this->table_block() );
+
+		$this->assertStringContainsString( '<table>', $content, 'The table survives.' );
+		$this->assertStringContainsString( '<th scope="col">Zone</th>', $content, 'Header cells keep their scope.' );
+		$this->assertStringContainsString( '<td>North</td>', $content, 'Body cells survive.' );
+		$this->assertStringContainsString( '<td>North</td><td>Evacuate</td>', preg_replace( '/\s+/', '', $content ), 'Each cell stays in its own element.' );
+	}
+
+	/**
+	 * A table gets its own horizontal scroller, so a wide table can overflow
+	 * without the whole article column becoming a scroll container, and stays
+	 * a table so assistive technology still reads it as one.
+	 */
+	public function test_wraps_a_table_in_a_scroller_the_reader_can_use() {
+		// Through the same sanitizer the template applies, so the test cannot
+		// pass on markup the page never serves.
+		$html = Lite_Site::wrap_tables_for_scrolling( wp_kses_post( Lite_Site::clean_content( $this->table_block() ) ) );
+
+		$this->assertStringContainsString( 'class="lite-table-scroll"', $html, 'The table is wrapped in its own scroller.' );
+		$this->assertStringContainsString( 'tabindex="0"', $html, 'The scroller carries the attribute the keyboard needs.' );
+		$this->assertStringContainsString( 'aria-label=', $html, 'The scroller is named, so a keyboard stop is explained.' );
+		$this->assertStringContainsString( '</table></div>', $html, 'The wrapper closes around the table.' );
+	}
+
+	/**
+	 * Only the outermost table is wrapped. Wrapping a nested one would close
+	 * the div inside the outer table, where the parser drops it, leaving the
+	 * wrapper open over the rest of the article.
+	 */
+	public function test_wraps_only_the_outermost_of_nested_tables() {
+		$html = Lite_Site::wrap_tables_for_scrolling(
+			'<table><tr><td>outer<table><tr><td>inner</td></tr></table></td></tr></table><p>After.</p>'
+		);
+
+		$this->assertSame( 1, substr_count( $html, 'lite-table-scroll' ), 'Only one scroller is emitted.' );
+		$this->assertStringStartsWith( '<div class="lite-table-scroll"', $html, 'The scroller opens before the outer table.' );
+		$this->assertStringContainsString( '</table></div><p>After.</p>', $html, 'The scroller closes after the outer table.' );
+	}
+
+	/**
+	 * A table whose closing tag never arrives is left alone rather than being
+	 * wrapped by an unbalanced div.
+	 */
+	public function test_an_unclosed_table_does_not_swallow_what_follows() {
+		$html = Lite_Site::wrap_tables_for_scrolling(
+			'<table><tr><td>orphan</td></tr><p>Between.</p><table><tr><td>good</td></tr></table>'
+		);
+
+		$this->assertStringNotContainsString( '<div class="lite-table-scroll" tabindex="0" role="group" aria-label="Table, scrolls sideways"><table><tr><td>orphan', $html, 'The wrapper does not open at the unclosed table.' );
+		$this->assertStringContainsString( '<p>Between.</p>', $html, 'The paragraph between the tables is left where it was.' );
+	}
+
+	/**
+	 * Only one table is involved, and the wrapper closes around it.
+	 */
+	public function test_wraps_a_single_closed_table() {
+		$html = Lite_Site::wrap_tables_for_scrolling( '<p>Before.</p><table><tr><td>North</td></tr></table><p>After.</p>' );
+
+		$this->assertStringContainsString( '<p>Before.</p><div class="lite-table-scroll"', $html, 'The wrapper opens at the table.' );
+		$this->assertStringContainsString( '</table></div><p>After.</p>', $html, 'The wrapper closes at the table.' );
+	}
+
+	/**
+	 * A self-closing table tag closes nothing, so it must not strand the walk
+	 * and leave every later table unwrapped.
+	 */
+	public function test_a_self_closing_table_tag_does_not_strand_the_walk() {
+		$html = Lite_Site::wrap_tables_for_scrolling( '<table /><p>Text.</p><table><tr><td>North</td></tr></table>' );
+
+		$this->assertSame( 1, substr_count( $html, 'lite-table-scroll' ), 'The real table is still wrapped.' );
+	}
+
+	/**
+	 * A failed preg_* call falls back to its input rather than passing null on,
+	 * which would blank the article.
+	 */
+	public function test_a_failed_pattern_falls_back_to_the_original() {
+		$this->assertSame( 'original', self::invoke_private( Lite_Site::class, 'or_original', [ null, 'original' ] ), 'A null result falls back.' );
+		$this->assertSame( 'replaced', self::invoke_private( Lite_Site::class, 'or_original', [ 'replaced', 'original' ] ), 'A string result is kept.' );
+	}
+
+	/**
+	 * A large figure must not defeat the content pipeline. A pattern that hits
+	 * a PCRE limit returns null, which would blank the article and cache the
+	 * blank — on a results table during an election, say.
+	 */
+	public function test_clean_content_survives_a_very_large_figure() {
+		$rows = '';
+		for ( $i = 0; $i < 400; $i++ ) {
+			$rows .= '<tr><td>Precinct ' . $i . '</td><td>Reporting</td><td>Turnout steady through the afternoon</td></tr>';
+		}
+		$content = Lite_Site::clean_content( '<figure class="wp-block-table"><table>' . $rows . '</table></figure>' );
+
+		$this->assertNotSame( '', $content, 'A large figure does not blank the article.' );
+		$this->assertStringContainsString( 'Precinct 399', $content, 'The last row survives.' );
+	}
+
+	/**
+	 * A table's caption survives. The block editor saves it as a figcaption
+	 * beside the table, not as a caption inside it.
+	 */
+	public function test_clean_content_keeps_a_block_table_caption() {
+		$content = Lite_Site::clean_content( $this->table_block() );
+
+		$this->assertStringContainsString( '<figcaption', $content, 'The block editor caption survives as an element.' );
+		$this->assertStringContainsString( 'Evacuation zones', $content, 'The caption text survives.' );
+		$this->assertStringNotContainsString( '</table>Evacuation', preg_replace( '/\s+/', '', $content ), 'The caption is not left as bare text after the table.' );
+	}
+
+	/**
+	 * A caption written inside the table, as the classic editor and imported
+	 * markup do, survives too.
+	 */
+	public function test_clean_content_keeps_an_inline_table_caption() {
+		$content = Lite_Site::clean_content( '<table><caption>Zones</caption><tr><td>North</td></tr></table>' );
+
+		$this->assertStringContainsString( '<caption>Zones</caption>', $content, 'An inline caption survives.' );
+	}
+
+	/**
+	 * An image inside a table must not take the table with it. The figure pass
+	 * runs before the allowlist, and the block editor wraps a table in a figure,
+	 * so an unguarded match would replace the whole table with one placeholder.
+	 */
+	public function test_clean_content_keeps_a_table_that_contains_an_image() {
+		$content = Lite_Site::clean_content(
+			'<!-- wp:table --><figure class="wp-block-table"><table><tr><td><img src="https://some-other-domain.test/map.jpg" alt="Zone map"></td><td>Evacuate</td></tr></table></figure><!-- /wp:table -->'
+		);
+
+		$this->assertStringContainsString( '<table>', $content, 'The table survives an image in a cell.' );
+		$this->assertStringContainsString( 'Evacuate', $content, 'Cell text beside the image survives.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A table figure is not treated as an image figure.' );
+	}
+
+	/**
+	 * A core table block, as the editor saves it.
+	 *
+	 * Block delimiters matter: do_blocks() skips wpautop for block content, and
+	 * without them the cells are separated by newlines the real bug never had.
+	 *
+	 * @return string
+	 */
+	private function table_block() {
+		return '<!-- wp:table --><figure class="wp-block-table"><table><thead><tr><th scope="col">Zone</th><th scope="col">Status</th></tr></thead><tbody><tr><td>North</td><td>Evacuate</td></tr></tbody></table><figcaption class="wp-element-caption">Evacuation zones</figcaption></figure><!-- /wp:table -->';
+	}
+
+	/**
+	 * A table cell may span rows and columns.
+	 */
+	public function test_clean_content_keeps_table_cell_spans() {
+		$content = Lite_Site::clean_content( '<table><tr><td colspan="2" rowspan="3">Cell</td></tr></table>' );
+
+		$this->assertStringContainsString( 'colspan="2"', $content, 'Column spans survive.' );
+		$this->assertStringContainsString( 'rowspan="3"', $content, 'Row spans survive.' );
 	}
 
 	/**
@@ -180,6 +342,175 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertStringContainsString( 'data-alt="A photo"', $content, 'The alt text should be preserved.' );
 		$this->assertStringContainsString( 'data-caption="The caption"', $content, 'The caption should be preserved.' );
 		$this->assertStringContainsString( 'lite-image-load-btn', $content, 'A load button should be offered.' );
+	}
+
+	/**
+	 * Shapes a lazy loader leaves an <img> in, and the source a reader should get.
+	 *
+	 * @return array[]
+	 */
+	public function lazy_image_source_provider(): array {
+		return [
+			'data-src beside a stub src'  => [
+				'<img src="https://some-other-domain.test/1x1.gif" data-src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'a stub src written after it' => [
+				'<img data-src="https://some-other-domain.test/real.jpg" src="https://some-other-domain.test/1x1.gif">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'data-src with no src at all' => [
+				'<img data-src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'data-lazy-src'               => [
+				'<img src="https://some-other-domain.test/1x1.gif" data-lazy-src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'data-original'               => [
+				'<img data-original="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+			'an ordinary src on its own'  => [
+				'<img src="https://some-other-domain.test/real.jpg">',
+				'https://some-other-domain.test/real.jpg',
+			],
+		];
+	}
+
+	/**
+	 * A lazy loader puts a stub in src and the real image in a data attribute, so
+	 * reading src alone offers the reader a transparent pixel, and reading it
+	 * alone when there is no src at all offers them nothing.
+	 *
+	 * @dataProvider lazy_image_source_provider
+	 *
+	 * @param string $img      The image tag to wrap in a figure.
+	 * @param string $expected The source the placeholder should carry.
+	 */
+	public function test_clean_content_reads_the_source_a_lazy_loader_left( string $img, string $expected ) {
+		$content = Lite_Site::clean_content( '<figure>' . $img . '</figure>' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'A placeholder should be emitted.' );
+		$this->assertStringContainsString(
+			sprintf( 'data-src="%s"', $expected ),
+			$content,
+			'The placeholder should carry the image the browser would have loaded.'
+		);
+	}
+
+	/**
+	 * Places a source can be forged, and where the real one sits in the tag.
+	 *
+	 * @return array[]
+	 */
+	public function forged_source_provider(): array {
+		$real   = 'https://some-other-domain.test/real.jpg';
+		$forged = 'data-src="https://forger.test/p.jpg"';
+
+		return [
+			'forged inside title, real src first' => [
+				'<img src="' . $real . '" alt="Flood" title=\'x ' . $forged . ' y\'>',
+			],
+			'forged inside title, real src last'  => [
+				'<img title=\'x ' . $forged . ' y\' src="' . $real . '" alt="Flood">',
+			],
+			'forged inside data-caption'          => [
+				'<img src="' . $real . '" data-caption=\'' . $forged . '\' alt="Flood">',
+			],
+			'forged inside alt'                   => [
+				'<img alt=\'' . $forged . '\' src="' . $real . '">',
+			],
+		];
+	}
+
+	/**
+	 * An attribute value is text, not markup. A source written inside one is not
+	 * an attribute of the tag, so it cannot be the source the reader is offered:
+	 * the browser would load the real one, and the placeholder has to agree with
+	 * the browser or it sends the reader somewhere the page never pointed.
+	 *
+	 * @dataProvider forged_source_provider
+	 *
+	 * @param string $img The image tag to wrap in a figure.
+	 */
+	public function test_clean_content_ignores_a_source_forged_in_an_attribute_value( string $img ) {
+		$content = Lite_Site::clean_content( '<figure>' . $img . '</figure>' );
+
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/real.jpg"',
+			$content,
+			'The real source should be the one offered.'
+		);
+		$this->assertStringNotContainsString(
+			'data-src="https://forger.test/p.jpg"',
+			$content,
+			'A source written inside another attribute value should never be read as an attribute.'
+		);
+	}
+
+	/**
+	 * Attribute values need no quotes to be valid HTML, and a hand-written post
+	 * or an imported feed item may carry none. Reading them with a pattern that
+	 * required quotes dropped the whole figure.
+	 */
+	public function test_clean_content_reads_unquoted_image_attributes() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src=https://some-other-domain.test/real.jpg alt=Flood></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'An unquoted source should still be read.' );
+		$this->assertStringContainsString( 'data-alt="Flood"', $content, 'An unquoted alt should still be read.' );
+	}
+
+	/**
+	 * A tag name and an attribute name are case-insensitive in HTML.
+	 */
+	public function test_clean_content_reads_an_uppercase_image_tag() {
+		$content = Lite_Site::clean_content(
+			'<figure><IMG SRC="https://some-other-domain.test/real.jpg" ALT="Flood"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'An uppercase source should still be read.' );
+		$this->assertStringContainsString( 'data-alt="Flood"', $content, 'An uppercase alt should still be read.' );
+	}
+
+	/**
+	 * The alt text is the whole of what a placeholder can tell a reader about an
+	 * image they have not loaded, so a data-alt written first must not take its
+	 * place.
+	 */
+	public function test_clean_content_keeps_the_real_alt_beside_a_data_alt() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/real.jpg" data-alt="" alt="Flood damage on Mill Road"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-alt="Flood damage on Mill Road"', $content, 'The alt text should survive a data-alt.' );
+	}
+
+	/**
+	 * A srcset candidate replaces src rather than supplementing it, so a srcset
+	 * belonging to the stub must not travel with a source read from elsewhere.
+	 */
+	public function test_clean_content_pairs_a_srcset_with_the_source_it_belongs_to() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/1x1.gif" srcset="https://some-other-domain.test/1x1.gif 2x" data-src="https://some-other-domain.test/real.jpg"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'The real image should be the source.' );
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The stub\'s srcset should not travel with it.' );
+	}
+
+	/**
+	 * The srcset that belongs to the chosen source does travel with it.
+	 */
+	public function test_clean_content_keeps_the_srcset_belonging_to_the_chosen_source() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/1x1.gif" data-src="https://some-other-domain.test/real.jpg" data-srcset="https://some-other-domain.test/real-2x.jpg 2x"></figure>'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'The real image should be the source.' );
+		$this->assertStringContainsString( 'data-srcset="https://some-other-domain.test/real-2x.jpg 2x"', $content, 'Its own srcset should be kept.' );
 	}
 
 	/**
@@ -278,5 +609,370 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertContains( 'is_lite', $vars, 'The lite site flag should be registered.' );
 		$this->assertContains( 'lite_path', $vars, 'The lite path should be registered.' );
 		$this->assertContains( 'lite_page', $vars, 'The lite page number should be registered.' );
+	}
+
+	/**
+	 * A placeholder written in post content is not one this plugin built.
+	 *
+	 * Every piece of markup a placeholder is made of passes wp_kses(), so a
+	 * custom HTML block or an imported feed item could write one and have a
+	 * reader's tap fetch an arbitrary host.
+	 */
+	public function test_clean_content_clears_a_forged_placeholder() {
+		$content = Lite_Site::clean_content(
+			'<div class="lite-image-placeholder" data-src="https://tracker.some-other-domain.test/p.gif?uid=1">'
+			. '<button class="lite-image-load-btn" type="button">Load image</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The hook class does not survive from content.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'Nor does the button class.' );
+	}
+
+	/**
+	 * The same holds for the table wrapper's class.
+	 */
+	public function test_clean_content_clears_a_forged_table_wrapper() {
+		$content = Lite_Site::clean_content( '<div class="lite-table-scroll"><p>Not a table.</p></div>' );
+
+		$this->assertStringNotContainsString( 'lite-table-scroll', $content, 'The wrapper class does not survive from content.' );
+		$this->assertStringContainsString( 'Not a table.', $content, 'The copy inside it does.' );
+	}
+
+	/**
+	 * A placeholder this plugin builds still gets its classes.
+	 */
+	public function test_clean_content_still_builds_its_own_placeholder() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-image"><img src="https://some-other-domain.test/photo.jpg" alt="Flood damage"/></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The plugin still emits a placeholder.' );
+		$this->assertStringContainsString( 'lite-image-load-btn', $content, 'With its button.' );
+	}
+
+	/**
+	 * A srcset candidate replaces src rather than supplementing it, so an
+	 * unvetted candidate is the image the browser would actually load.
+	 */
+	public function test_clean_content_drops_a_srcset_carrying_an_inline_payload() {
+		$blob    = str_repeat( 'A', 40000 );
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="data:image/png;base64,' . $blob . ' 1x" alt="Chart"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( $blob, $content, 'The payload is not carried in the page.' );
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The srcset is dropped rather than half filtered.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'The vetted source still loads.' );
+	}
+
+	/**
+	 * The same for a candidate pointing somewhere the source rules reject.
+	 */
+	public function test_clean_content_drops_a_srcset_with_a_rejected_candidate() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="https://some-other-domain.test/ok.jpg 1x, javascript:alert(1) 2x" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'One bad candidate drops the whole list.' );
+		$this->assertStringNotContainsString( 'javascript:', $content, 'And it does not reach the page.' );
+	}
+
+	/**
+	 * A CDN path can hold a transform with a comma in it. Splitting the list
+	 * on commas before whitespace truncated the URL.
+	 */
+	public function test_clean_content_keeps_a_srcset_url_containing_a_comma() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/flood.jpg" srcset="https://cdn.some-other-domain.test/upload/w_800,h_600/flood.jpg 800w" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringContainsString( 'w_800,h_600/flood.jpg 800w', $content, 'The whole URL survives with its descriptor.' );
+	}
+
+	/**
+	 * A srcset longer than the budget is left off rather than shipped.
+	 */
+	public function test_clean_content_drops_an_oversized_srcset() {
+		// Just over SRCSET_MAX_LENGTH once escaped, so the test pins the
+		// constant rather than "some budget".
+		$candidates = [];
+		for ( $i = 0; $i < 31; $i++ ) {
+			$candidates[] = 'https://some-other-domain.test/a-very-long-image-file-name-' . $i . '.jpg ' . ( $i + 1 ) . 'w';
+		}
+
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="' . implode( ', ', $candidates ) . '" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'An oversized list is left off.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'The source still loads.' );
+	}
+
+	/**
+	 * The post content filter is public, so a third-party callback can hand
+	 * back something that is not a string. The page a reader reaches when
+	 * everything else is down must not be the one that fatals.
+	 */
+	public function test_clean_content_survives_a_filter_returning_a_non_string() {
+		foreach ( [ null, [ 'not', 'a', 'string' ] ] as $return_value ) {
+			$callback = function () use ( $return_value ) {
+				return $return_value;
+			};
+
+			add_filter( 'newspack_lite_site_post_content', $callback, 99 );
+			$content = Lite_Site::clean_content( '<p>Story.</p>' );
+			remove_filter( 'newspack_lite_site_post_content', $callback, 99 );
+
+			$this->assertIsString( $content, 'clean_content() always returns a string.' );
+			$this->assertStringContainsString( 'Story.', $content, 'And the reader still gets the story, rather than a blank page.' );
+		}
+	}
+
+	/**
+	 * The HTML parser swallows a <textarea> whole, so the class walk never
+	 * sees inside one, and kses then drops the wrapper and keeps the
+	 * children. That let a forged placeholder through complete, from content
+	 * any contributor can write.
+	 *
+	 * @dataProvider atomic_wrapper_provider
+	 * @param string $open  Opening tag.
+	 * @param string $close Closing tag, or an empty string to leave it open.
+	 */
+	public function test_clean_content_clears_a_forgery_hidden_in_an_atomic_element( $open, $close ) {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p>' . $open
+			. '<div class="lite-image-placeholder" data-src="https://tracker.some-other-domain.test/p.gif?uid=1">'
+			. '<button class="lite-image-load-btn" type="button">Load image</button></div>' . $close
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The hook class does not survive.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'Nor does the button class.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
+	 * The elements WP_HTML_Tag_Processor consumes together with their
+	 * contents, closed and unclosed.
+	 *
+	 * @return array<string,array<int,string>>
+	 */
+	public function atomic_wrapper_provider() {
+		return [
+			'textarea'          => [ '<textarea>', '</textarea>' ],
+			'title'             => [ '<title>', '</title>' ],
+			'iframe'            => [ '<iframe>', '</iframe>' ],
+			'xmp'               => [ '<xmp>', '</xmp>' ],
+			'noembed'           => [ '<noembed>', '</noembed>' ],
+			'noframes'          => [ '<noframes>', '</noframes>' ],
+			'unclosed textarea' => [ '<textarea>', '' ],
+			'unclosed title'    => [ '<title>', '' ],
+		];
+	}
+
+	/**
+	 * A class value can spell a reserved name with character references, which
+	 * kses decodes back into the real name. A guard that looks for the literal
+	 * name is therefore evadable; one that looks for the attribute name is not.
+	 *
+	 * @dataProvider encoded_class_provider
+	 * @param string $class The class attribute value.
+	 */
+	public function test_clean_content_clears_an_entity_encoded_forgery( $class ) {
+		$content = Lite_Site::clean_content(
+			'<div class="' . $class . '" data-src="https://tracker.some-other-domain.test/p.gif">'
+			. '<button class="lite&#45;image-load-btn" type="button">Load image</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The decoded class does not reach the page.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'Nor does the button class.' );
+	}
+
+	/**
+	 * Ways of spelling the same reserved name.
+	 *
+	 * @return array<string,array<int,string>>
+	 */
+	public function encoded_class_provider() {
+		return [
+			'decimal hyphen' => [ 'lite&#45;image-placeholder' ],
+			'hex hyphen'     => [ 'lite&#x2D;image-placeholder' ],
+			'encoded letter' => [ '&#108;ite&#45;image-placeholder' ],
+		];
+	}
+
+	/**
+	 * The comment pass can join a class value back into a reserved name, so it
+	 * has to run before the walk rather than after it.
+	 */
+	public function test_clean_content_clears_a_forgery_split_by_a_comment() {
+		$content = Lite_Site::clean_content(
+			'<div class="lite-image-place<!---->holder" data-src="https://tracker.some-other-domain.test/p.gif">'
+			. '<button class="lite-image-load-btn" type="button">Load image</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The rejoined class does not reach the page.' );
+	}
+
+	/**
+	 * A document-relative candidate is not rejected by esc_url(), it is
+	 * rewritten to a host named after the first path segment.
+	 */
+	public function test_clean_content_drops_a_relative_srcset_candidate() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="photos/flood-800.jpg 800w" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'http://photos/', $content, 'A relative candidate is not relocated to a bogus host.' );
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The list is dropped rather than half filtered.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'The vetted source still loads.' );
+	}
+
+	/**
+	 * The srcset grammar tracks parentheses in a descriptor and this parser
+	 * does not, so a descriptor like 1x(,) used to split off a junk candidate
+	 * that esc_url() turned into http://) and passed.
+	 */
+	public function test_clean_content_drops_a_parenthesized_srcset_descriptor() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="https://some-other-domain.test/a.jpg 1x(,)" alt="Flood"/></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'A descriptor that is not a width or a density drops the list.' );
+		$this->assertStringNotContainsString( 'http://)', $content, 'And no junk candidate is emitted.' );
+	}
+
+	/**
+	 * A pathological srcset is rejected on its length before every candidate
+	 * is parsed and escaped.
+	 */
+	public function test_clean_content_rejects_a_pathological_srcset_cheaply() {
+		// Comfortably past the early bound without building a string large
+		// enough to upset WordPress's own block parser.
+		$srcset  = implode( ', ', array_fill( 0, 1000, 'https://some-other-domain.test/a.jpg 1x' ) );
+		$started = microtime( true );
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="' . $srcset . '" alt="Flood"/></figure>'
+		);
+		$elapsed = microtime( true ) - $started;
+
+		$this->assertStringNotContainsString( 'data-srcset', $content, 'The oversized list is dropped.' );
+		$this->assertLessThan( 1.0, $elapsed, 'And it is dropped without parsing every candidate.' );
+	}
+	/**
+	 * Content with two figures, the first of them never closed.
+	 *
+	 * @return string
+	 */
+	private function unclosed_figure_before_another() {
+		return '<p>Intro</p>'
+			. '<figure><img src="https://some-other-domain.test/one.jpg" alt="First photo">'
+			. '<p>A paragraph of reporting between the two figures.</p>'
+			. '<figure><img src="https://some-other-domain.test/two.jpg" alt="Second photo"><figcaption>The second caption</figcaption></figure>'
+			. '<p>Closing paragraph.</p>';
+	}
+
+	/**
+	 * A figure left unclosed is ordinary in a hand-written post and in an
+	 * imported feed item. Where it ends is a guess, and a guess that runs to the
+	 * next figure's closing tag takes the reporting between them with it.
+	 */
+	public function test_clean_content_keeps_the_prose_after_an_unclosed_figure() {
+		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
+
+		$this->assertStringContainsString(
+			'A paragraph of reporting between the two figures.',
+			$content,
+			'The reporting between the two figures survives.'
+		);
+		$this->assertStringContainsString(
+			'Closing paragraph.',
+			$content,
+			'And so does the paragraph after them.'
+		);
+	}
+
+	/**
+	 * The second figure is a figure in its own right, so it still becomes a
+	 * placeholder when the one before it was never closed.
+	 */
+	public function test_clean_content_keeps_a_figure_that_follows_an_unclosed_one() {
+		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
+
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/two.jpg"',
+			$content,
+			'The second photograph is still offered.'
+		);
+	}
+
+	/**
+	 * A caption describes the image in its own figure. Carrying it to an earlier
+	 * one prints a description of one photograph underneath another.
+	 */
+	public function test_clean_content_keeps_a_caption_with_its_own_image() {
+		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
+
+		$this->assertSame(
+			1,
+			substr_count( $content, 'lite-image-placeholder' ),
+			'Only the closed figure becomes a placeholder.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/data-src="https:\/\/some-other-domain\.test\/two\.jpg"[^>]*data-caption="The second caption"/',
+			$content,
+			'The caption stays with the image from its own figure.'
+		);
+	}
+
+	/**
+	 * A gallery nests one figure per image. Each one already becomes its own
+	 * placeholder with its own caption, and this is the contract for that:
+	 * reading a figure's extent as ending at the next figure must not collapse
+	 * a gallery into a single image.
+	 */
+	public function test_clean_content_gives_each_gallery_image_its_own_caption() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-gallery">'
+			. '<figure><img src="https://some-other-domain.test/g1.jpg" alt="Gallery one"><figcaption>First caption</figcaption></figure>'
+			. '<figure><img src="https://some-other-domain.test/g2.jpg" alt="Gallery two"><figcaption>Second caption</figcaption></figure>'
+			. '</figure>'
+		);
+
+		$this->assertSame(
+			2,
+			substr_count( $content, 'lite-image-placeholder' ),
+			'Each image in the gallery gets its own placeholder.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/g1\.jpg"[^>]*data-caption="First caption"/',
+			$content,
+			'The first image keeps the first caption.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/g2\.jpg"[^>]*data-caption="Second caption"/',
+			$content,
+			'And the second keeps the second.'
+		);
+	}
+
+	/**
+	 * `wpautop` writes a closing paragraph tag after a figure that was never
+	 * closed, and the allowlist keeps a closing tag whose opening tag it has
+	 * just removed. Neither belongs on the page.
+	 */
+	public function test_clean_content_balances_a_stray_closing_tag() {
+		$content = Lite_Site::clean_content(
+			wpautop(
+				'<p>Intro</p>'
+				. '<figure><img src="https://some-other-domain.test/one.jpg" alt="A photo">'
+				. '<p>After the figure.</p>'
+			)
+		);
+
+		$this->assertSame(
+			preg_match_all( '/<p[\s>]/', $content ),
+			substr_count( $content, '</p>' ),
+			'Every paragraph that closes was opened.'
+		);
 	}
 }
