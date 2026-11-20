@@ -47,3 +47,14 @@ coverage/
 # Misc
 tsconfig.tsbuildinfo
 .markdownlint*
+
+# Marketing video media: only the scripts are kept in the repository.
+videos/**/*.mp4
+videos/**/*.webm
+videos/**/*.mov
+videos/**/*.jpg
+videos/**/*.jpeg
+videos/**/*.png
+videos/**/*.webp
+videos/**/*.wav
+videos/**/*.mp3
