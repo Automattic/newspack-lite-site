@@ -858,4 +858,121 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$this->assertStringNotContainsString( 'data-srcset', $content, 'The oversized list is dropped.' );
 		$this->assertLessThan( 1.0, $elapsed, 'And it is dropped without parsing every candidate.' );
 	}
+	/**
+	 * Content with two figures, the first of them never closed.
+	 *
+	 * @return string
+	 */
+	private function unclosed_figure_before_another() {
+		return '<p>Intro</p>'
+			. '<figure><img src="https://some-other-domain.test/one.jpg" alt="First photo">'
+			. '<p>A paragraph of reporting between the two figures.</p>'
+			. '<figure><img src="https://some-other-domain.test/two.jpg" alt="Second photo"><figcaption>The second caption</figcaption></figure>'
+			. '<p>Closing paragraph.</p>';
+	}
+
+	/**
+	 * A figure left unclosed is ordinary in a hand-written post and in an
+	 * imported feed item. Where it ends is a guess, and a guess that runs to the
+	 * next figure's closing tag takes the reporting between them with it.
+	 */
+	public function test_clean_content_keeps_the_prose_after_an_unclosed_figure() {
+		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
+
+		$this->assertStringContainsString(
+			'A paragraph of reporting between the two figures.',
+			$content,
+			'The reporting between the two figures survives.'
+		);
+		$this->assertStringContainsString(
+			'Closing paragraph.',
+			$content,
+			'And so does the paragraph after them.'
+		);
+	}
+
+	/**
+	 * The second figure is a figure in its own right, so it still becomes a
+	 * placeholder when the one before it was never closed.
+	 */
+	public function test_clean_content_keeps_a_figure_that_follows_an_unclosed_one() {
+		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
+
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/two.jpg"',
+			$content,
+			'The second photograph is still offered.'
+		);
+	}
+
+	/**
+	 * A caption describes the image in its own figure. Carrying it to an earlier
+	 * one prints a description of one photograph underneath another.
+	 */
+	public function test_clean_content_keeps_a_caption_with_its_own_image() {
+		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
+
+		$this->assertSame(
+			1,
+			substr_count( $content, 'lite-image-placeholder' ),
+			'Only the closed figure becomes a placeholder.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/data-src="https:\/\/some-other-domain\.test\/two\.jpg"[^>]*data-caption="The second caption"/',
+			$content,
+			'The caption stays with the image from its own figure.'
+		);
+	}
+
+	/**
+	 * A gallery nests one figure per image. Each one already becomes its own
+	 * placeholder with its own caption, and this is the contract for that:
+	 * reading a figure's extent as ending at the next figure must not collapse
+	 * a gallery into a single image.
+	 */
+	public function test_clean_content_gives_each_gallery_image_its_own_caption() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-gallery">'
+			. '<figure><img src="https://some-other-domain.test/g1.jpg" alt="Gallery one"><figcaption>First caption</figcaption></figure>'
+			. '<figure><img src="https://some-other-domain.test/g2.jpg" alt="Gallery two"><figcaption>Second caption</figcaption></figure>'
+			. '</figure>'
+		);
+
+		$this->assertSame(
+			2,
+			substr_count( $content, 'lite-image-placeholder' ),
+			'Each image in the gallery gets its own placeholder.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/g1\.jpg"[^>]*data-caption="First caption"/',
+			$content,
+			'The first image keeps the first caption.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/g2\.jpg"[^>]*data-caption="Second caption"/',
+			$content,
+			'And the second keeps the second.'
+		);
+	}
+
+	/**
+	 * `wpautop` writes a closing paragraph tag after a figure that was never
+	 * closed, and the allowlist keeps a closing tag whose opening tag it has
+	 * just removed. Neither belongs on the page.
+	 */
+	public function test_clean_content_balances_a_stray_closing_tag() {
+		$content = Lite_Site::clean_content(
+			wpautop(
+				'<p>Intro</p>'
+				. '<figure><img src="https://some-other-domain.test/one.jpg" alt="A photo">'
+				. '<p>After the figure.</p>'
+			)
+		);
+
+		$this->assertSame(
+			preg_match_all( '/<p[\s>]/', $content ),
+			substr_count( $content, '</p>' ),
+			'Every paragraph that closes was opened.'
+		);
+	}
 }

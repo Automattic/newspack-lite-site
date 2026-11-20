@@ -1467,10 +1467,16 @@ class Lite_Site {
 		// names itself. See RESERVED_CLASSES.
 		$content = self::strip_reserved_classes( $content );
 
-		// Replace figures with lazy-load placeholders before stripping.
+		// Replace figures with lazy-load placeholders before stripping. The
+		// pattern stops at a following `<figure` as well as at a closing tag,
+		// so a figure left unclosed cannot swallow the content up to the next
+		// figure's close. A tempered pattern would say this more directly and
+		// is deliberately avoided: per-character alternation over figure
+		// content exhausts the PCRE JIT stack at about 24.6 KB of content and
+		// returns null, which blanks the article.
 		$content = self::or_original(
 			preg_replace_callback(
-				'/<figure\b[^>]*>.*?<\/figure>/is',
+				'/<figure\b[^>]*>.*?(?:(?=<figure\b)|<\/figure>)/is',
 				[ __CLASS__, 'figure_to_placeholder' ],
 				$content
 			),
@@ -1550,6 +1556,13 @@ class Lite_Site {
 
 		// Strip all HTML except allowed elements.
 		$content = wp_kses( $content, $allowed_html );
+
+		// Close what the content left open, and drop a closing tag with no
+		// opening one. `wpautop` writes a stray `</p>` after a figure that was
+		// never closed, and the allowlist keeps a closing tag whose opening tag
+		// it has just removed. This runs before the empty-paragraph pass below
+		// so a paragraph that balancing leaves empty is removed with the rest.
+		$content = force_balance_tags( $content );
 
 		// Clean up any empty paragraphs.
 		$content = self::or_original( preg_replace( '/<p>\s*<\/p>/', '', $content ), $content );
@@ -1922,6 +1935,14 @@ class Lite_Site {
 	 */
 	private static function figure_to_placeholder( $matches ) {
 		$figure_html = $matches[0];
+
+		// A match that stopped at a following `<figure` has no closing tag, so
+		// where this figure ends is a guess. Replacing it would delete whatever
+		// the guess took in: the prose between the two figures, and the second
+		// figure's own image and caption. Leave it to the passes below.
+		if ( ! preg_match( '/<\/figure\s*>$/i', $figure_html ) ) {
+			return $figure_html;
+		}
 
 		// The block editor wraps a table in a figure. An image in any cell would
 		// otherwise turn the whole table, cell text and all, into one placeholder.
