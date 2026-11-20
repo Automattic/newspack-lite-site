@@ -10,13 +10,13 @@
 //   node scripts/record.mjs                       # the whole video
 //   ONLY=latest,article node scripts/record.mjs   # just those scenes, no join
 //
-// The "enable" scene needs an admin sign-in to the demo site. A window opens
-// for it before the first scene is recorded, and stays open until the
-// recording ends; nothing is saved. That scene turns Lite
-// Site off first, so it can be turned on on camera, and checks afterwards
-// that every setting is back to what it was.
+// The "enable" scene needs an admin sign-in. The skill's signInToDemoSite()
+// opens a window for it before the first scene and keeps it open until the
+// recording ends; nothing is saved. That scene turns Lite Site off first, so
+// it can be turned on on camera, and withChanges() puts the settings back
+// afterwards.
 import { chromium } from 'playwright';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { interstitial, closingCard, headline, zoomTo } from '../../lib/narrate.mjs';
 import { configureVoiceover, voiceover } from '../../lib/voiceover.mjs';
@@ -24,12 +24,15 @@ import { recordScene, joinScenes } from '../../lib/scenes.mjs';
 import { color } from '../../lib/brand.mjs';
 import { sessionDirs } from '../../lib/video-files.mjs';
 import { getDemoSite } from '../../lib/demo-sites.mjs';
+import { signInToDemoSite } from '../../lib/demo-login.mjs';
+import { withChanges } from '../../lib/changes.mjs';
 
 const dirs = sessionDirs(import.meta.url);
 const SCENES_DIR = join(dirs.videos, 'scenes');
 const OUT = join(dirs.videos, 'lite-site.mp4');
 const PHOTO = join(dirs.assets, 'pexels-photo-8568720.jpg'); // see "Photos" in script.md
 const SITE = getDemoSite('gazette').url.replace(/\/$/, '');
+const LEDGER = join(dirs.session, 'changes.json');
 
 // --- The voice -------------------------------------------------------------------
 // The same lines as script.md, word for word.
@@ -170,33 +173,17 @@ if ((await fetch(`${SITE}/lite/`)).status !== 200) {
 
 const browser = await chromium.launch({ headless: true });
 
-// Signing in happens here, once, before anything is recorded. The window
-// stays open until the recording ends, and every admin request runs inside
-// that signed-in page: on the Gazette, a request sent with Playwright's
-// request tool (context.request) signs the session out, so the skill's
-// startChanges() can't be used here. Nothing is saved to disk.
-let adminPage, storageState, original;
-const wp = (method, route, data) => adminPage.evaluate(async ([site, method, route, data]) => {
+// Signing in happens once, before anything is recorded. Only the "enable"
+// scene needs it.
+const admin = wants('enable') ? await signInToDemoSite(chromium, 'gazette') : null;
+
+// Lite Site's settings, read from inside the signed-in page (a request from
+// outside a page signs the demo site's session out).
+const liteSettings = (page) => page.evaluate(async (site) => {
   const nonce = (await (await fetch(`${site}/wp-admin/admin-ajax.php?action=rest-nonce`)).text()).trim();
-  const res = await fetch(`${site}/wp-json${route}`, {
-    method, headers: { 'X-WP-Nonce': nonce, 'Content-Type': 'application/json' },
-    body: data === undefined ? undefined : JSON.stringify(data),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`${method} ${route}: ${res.status} ${body.message ?? ''}`);
-  return body;
-}, [SITE, method, route, data]);
-if (wants('enable')) {
-  const signInBrowser = await chromium.launch({ headless: false });
-  adminPage = await (await signInBrowser.newContext()).newPage();
-  await adminPage.goto(`${SITE}/wp-admin/`, { waitUntil: 'commit', timeout: 120000 });
-  console.log(`Sign in to ${SITE} in the window that opened. Recording starts after that.`);
-  await adminPage.waitForFunction(() => document.body?.classList.contains('wp-admin'), null, { timeout: 300000, polling: 1000 });
-  storageState = await adminPage.context().storageState();
-  original = (await wp('GET', '/wp/v2/settings?context=edit')).newspack_lite_site_settings;
-  if (!original) throw new Error('Could not read the Lite Site settings. Is the sign-in an administrator?');
-  writeFileSync(join(dirs.session, 'lite-site-settings-before.json'), `${JSON.stringify(original, null, 2)}\n`);
-}
+  const res = await fetch(`${site}/wp-json/wp/v2/settings?context=edit`, { headers: { 'X-WP-Nonce': nonce } });
+  return (await res.json()).newspack_lite_site_settings;
+}, SITE);
 
 const scenes = [];
 let story;
@@ -290,19 +277,18 @@ await scene('article',
   });
 
 // Lite Site > Settings, signed in. Lite Site is turned off off camera first,
-// through the undo list. Lite Site keeps all its settings in one option, which
-// the REST API replaces whole, so the whole object is sent back with only
-// `enabled` changed.
-if (wants('enable')) {
-  try {
+// and withChanges() puts the settings back when the scene ends, or if it
+// fails. Lite Site keeps all its settings in one option, which the REST API
+// replaces whole, so the whole object is sent with only `enabled` changed.
+if (admin) {
+  const settings = await liteSettings(admin.page);
+  if (!settings) throw new Error('Could not read the Lite Site settings. Is the sign-in an administrator?');
+  const undo = await withChanges(admin.page, { siteUrl: `${SITE}/`, ledgerPath: LEDGER }, async (changes) => {
     await scene('enable',
       {
-        contextOptions: { storageState },
+        contextOptions: { storageState: admin.storageState },
         setup: async (p) => {
-          // Off, off camera. The whole object goes back with only `enabled`
-          // changed: Lite Site keeps all its settings in one option, which the
-          // REST API replaces whole.
-          await wp('POST', '/wp/v2/settings', { newspack_lite_site_settings: { ...original, enabled: false } });
+          await changes.update('/wp/v2/settings', { newspack_lite_site_settings: { ...settings, enabled: false } });
           await p.goto(`${SITE}/wp-admin/admin.php?page=newspack-lite-site`, { waitUntil: 'load' });
           const box = p.getByLabel('Enable Lite Site');
           await box.waitFor();
@@ -322,19 +308,10 @@ if (wants('enable')) {
           await saved;
         });
       });
-  } finally {
-    // The scene turned it back on. If anything differs (say the scene failed
-    // before saving), put the original settings back, so the shared demo site
-    // is never left with Lite Site off.
-    const after = (await wp('GET', '/wp/v2/settings?context=edit')).newspack_lite_site_settings;
-    const differ = Object.keys(original).filter((k) => JSON.stringify(original[k]) !== JSON.stringify(after[k]));
-    if (differ.length) {
-      await wp('POST', '/wp/v2/settings', { newspack_lite_site_settings: original });
-      console.log(`Put back Lite Site settings that differed after the recording: ${differ.join(', ')}.`);
-    } else {
-      console.log('Lite Site settings are back to exactly what they were.');
-    }
-  }
+  });
+  console.log(`Put back: ${undo.undone.join('; ') || 'nothing'}`);
+  for (const step of undo.byHand) console.log(`Undo by hand: ${step}`);
+  for (const f of undo.failed) console.log(`Undo failed: ${f.description} (${f.error})`);
 }
 
 await scene('closing',
@@ -342,7 +319,7 @@ await scene('closing',
   (p) => speakWhile(p, lines.close));
 
 await browser.close();
-await adminPage?.context().browser().close();
+await admin?.close();
 
 for (const s of scenes) console.log(`  ${s.name}: ${s.durationSec.toFixed(2)}s, ${s.entries.length} line(s)`);
 if (only) {
