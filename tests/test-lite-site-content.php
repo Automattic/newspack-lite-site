@@ -228,8 +228,17 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 	/**
 	 * A large figure must not defeat the content pipeline. A pattern that hits
-	 * a PCRE limit returns null, which would blank the article and cache the
-	 * blank — on a results table during an election, say.
+	 * a PCRE limit returns null, and the fallback hands back the original
+	 * content, so every figure in the article loses its placeholder.
+	 *
+	 * This guards against reintroducing a pattern that fails at this size: the
+	 * tempered-dot form it replaced exhausted the JIT stack at about 24.6 KB.
+	 * It is not a test of the backtrack limit, which a lazy scan reaches three
+	 * orders of magnitude higher, at a megabyte of figure content.
+	 *
+	 * The image figure is what detects the failure. A table figure cannot: the
+	 * pass leaves a table alone on purpose, so its output is the same whether
+	 * the pass ran or fell back to the original.
 	 */
 	public function test_clean_content_survives_a_very_large_figure() {
 		$rows = '';
@@ -240,6 +249,15 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertNotSame( '', $content, 'A large figure does not blank the article.' );
 		$this->assertStringContainsString( 'Precinct 399', $content, 'The last row survives.' );
+
+		$caption = str_repeat( 'Turnout steady through the afternoon. ', 1000 );
+		$image   = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/precincts.jpg" alt="Precinct map">'
+			. '<figcaption>' . $caption . '</figcaption></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $image, 'A large image figure still becomes a placeholder.' );
+		$this->assertStringContainsString( 'precincts.jpg', $image, 'The placeholder keeps the image it was built from.' );
 	}
 
 	/**
@@ -803,10 +821,15 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	/**
 	 * The comment pass can join a class value back into a reserved name, so it
 	 * has to run before the walk rather than after it.
+	 *
+	 * The class value is unquoted on purpose. Quoted, the embedded `<` stops
+	 * wptexturize recognizing the opening tag, so it curls the quote, the
+	 * allowlist discards the whole mangled attribute, and the walk never sees
+	 * a usable class. The test would then pass whatever the pass order was.
 	 */
 	public function test_clean_content_clears_a_forgery_split_by_a_comment() {
 		$content = Lite_Site::clean_content(
-			'<div class="lite-image-place<!---->holder" data-src="https://tracker.some-other-domain.test/p.gif">'
+			'<div class=lite-image-place<!---->holder data-src=https://tracker.some-other-domain.test/p.gif>'
 			. '<button class="lite-image-load-btn" type="button">Load image</button></div>'
 		);
 
