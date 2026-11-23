@@ -37,6 +37,35 @@ class Lite_Site {
 	const SRCSET_WHITESPACE = " \t\n\r\f";
 
 	/**
+	 * Image source attributes in the order a reader should get them, each
+	 * paired with the srcset belonging to the same image.
+	 *
+	 * @var array
+	 */
+	const IMAGE_SOURCE_PAIRS = [
+		[ 'data-src', 'data-srcset' ],
+		[ 'data-lazy-src', 'data-lazy-srcset' ],
+		[ 'data-original', '' ],
+		[ 'src', 'srcset' ],
+	];
+
+	/**
+	 * Every attribute of an <img> this class reads.
+	 *
+	 * @var array
+	 */
+	const IMAGE_ATTRIBUTES = [
+		'src',
+		'srcset',
+		'data-src',
+		'data-srcset',
+		'data-lazy-src',
+		'data-lazy-srcset',
+		'data-original',
+		'alt',
+	];
+
+	/**
 	 * Classes this plugin emits and the lite page's own script acts on.
 	 *
 	 * They are stripped from incoming content before any pass adds them, so a
@@ -663,7 +692,7 @@ class Lite_Site {
 		remove_all_actions( 'wp_footer' );
 
 		if ( 'archive' === $is_lite ) {
-			include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
+			echo self::render_archive_page(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 			exit;
 		}
 
@@ -831,6 +860,48 @@ class Lite_Site {
 	 */
 	private static function include_single_template() {
 		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+	}
+
+	/**
+	 * Render the lite archive page.
+	 *
+	 * The render is counted, and the not-found flag fenced, the way
+	 * cache_single_page() does both for a single page. Without the count an
+	 * after-footer callback rendering a missing lite page would hand its 404
+	 * and its no-store headers to an archive that rendered perfectly well.
+	 * Without the fence a missing archive nested inside a single render would
+	 * leave the flag set, and the article around it would go unstored though
+	 * it rendered fine. The archive itself is not stored: the page cache holds
+	 * single pages only.
+	 *
+	 * @return string The page HTML.
+	 */
+	public static function render_archive_page(): string {
+		$was_not_found      = self::$is_not_found;
+		self::$is_not_found = false;
+
+		++self::$render_depth;
+
+		ob_start();
+		try {
+			self::include_archive_template();
+		} finally {
+			$output             = ob_get_clean();
+			self::$is_not_found = $was_not_found;
+			--self::$render_depth;
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Include the lite archive template.
+	 *
+	 * Kept out of render_archive_page() so the template's variables can't
+	 * overwrite that method's own, such as the markup it returns.
+	 */
+	private static function include_archive_template() {
+		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
 	}
 
 	/**
@@ -1456,11 +1527,7 @@ class Lite_Site {
 		// A third-party callback on this public filter can return anything, and
 		// the rest of this method needs a string.
 		$filtered = apply_filters( 'newspack_lite_site_post_content', $content );
-		$content  = is_string( $filtered ) ? $filtered : (string) $content;
-
-		// Clear the classes this plugin's own script acts on, before any pass
-		// below adds them. See RESERVED_CLASSES.
-		$content = self::strip_reserved_classes( $content );
+		$content  = is_string( $filtered ) ? $filtered : ( is_string( $content ) ? $content : '' );
 
 		// Remove HTML comments. The single-token `.` with the `s` modifier stays
 		// linear on an unclosed `<!--`, where alternation-based patterns
@@ -1474,12 +1541,29 @@ class Lite_Site {
 		$content = self::or_original( preg_replace( '/<script.*?>.*?<\/script>/is', '', $content ), $content );
 		$content = self::or_original( preg_replace( '/<style.*?>.*?<\/style>/is', '', $content ), $content );
 
+		$content = self::unwrap_atomic_elements( $content );
+
 		$content = self::resolve_noscript_fallbacks( $content );
 
-		// Replace figures with lazy-load placeholders before stripping.
+		// Clear the classes this plugin's own script acts on. This runs after
+		// the passes above because each of them can rewrite text: a comment
+		// inside a class value, say, is removed at this point rather than
+		// later, where it would join `lite-image-place<!---->holder` back into
+		// a reserved name after the walk had already passed over it. It runs
+		// before the figure pass below, which is where the plugin adds those
+		// names itself. See RESERVED_CLASSES.
+		$content = self::strip_reserved_classes( $content );
+
+		// Replace figures with lazy-load placeholders before stripping. The
+		// pattern stops at a following `<figure` as well as at a closing tag,
+		// so a figure left unclosed cannot swallow the content up to the next
+		// figure's close. A tempered pattern would say this more directly and
+		// is deliberately avoided: per-character alternation over figure
+		// content exhausts the PCRE JIT stack at about 24.6 KB of content and
+		// returns null, which blanks the article.
 		$content = self::or_original(
 			preg_replace_callback(
-				'/<figure\b[^>]*>.*?<\/figure>/is',
+				'/<figure\b[^>]*>.*?(?:(?=<figure\b)|<\/figure>)/is',
 				[ __CLASS__, 'figure_to_placeholder' ],
 				$content
 			),
@@ -1567,10 +1651,22 @@ class Lite_Site {
 		 *
 		 * @param array $allowed_html Allowed elements and their attributes, in wp_kses() form.
 		 */
-		$allowed_html = apply_filters( 'newspack_lite_site_allowed_html', $allowed_html );
+		$filtered_html = apply_filters( 'newspack_lite_site_allowed_html', $allowed_html );
+
+		// Same reasoning as the content filter above. A callback returning a
+		// string makes wp_kses_attr() index it as a string offset and throw;
+		// returning a scalar silently strips every tag on the page.
+		$allowed_html = is_array( $filtered_html ) ? $filtered_html : $allowed_html;
 
 		// Strip all HTML except allowed elements.
 		$content = wp_kses( $content, $allowed_html );
+
+		// Close what the content left open, and drop a closing tag with no
+		// opening one. `wpautop` writes a stray `</p>` after a figure that was
+		// never closed, and the allowlist keeps a closing tag whose opening tag
+		// it has just removed. This runs before the empty-paragraph pass below
+		// so a paragraph that balancing leaves empty is removed with the rest.
+		$content = force_balance_tags( $content );
 
 		// Clean up any empty paragraphs.
 		$content = self::or_original( preg_replace( '/<p>\s*<\/p>/', '', $content ), $content );
@@ -1651,10 +1747,11 @@ class Lite_Site {
 	 * A pattern that hits a PCRE limit returns null, and passing that on blanks
 	 * the article — on the page a reader reaches when everything else is down.
 	 *
-	 * The parameters stay loosely typed on purpose. newspack_lite_site_post_content
-	 * is a public filter, so $original can be whatever a third-party callback
-	 * returned. A TypeError here would take down the page a reader reaches when
-	 * everything else is already down, which is the opposite of the point.
+	 * The parameters stay loosely typed on purpose, though clean_content() now
+	 * coerces its content to a string before the first call, so the non-string
+	 * branch should be unreachable. It is kept because the cost is a single
+	 * is_string() and the failure it guards against is a fatal on the page a
+	 * reader reaches when everything else is already down.
 	 *
 	 * @param string|null $result   The preg_* result.
 	 * @param mixed       $original The string passed in.
@@ -1666,6 +1763,35 @@ class Lite_Site {
 		}
 
 		return is_string( $original ) ? $original : '';
+	}
+
+	/**
+	 * Remove the wrapper tags of elements the HTML parser treats as atomic.
+	 *
+	 * WP_HTML_Tag_Processor consumes TITLE, TEXTAREA, IFRAME, XMP, NOEMBED and
+	 * NOFRAMES together with everything inside them, so strip_reserved_classes()
+	 * never visits markup nested in one and cannot clear a class there. kses
+	 * then drops the wrapper and keeps the children, which is how a forged
+	 * placeholder hidden in a <textarea> reached the reader complete, from a
+	 * post any contributor can write or a feed item this plugin imported. An
+	 * unterminated wrapper is worse: the parser stops at it, so every tag after
+	 * it goes unvisited too.
+	 *
+	 * Only the wrapper tags go, not their contents, which is what kses does to
+	 * these elements anyway, so nothing a reader would have seen is lost. Their
+	 * contents become ordinary markup that the walk can reach.
+	 *
+	 * script and style are absent on purpose: they are removed whole, contents
+	 * and all, before this runs.
+	 *
+	 * @param string $html Post content.
+	 * @return string Content with those wrappers removed.
+	 */
+	private static function unwrap_atomic_elements( string $html ): string {
+		return self::or_original(
+			preg_replace( '/<\/?(?:title|textarea|iframe|xmp|noembed|noframes)\b[^>]*>/i', '', $html ),
+			$html
+		);
 	}
 
 	/**
@@ -1685,7 +1811,12 @@ class Lite_Site {
 	 * @return string Content with the reserved classes cleared.
 	 */
 	private static function strip_reserved_classes( string $html ): string {
-		if ( false === stripos( $html, 'lite-image-' ) && false === stripos( $html, 'lite-table-' ) ) {
+		// Gate on something that cannot be written any other way. A class
+		// VALUE can spell a reserved name with character references, as
+		// lite&#45;image-placeholder, which kses later decodes back into the
+		// real name -- so a test for the name itself is evadable. An attribute
+		// NAME is never entity-decoded, so `class` is always spelled out.
+		if ( false === stripos( $html, 'class' ) ) {
 			return $html;
 		}
 
@@ -1740,6 +1871,14 @@ class Lite_Site {
 	 */
 	private static function figure_to_placeholder( array $matches ): string {
 		$figure_html = $matches[0];
+
+		// A match that stopped at a following `<figure` has no closing tag, so
+		// where this figure ends is a guess. Replacing it would delete whatever
+		// the guess took in: the prose between the two figures, and the second
+		// figure's own image and caption. Leave it to the passes below.
+		if ( ! preg_match( '/<\/figure\s*>$/i', $figure_html ) ) {
+			return $figure_html;
+		}
 
 		// The block editor wraps a table in a figure. An image in any cell would
 		// otherwise turn the whole table, cell text and all, into one placeholder.
@@ -2019,27 +2158,63 @@ class Lite_Site {
 	/**
 	 * Rebuild a srcset from candidates this plugin would accept as a source.
 	 *
-	 * Every candidate has to pass the same rules as src, because a srcset
-	 * candidate is what the browser loads instead of src. One rejected
-	 * candidate drops the whole list: a partly filtered set would still change
-	 * which image a given screen gets.
+	 * The placeholder's data-src is checked with esc_url(), but data-srcset was
+	 * copied through with nothing but attribute escaping. Per the HTML standard
+	 * a srcset candidate REPLACES src rather than supplementing it, so an
+	 * unvetted candidate here is the image the browser actually loads.
+	 *
+	 * What this does and does not buy: esc_url() vets the PROTOCOL, so it stops
+	 * an inline data: payload and a javascript: URL. It does not stop a
+	 * third-party host, which an author could equally have put in src.
+	 *
+	 * One rejected candidate drops the whole list. A partly filtered set would
+	 * still change which image a given screen gets, and the reader still has
+	 * the vetted data-src to load.
 	 *
 	 * @param string $srcset Raw srcset value.
 	 * @return string Escaped srcset, or an empty string.
 	 */
 	private static function safe_image_srcset( string $srcset ): string {
+		// Bound the work, not only the output. Without this a megabyte of
+		// candidates is parsed and escaped in full before the budget below
+		// throws the result away.
+		if ( strlen( $srcset ) > self::SRCSET_MAX_LENGTH * 10 ) {
+			return '';
+		}
+
 		$parts = [];
 
 		foreach ( self::parse_srcset( $srcset ) as $candidate ) {
-			$url = self::safe_image_src( $candidate['url'] );
+			// A descriptor is a width or a pixel density, nothing else. The
+			// grammar tracks parentheses and parse_srcset() does not, so
+			// without this a descriptor like `1x(,)` splits off a second
+			// candidate whose URL is `)`, and esc_url() turns that into
+			// `http://)`, which is not empty and so slips the test below.
+			if ( '' !== $candidate['descriptor'] && 1 !== preg_match( '/^[0-9.]+[wx]$/', $candidate['descriptor'] ) ) {
+				return '';
+			}
+
+			// esc_url() does not reject a document-relative path, it moves it:
+			// photos/flood.jpg becomes http://photos/flood.jpg, a plaintext
+			// request to a host named "photos". Because a candidate replaces
+			// src, that is the request the browser would actually make.
+			$has_scheme = 1 === preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $candidate['url'] );
+
+			if ( ! $has_scheme && ! str_starts_with( $candidate['url'], '/' ) ) {
+				return '';
+			}
+
+			$url = esc_url( $candidate['url'] );
 
 			if ( '' === $url ) {
 				return '';
 			}
 
+			// The descriptor is digits, a dot and w or x by the test above, so
+			// there is nothing left in it to escape.
 			$parts[] = '' === $candidate['descriptor']
 				? $url
-				: $url . ' ' . esc_attr( $candidate['descriptor'] );
+				: $url . ' ' . $candidate['descriptor'];
 		}
 
 		if ( ! $parts ) {
@@ -2048,6 +2223,8 @@ class Lite_Site {
 
 		$result = implode( ', ', $parts );
 
+		// Measured after escaping, so the budget counts the bytes the page
+		// actually carries rather than the bytes the author wrote.
 		return strlen( $result ) > self::SRCSET_MAX_LENGTH ? '' : $result;
 	}
 

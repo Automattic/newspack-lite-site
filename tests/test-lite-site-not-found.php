@@ -242,4 +242,71 @@ class Test_Lite_Site_Not_Found extends Lite_Site_TestCase {
 		$this->assertStringContainsString( 'A listed article', $rendered['page'], 'The post appears in the list.' );
 		$this->assertStringNotContainsString( 'Nothing to show here yet.', $rendered['page'], 'No empty state when there are posts.' );
 	}
+
+	/**
+	 * A not-found render nested inside an archive render does not hand the
+	 * archive its 404. An archive owns its response the way an article owns
+	 * its own.
+	 */
+	public function test_a_nested_not_found_does_not_block_the_archive() {
+		self::factory()->post->create( [ 'post_title' => 'A listed article' ] );
+
+		$nested = function () {
+			$outer = get_query_var( 'lite_path' );
+			set_query_var( 'lite_path', '2026/01/01/no-such-article' );
+			Lite_Site::cache_single_page( 'nls_page_test_archive_nested' );
+			set_query_var( 'lite_path', $outer );
+		};
+
+		$status  = 0;
+		$capture = function ( $header, $code ) use ( &$status ) {
+			$status = $code;
+			return $header;
+		};
+
+		add_action( 'newspack_lite_site_archive_after_footer', $nested );
+		add_filter( 'status_header', $capture, 10, 2 );
+
+		try {
+			$page = Lite_Site::render_archive_page();
+		} finally {
+			remove_action( 'newspack_lite_site_archive_after_footer', $nested );
+			remove_filter( 'status_header', $capture, 10 );
+		}
+
+		$this->assertNotSame( 404, $status, 'The archive does not inherit the nested render\'s 404.' );
+		$this->assertStringContainsString( 'A listed article', $page, 'The archive still renders its list.' );
+		$this->assertFalse( get_transient( 'nls_page_test_archive_nested' ), 'The nested not-found page is not cached.' );
+	}
+
+	/**
+	 * A not-found archive nested inside an article render does not stop the
+	 * article being stored. The depth counter keeps the nested render's 404
+	 * off the response; this is the other half, the flag that decides whether
+	 * the page may be cached.
+	 */
+	public function test_a_nested_not_found_archive_does_not_block_the_outer_page() {
+		$post = self::factory()->post->create( [ 'post_title' => 'The outer article' ] );
+		$path = ltrim( wp_make_link_relative( get_permalink( $post ) ), '/' );
+
+		$nested = function () {
+			$outer = get_query_var( 'lite_page' );
+			set_query_var( 'lite_page', 99 );
+			Lite_Site::render_archive_page();
+			set_query_var( 'lite_page', $outer );
+		};
+
+		add_action( 'newspack_lite_site_single_after_footer', $nested );
+		set_query_var( 'lite_path', $path );
+		$cache_key = 'nls_page_test_nested_archive_outer';
+
+		try {
+			$page = Lite_Site::cache_single_page( $cache_key );
+		} finally {
+			remove_action( 'newspack_lite_site_single_after_footer', $nested );
+		}
+
+		$this->assertStringContainsString( 'The outer article', $page, 'The outer page renders.' );
+		$this->assertNotFalse( get_transient( $cache_key ), 'The outer page is still stored after a nested archive 404.' );
+	}
 }
