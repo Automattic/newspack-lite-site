@@ -9,7 +9,7 @@ namespace Newspack_Lite_Site;
 
 defined( 'ABSPATH' ) || exit;
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from Lite_Site::handle_lite_site_templates(), so these variables are local to that method.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from Lite_Site::include_archive_template(), so these variables are local to that method.
 
 $posts_per_page      = Lite_Site::get_posts_per_page();
 $categories          = Lite_Site::get_categories();

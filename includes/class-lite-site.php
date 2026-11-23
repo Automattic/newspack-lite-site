@@ -692,7 +692,7 @@ class Lite_Site {
 		remove_all_actions( 'wp_footer' );
 
 		if ( 'archive' === $is_lite ) {
-			include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
+			echo self::render_archive_page(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 			exit;
 		}
 
@@ -819,6 +819,41 @@ class Lite_Site {
 	 */
 	private static function include_single_template() {
 		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+	}
+
+	/**
+	 * Render the lite archive page.
+	 *
+	 * The render is counted the way cache_single_page() counts a single page.
+	 * Without that count an after-footer callback rendering a missing lite
+	 * page would hand its 404 and its no-store headers to an archive that
+	 * rendered perfectly well. The archive itself is not stored: the page
+	 * cache holds single pages only.
+	 *
+	 * @return string The page HTML.
+	 */
+	public static function render_archive_page(): string {
+		++self::$render_depth;
+
+		ob_start();
+		try {
+			self::include_archive_template();
+		} finally {
+			$output = ob_get_clean();
+			--self::$render_depth;
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Include the lite archive template.
+	 *
+	 * Kept out of render_archive_page() so the template's variables can't
+	 * overwrite that method's own, such as the markup it returns.
+	 */
+	private static function include_archive_template() {
+		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
 	}
 
 	/**
