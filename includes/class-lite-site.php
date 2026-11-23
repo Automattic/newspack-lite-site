@@ -824,22 +824,29 @@ class Lite_Site {
 	/**
 	 * Render the lite archive page.
 	 *
-	 * The render is counted the way cache_single_page() counts a single page.
-	 * Without that count an after-footer callback rendering a missing lite
-	 * page would hand its 404 and its no-store headers to an archive that
-	 * rendered perfectly well. The archive itself is not stored: the page
-	 * cache holds single pages only.
+	 * The render is counted, and the not-found flag fenced, the way
+	 * cache_single_page() does both for a single page. Without the count an
+	 * after-footer callback rendering a missing lite page would hand its 404
+	 * and its no-store headers to an archive that rendered perfectly well.
+	 * Without the fence a missing archive nested inside a single render would
+	 * leave the flag set, and the article around it would go unstored though
+	 * it rendered fine. The archive itself is not stored: the page cache holds
+	 * single pages only.
 	 *
 	 * @return string The page HTML.
 	 */
 	public static function render_archive_page(): string {
+		$was_not_found      = self::$is_not_found;
+		self::$is_not_found = false;
+
 		++self::$render_depth;
 
 		ob_start();
 		try {
 			self::include_archive_template();
 		} finally {
-			$output = ob_get_clean();
+			$output             = ob_get_clean();
+			self::$is_not_found = $was_not_found;
 			--self::$render_depth;
 		}
 
