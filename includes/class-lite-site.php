@@ -1668,7 +1668,12 @@ class Lite_Site {
 			list( $from, $to ) = $span;
 			$html              = substr( $html, 0, $from )
 				. sprintf(
-					'<div class="lite-table-scroll" tabindex="0" role="group" aria-label="%s">',
+					// The tab stop and the label are added by the page's own
+					// script, and only to a table that actually overflows. A
+					// two-column table on a phone does not, and announcing
+					// scrolling that cannot happen, behind an extra tab stop,
+					// is worse than saying nothing.
+					'<div class="lite-table-scroll" data-scroll-label="%s">',
 					esc_attr__( 'Table, scrolls sideways', 'newspack-lite-site' )
 				)
 				. substr( $html, $from, $to - $from )
@@ -1768,7 +1773,30 @@ class Lite_Site {
 			}
 		}
 
-		return $processor->get_updated_html();
+		$html = $processor->get_updated_html();
+
+		// The walk and kses do not always read the same markup, and where they
+		// disagree the reader gets kses's reading. An unterminated <script>
+		// pauses the processor at an incomplete token and everything after it
+		// goes unwalked; a `>` inside a quoted attribute hides a tag from the
+		// processor that kses later treats as real markup. Either way a
+		// reserved name can still be in the string. The walk above is what
+		// catches a name spelled with character references, which this cannot
+		// see; this is what catches the markup the walk never reached. Nothing
+		// legitimate carries these names yet, since the passes that add them
+		// run after this one, so removing what is left costs nothing.
+		foreach ( self::RESERVED_CLASSES as $class ) {
+			if ( false === stripos( $html, $class ) ) {
+				continue;
+			}
+
+			$html = self::or_original(
+				preg_replace( '/' . preg_quote( $class, '/' ) . '/i', '', $html ),
+				$html
+			);
+		}
+
+		return $html;
 	}
 
 	/**
@@ -1970,6 +1998,49 @@ class Lite_Site {
 	}
 
 	/**
+	 * Give a table figure's caption to the table itself.
+	 *
+	 * The allowlist keeps `figcaption` but drops `figure`, so a Table block's
+	 * caption reaches the reader as loose text after the table with nothing
+	 * tying the two together. A screen reader announces the table and then,
+	 * separately, a sentence. `caption` is the element that belongs to a
+	 * table, and the allowlist already keeps it.
+	 *
+	 * A table that captions itself keeps its own; only a figure's caption is
+	 * moved, and only into a table that has none.
+	 *
+	 * @param string $figure_html A figure known to hold a table.
+	 * @return string The figure with its caption moved into the table.
+	 */
+	private static function table_caption_from_figure( string $figure_html ): string {
+		if ( ! preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $caption ) ) {
+			return $figure_html;
+		}
+
+		if ( preg_match( '/<table\b[^>]*>\s*<caption\b/i', $figure_html ) ) {
+			return $figure_html;
+		}
+
+		$without = self::or_original(
+			preg_replace( '/<figcaption[^>]*>.*?<\/figcaption>/is', '', $figure_html ),
+			$figure_html
+		);
+
+		$inner = $caption[1];
+
+		$moved = preg_replace_callback(
+			'/<table\b[^>]*>/i',
+			static function ( array $matches ) use ( $inner ): string {
+				return $matches[0] . '<caption>' . $inner . '</caption>';
+			},
+			$without,
+			1
+		);
+
+		return self::or_original( $moved, $figure_html );
+	}
+
+	/**
 	 * Convert a <figure> element into a lazy-load image placeholder.
 	 *
 	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
@@ -1989,7 +2060,7 @@ class Lite_Site {
 		// The block editor wraps a table in a figure. An image in any cell would
 		// otherwise turn the whole table, cell text and all, into one placeholder.
 		if ( preg_match( '/<table\b/i', $figure_html ) ) {
-			return $figure_html;
+			return self::table_caption_from_figure( $figure_html );
 		}
 
 		$attributes = self::read_img_attrs( $figure_html );

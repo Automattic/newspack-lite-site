@@ -185,6 +185,43 @@ if ( $is_liveblog ) {
 		}
 
 		new ImageLoader();
+
+		// A table wrapper is a tab stop, and announces that it scrolls, only
+		// once it actually overflows. The server cannot know: the same table
+		// fits in landscape and scrolls in portrait. Re-checked on resize so
+		// turning the phone is enough to change it.
+		( function () {
+			const wrappers = document.querySelectorAll( '.lite-table-scroll' );
+
+			if ( ! wrappers.length ) {
+				return;
+			}
+
+			function sync() {
+				wrappers.forEach( function ( wrapper ) {
+					const scrolls = wrapper.scrollWidth > wrapper.clientWidth;
+
+					if ( scrolls ) {
+						wrapper.setAttribute( 'tabindex', '0' );
+						wrapper.setAttribute( 'role', 'group' );
+						wrapper.setAttribute( 'aria-label', wrapper.dataset.scrollLabel || '' );
+						return;
+					}
+
+					wrapper.removeAttribute( 'tabindex' );
+					wrapper.removeAttribute( 'role' );
+					wrapper.removeAttribute( 'aria-label' );
+				} );
+			}
+
+			sync();
+
+			let pending = null;
+			window.addEventListener( 'resize', function () {
+				window.clearTimeout( pending );
+				pending = window.setTimeout( sync, 150 );
+			} );
+		} )();
 	</script>
 </body>
 </html>

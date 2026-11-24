@@ -164,8 +164,16 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$html = Lite_Site::wrap_tables_for_scrolling( wp_kses_post( Lite_Site::clean_content( $this->table_block() ) ) );
 
 		$this->assertStringContainsString( 'class="lite-table-scroll"', $html, 'The table is wrapped in its own scroller.' );
-		$this->assertStringContainsString( 'tabindex="0"', $html, 'The scroller carries the attribute the keyboard needs.' );
-		$this->assertStringContainsString( 'aria-label=', $html, 'The scroller is named, so a keyboard stop is explained.' );
+		$this->assertStringContainsString(
+			'data-scroll-label="Table, scrolls sideways"',
+			$html,
+			'The scroller carries the name its tab stop will be given.'
+		);
+		$this->assertStringNotContainsString(
+			'tabindex=',
+			$html,
+			'But not the tab stop itself: the page script adds that only to a table that overflows.'
+		);
 		$this->assertStringContainsString( '</table></div>', $html, 'The wrapper closes around the table.' );
 	}
 
@@ -193,7 +201,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 			'<table><tr><td>orphan</td></tr><p>Between.</p><table><tr><td>good</td></tr></table>'
 		);
 
-		$this->assertStringNotContainsString( '<div class="lite-table-scroll" tabindex="0" role="group" aria-label="Table, scrolls sideways"><table><tr><td>orphan', $html, 'The wrapper does not open at the unclosed table.' );
+		$this->assertStringNotContainsString( '<div class="lite-table-scroll" data-scroll-label="Table, scrolls sideways"><table><tr><td>orphan', $html, 'The wrapper does not open at the unclosed table.' );
 		$this->assertStringContainsString( '<p>Between.</p>', $html, 'The paragraph between the tables is left where it was.' );
 	}
 
@@ -248,7 +256,11 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 		$content = Lite_Site::clean_content( '<figure class="wp-block-table"><table>' . $rows . '</table></figure>' );
 
 		$this->assertNotSame( '', $content, 'A large figure does not blank the article.' );
-		$this->assertStringContainsString( 'Precinct 399', $content, 'The last row survives.' );
+		$this->assertStringContainsString(
+			'<td>Precinct 399</td>',
+			$content,
+			'The last row survives as a row. Asserting the text alone passes on trunk too, where the table is stripped and its cells run together.'
+		);
 
 		$caption = str_repeat( 'Turnout steady through the afternoon. ', 1000 );
 		$image   = Lite_Site::clean_content(
@@ -261,14 +273,16 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A table's caption survives. The block editor saves it as a figcaption
-	 * beside the table, not as a caption inside it.
+	 * A table's caption survives, and belongs to the table. The block editor
+	 * saves it as a figcaption beside the table; the allowlist drops the
+	 * figure that joined them, so it is moved into the table's own caption
+	 * rather than left loose underneath it.
 	 */
 	public function test_clean_content_keeps_a_block_table_caption() {
 		$content = Lite_Site::clean_content( $this->table_block() );
 
-		$this->assertStringContainsString( '<figcaption', $content, 'The block editor caption survives as an element.' );
-		$this->assertStringContainsString( 'Evacuation zones', $content, 'The caption text survives.' );
+		$this->assertStringContainsString( '<caption>Evacuation zones</caption>', $content, 'The caption survives, tied to its table.' );
+		$this->assertStringNotContainsString( '<figcaption', $content, 'And is not left as an element belonging to nothing.' );
 		$this->assertStringNotContainsString( '</table>Evacuation', preg_replace( '/\s+/', '', $content ), 'The caption is not left as bare text after the table.' );
 	}
 
@@ -871,15 +885,30 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	public function test_clean_content_rejects_a_pathological_srcset_cheaply() {
 		// Comfortably past the early bound without building a string large
 		// enough to upset WordPress's own block parser.
-		$srcset  = implode( ', ', array_fill( 0, 1000, 'https://some-other-domain.test/a.jpg 1x' ) );
-		$started = microtime( true );
+		$srcset = implode( ', ', array_fill( 0, 1000, 'https://some-other-domain.test/a.jpg 1x' ) );
+
+		// Elapsed time does not tell these apart: a thousand candidates parse
+		// in a few milliseconds, so the clock passes whether the bound fired
+		// or every candidate was escaped one by one. esc_url() runs the
+		// clean_url filter once per call, so counting it says which happened.
+		$escaped = 0;
+		$counter = static function ( $url ) use ( &$escaped ) {
+			++$escaped;
+			return $url;
+		};
+
+		add_filter( 'clean_url', $counter );
 		$content = Lite_Site::clean_content(
 			'<figure><img src="https://some-other-domain.test/photo.jpg" srcset="' . $srcset . '" alt="Flood"/></figure>'
 		);
-		$elapsed = microtime( true ) - $started;
+		remove_filter( 'clean_url', $counter );
 
 		$this->assertStringNotContainsString( 'data-srcset', $content, 'The oversized list is dropped.' );
-		$this->assertLessThan( 1.0, $elapsed, 'And it is dropped without parsing every candidate.' );
+		$this->assertLessThan(
+			10,
+			$escaped,
+			'And dropped on its length, before the thousand candidates are escaped one by one.'
+		);
 	}
 	/**
 	 * Content with two figures, the first of them never closed.
@@ -997,5 +1026,79 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 			substr_count( $content, '</p>' ),
 			'Every paragraph that closes was opened.'
 		);
+	}
+
+	/**
+	 * The allowlist keeps figcaption but drops figure, so a Table block's
+	 * caption used to reach the reader as loose text after the table with
+	 * nothing tying the two together.
+	 */
+	public function test_clean_content_gives_a_table_figures_caption_to_the_table() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-table"><table><tr><td>North</td><td>Evacuate</td></tr></table>'
+			. '<figcaption>Zones as of this morning.</figcaption></figure>'
+		);
+
+		$this->assertStringContainsString(
+			'<caption>Zones as of this morning.</caption>',
+			$content,
+			'The caption belongs to the table now.'
+		);
+		$this->assertStringNotContainsString(
+			'<figcaption>',
+			$content,
+			'And is not also left loose after it.'
+		);
+		$this->assertLessThan(
+			strpos( $content, '<td>North</td>' ),
+			strpos( $content, '<caption>' ),
+			'A caption is the table\'s first child, where a screen reader reads it as the table\'s name.'
+		);
+	}
+
+	/**
+	 * A table that captions itself keeps its own. Only a figure's caption is
+	 * moved, and only into a table that has none.
+	 */
+	public function test_clean_content_leaves_a_table_that_captions_itself() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-table"><table><caption>Its own caption.</caption>'
+			. '<tr><td>North</td></tr></table><figcaption>The figure\'s caption.</figcaption></figure>'
+		);
+
+		$this->assertStringContainsString( '<caption>Its own caption.</caption>', $content, 'The table keeps its own.' );
+		$this->assertSame( 1, substr_count( $content, '<caption>' ), 'And is not given a second one.' );
+	}
+
+	/**
+	 * An unterminated <script> pauses the tag processor at an incomplete
+	 * token, so everything after it goes unwalked, while kses keeps that
+	 * markup. A placeholder forged there would reach the reader with a button
+	 * the page's own script acts on.
+	 */
+	public function test_clean_content_clears_a_forged_class_after_an_unterminated_script() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><script>var a = 1;'
+			. '<div class="lite-image-placeholder" data-src="https://some-other-domain.test/p.gif">'
+			. '<button class="lite-image-load-btn" type="button">Load</button></div>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No forged container survives.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'And no forged button.' );
+	}
+
+	/**
+	 * A `>` inside a quoted attribute hides markup from the tag processor,
+	 * which reads it as part of the attribute value, while kses reads it as
+	 * real markup and keeps it.
+	 */
+	public function test_clean_content_clears_a_forged_class_hidden_by_a_quoted_bracket() {
+		$content = Lite_Site::clean_content(
+			'<p title="x><div class=lite-image-placeholder data-src=https://some-other-domain.test/p.gif>'
+			. '<button class=lite-image-load-btn type=button>Load</button></div>">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No forged container survives.' );
+		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'And no forged button.' );
 	}
 }
