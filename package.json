@@ -86,9 +86,6 @@
 			"@wordpress/keycodes": "^4.55.0",
 			"newspack-icons": "~1.4.0",
 			"@wordpress/url": "^4.55.0"
-		},
-		"newspack-icons": {
-			"@wordpress/primitives": "^5.2.0"
 		}
 	}
 }
