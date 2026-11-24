@@ -740,8 +740,6 @@
 :root {
 	--animate-fd-fade-in: fd-fade-in 200ms ease;
 	--animate-fd-fade-out: fd-fade-out 200ms ease;
-	--animate-fd-dialog-in: fd-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
-	--animate-fd-dialog-out: fd-dialog-out 200ms cubic-bezier(0.16, 1, 0.3, 1);
 	--animate-fd-sidebar-in: fd-sidebar-in 250ms cubic-bezier(0.32, 0.72, 0, 1);
 	--animate-fd-sidebar-out: fd-sidebar-out 250ms cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -756,32 +754,10 @@
 		--tw-exit-translate-x: 0;
 		--tw-exit-translate-y: 0;
 	}
-
-	:root {
-		--animate-fd-dialog-in: fd-fade-in 150ms ease;
-		--animate-fd-dialog-out: fd-fade-out 150ms ease;
-		--animate-fd-popover-in: fd-fade-in 100ms ease;
-		--animate-fd-popover-out: fd-fade-out 100ms ease;
-		--animate-fd-sidebar-in: fd-fade-in 150ms ease;
-		--animate-fd-sidebar-out: fd-fade-out 150ms ease;
-		--animate-fd-nav-menu-in: fd-fade-in 150ms ease;
-		--animate-fd-nav-menu-out: fd-fade-out 150ms ease;
-		--animate-fd-enterFromLeft: fd-fade-in 150ms ease;
-		--animate-fd-enterFromRight: fd-fade-in 150ms ease;
-		--animate-fd-exitToLeft: fd-fade-out 150ms ease;
-		--animate-fd-exitToRight: fd-fade-out 150ms ease;
-	}
 }
 
 html:not([data-astro-transition]) body {
 	view-transition-name: none !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	#nd-sidebar-mobile {
-		--animate-fd-sidebar-in: fd-fade-in var(--newspack-ui-duration-sheet) var(--newspack-ui-ease-drawer);
-		--animate-fd-sidebar-out: fd-fade-out var(--newspack-ui-duration-sheet) var(--newspack-ui-ease-drawer);
-	}
 }
 
 @keyframes ls-weight-lite {
@@ -854,7 +830,7 @@ html:not([data-astro-transition]) body {
 	}
 }
 
-.docs-prose {
+.prose.docs-prose {
 	font-size: var(--newspack-ui-font-size-body);
 	line-height: var(--ls-line-height-prose);
 }

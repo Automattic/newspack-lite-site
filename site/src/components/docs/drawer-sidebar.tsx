@@ -1,3 +1,5 @@
+"use client"
+
 import { useMemo, useRef, type ReactNode } from 'react';
 import Link from 'fumadocs-core/link';
 import { usePathname } from 'fumadocs-core/framework';
@@ -22,6 +24,7 @@ import {
 	type SidebarProps,
 } from 'fumadocs-ui/layouts/notebook/slots/sidebar';
 import { cn } from '@/lib/utils';
+import { DOCS_SIDEBAR } from '@/lib/site';
 import { CloseIcon } from '@/lib/newspack-ui-icons';
 import { DRAWER_CLOSE, DRAWER_ITEM, DRAWER_ITEM_BASE, DRAWER_ITEM_HOVER, DRAWER_LINKS, FolderChevron, drawerOffset } from '@/components/site/drawer-nav';
 
@@ -166,7 +169,8 @@ export function drawerTree( root: PageTree.Root ): PageTree.Root {
 /**
  * The notebook sidebar. Both modes render folders and separators with the components above, so
  * no lucide chevron is drawn. In drawer mode it renders the site links with the docs tree nested
- * under the `drawer: 'tree'` link, from `drawerTree()`.
+ * under the `drawer: 'tree'` link, from `drawerTree()`. With `DOCS_SIDEBAR` off, the desktop
+ * sidebar is not rendered, so the layout gives its column to the page.
  */
 function DocsSidebar( props: SidebarProps ) {
 	const { mode } = useSidebar();
@@ -174,7 +178,7 @@ function DocsSidebar( props: SidebarProps ) {
 	const tree = useMemo( () => drawerTree( full ), [ full ] );
 
 	if ( mode !== 'drawer' ) {
-		return <Sidebar { ...props } components={ DRAWER_COMPONENTS } />;
+		return DOCS_SIDEBAR ? <Sidebar { ...props } components={ DRAWER_COMPONENTS } /> : null;
 	}
 	return (
 		<TreeContextProvider tree={ tree }>
