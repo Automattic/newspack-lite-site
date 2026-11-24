@@ -52,6 +52,12 @@ defined( 'ABSPATH' ) || exit;
 	.content figure img {
 		display: block;
 		max-width: 100%;
+		/* The loaded image carries the width and height the source declared,
+		so the browser reserves its space before it arrives. Those are the
+		image's own pixels, not the column's: without this the picture keeps
+		its full height while max-width narrows it, and a tall photograph
+		renders stretched on a phone and inside a table cell. */
+		height: auto;
 	}
 	.content figcaption {
 		font-size: 0.875rem;
@@ -90,6 +96,7 @@ defined( 'ABSPATH' ) || exit;
 	.liveblog-entry-content figure img {
 		display: block;
 		max-width: 100%;
+		height: auto;
 	}
 	.content th,
 	.content td,

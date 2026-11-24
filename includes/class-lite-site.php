@@ -1853,13 +1853,76 @@ class Lite_Site {
 			return $html;
 		}
 
-		$without = self::or_original( preg_replace( '/<noscript\b[^>]*>.*?<\/noscript>/is', '', $html ), $html );
+		// The sources already on the page outside any fallback. A lazy loader
+		// writes the real file into a data attribute out here and into src
+		// inside the fallback, so both kinds of attribute are collected for
+		// the two to match.
+		$outside = self::or_original( preg_replace( '/<noscript\b[^>]*>.*?<\/noscript>/is', '', $html ), $html );
+		$sources = self::image_sources_in( $outside );
 
-		if ( false !== stripos( $without, '<img' ) ) {
-			return $without;
+		// Each fallback is judged on its own. One that repeats an image the
+		// reader is already being offered is a duplicate and goes; one holding
+		// anything else is the only copy of it on the page, so its contents
+		// stay. Testing the page as a whole would drop a noscript-only
+		// evacuation map because some unrelated photograph appeared above it.
+		$resolved = preg_replace_callback(
+			'/<noscript\b[^>]*>(.*?)<\/noscript>/is',
+			static function ( array $matches ) use ( $sources ): string {
+				$inner = $matches[1];
+
+				foreach ( self::image_sources_in( $inner ) as $source ) {
+					if ( in_array( $source, $sources, true ) ) {
+						return '';
+					}
+				}
+
+				return $inner;
+			},
+			$html
+		);
+
+		return self::or_original( $resolved, $html );
+	}
+
+	/**
+	 * Every source the images in a fragment could load, as written.
+	 *
+	 * Raw values rather than vetted ones: this answers whether two tags point
+	 * at the same file, which is a question about the markup, not about what
+	 * the reader should be served.
+	 *
+	 * @param string $html A fragment.
+	 * @return string[] Source values, in no particular order.
+	 */
+	private static function image_sources_in( string $html ): array {
+		if ( false === stripos( $html, '<img' ) ) {
+			return [];
 		}
 
-		return self::or_original( preg_replace( '/<\/?noscript\b[^>]*>/i', '', $html ), $html );
+		$sources   = [];
+		$processor = new \WP_HTML_Tag_Processor( $html );
+
+		while ( $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
+			foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
+				foreach ( $pair as $name ) {
+					if ( '' === $name ) {
+						continue;
+					}
+
+					$value = $processor->get_attribute( $name );
+
+					if ( is_string( $value ) ) {
+						$value = self::browser_url_value( $value );
+
+						if ( '' !== $value ) {
+							$sources[] = $value;
+						}
+					}
+				}
+			}
+		}
+
+		return $sources;
 	}
 
 	/**
@@ -2095,13 +2158,31 @@ class Lite_Site {
 	}
 
 	/**
+	 * A URL as the browser will read it.
+	 *
+	 * Browsers drop tab, carriage return and line feed from a URL before
+	 * requesting it, so the string this plugin judges has to be the string the
+	 * browser will fetch. Without this, a source written as
+	 * `da&#10;ta:image/svg+xml;base64,...` fails the scheme test, passes as a
+	 * document-relative path, and the browser puts the `data:` scheme back,
+	 * past both the SVG rule and the inline size budget. The parser decodes
+	 * the entity, so the whitespace is real by the time it is read here.
+	 *
+	 * @param string $src Raw source value.
+	 * @return string The value with browser-ignored whitespace removed.
+	 */
+	private static function browser_url_value( string $src ): string {
+		return trim( str_replace( [ "\t", "\r", "\n" ], '', $src ) );
+	}
+
+	/**
 	 * Escape an image source for an attribute, or reject it.
 	 *
 	 * @param string $src Raw source value.
 	 * @return string Escaped source, or an empty string.
 	 */
 	private static function safe_image_src( string $src ): string {
-		$src = trim( $src );
+		$src = self::browser_url_value( $src );
 
 		if ( '' === $src ) {
 			return '';
@@ -2139,7 +2220,7 @@ class Lite_Site {
 	 * @return string Escaped source, or an empty string.
 	 */
 	private static function safe_data_image_src( string $src ): string {
-		$src = trim( $src );
+		$src = self::browser_url_value( $src );
 
 		if ( 0 !== stripos( $src, 'data:image/' ) || 0 === stripos( $src, 'data:image/svg' ) ) {
 			return '';

@@ -1501,4 +1501,79 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 			'Every paragraph that closes was opened.'
 		);
 	}
+
+	/**
+	 * A fallback is judged against the image it holds, not against the page.
+	 * An article with a photograph at the top and an evacuation map that only
+	 * a <noscript> carries used to lose the map, because the photograph above
+	 * it counted as "an image elsewhere" and every fallback was dropped.
+	 */
+	public function test_clean_content_keeps_a_noscript_only_image_beside_another_image() {
+		$content = Lite_Site::clean_content(
+			'<p><img src="https://some-other-domain.test/portrait.jpg" alt="The mayor"></p>'
+			. '<p>Story.</p>'
+			. '<noscript><img src="https://some-other-domain.test/evacuation-map.jpg" alt="Evacuation map"></noscript>'
+		);
+
+		$this->assertSame( 2, substr_count( $content, 'lite-image-placeholder' ), 'Both images are offered.' );
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/evacuation-map.jpg"',
+			$content,
+			'The map the fallback carries is the only copy of it, so it survives.'
+		);
+	}
+
+	/**
+	 * The duplicate rule still has to fire when the page holds other images:
+	 * a lazy-loaded photograph beside an unrelated one is still one
+	 * photograph, not two.
+	 */
+	public function test_clean_content_drops_a_duplicate_fallback_beside_another_image() {
+		$content = Lite_Site::clean_content(
+			'<p><img src="https://some-other-domain.test/portrait.jpg" alt="The mayor"></p>'
+			. '<p><img class="lazyload" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-src="https://some-other-domain.test/real.jpg" alt="Flood">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg" alt="Flood"></noscript></p>'
+		);
+
+		$this->assertSame( 2, substr_count( $content, 'lite-image-placeholder' ), 'Two photographs, two placeholders.' );
+		$this->assertSame(
+			1,
+			substr_count( $content, 'data-src="https://some-other-domain.test/real.jpg"' ),
+			'The lazy-loaded one is offered once, not twice.'
+		);
+	}
+
+	/**
+	 * A browser drops tab, carriage return and line feed from a URL before
+	 * requesting it. A scheme split across that whitespace therefore reads as
+	 * a relative path here and as `data:` to the browser, which would put an
+	 * inline SVG of any size on a page whose promise is to stay small.
+	 */
+	public function test_clean_content_rejects_a_scheme_split_by_whitespace() {
+		$svg     = 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg"></svg>' );
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="' . substr( $svg, 0, 2 ) . '&#10;' . substr( $svg, 2 ) . '" alt="A map">'
+		);
+
+		$this->assertStringNotContainsString( 'svg', $content, 'The SVG never reaches the page.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'And it is not offered as an image.' );
+	}
+
+	/**
+	 * The same whitespace inside `data:image/svg` would otherwise slip past
+	 * the SVG test and be treated as an ordinary inline image.
+	 */
+	public function test_clean_content_rejects_an_svg_type_split_by_whitespace() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="data:image/sv&#9;g+xml;base64,'
+			. base64_encode( '<svg xmlns="http://www.w3.org/2000/svg"></svg>' ) . '" alt="A map">'
+		);
+
+		$this->assertStringNotContainsString(
+			'lite-image-placeholder',
+			$content,
+			'Still recognized as an SVG, and still refused.'
+		);
+	}
 }
