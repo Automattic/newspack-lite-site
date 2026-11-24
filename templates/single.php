@@ -155,12 +155,23 @@ if ( $is_liveblog ) {
 				// follow the image that replaces the button.
 				figure.setAttribute( 'tabindex', '-1' );
 
-				img.src = src;
 				img.alt = alt;
 
+				// With `w` descriptors and no sizes the browser assumes the
+				// image fills the viewport and downloads a candidate for the
+				// whole screen rather than for a 39.5rem column. Both are set
+				// before src so the first fetch is the right one.
 				if ( srcset ) {
+					const width = Math.ceil( placeholder.getBoundingClientRect().width );
+
+					if ( width > 0 ) {
+						img.sizes = width + 'px';
+					}
+
 					img.srcset = srcset;
 				}
+
+				img.src = src;
 
 				// Declared so the browser can reserve the space before the
 				// bytes arrive. Without them the article reflows under the
@@ -191,12 +202,17 @@ if ( $is_liveblog ) {
 				// cleared from incoming content before any pass adds it. See
 				// RESERVED_CLASSES.
 				const btn = e.target.closest( 'button.lite-image-load-btn' );
-				if ( ! btn ) {
+				const placeholder = ( btn || e.target ).closest( '.lite-image-placeholder' );
+
+				if ( ! placeholder || ! placeholder.dataset.src ) {
 					return;
 				}
 
-				const placeholder = btn.closest( '.lite-image-placeholder' );
-				if ( ! placeholder || ! placeholder.dataset.src ) {
+				// Inside a linked image the whole placeholder sits in the
+				// <a>, so a tap on the label or the caption follows the link
+				// even though it never reached the button. Anywhere in the
+				// placeholder loads the image instead.
+				if ( ! btn && ! placeholder.closest( 'a' ) ) {
 					return;
 				}
 

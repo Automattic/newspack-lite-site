@@ -590,14 +590,28 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A bare relative path is read by esc_url() as a host, which turned
-	 * images/flood.jpg into a request to a host named "images".
+	 * A document-relative path resolves against the lite URL, not the
+	 * article's, so images/flood.jpg on /lite/2026/03/story asks for
+	 * /lite/2026/03/images/flood.jpg. A feed item's relative paths belong to
+	 * the partner's site and do not resolve here at all. Either way the
+	 * reader would tap Load image and get a 404, and safe_image_srcset()
+	 * already turns these away, so src agrees with it.
 	 */
-	public function test_clean_content_keeps_a_document_relative_source_relative() {
+	public function test_clean_content_drops_a_document_relative_source() {
 		$content = Lite_Site::clean_content( '<img src="images/flood.jpg" alt="Flood" width="800" height="600">' );
 
-		$this->assertStringContainsString( 'data-src="images/flood.jpg"', $content, 'The path is left for the browser to resolve.' );
-		$this->assertStringNotContainsString( 'http://images/', $content, 'It is not rewritten to a host named after the folder.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No button is offered for a path that cannot resolve.' );
+		$this->assertStringNotContainsString( 'images/flood.jpg', $content, 'And the path does not reach the page.' );
+		$this->assertStringNotContainsString( 'http://images/', $content, 'Least of all rewritten to a host named after the folder.' );
+	}
+
+	/**
+	 * A root-relative path does resolve, and is kept.
+	 */
+	public function test_clean_content_keeps_a_root_relative_source() {
+		$content = Lite_Site::clean_content( '<img src="/wp-content/uploads/flood.jpg" alt="Flood" width="800" height="600">' );
+
+		$this->assertStringContainsString( 'data-src="/wp-content/uploads/flood.jpg"', $content, 'A path from the root is offered as it is.' );
 	}
 
 	/**
@@ -1260,11 +1274,14 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 	/**
 	 * A relative path can hold a colon in its filename, which is not a scheme.
+	 * It is dropped for being document-relative, not mistaken for a scheme and
+	 * handed to esc_url(), which would read 2026 as one and empty the value.
 	 */
-	public function test_clean_content_keeps_a_relative_path_containing_a_colon() {
+	public function test_clean_content_drops_a_relative_path_containing_a_colon() {
 		$content = Lite_Site::clean_content( '<img src="2026:03:photo.jpg" alt="Flood" width="800" height="600">' );
 
-		$this->assertStringContainsString( 'data-src="2026:03:photo.jpg"', $content, 'The path survives rather than being read as a scheme.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'It is turned away like any relative path.' );
+		$this->assertStringNotContainsString( '2026:03:photo.jpg', $content, 'And does not reach the page.' );
 	}
 
 	/**
@@ -1678,5 +1695,85 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No forged container survives.' );
 		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'And no forged button.' );
+	}
+
+	/**
+	 * A lazy loader that keeps the real file on an attribute this plugin does
+	 * not read leaves only a stub behind: a transparent pixel in src. The
+	 * fallback holds the only real copy, so offering both gave the reader two
+	 * buttons, one of which fetched the pixel.
+	 */
+	public function test_clean_content_prefers_a_fallback_over_a_stub_only_image() {
+		$content = Lite_Site::clean_content(
+			'<p><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-opt-src="https://some-other-domain.test/real.jpg" alt="Flooded road">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg"></noscript></p>'
+		);
+
+		$this->assertSame( 1, substr_count( $content, 'lite-image-placeholder' ), 'One photograph gets one button.' );
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/real.jpg"',
+			$content,
+			'And it loads the real file.'
+		);
+		$this->assertStringNotContainsString( 'R0lGOD', $content, 'The stub is not offered at all.' );
+		$this->assertStringContainsString(
+			'data-alt="Flooded road"',
+			$content,
+			'The description was written on the stub, so it comes across with it.'
+		);
+	}
+
+	/**
+	 * An image with a real source beside its stub is not this case: the
+	 * fallback there is a duplicate and still goes.
+	 */
+	public function test_clean_content_still_drops_a_duplicate_beside_a_readable_source() {
+		$content = Lite_Site::clean_content(
+			'<p><img class="lazyload" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-src="https://some-other-domain.test/real.jpg" alt="Flood">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg" alt="Flood"></noscript></p>'
+		);
+
+		$this->assertSame( 1, substr_count( $content, 'lite-image-placeholder' ), 'Still one placeholder.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'Loading the real file.' );
+	}
+
+	/**
+	 * The URL parser trims every C0 control from both ends, where trim()'s own
+	 * default list stops at \x0B. A form feed before the scheme would
+	 * otherwise break the scheme test here and be put back by the browser.
+	 */
+	public function test_clean_content_rejects_a_scheme_behind_a_form_feed() {
+		$svg     = 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg"></svg>' );
+		$content = Lite_Site::clean_content( '<img data-src="&#12;' . $svg . '" alt="A map">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The SVG is refused like any other.' );
+		$this->assertStringNotContainsString( 'svg', $content, 'And does not reach the page.' );
+	}
+
+	/**
+	 * A beacon that declares its size with !important, or without the leading
+	 * zero, is still a beacon.
+	 */
+	public function test_clean_content_reads_a_beacon_size_written_with_important() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://pixel.some-other-domain.test/b.gif" style="width:1px !important;height:1px !important;">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No button for a beacon.' );
+		$this->assertStringNotContainsString( 'pixel.some-other-domain.test', $content, 'And its URL never reaches the page.' );
+	}
+
+	/**
+	 * The same, written as .5px rather than 0.5px.
+	 */
+	public function test_clean_content_reads_a_beacon_size_without_a_leading_zero() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://pixel.some-other-domain.test/c.gif" style="width:.5px;height:.5px;">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No button for a beacon.' );
+		$this->assertStringNotContainsString( 'pixel.some-other-domain.test', $content, 'And its URL never reaches the page.' );
 	}
 }

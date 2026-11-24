@@ -1881,6 +1881,22 @@ class Lite_Site {
 			return $html;
 		}
 
+		// A lazy loader that keeps the real file on an attribute this plugin
+		// does not read, such as Optimole's data-opt-src, leaves nothing here
+		// but a stub: a transparent pixel in src. The only real copy of the
+		// image is the one inside the fallback. Judged on sources alone the
+		// two never match, so the reader is offered both, and one of the two
+		// buttons fetches the pixel. Where an image carries nothing but a
+		// stub and a fallback follows it, the fallback is the image.
+		$html = self::or_original(
+			preg_replace_callback(
+				'/<img\b[^>]*>\s*<noscript\b[^>]*>(.*?)<\/noscript>/is',
+				[ __CLASS__, 'prefer_fallback_over_stub' ],
+				$html
+			),
+			$html
+		);
+
 		// The sources already on the page outside any fallback. A lazy loader
 		// writes the real file into a data attribute out here and into src
 		// inside the fallback, so both kinds of attribute are collected for
@@ -1910,6 +1926,77 @@ class Lite_Site {
 		);
 
 		return self::or_original( $resolved, $html );
+	}
+
+	/**
+	 * Replace a stub image and the fallback after it with the fallback.
+	 *
+	 * The stub's description is carried across when the fallback has none of
+	 * its own, since the alt text is usually on the tag the editor wrote
+	 * rather than on the one the lazy loader generated.
+	 *
+	 * @param array $matches Match array; [0] is the image and its fallback, [1] the fallback's contents.
+	 * @return string The fallback's contents, or the pair unchanged.
+	 */
+	private static function prefer_fallback_over_stub( array $matches ): string {
+		$stub = self::parse_image_attrs( $matches[0] );
+
+		if ( ! $stub['found'] || ! self::has_only_stub_sources( $stub ) ) {
+			return $matches[0];
+		}
+
+		$inner    = $matches[1];
+		$fallback = self::parse_image_attrs( $inner );
+
+		if ( ! $fallback['found'] ) {
+			return $matches[0];
+		}
+
+		if ( null === $fallback['alt'] && is_string( $stub['alt'] ) && '' !== $stub['alt'] ) {
+			$processor = new \WP_HTML_Tag_Processor( $inner );
+
+			if ( $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
+				$processor->set_attribute( 'alt', $stub['alt'] );
+				$inner = $processor->get_updated_html();
+			}
+		}
+
+		return $inner;
+	}
+
+	/**
+	 * Whether every source an image carries is an inline stub.
+	 *
+	 * A lazy loader's placeholder is a `data:` pixel. An image whose sources
+	 * are all of that kind has no real file behind it on this page.
+	 *
+	 * @param array $image Attributes from parse_image_attrs().
+	 * @return bool True when the image carries at least one source and all of them are inline.
+	 */
+	private static function has_only_stub_sources( array $image ): bool {
+		$found = false;
+
+		foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
+			foreach ( $pair as $name ) {
+				if ( '' === $name ) {
+					continue;
+				}
+
+				$value = self::browser_url_value( (string) $image[ str_replace( '-', '_', $name ) ] );
+
+				if ( '' === $value ) {
+					continue;
+				}
+
+				$found = true;
+
+				if ( 0 !== stripos( $value, 'data:' ) ) {
+					return false;
+				}
+			}
+		}
+
+		return $found;
 	}
 
 	/**
@@ -2141,7 +2228,14 @@ class Lite_Site {
 				continue;
 			}
 
-			if ( '' === $value || ! ctype_digit( $value[0] ) ) {
+			// !important is not part of the length. Left on, it reads as part
+			// of the unit, and `width:1px !important` stops looking like a
+			// beacon.
+			$without_important = preg_replace( '/!\s*important\s*$/', '', $value );
+			$value             = trim( is_string( $without_important ) ? $without_important : $value );
+
+			// A length may be written without its leading zero, as .5px.
+			if ( '' === $value || ( ! ctype_digit( $value[0] ) && '.' !== $value[0] ) ) {
 				continue;
 			}
 
@@ -2243,7 +2337,14 @@ class Lite_Site {
 	 * @return string The value with browser-ignored whitespace removed.
 	 */
 	private static function browser_url_value( string $src ): string {
-		return trim( str_replace( [ "\t", "\r", "\n" ], '', $src ) );
+		// Tab, carriage return and line feed go from anywhere in the value.
+		$src = str_replace( [ "\t", "\r", "\n" ], '', $src );
+
+		// And every C0 control and space goes from both ends, as the URL
+		// parser trims them. trim()'s own default list stops at \x0B, so a
+		// form feed written as &#12; would otherwise survive, break the scheme
+		// test below, and be put back by the browser.
+		return trim( $src, "\x00..\x20" );
 	}
 
 	/**
@@ -2265,14 +2366,17 @@ class Lite_Site {
 		// scheme and empties the whole value.
 		$has_scheme = 1 === preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $src );
 
-		// Relative to the document. esc_url() reads such a value as a host and
-		// turns images/flood.jpg into http://images/flood.jpg, a request to a
-		// host named "images". With no scheme there is nothing to smuggle, so
-		// escaping it as an attribute and letting the browser resolve it is
-		// both safe and correct. A leading backslash is excluded because
-		// browsers normalize \\host to //host.
+		// Relative to the document, and the document is the lite page rather
+		// than the article: /lite/2026/03/story resolves images/flood.jpg to
+		// /lite/2026/03/images/flood.jpg, which is nothing. A feed item's
+		// relative paths belong to the partner's site and never resolve here
+		// at all. Either way the reader taps Load image and gets a 404, so
+		// there is nothing to offer. safe_image_srcset() already rejects these,
+		// and src and srcset should agree about what a source is. Root-relative
+		// and absolute paths are unaffected. A leading backslash is excluded
+		// because browsers normalize \\host to //host.
 		if ( ! $has_scheme && ! in_array( $src[0], [ '/', '#', '?', '\\' ], true ) ) {
-			return esc_attr( $src );
+			return '';
 		}
 
 		return esc_url( $src );
