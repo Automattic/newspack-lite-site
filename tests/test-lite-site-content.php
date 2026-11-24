@@ -308,7 +308,7 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertStringContainsString( '<table>', $content, 'The table survives an image in a cell.' );
 		$this->assertStringContainsString( 'Evacuate', $content, 'Cell text beside the image survives.' );
-		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A table figure is not treated as an image figure.' );
+		$this->assertStringContainsString( '<td><span class="lite-image-placeholder"', $content, 'The image becomes a placeholder inside its own cell, not in place of the table.' );
 	}
 
 	/**
@@ -331,6 +331,380 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertStringContainsString( 'colspan="2"', $content, 'Column spans survive.' );
 		$this->assertStringContainsString( 'rowspan="3"', $content, 'Row spans survive.' );
+	}
+
+	/**
+	 * An image with no figure around it still becomes a placeholder, so the
+	 * reader is told an image is there and can load it.
+	 */
+	public function test_clean_content_converts_bare_image_to_placeholder() {
+		$content = Lite_Site::clean_content(
+			'<p>Before</p><p><img src="https://some-other-domain.test/map.jpg" alt="A map of road closures"></p><p>After</p>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'A placeholder should be emitted.' );
+		$this->assertStringContainsString( 'A map of road closures', $content, 'The alt text should survive.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/map.jpg"', $content, 'The source should be kept for loading on demand.' );
+		$this->assertStringNotContainsString( '<img', $content, 'No image should be downloaded on first load.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+		$this->assertStringContainsString( 'After', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * Attribute names are not case sensitive in HTML, and syndicated or
+	 * migrated markup is full of uppercase ones.
+	 */
+	public function test_clean_content_reads_uppercase_attributes() {
+		$content = Lite_Site::clean_content( '<p>Story.</p><IMG SRC="https://some-other-domain.test/photo.jpg" ALT="Flood damage">' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'An uppercase tag still becomes a placeholder.' );
+		$this->assertStringContainsString( 'Flood damage', $content, 'Its alt text survives.' );
+	}
+
+	/**
+	 * Alt text with an apostrophe in it keeps the whole sentence.
+	 */
+	public function test_clean_content_keeps_alt_text_containing_an_apostrophe() {
+		$content = Lite_Site::clean_content( '<img src="https://some-other-domain.test/a.jpg" alt="Mayor\'s address to the council">' );
+
+		$this->assertStringContainsString( 'Mayor&#039;s address to the council', $content, 'The alt text is not truncated at the apostrophe.' );
+	}
+
+	/**
+	 * A lazy-loaded image carries its real description in alt and an empty
+	 * data-alt. Reading the wrong one would drop a described photograph.
+	 */
+	public function test_clean_content_does_not_confuse_data_attributes_with_their_own() {
+		$content = Lite_Site::clean_content(
+			'<img data-alt="" data-width="1" data-height="1" src="https://some-other-domain.test/photo.jpg" alt="A map of road closures" width="1600" height="900">'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The photograph is still offered.' );
+		$this->assertStringContainsString( 'A map of road closures', $content, 'Its own alt text is used.' );
+	}
+
+	/**
+	 * A malformed tag must not swallow the copy that follows it. An
+	 * unterminated quote used to let the match run past the tag and delete the
+	 * sentence after it.
+	 */
+	public function test_clean_content_does_not_swallow_copy_after_a_malformed_image() {
+		$content = Lite_Site::clean_content(
+			'<p>Lead.</p><img src="a.jpg" alt="Map of closures<p>Crews cleared 6" of snow overnight.</p><p>The road reopened.</p>'
+		);
+
+		$this->assertStringContainsString( 'The road reopened.', $content, 'Later copy survives.' );
+		$this->assertStringContainsString( 'Lead.', $content, 'Earlier copy survives.' );
+		$this->assertStringContainsString( 'of snow overnight.', $content, 'So does the sentence the match could have swallowed.' );
+	}
+
+	/**
+	 * A very large image tag must not defeat the pipeline. A pattern that hits
+	 * a PCRE limit returns null, which would blank the article.
+	 */
+	public function test_clean_content_survives_a_very_large_image_tag() {
+		$blob    = str_repeat( 'A', 40000 );
+		$content = Lite_Site::clean_content( '<p>Story.</p><img src="data:image/png;base64,' . $blob . '" alt="Chart">' );
+
+		$this->assertStringContainsString( 'Story.', $content, 'A huge tag does not blank the article.' );
+		$this->assertStringNotContainsString( $blob, $content, 'A blob this size is not carried in the page.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'And it is not offered behind a button either.' );
+	}
+
+	/**
+	 * A small inline image needs no request at all, so it is worth keeping
+	 * where a large one is not.
+	 */
+	public function test_clean_content_keeps_a_small_inline_data_image() {
+		$src     = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==';
+		$content = Lite_Site::clean_content( '<p>Story.</p><img src="' . $src . '" alt="Turnout chart" width="600" height="400">' );
+
+		$this->assertStringContainsString( 'data-src="' . $src . '"', $content, 'A small inline image is kept.' );
+		$this->assertStringContainsString( 'Turnout chart', $content, 'With its description.' );
+	}
+
+	/**
+	 * An inline SVG is markup, and an <img> is not where this plugin wants to
+	 * find out how a given browser treats it.
+	 */
+	public function test_clean_content_drops_an_inline_svg_data_image() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" alt="Chart" width="90" height="90">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No placeholder for an inline SVG.' );
+		$this->assertStringNotContainsString( 'image/svg', $content, 'Its payload does not reach the page.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
+	 * The placeholder replaces an image that can sit inside a paragraph, so it
+	 * has to be phrasing content rather than a block element.
+	 */
+	public function test_placeholder_is_inline_safe() {
+		$content = Lite_Site::clean_content( '<p>The chart <img src="https://some-other-domain.test/c.png" alt="Turnout"> shows turnout.</p>' );
+
+		$this->assertStringContainsString( '<span class="lite-image-placeholder"', $content, 'The placeholder is a span.' );
+		$this->assertStringNotContainsString( '<div class="lite-image-placeholder"', $content, 'It is not a block element inside a paragraph.' );
+		$this->assertStringContainsString( 'shows turnout.', $content, 'Copy after the image keeps its place.' );
+	}
+
+	/**
+	 * A tracking pixel never becomes a Load image button. Feed items routinely
+	 * end with a 1x1 beacon, and the lite page's promise is that nothing third
+	 * party is fetched unless a reader asks for it.
+	 */
+	public function test_clean_content_drops_tracking_pixels() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://feeds.some-other-domain.test/~r/site/~4/abc" height="1" width="1" border="0">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A 1x1 beacon is not offered to the reader.' );
+		$this->assertStringNotContainsString( 'feeds.some-other-domain.test', $content, 'Its URL does not reach the page.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
+	 * A real photograph with no alt attribute still earns a placeholder: the
+	 * size rule is for beacons, not for images an author simply did not
+	 * describe.
+	 */
+	public function test_clean_content_keeps_an_image_with_no_alt_attribute() {
+		$content = Lite_Site::clean_content( '<p>Story.</p><img src="https://some-other-domain.test/photo.jpg" width="1200" height="800">' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'An undescribed photograph is still offered.' );
+	}
+
+	/**
+	 * An image marked decorative with an empty alt stays out of the way: a
+	 * box with no label would tell the reader nothing.
+	 */
+	public function test_clean_content_drops_decorative_images() {
+		$content = Lite_Site::clean_content(
+			'<p>Before</p><img class="wp-block-cover__image-background" src="https://some-other-domain.test/cover.jpg" alt="">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A decorative image needs no placeholder.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * An image tag with nothing to load leaves nothing behind.
+	 */
+	public function test_clean_content_drops_image_without_a_source() {
+		$content = Lite_Site::clean_content( '<p>Before</p><img alt="No source">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No placeholder without a source.' );
+		$this->assertStringNotContainsString( '<img', $content, 'The empty image tag is removed.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * The classic editor writes alt="" into every insert whose attachment has
+	 * no alt text, so an empty alt cannot be read as "decorative": doing so
+	 * deletes undescribed news photographs, which is the bug this pass exists
+	 * to fix.
+	 */
+	public function test_clean_content_keeps_a_photograph_with_an_empty_alt() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img class="alignnone size-full wp-image-2" src="https://some-other-domain.test/photo.jpg" alt="" width="800" height="600" />'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'An undescribed photograph is still offered.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo.jpg"', $content, 'With its source.' );
+	}
+
+	/**
+	 * A beacon gives itself away with one edge. Requiring both let a 1x100
+	 * spacer through with a Load image button on it.
+	 */
+	public function test_clean_content_drops_a_beacon_with_one_tiny_edge() {
+		$content = Lite_Site::clean_content( '<p>Story.</p><img src="https://pixel.some-other-domain.test/b.gif" width="1" height="100">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A 1x100 spacer is not offered to the reader.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
+	 * The common noscript beacon declares its size in a style attribute and
+	 * carries no width or height at all.
+	 */
+	public function test_clean_content_drops_a_beacon_sized_in_a_style_attribute() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://pixel.some-other-domain.test/b.gif?v=noscript" style="height:0;width:0;">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A zero-sized beacon is not offered.' );
+		$this->assertStringNotContainsString( 'pixel.some-other-domain.test', $content, 'Its URL does not reach the page.' );
+	}
+
+	/**
+	 * A min-width:0 reset is not a tracking pixel. Matching the property
+	 * loosely would delete the photograph it sits on.
+	 */
+	public function test_clean_content_keeps_an_image_with_a_min_width_reset() {
+		$content = Lite_Site::clean_content(
+			'<img src="https://some-other-domain.test/e.jpg" alt="Map" style="min-width:0;max-width:100%" width="800" height="600">'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The photograph survives a CSS reset.' );
+		$this->assertStringContainsString( 'Map', $content, 'With its description.' );
+	}
+
+	/**
+	 * A lazy loader parks a one-pixel stub on src and puts the real URL on
+	 * data-src. Taking src would hand the reader a transparent pixel.
+	 */
+	public function test_clean_content_prefers_a_lazy_loaded_source_over_a_stub() {
+		$stub    = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+		$content = Lite_Site::clean_content(
+			'<img src="' . $stub . '" data-src="https://some-other-domain.test/real.jpg" alt="Flood" width="1200" height="800">'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'The real URL is what the button loads.' );
+		$this->assertStringNotContainsString( 'R0lGOD', $content, 'The stub is not what the reader gets.' );
+	}
+
+	/**
+	 * An image can carry its only usable URL in a srcset, which imports and
+	 * save-time rewriters leave behind.
+	 */
+	public function test_clean_content_falls_back_to_a_srcset_url() {
+		$content = Lite_Site::clean_content(
+			'<img srcset="https://some-other-domain.test/p-800.jpg 1x, https://some-other-domain.test/p-1600.jpg 2x" alt="Evacuation route">'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/p-800.jpg"', $content, 'The first candidate is used as the source.' );
+		$this->assertStringContainsString( 'Evacuation route', $content, 'The alt text is not lost with it.' );
+	}
+
+	/**
+	 * The canonical lazysizes shape: no src at all, everything on data-*.
+	 */
+	public function test_clean_content_falls_back_to_a_data_srcset_url() {
+		$content = Lite_Site::clean_content(
+			'<img class="lazyload" data-srcset="https://some-other-domain.test/q-800.jpg 800w" alt="Route">'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/q-800.jpg"', $content, 'A data-srcset candidate is used.' );
+	}
+
+	/**
+	 * A document-relative path resolves against the lite URL, not the
+	 * article's, so images/flood.jpg on /lite/2026/03/story asks for
+	 * /lite/2026/03/images/flood.jpg. A feed item's relative paths belong to
+	 * the partner's site and do not resolve here at all. Either way the
+	 * reader would tap Load image and get a 404, and safe_image_srcset()
+	 * already turns these away, so src agrees with it.
+	 */
+	public function test_clean_content_drops_a_document_relative_source() {
+		$content = Lite_Site::clean_content( '<img src="images/flood.jpg" alt="Flood" width="800" height="600">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No button is offered for a path that cannot resolve.' );
+		$this->assertStringNotContainsString( 'images/flood.jpg', $content, 'And the path does not reach the page.' );
+		$this->assertStringNotContainsString( 'http://images/', $content, 'Least of all rewritten to a host named after the folder.' );
+	}
+
+	/**
+	 * A root-relative path does resolve, and is kept.
+	 */
+	public function test_clean_content_keeps_a_root_relative_source() {
+		$content = Lite_Site::clean_content( '<img src="/wp-content/uploads/flood.jpg" alt="Flood" width="800" height="600">' );
+
+		$this->assertStringContainsString( 'data-src="/wp-content/uploads/flood.jpg"', $content, 'A path from the root is offered as it is.' );
+	}
+
+	/**
+	 * A source with a scheme the site does not allow is not offered behind a
+	 * button that would do nothing, or worse.
+	 */
+	public function test_clean_content_drops_a_disallowed_scheme() {
+		$content = Lite_Site::clean_content( '<p>Before</p><img src="javascript:alert(1)" alt="X" width="90" height="90">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No placeholder for a scheme the site rejects.' );
+		$this->assertStringNotContainsString( 'javascript:', $content, 'And the scheme does not reach the page.' );
+		$this->assertStringContainsString( 'Before', $content, 'Surrounding copy should survive.' );
+	}
+
+	/**
+	 * IMG_TAG_PATTERN stops at the first ">", so a ">" inside a quoted
+	 * attribute truncates the match.
+	 *
+	 * The outcome is the same whether the callback deletes the match or hands
+	 * it back, since wp_kses() removes it either way; this pins the outcome,
+	 * not the branch that produces it.
+	 */
+	public function test_clean_content_hands_back_a_tag_it_cannot_parse() {
+		$content = Lite_Site::clean_content(
+			'<p>Lead.</p><img src="https://some-other-domain.test/a.jpg" alt="Snowfall > 12 inches"><p>The road reopened.</p>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'Half a tag is not turned into a placeholder.' );
+		$this->assertStringContainsString( 'Lead.', $content, 'Earlier copy survives.' );
+		$this->assertStringContainsString( 'The road reopened.', $content, 'Later copy survives.' );
+	}
+
+	/**
+	 * The classic editor links an image to the full-size original by default,
+	 * so the placeholder lands inside an <a>, and the anchor has to survive
+	 * for the image to be a link again once it loads.
+	 *
+	 * Whether tapping the button navigates away is a question about the page's
+	 * script, which this cannot reach.
+	 */
+	public function test_clean_content_keeps_a_placeholder_inside_a_link() {
+		$content = Lite_Site::clean_content(
+			'<p>Lead.</p><a href="https://some-other-domain.test/flood-scaled.jpg"><img src="https://some-other-domain.test/flood-300x200.jpg" alt="Flood damage" width="300" height="200" /></a>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringContainsString( 'flood-scaled.jpg', $content, 'And the link around it survives.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/flood-300x200.jpg"', $content, 'The button loads the smaller file, not the original.' );
+	}
+
+	/**
+	 * The block editor puts the anchor inside the figure, so the figure pass is
+	 * the one that has to carry it. A link set on an image in the editor reaches
+	 * the reader whichever editor wrote the markup.
+	 */
+	public function test_clean_content_keeps_a_link_wrapped_inside_a_figure() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-image size-large"><a href="https://some-other-domain.test/bridge-report"><img src="https://some-other-domain.test/bridge-800x600.jpg" alt="Bridge inspection" width="800" height="600" /></a><figcaption class="wp-element-caption">Crews check for scour.</figcaption></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringContainsString( 'href="https://some-other-domain.test/bridge-report"', $content, 'And the link the editor set survives.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/bridge-800x600.jpg"', $content, 'The button still loads the image.' );
+		$this->assertStringContainsString( 'data-caption="Crews check for scour."', $content, 'The caption is carried too.' );
+		$this->assertStringContainsString( 'class="lite-site-external"', $content, 'And it is marked external like any other outbound link.' );
+	}
+
+	/**
+	 * A photo credit in the caption is a link in the caption. The image itself
+	 * is not a link, so the placeholder is not wrapped in one.
+	 */
+	public function test_clean_content_does_not_treat_a_caption_credit_as_an_image_link() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/levee.jpg" alt="The levee" /><figcaption>Photo by <a href="https://some-other-domain.test/photographer">A. Reporter</a></figcaption></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringNotContainsString( 'photographer', $content, 'The credit does not become a link on the image.' );
+	}
+
+	/**
+	 * A figure's link reaches the reader only if the page may link to it, so a
+	 * scheme esc_url() refuses leaves the placeholder with no anchor at all
+	 * rather than an empty one pointing back at the page.
+	 */
+	public function test_clean_content_drops_a_figure_link_with_a_disallowed_scheme() {
+		$content = Lite_Site::clean_content(
+			'<figure><a href="javascript:alert(1)"><img src="https://some-other-domain.test/map.jpg" alt="Flood map" /></a></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringNotContainsString( 'javascript', $content, 'The refused scheme does not reach the page.' );
+		$this->assertStringNotContainsString( '<a', $content, 'And no empty anchor is left behind.' );
 	}
 
 	/**
@@ -761,6 +1135,54 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A zero dimension is what a broken importer writes, not what a beacon
+	 * writes. Treating it as tiny deleted real photographs.
+	 */
+	public function test_clean_content_keeps_a_photograph_with_a_zero_dimension() {
+		$content = Lite_Site::clean_content( '<img src="https://some-other-domain.test/photo.jpg" alt="Levee breach" width="0" height="0">' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The photograph is still offered.' );
+		$this->assertStringContainsString( 'Levee breach', $content, 'With its description.' );
+		$this->assertStringNotContainsString( 'data-width', $content, 'A zero dimension is not passed on to reserve space with.' );
+	}
+
+	/**
+	 * The common inline-styled beacon carries no width or height attributes
+	 * and a one-pixel style, so matching only zero missed it.
+	 */
+	public function test_clean_content_drops_a_one_pixel_styled_beacon() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://pixel.some-other-domain.test/b.gif?u=9" style="position:absolute;width:1px;height:1px">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A one-pixel beacon is not offered.' );
+		$this->assertStringNotContainsString( 'pixel.some-other-domain.test', $content, 'Its URL does not reach the page.' );
+	}
+
+	/**
+	 * Only px and unitless lengths are read as pixels, so a 1em icon is left
+	 * alone rather than read as a one-pixel beacon.
+	 */
+	public function test_clean_content_keeps_an_image_sized_in_em() {
+		$content = Lite_Site::clean_content( '<img src="https://some-other-domain.test/icon.png" alt="Rain" style="width:1em;height:1em">' );
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'An em-sized image is not a beacon.' );
+	}
+
+	/**
+	 * The beacon rule applies inside a figure too. Before, a feed's wrapped
+	 * beacon kept its URL on the page with a button inviting the tap.
+	 */
+	public function test_clean_content_drops_a_beacon_wrapped_in_a_figure() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><figure><img src="https://pixel.some-other-domain.test/t.gif" width="1" height="1" alt=""></figure>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'A wrapped beacon is not offered either.' );
+		$this->assertStringContainsString( 'Story.', $content, 'The copy around it survives.' );
+	}
+
+	/**
 	 * The HTML parser swallows a <textarea> whole, so the class walk never
 	 * sees inside one, and kses then drops the wrapper and keeps the
 	 * children. That let a forged placeholder through complete, from content
@@ -783,6 +1205,58 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The Cover rule matches a class token, not a substring of the attribute.
+	 */
+	public function test_clean_content_keeps_an_image_whose_class_merely_contains_the_cover_name() {
+		$content = Lite_Site::clean_content(
+			'<img class="my-wp-block-cover__image-background-thumb" src="https://some-other-domain.test/photo.jpg" alt="Flood" width="800" height="600">'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'A lookalike class does not delete the image.' );
+	}
+
+	/**
+	 * Some lazy loaders park a real placeholder FILE on src rather than a
+	 * data: URI, so the reader got a blank graphic instead of the photograph.
+	 */
+	public function test_clean_content_prefers_a_lazy_source_over_a_file_stub() {
+		$content = Lite_Site::clean_content(
+			'<img class="lazy lazy-hidden" src="https://some-other-domain.test/plugins/a3-lazy-load/assets/images/lazy_placeholder.gif"'
+			. ' data-src="https://some-other-domain.test/photo-1200x800.jpg" alt="Flood" width="1200" height="800">'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/photo-1200x800.jpg"', $content, 'The real photograph is what loads.' );
+		$this->assertStringNotContainsString( 'lazy_placeholder.gif', $content, 'The stub graphic is not.' );
+	}
+
+	/**
+	 * Vendor-prefixed lazy attributes carry the real image too.
+	 *
+	 * @dataProvider lazy_attribute_provider
+	 * @param string $attribute The attribute holding the real URL.
+	 */
+	public function test_clean_content_reads_vendor_lazy_attributes( $attribute ) {
+		$content = Lite_Site::clean_content(
+			'<img src="https://some-other-domain.test/stub.gif" ' . $attribute . '="https://some-other-domain.test/real.jpg" alt="Flood" width="900" height="600">'
+		);
+
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'The real URL is what the button loads.' );
+	}
+
+	/**
+	 * The lazy attribute names in circulation.
+	 *
+	 * @return array<int,array<int,string>>
+	 */
+	public function lazy_attribute_provider() {
+		return [
+			[ 'data-src' ],
+			[ 'data-lazy-src' ],
+			[ 'data-original' ],
+		];
+	}
+
+	/**
 	 * The elements WP_HTML_Tag_Processor consumes together with their
 	 * contents, closed and unclosed.
 	 *
@@ -799,6 +1273,81 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 			'unclosed textarea' => [ '<textarea>', '' ],
 			'unclosed title'    => [ '<title>', '' ],
 		];
+	}
+
+	/**
+	 * A lazy loader emits the image twice, once lazily and once in a
+	 * <noscript>. kses keeps the contents, so the reader used to get two
+	 * placeholders and two buttons for one photograph.
+	 */
+	public function test_clean_content_does_not_duplicate_a_noscript_fallback() {
+		$content = Lite_Site::clean_content(
+			'<p><img class="lazyload" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-src="https://some-other-domain.test/real.jpg" alt="Flood">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg" alt="Flood"></noscript></p>'
+		);
+
+		$this->assertSame( 1, substr_count( $content, 'lite-image-placeholder' ), 'One photograph gets one placeholder.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'And it loads the real image.' );
+	}
+
+	/**
+	 * If the <noscript> holds the only image, it is still offered: the wrapper
+	 * alone is removed, which is what kses did before.
+	 */
+	public function test_clean_content_keeps_a_noscript_only_image() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><noscript><img src="https://some-other-domain.test/only.jpg" alt="Flood"></noscript>'
+		);
+
+		$this->assertSame( 1, substr_count( $content, 'lite-image-placeholder' ), 'The only image is still offered.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/only.jpg"', $content, 'With its source.' );
+	}
+
+	/**
+	 * An <img> written inside a script string was never on the page, so it
+	 * must not become a button a reader can fire.
+	 */
+	public function test_clean_content_ignores_an_image_inside_a_script() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><script>var a = \'<img src="https://tracker.some-other-domain.test/p.gif">\';</script>'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'Markup inside a script is not content.' );
+		$this->assertStringNotContainsString( 'tracker.some-other-domain.test', $content, 'Its URL does not reach the page.' );
+	}
+
+	/**
+	 * A relative path can hold a colon in its filename, which is not a scheme.
+	 * It is dropped for being document-relative, not mistaken for a scheme and
+	 * handed to esc_url(), which would read 2026 as one and empty the value.
+	 */
+	public function test_clean_content_drops_a_relative_path_containing_a_colon() {
+		$content = Lite_Site::clean_content( '<img src="2026:03:photo.jpg" alt="Flood" width="800" height="600">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'It is turned away like any relative path.' );
+		$this->assertStringNotContainsString( '2026:03:photo.jpg', $content, 'And does not reach the page.' );
+	}
+
+	/**
+	 * An alt of "0" is a description, however terse.
+	 */
+	public function test_clean_content_treats_a_zero_alt_as_a_description() {
+		$content = Lite_Site::clean_content( '<img src="https://some-other-domain.test/chart.png" alt="0" width="400" height="300">' );
+
+		$this->assertStringContainsString( 'data-alt="0"', $content, 'The description is carried.' );
+		$this->assertStringContainsString( 'Image: 0', $content, 'And used in the label.' );
+	}
+
+	/**
+	 * Dimensions are carried so the figure can reserve space, which keeps the
+	 * article from reflowing under the reader when the image arrives.
+	 */
+	public function test_clean_content_carries_dimensions_for_the_loaded_image() {
+		$content = Lite_Site::clean_content( '<img src="https://some-other-domain.test/photo.jpg" alt="Flood" width="1200" height="800">' );
+
+		$this->assertStringContainsString( 'data-width="1200"', $content, 'The width is carried.' );
+		$this->assertStringContainsString( 'data-height="800"', $content, 'So is the height.' );
 	}
 
 	/**
@@ -960,14 +1509,30 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	/**
 	 * A caption describes the image in its own figure. Carrying it to an earlier
 	 * one prints a description of one photograph underneath another.
+	 *
+	 * The figure left unclosed is handed back whole by the figure pass, since
+	 * where it ends is a guess. Its image is then a bare one, so the pass after
+	 * it offers the photograph on its own, with its alt text and no caption.
+	 * Both photographs reach the reader and neither is described by the other's
+	 * words.
 	 */
 	public function test_clean_content_keeps_a_caption_with_its_own_image() {
 		$content = Lite_Site::clean_content( $this->unclosed_figure_before_another() );
 
 		$this->assertSame(
-			1,
+			2,
 			substr_count( $content, 'lite-image-placeholder' ),
-			'Only the closed figure becomes a placeholder.'
+			'Both photographs are offered.'
+		);
+		$this->assertMatchesRegularExpression(
+			'/data-src="https:\/\/some-other-domain\.test\/one\.jpg"[^>]*data-alt="First photo"[^>]*>/',
+			$content,
+			'The image from the unclosed figure keeps its description.'
+		);
+		$this->assertDoesNotMatchRegularExpression(
+			'/data-src="https:\/\/some-other-domain\.test\/one\.jpg"[^>]*data-caption=/',
+			$content,
+			'And it is not given the other figure\'s caption.'
 		);
 		$this->assertMatchesRegularExpression(
 			'/data-src="https:\/\/some-other-domain\.test\/two\.jpg"[^>]*data-caption="The second caption"/',
@@ -1025,6 +1590,81 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 			preg_match_all( '/<p[\s>]/', $content ),
 			substr_count( $content, '</p>' ),
 			'Every paragraph that closes was opened.'
+		);
+	}
+
+	/**
+	 * A fallback is judged against the image it holds, not against the page.
+	 * An article with a photograph at the top and an evacuation map that only
+	 * a <noscript> carries used to lose the map, because the photograph above
+	 * it counted as "an image elsewhere" and every fallback was dropped.
+	 */
+	public function test_clean_content_keeps_a_noscript_only_image_beside_another_image() {
+		$content = Lite_Site::clean_content(
+			'<p><img src="https://some-other-domain.test/portrait.jpg" alt="The mayor"></p>'
+			. '<p>Story.</p>'
+			. '<noscript><img src="https://some-other-domain.test/evacuation-map.jpg" alt="Evacuation map"></noscript>'
+		);
+
+		$this->assertSame( 2, substr_count( $content, 'lite-image-placeholder' ), 'Both images are offered.' );
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/evacuation-map.jpg"',
+			$content,
+			'The map the fallback carries is the only copy of it, so it survives.'
+		);
+	}
+
+	/**
+	 * The duplicate rule still has to fire when the page holds other images:
+	 * a lazy-loaded photograph beside an unrelated one is still one
+	 * photograph, not two.
+	 */
+	public function test_clean_content_drops_a_duplicate_fallback_beside_another_image() {
+		$content = Lite_Site::clean_content(
+			'<p><img src="https://some-other-domain.test/portrait.jpg" alt="The mayor"></p>'
+			. '<p><img class="lazyload" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-src="https://some-other-domain.test/real.jpg" alt="Flood">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg" alt="Flood"></noscript></p>'
+		);
+
+		$this->assertSame( 2, substr_count( $content, 'lite-image-placeholder' ), 'Two photographs, two placeholders.' );
+		$this->assertSame(
+			1,
+			substr_count( $content, 'data-src="https://some-other-domain.test/real.jpg"' ),
+			'The lazy-loaded one is offered once, not twice.'
+		);
+	}
+
+	/**
+	 * A browser drops tab, carriage return and line feed from a URL before
+	 * requesting it. A scheme split across that whitespace therefore reads as
+	 * a relative path here and as `data:` to the browser, which would put an
+	 * inline SVG of any size on a page whose promise is to stay small.
+	 */
+	public function test_clean_content_rejects_a_scheme_split_by_whitespace() {
+		$svg     = 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg"></svg>' );
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="' . substr( $svg, 0, 2 ) . '&#10;' . substr( $svg, 2 ) . '" alt="A map">'
+		);
+
+		$this->assertStringNotContainsString( 'svg', $content, 'The SVG never reaches the page.' );
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'And it is not offered as an image.' );
+	}
+
+	/**
+	 * The same whitespace inside `data:image/svg` would otherwise slip past
+	 * the SVG test and be treated as an ordinary inline image.
+	 */
+	public function test_clean_content_rejects_an_svg_type_split_by_whitespace() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="data:image/sv&#9;g+xml;base64,'
+			. base64_encode( '<svg xmlns="http://www.w3.org/2000/svg"></svg>' ) . '" alt="A map">'
+		);
+
+		$this->assertStringNotContainsString(
+			'lite-image-placeholder',
+			$content,
+			'Still recognized as an SVG, and still refused.'
 		);
 	}
 
@@ -1100,5 +1740,85 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 
 		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No forged container survives.' );
 		$this->assertStringNotContainsString( 'lite-image-load-btn', $content, 'And no forged button.' );
+	}
+
+	/**
+	 * A lazy loader that keeps the real file on an attribute this plugin does
+	 * not read leaves only a stub behind: a transparent pixel in src. The
+	 * fallback holds the only real copy, so offering both gave the reader two
+	 * buttons, one of which fetched the pixel.
+	 */
+	public function test_clean_content_prefers_a_fallback_over_a_stub_only_image() {
+		$content = Lite_Site::clean_content(
+			'<p><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-opt-src="https://some-other-domain.test/real.jpg" alt="Flooded road">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg"></noscript></p>'
+		);
+
+		$this->assertSame( 1, substr_count( $content, 'lite-image-placeholder' ), 'One photograph gets one button.' );
+		$this->assertStringContainsString(
+			'data-src="https://some-other-domain.test/real.jpg"',
+			$content,
+			'And it loads the real file.'
+		);
+		$this->assertStringNotContainsString( 'R0lGOD', $content, 'The stub is not offered at all.' );
+		$this->assertStringContainsString(
+			'data-alt="Flooded road"',
+			$content,
+			'The description was written on the stub, so it comes across with it.'
+		);
+	}
+
+	/**
+	 * An image with a real source beside its stub is not this case: the
+	 * fallback there is a duplicate and still goes.
+	 */
+	public function test_clean_content_still_drops_a_duplicate_beside_a_readable_source() {
+		$content = Lite_Site::clean_content(
+			'<p><img class="lazyload" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="'
+			. ' data-src="https://some-other-domain.test/real.jpg" alt="Flood">'
+			. '<noscript><img src="https://some-other-domain.test/real.jpg" alt="Flood"></noscript></p>'
+		);
+
+		$this->assertSame( 1, substr_count( $content, 'lite-image-placeholder' ), 'Still one placeholder.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/real.jpg"', $content, 'Loading the real file.' );
+	}
+
+	/**
+	 * The URL parser trims every C0 control from both ends, where trim()'s own
+	 * default list stops at \x0B. A form feed before the scheme would
+	 * otherwise break the scheme test here and be put back by the browser.
+	 */
+	public function test_clean_content_rejects_a_scheme_behind_a_form_feed() {
+		$svg     = 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg"></svg>' );
+		$content = Lite_Site::clean_content( '<img data-src="&#12;' . $svg . '" alt="A map">' );
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'The SVG is refused like any other.' );
+		$this->assertStringNotContainsString( 'svg', $content, 'And does not reach the page.' );
+	}
+
+	/**
+	 * A beacon that declares its size with !important, or without the leading
+	 * zero, is still a beacon.
+	 */
+	public function test_clean_content_reads_a_beacon_size_written_with_important() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://pixel.some-other-domain.test/b.gif" style="width:1px !important;height:1px !important;">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No button for a beacon.' );
+		$this->assertStringNotContainsString( 'pixel.some-other-domain.test', $content, 'And its URL never reaches the page.' );
+	}
+
+	/**
+	 * The same, written as .5px rather than 0.5px.
+	 */
+	public function test_clean_content_reads_a_beacon_size_without_a_leading_zero() {
+		$content = Lite_Site::clean_content(
+			'<p>Story.</p><img src="https://pixel.some-other-domain.test/c.gif" style="width:.5px;height:.5px;">'
+		);
+
+		$this->assertStringNotContainsString( 'lite-image-placeholder', $content, 'No button for a beacon.' );
+		$this->assertStringNotContainsString( 'pixel.some-other-domain.test', $content, 'And its URL never reaches the page.' );
 	}
 }

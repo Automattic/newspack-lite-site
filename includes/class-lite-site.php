@@ -732,6 +732,47 @@ class Lite_Site {
 	}
 
 	/**
+	 * Locates an <img> tag so the parser can be pointed at it.
+	 *
+	 * Close to how wp_kses_split() finds a tag, but not identical: kses
+	 * tolerates a tag left unterminated at the end of the input and this
+	 * requires the '>'. Like kses, it stops at the first '>', so a '>' inside
+	 * a quoted attribute truncates the match -- img_to_placeholder() hands
+	 * such a tag back untouched rather than acting on half of it.
+	 *
+	 * Attributes are read with WP_HTML_Tag_Processor, which handles attribute
+	 * case, quoting styles, entities, and the difference between an absent
+	 * and an empty alt.
+	 *
+	 * @var string
+	 */
+	const IMG_TAG_PATTERN = '<img\b[^>]*>';
+
+	/**
+	 * The largest declared edge, in pixels, at which an image is treated as a
+	 * tracking beacon rather than content.
+	 *
+	 * One edge is enough: no photograph is four pixels wide, and spacers and
+	 * rules come through as 1x100 or 100x1 as often as 1x1.
+	 *
+	 * @var int
+	 */
+	const TRACKING_PIXEL_MAX_SIZE = 4;
+
+	/**
+	 * The longest inline data: image, in characters, this page will carry.
+	 *
+	 * An inline image needs no request, but its bytes ride in the HTML whether
+	 * or not the reader ever taps Load image -- which is the one cost this page
+	 * exists to avoid. Below this an icon or a sparkline is cheaper than the
+	 * request a placeholder would invite; above it the blob is dropped rather
+	 * than pushed down a connection that is already struggling.
+	 *
+	 * @var int
+	 */
+	const DATA_IMAGE_MAX_LENGTH = 2048;
+
+	/**
 	 * Whether the page being rendered is a lite not-found page.
 	 *
 	 * A not-found page must never be stored in the page cache: the post it
@@ -1493,12 +1534,16 @@ class Lite_Site {
 		// backtrack catastrophically and preg_replace returns null.
 		$content = self::or_original( preg_replace( '/<!--.*?-->/s', '', $content ), $content );
 
-		// Remove script and style tags along with their contents — wp_kses
-		// would strip the tags but leave raw CSS/JS behind as text.
+		// Remove script and style tags along with their contents. wp_kses would
+		// strip the tags but leave raw CSS/JS behind as text. This runs before
+		// the image passes so an <img> written inside a script string cannot
+		// become a Load image button for a URL that was never on the page.
 		$content = self::or_original( preg_replace( '/<script.*?>.*?<\/script>/is', '', $content ), $content );
 		$content = self::or_original( preg_replace( '/<style.*?>.*?<\/style>/is', '', $content ), $content );
 
 		$content = self::unwrap_atomic_elements( $content );
+
+		$content = self::resolve_noscript_fallbacks( $content );
 
 		// Clear the classes this plugin's own script acts on. This runs after
 		// the passes above because each of them can rewrite text: a comment
@@ -1525,6 +1570,18 @@ class Lite_Site {
 			$content
 		);
 
+		// Any <img> left is one no figure wrapped, from the classic editor, a
+		// custom HTML block or an imported feed item. Without this it would be
+		// stripped by wp_kses() below, taking its alt text with it, and the
+		// reader would never know an image had been there.
+		$content = self::or_original(
+			preg_replace_callback(
+				'/' . self::IMG_TAG_PATTERN . '/i',
+				[ __CLASS__, 'img_to_placeholder' ],
+				$content
+			),
+			$content
+		);
 		// Define allowed HTML elements for text-only content.
 		$allowed_html = [
 			'p'          => [ 'class' => true ],
@@ -1564,11 +1621,16 @@ class Lite_Site {
 			'caption'    => [],
 			'figcaption' => [],
 			'div'        => [
+				'class' => true,
+			],
+			'span'       => [
 				'class'        => true,
 				'data-src'     => true,
 				'data-srcset'  => true,
 				'data-alt'     => true,
 				'data-caption' => true,
+				'data-width'   => true,
+				'data-height'  => true,
 			],
 			'button'     => [
 				'class' => true,
@@ -1800,6 +1862,597 @@ class Lite_Site {
 	}
 
 	/**
+	 * Resolve <noscript> image fallbacks before the image passes run.
+	 *
+	 * Lazy loaders emit the real image twice: once lazily, and once inside a
+	 * <noscript> for readers without JavaScript. A browser shows one. kses
+	 * strips the wrapper and keeps the contents, so without this the reader
+	 * gets two placeholders and two Load image buttons for one photograph.
+	 *
+	 * The fallback is only dropped when another image survives outside it. If
+	 * the <noscript> holds the only image, the wrapper alone is removed, which
+	 * is what kses did before.
+	 *
+	 * @param string $html Post content.
+	 * @return string Content with the duplicate fallbacks resolved.
+	 */
+	private static function resolve_noscript_fallbacks( string $html ): string {
+		if ( false === stripos( $html, '<noscript' ) ) {
+			return $html;
+		}
+
+		// A lazy loader that keeps the real file on an attribute this plugin
+		// does not read, such as Optimole's data-opt-src, leaves nothing here
+		// but a stub: a transparent pixel in src. The only real copy of the
+		// image is the one inside the fallback. Judged on sources alone the
+		// two never match, so the reader is offered both, and one of the two
+		// buttons fetches the pixel. Where an image carries nothing but a
+		// stub and a fallback follows it, the fallback is the image.
+		$html = self::or_original(
+			preg_replace_callback(
+				'/<img\b[^>]*>\s*<noscript\b[^>]*>(.*?)<\/noscript>/is',
+				[ __CLASS__, 'prefer_fallback_over_stub' ],
+				$html
+			),
+			$html
+		);
+
+		// The sources already on the page outside any fallback. A lazy loader
+		// writes the real file into a data attribute out here and into src
+		// inside the fallback, so both kinds of attribute are collected for
+		// the two to match.
+		$outside = self::or_original( preg_replace( '/<noscript\b[^>]*>.*?<\/noscript>/is', '', $html ), $html );
+		$sources = self::image_sources_in( $outside );
+
+		// Each fallback is judged on its own. One that repeats an image the
+		// reader is already being offered is a duplicate and goes; one holding
+		// anything else is the only copy of it on the page, so its contents
+		// stay. Testing the page as a whole would drop a noscript-only
+		// evacuation map because some unrelated photograph appeared above it.
+		$resolved = preg_replace_callback(
+			'/<noscript\b[^>]*>(.*?)<\/noscript>/is',
+			static function ( array $matches ) use ( $sources ): string {
+				$inner = $matches[1];
+
+				foreach ( self::image_sources_in( $inner ) as $source ) {
+					if ( in_array( $source, $sources, true ) ) {
+						return '';
+					}
+				}
+
+				return $inner;
+			},
+			$html
+		);
+
+		return self::or_original( $resolved, $html );
+	}
+
+	/**
+	 * Replace a stub image and the fallback after it with the fallback.
+	 *
+	 * The stub's description is carried across when the fallback has none of
+	 * its own, since the alt text is usually on the tag the editor wrote
+	 * rather than on the one the lazy loader generated.
+	 *
+	 * @param array $matches Match array; [0] is the image and its fallback, [1] the fallback's contents.
+	 * @return string The fallback's contents, or the pair unchanged.
+	 */
+	private static function prefer_fallback_over_stub( array $matches ): string {
+		$stub = self::parse_image_attrs( $matches[0] );
+
+		if ( ! $stub['found'] || ! self::has_only_stub_sources( $stub ) ) {
+			return $matches[0];
+		}
+
+		$inner    = $matches[1];
+		$fallback = self::parse_image_attrs( $inner );
+
+		if ( ! $fallback['found'] ) {
+			return $matches[0];
+		}
+
+		if ( null === $fallback['alt'] && is_string( $stub['alt'] ) && '' !== $stub['alt'] ) {
+			$processor = new \WP_HTML_Tag_Processor( $inner );
+
+			if ( $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
+				$processor->set_attribute( 'alt', $stub['alt'] );
+				$inner = $processor->get_updated_html();
+			}
+		}
+
+		return $inner;
+	}
+
+	/**
+	 * Whether every source an image carries is an inline stub.
+	 *
+	 * A lazy loader's placeholder is a `data:` pixel. An image whose sources
+	 * are all of that kind has no real file behind it on this page.
+	 *
+	 * @param array $image Attributes from parse_image_attrs().
+	 * @return bool True when the image carries at least one source and all of them are inline.
+	 */
+	private static function has_only_stub_sources( array $image ): bool {
+		$found = false;
+
+		foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
+			foreach ( $pair as $name ) {
+				if ( '' === $name ) {
+					continue;
+				}
+
+				$value = self::browser_url_value( (string) $image[ str_replace( '-', '_', $name ) ] );
+
+				if ( '' === $value ) {
+					continue;
+				}
+
+				$found = true;
+
+				if ( 0 !== stripos( $value, 'data:' ) ) {
+					return false;
+				}
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Every source the images in a fragment could load, as written.
+	 *
+	 * Raw values rather than vetted ones: this answers whether two tags point
+	 * at the same file, which is a question about the markup, not about what
+	 * the reader should be served.
+	 *
+	 * @param string $html A fragment.
+	 * @return string[] Source values, in no particular order.
+	 */
+	private static function image_sources_in( string $html ): array {
+		if ( false === stripos( $html, '<img' ) ) {
+			return [];
+		}
+
+		$sources   = [];
+		$processor = new \WP_HTML_Tag_Processor( $html );
+
+		while ( $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
+			foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
+				foreach ( $pair as $name ) {
+					if ( '' === $name ) {
+						continue;
+					}
+
+					$value = $processor->get_attribute( $name );
+
+					if ( is_string( $value ) ) {
+						$value = self::browser_url_value( $value );
+
+						if ( '' !== $value ) {
+							$sources[] = $value;
+						}
+					}
+				}
+			}
+		}
+
+		return $sources;
+	}
+
+	/**
+	 * Give a table figure's caption to the table itself.
+	 *
+	 * The allowlist keeps `figcaption` but drops `figure`, so a Table block's
+	 * caption reaches the reader as loose text after the table with nothing
+	 * tying the two together. A screen reader announces the table and then,
+	 * separately, a sentence. `caption` is the element that belongs to a
+	 * table, and the allowlist already keeps it.
+	 *
+	 * A table that captions itself keeps its own; only a figure's caption is
+	 * moved, and only into a table that has none.
+	 *
+	 * @param string $figure_html A figure known to hold a table.
+	 * @return string The figure with its caption moved into the table.
+	 */
+	private static function table_caption_from_figure( string $figure_html ): string {
+		if ( ! preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $caption ) ) {
+			return $figure_html;
+		}
+
+		if ( preg_match( '/<table\b[^>]*>\s*<caption\b/i', $figure_html ) ) {
+			return $figure_html;
+		}
+
+		$without = self::or_original(
+			preg_replace( '/<figcaption[^>]*>.*?<\/figcaption>/is', '', $figure_html ),
+			$figure_html
+		);
+
+		$inner = $caption[1];
+
+		$moved = preg_replace_callback(
+			'/<table\b[^>]*>/i',
+			static function ( array $matches ) use ( $inner ): string {
+				return $matches[0] . '<caption>' . $inner . '</caption>';
+			},
+			$without,
+			1
+		);
+
+		return self::or_original( $moved, $figure_html );
+	}
+
+	/**
+	 * Convert a <figure> element into a lazy-load image placeholder.
+	 *
+	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
+	 * @return string Placeholder HTML, the figure unchanged if it holds no
+	 *                image, or an empty string if the image is furniture.
+	 */
+	private static function figure_to_placeholder( array $matches ): string {
+		$figure_html = $matches[0];
+
+		// A match that stopped at a following `<figure` has no closing tag, so
+		// where this figure ends is a guess. Replacing it would delete whatever
+		// the guess took in: the prose between the two figures, and the second
+		// figure's own image and caption. Leave it to the passes below.
+		if ( ! preg_match( '/<\/figure\s*>$/i', $figure_html ) ) {
+			return $figure_html;
+		}
+
+		// The block editor wraps a table in a figure. An image in any cell would
+		// otherwise turn the whole table, cell text and all, into one placeholder.
+		if ( preg_match( '/<table\b/i', $figure_html ) ) {
+			return self::table_caption_from_figure( $figure_html );
+		}
+
+		$image  = self::parse_image_attrs( $figure_html );
+		$source = self::pick_image_source( $image );
+
+		if ( '' === $source['src'] ) {
+			return $figure_html;
+		}
+
+		// The same rule the bare path uses. Without it a beacon wrapped in a
+		// figure keeps its URL on the page with a button inviting the tap.
+		if ( self::is_decorative_image( $image ) ) {
+			return '';
+		}
+
+		$caption = '';
+		if ( preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $cap_match ) ) {
+			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
+		}
+
+		return self::wrap_placeholder_in_figure_link(
+			$figure_html,
+			self::build_image_placeholder( $source, $image, $caption )
+		);
+	}
+
+	/**
+	 * Carry a figure's own link over to the placeholder that replaces it.
+	 *
+	 * The block editor puts the anchor inside the figure, so replacing the
+	 * figure would take the link with it. The bare path keeps a link for free,
+	 * since its pattern matches the <img> alone and leaves the anchor around
+	 * it in place; this is the same outcome for the markup the block editor
+	 * writes. The whole placeholder goes inside the anchor, which is the shape
+	 * the page's script already reads: a tap anywhere in it loads the image,
+	 * and the link works once the image is there.
+	 *
+	 * Only an anchor wrapping the image counts. A photo credit in the caption
+	 * is a link in the caption, not a link on the image. An anchor carrying a
+	 * '>' inside an attribute value is left alone, as elsewhere in this class,
+	 * which costs the link and nothing else.
+	 *
+	 * @param string $figure_html The full <figure> HTML being replaced.
+	 * @param string $placeholder The placeholder built from its image.
+	 * @return string The placeholder, wrapped in the figure's link if it had one.
+	 */
+	private static function wrap_placeholder_in_figure_link( string $figure_html, string $placeholder ): string {
+		$pattern = '/<a\b[^>]*\bhref\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)[^>]*>\s*<img\b/i';
+
+		if ( ! preg_match( $pattern, $figure_html, $matches ) ) {
+			return $placeholder;
+		}
+
+		$href = esc_url( trim( $matches[1], '"\'' ) );
+
+		// esc_url() empties an href the page must not link to, and an empty one
+		// would point the reader at the page they are already on.
+		if ( '' === $href ) {
+			return $placeholder;
+		}
+
+		return sprintf( '<a href="%s">%s</a>', $href, $placeholder );
+	}
+
+	/**
+	 * Convert a bare <img> element into a lazy-load image placeholder.
+	 *
+	 * Runs after the figure pass, so every image this sees is one no figure
+	 * wrapped: the classic editor, a custom HTML block, or an imported feed
+	 * item. Without it wp_kses() would drop the image and its alt text, and
+	 * the page would give no sign that an image had been there at all.
+	 *
+	 * @param array $matches Regex match array; $matches[0] is the full <img> tag.
+	 * @return string Placeholder HTML, the tag unchanged if it cannot be read,
+	 *                or an empty string if there is nothing a reader could load.
+	 */
+	private static function img_to_placeholder( array $matches ): string {
+		$image = self::parse_image_attrs( $matches[0] );
+
+		// IMG_TAG_PATTERN stops at the first '>', so a '>' inside a quoted
+		// attribute hands the parser a truncated tag it cannot read. Give the
+		// match back and let wp_kses() remove it, as it did before this pass
+		// existed. The outcome is the same either way; acting on half a tag is
+		// what this avoids.
+		if ( ! $image['found'] ) {
+			return $matches[0];
+		}
+
+		$source = self::pick_image_source( $image );
+
+		// Nothing a reader could load. Better no box than a button that
+		// fetches the page itself.
+		if ( '' === $source['src'] ) {
+			return '';
+		}
+
+		if ( self::is_decorative_image( $image ) ) {
+			return '';
+		}
+
+		return self::build_image_placeholder( $source, $image, '' );
+	}
+
+	/**
+	 * Decide whether an image is furniture rather than content.
+	 *
+	 * An empty alt does not qualify, though it is tempting. get_image_tag()
+	 * writes alt="" into every classic editor insert whose attachment has no
+	 * alt text, so an undescribed news photograph arrives here looking exactly
+	 * like a decorative one, and deleting it is the bug this pass exists to
+	 * fix. What does qualify is a Cover block's background and a beacon.
+	 *
+	 * @param array $image Attributes from parse_image_attrs().
+	 * @return bool Whether to leave the image out of the page.
+	 */
+	private static function is_decorative_image( array $image ): bool {
+		// A Cover block's background, dropped by decision rather than by
+		// necessity. The lite page loads no block CSS, so a placeholder here
+		// would not in fact sit on top of anything; a Cover hero simply does
+		// not get a box, which is what the guide tells publishers.
+		if ( $image['has_cover_class'] ) {
+			return true;
+		}
+
+		// A beacon declares a tiny size. One edge is enough: no photograph is
+		// four pixels wide, and spacers come through as 1x100 as often as 1x1.
+		// Zero is excluded, because that is what a broken or missing dimension
+		// looks like coming out of an importer, not what a beacon writes.
+		foreach ( [ 'width', 'height' ] as $side ) {
+			if ( null !== $image[ $side ] && $image[ $side ] > 0 && $image[ $side ] <= self::TRACKING_PIXEL_MAX_SIZE ) {
+				return true;
+			}
+		}
+
+		return self::has_beacon_style( $image['style'] );
+	}
+
+	/**
+	 * Whether a style attribute sizes an image like a beacon.
+	 *
+	 * Zero counts here, unlike the width and height attributes: nobody writes
+	 * style="width:0" by accident, while width="0" is ordinary importer
+	 * breakage. Only px and unitless lengths are read, so a 1em icon is left
+	 * alone.
+	 *
+	 * @param string $style Style attribute value.
+	 * @return bool Whether the image is sized like a beacon.
+	 */
+	private static function has_beacon_style( string $style ): bool {
+		foreach ( explode( ';', $style ) as $declaration ) {
+			$parts = explode( ':', $declaration, 2 );
+
+			if ( count( $parts ) < 2 ) {
+				continue;
+			}
+
+			// Compared whole, so a min-width:0 reset is not a beacon.
+			$property = strtolower( trim( $parts[0] ) );
+			$value    = strtolower( trim( $parts[1] ) );
+
+			if ( ! in_array( $property, [ 'width', 'height' ], true ) ) {
+				continue;
+			}
+
+			// !important is not part of the length. Left on, it reads as part
+			// of the unit, and `width:1px !important` stops looking like a
+			// beacon.
+			$without_important = preg_replace( '/!\s*important\s*$/', '', $value );
+			$value             = trim( is_string( $without_important ) ? $without_important : $value );
+
+			// A length may be written without its leading zero, as .5px.
+			if ( '' === $value || ( ! ctype_digit( $value[0] ) && '.' !== $value[0] ) ) {
+				continue;
+			}
+
+			$unit = trim( ltrim( $value, '0123456789.' ) );
+
+			if ( '' !== $unit && 'px' !== $unit ) {
+				continue;
+			}
+
+			if ( (float) $value <= (float) self::TRACKING_PIXEL_MAX_SIZE ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Choose the source and srcset a reader should load, escaped for output.
+	 *
+	 * A lazy loader parks a stub on src -- a one-pixel data: URI, or a
+	 * placeholder gif file -- and puts the real image on data-src, a
+	 * vendor-prefixed variant, or a srcset. Reading src alone hands the reader
+	 * a transparent pixel where the photograph was.
+	 *
+	 * The two are chosen as a pair. Per the HTML standard a srcset candidate
+	 * REPLACES src rather than supplementing it, so a stub srcset beside a
+	 * vetted src is what the browser would actually load. Keeping each srcset
+	 * with the source attribute it was written next to is what stops that.
+	 *
+	 * @param array $image Attributes from parse_image_attrs().
+	 * @return array{src:string,srcset:string} Escaped values, empty when unusable.
+	 */
+	private static function pick_image_source( array $image ): array {
+		$pairs = [
+			[ 'data_src', 'data_srcset' ],
+			[ 'data_lazy_src', 'data_lazy_srcset' ],
+			[ 'data_original', '' ],
+			[ 'src', 'srcset' ],
+		];
+
+		foreach ( $pairs as $pair ) {
+			list( $src_key, $srcset_key ) = $pair;
+
+			$srcset = '' === $srcset_key ? '' : self::safe_image_srcset( $image[ $srcset_key ] );
+			$src    = self::safe_image_src( $image[ $src_key ] );
+
+			if ( '' !== $src ) {
+				return [
+					'src'    => $src,
+					'srcset' => $srcset,
+				];
+			}
+
+			// No usable source attribute, but its srcset may carry one.
+			if ( '' !== $srcset_key ) {
+				$src = self::first_srcset_url( $image[ $srcset_key ] );
+
+				if ( '' !== $src ) {
+					return [
+						'src'    => $src,
+						'srcset' => $srcset,
+					];
+				}
+			}
+		}
+
+		// Last, a small inline image. It needs no request at all, which makes
+		// it real content when it is all there is, and a stub when it is not.
+		foreach ( [ 'data_src', 'src' ] as $key ) {
+			$src = self::safe_data_image_src( $image[ $key ] );
+
+			if ( '' !== $src ) {
+				return [
+					'src'    => $src,
+					'srcset' => '',
+				];
+			}
+		}
+
+		return [
+			'src'    => '',
+			'srcset' => '',
+		];
+	}
+
+	/**
+	 * A URL as the browser will read it.
+	 *
+	 * Browsers drop tab, carriage return and line feed from a URL before
+	 * requesting it, so the string this plugin judges has to be the string the
+	 * browser will fetch. Without this, a source written as
+	 * `da&#10;ta:image/svg+xml;base64,...` fails the scheme test, passes as a
+	 * document-relative path, and the browser puts the `data:` scheme back,
+	 * past both the SVG rule and the inline size budget. The parser decodes
+	 * the entity, so the whitespace is real by the time it is read here.
+	 *
+	 * @param string $src Raw source value.
+	 * @return string The value with browser-ignored whitespace removed.
+	 */
+	private static function browser_url_value( string $src ): string {
+		// Tab, carriage return and line feed go from anywhere in the value.
+		$src = str_replace( [ "\t", "\r", "\n" ], '', $src );
+
+		// And every C0 control and space goes from both ends, as the URL
+		// parser trims them. trim()'s own default list stops at \x0B, so a
+		// form feed written as &#12; would otherwise survive, break the scheme
+		// test below, and be put back by the browser.
+		return trim( $src, "\x00..\x20" );
+	}
+
+	/**
+	 * Escape an image source for an attribute, or reject it.
+	 *
+	 * @param string $src Raw source value.
+	 * @return string Escaped source, or an empty string.
+	 */
+	private static function safe_image_src( string $src ): string {
+		$src = self::browser_url_value( $src );
+
+		if ( '' === $src ) {
+			return '';
+		}
+
+		// A scheme is a letter followed by letters, digits, +, - or . and a
+		// colon. Testing for any colon instead would send a relative path like
+		// 2026:03:photo.jpg to esc_url(), which reads the first segment as a
+		// scheme and empties the whole value.
+		$has_scheme = 1 === preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $src );
+
+		// Relative to the document, and the document is the lite page rather
+		// than the article: /lite/2026/03/story resolves images/flood.jpg to
+		// /lite/2026/03/images/flood.jpg, which is nothing. A feed item's
+		// relative paths belong to the partner's site and never resolve here
+		// at all. Either way the reader taps Load image and gets a 404, so
+		// there is nothing to offer. safe_image_srcset() already rejects these,
+		// and src and srcset should agree about what a source is. Root-relative
+		// and absolute paths are unaffected. A leading backslash is excluded
+		// because browsers normalize \\host to //host.
+		if ( ! $has_scheme && ! in_array( $src[0], [ '/', '#', '?', '\\' ], true ) ) {
+			return '';
+		}
+
+		return esc_url( $src );
+	}
+
+	/**
+	 * Escape a small inline data: image, which esc_url() will not pass.
+	 *
+	 * Because data: is not in wp_allowed_protocols(), esc_url() empties it. A
+	 * small inline raster image is worth keeping, since it needs no request at
+	 * all. A large one is not: see DATA_IMAGE_MAX_LENGTH. SVG is left out
+	 * whatever its size, since it is markup, and an <img> is not where this
+	 * plugin wants to discover how a given browser treats it.
+	 *
+	 * @param string $src Raw source value.
+	 * @return string Escaped source, or an empty string.
+	 */
+	private static function safe_data_image_src( string $src ): string {
+		$src = self::browser_url_value( $src );
+
+		if ( 0 !== stripos( $src, 'data:image/' ) || 0 === stripos( $src, 'data:image/svg' ) ) {
+			return '';
+		}
+
+		$escaped = esc_attr( $src );
+
+		// Measured after escaping, which is what the page actually carries.
+		if ( strlen( $escaped ) > self::DATA_IMAGE_MAX_LENGTH ) {
+			return '';
+		}
+
+		return $escaped;
+	}
+
+	/**
 	 * Rebuild a srcset from candidates this plugin would accept as a source.
 	 *
 	 * The placeholder's data-src is checked with esc_url(), but data-srcset was
@@ -1875,8 +2528,9 @@ class Lite_Site {
 	/**
 	 * Split a srcset into its candidates, the way the HTML grammar does.
 	 *
-	 * A URL is collected up to the first ASCII whitespace, not the first comma,
-	 * so a CDN path holding a transform like w_800,h_600 survives intact.
+	 * A URL is collected up to the first ASCII whitespace, not the first
+	 * comma, so a CDN path holding a transform like w_800,h_600 survives.
+	 * Splitting on commas first truncated it and left a 404 behind a button.
 	 *
 	 * @param string $srcset Raw srcset value.
 	 * @return array<int,array{url:string,descriptor:string}> Candidates, in order.
@@ -1901,7 +2555,7 @@ class Lite_Site {
 			if ( str_ends_with( $url, ',' ) ) {
 				$url = rtrim( $url, ',' );
 			} else {
-				$position         += strspn( $srcset, self::SRCSET_WHITESPACE, $position );
+				$position        += strspn( $srcset, self::SRCSET_WHITESPACE, $position );
 				$descriptor_length = strcspn( $srcset, ',', $position );
 				$descriptor        = trim( substr( $srcset, $position, $descriptor_length ) );
 				$position         += $descriptor_length + 1;
@@ -1919,166 +2573,114 @@ class Lite_Site {
 	}
 
 	/**
-	 * Read the attributes of the first <img> in a fragment.
+	 * The first candidate URL in a srcset this plugin would accept.
 	 *
-	 * The values come from the parser rather than from a pattern over the tag's
-	 * text. A pattern reads a literal data-src="..." written inside the value of
-	 * some other attribute as though it were an attribute of its own, so a
-	 * source forged in a title or a caption is chosen over the real one, and the
-	 * image the reader gets is not the image the browser would have loaded.
-	 *
-	 * A fragment with no img the parser can reach yields no source, and the
-	 * caller hands the figure back untouched, which is what it does for a figure
-	 * that never had an image.
-	 *
-	 * @param string $html A fragment expected to contain an <img> tag.
-	 * @return array The attributes in IMAGE_ATTRIBUTES, each '' when the tag does not carry it.
+	 * @param string $srcset Raw srcset value.
+	 * @return string Escaped URL, or an empty string.
 	 */
-	private static function read_img_attrs( string $html ): array {
-		$attributes = array_fill_keys( self::IMAGE_ATTRIBUTES, '' );
-		$processor  = new \WP_HTML_Tag_Processor( $html );
+	private static function first_srcset_url( string $srcset ): string {
+		foreach ( self::parse_srcset( $srcset ) as $candidate ) {
+			$url = self::safe_image_src( $candidate['url'] );
 
-		if ( ! $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
-			return $attributes;
+			if ( '' !== $url ) {
+				return $url;
+			}
 		}
 
-		foreach ( self::IMAGE_ATTRIBUTES as $name ) {
+		return '';
+	}
+
+	/**
+	 * Read an <img>'s attributes with the HTML parser core ships.
+	 *
+	 * Hand-rolled patterns get this wrong in ways that cost a reader the
+	 * picture: an uppercase ALT, an apostrophe inside the alt text, or a
+	 * data-alt picked up instead of the alt itself. The parser also decodes
+	 * entities, and tells an absent alt apart from an empty one.
+	 *
+	 * @param string $html HTML holding an <img> tag.
+	 * @return array{found:bool,src:string,srcset:string,data_src:string,data_srcset:string,data_lazy_src:string,data_lazy_srcset:string,data_original:string,class:string,style:string,has_cover_class:bool,alt:?string,width:?int,height:?int} Attributes found; alt is null when absent, sizes null when not declared.
+	 */
+	private static function parse_image_attrs( string $html ): array {
+		$image = [
+			'found'            => false,
+			'src'              => '',
+			'srcset'           => '',
+			'data_src'         => '',
+			'data_srcset'      => '',
+			'data_lazy_src'    => '',
+			'data_lazy_srcset' => '',
+			'data_original'    => '',
+			'class'            => '',
+			'style'            => '',
+			'has_cover_class'  => false,
+			'alt'              => null,
+			'width'            => null,
+			'height'           => null,
+		];
+
+		$processor = new \WP_HTML_Tag_Processor( $html );
+
+		if ( ! $processor->next_tag( 'IMG' ) ) {
+			return $image;
+		}
+
+		$image['found'] = true;
+
+		// data-lazy-* is Jetpack and WP Rocket, data-original older loaders.
+		// All of them leave a stub on src, so the real image is only reachable
+		// through the name that particular loader used.
+		$names = [ 'src', 'srcset', 'data-src', 'data-srcset', 'data-lazy-src', 'data-lazy-srcset', 'data-original', 'class', 'style' ];
+
+		foreach ( $names as $name ) {
 			$value = $processor->get_attribute( $name );
 
-			// An attribute written without a value reads as true, and one the tag
-			// does not carry as null. Only a string holds a source or a caption.
-			if ( is_string( $value ) ) {
-				$attributes[ $name ] = $value;
+			$image[ str_replace( '-', '_', $name ) ] = is_string( $value ) ? $value : '';
+		}
+
+		// has_class() splits on whitespace and folds case, where a substring
+		// test on the attribute matches my-wp-block-cover__image-background-x.
+		$image['has_cover_class'] = true === $processor->has_class( 'wp-block-cover__image-background' );
+
+		// An alt with no value at all is an empty alt, not an absent one: HTML
+		// treats `alt` and `alt=""` alike, and the parser reports the first as
+		// boolean true. Nothing downstream tells the two apart today, since
+		// both render an unlabeled box; this keeps the contract honest.
+		$alt = $processor->get_attribute( 'alt' );
+		if ( is_string( $alt ) ) {
+			$image['alt'] = $alt;
+		} elseif ( true === $alt ) {
+			$image['alt'] = '';
+		}
+
+		foreach ( [ 'width', 'height' ] as $side ) {
+			$value = $processor->get_attribute( $side );
+
+			if ( is_string( $value ) && ctype_digit( trim( $value ) ) ) {
+				$image[ $side ] = (int) trim( $value );
 			}
 		}
 
-		return $attributes;
+		return $image;
 	}
 
 	/**
-	 * Choose which of an <img> tag's source attributes the reader should get.
+	 * Build the placeholder a reader taps to load an image.
 	 *
-	 * A lazy loader leaves the real image in a data attribute and puts a stub in
-	 * src, so the literal src is the last choice rather than the first. Reading
-	 * src alone drops a figure whose image carries no src at all, which is what
-	 * Jetpack Lazy Images and WP Rocket emit.
+	 * The source and srcset arrive already escaped, from pick_image_source().
+	 * They cannot be escaped again here: esc_url() encodes an ampersand as
+	 * &#038;, and a second pass would turn that into &amp;#038; and break the
+	 * URL. Everything else in the placeholder is escaped at the point of use.
 	 *
-	 * The pair is chosen together because a srcset candidate replaces src rather
-	 * than supplementing it, so taking the source from the real image and the
-	 * srcset from the stub would still load the stub.
-	 *
-	 * @param array $attributes The attributes read by read_img_attrs().
-	 * @return array {
-	 *     @type string $src    The chosen source, not yet escaped, or ''.
-	 *     @type string $srcset The srcset belonging to it, already vetted, or ''.
-	 * }
+	 * @param array  $source  Escaped src and srcset, from pick_image_source().
+	 * @param array  $image   Attributes from parse_image_attrs().
+	 * @param string $caption Caption text, or an empty string.
+	 * @return string Placeholder HTML.
 	 */
-	private static function pick_figure_source( array $attributes ): array {
-		foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
-			list( $src_attr, $srcset_attr ) = $pair;
+	private static function build_image_placeholder( array $source, array $image, string $caption ): string {
+		$alt = (string) $image['alt'];
 
-			$src = $attributes[ $src_attr ];
-
-			if ( '' === $src ) {
-				continue;
-			}
-
-			return [
-				'src'    => $src,
-				'srcset' => '' === $srcset_attr
-					? ''
-					: self::safe_image_srcset( $attributes[ $srcset_attr ] ),
-			];
-		}
-
-		return [
-			'src'    => '',
-			'srcset' => '',
-		];
-	}
-
-	/**
-	 * Give a table figure's caption to the table itself.
-	 *
-	 * The allowlist keeps `figcaption` but drops `figure`, so a Table block's
-	 * caption reaches the reader as loose text after the table with nothing
-	 * tying the two together. A screen reader announces the table and then,
-	 * separately, a sentence. `caption` is the element that belongs to a
-	 * table, and the allowlist already keeps it.
-	 *
-	 * A table that captions itself keeps its own; only a figure's caption is
-	 * moved, and only into a table that has none.
-	 *
-	 * @param string $figure_html A figure known to hold a table.
-	 * @return string The figure with its caption moved into the table.
-	 */
-	private static function table_caption_from_figure( string $figure_html ): string {
-		if ( ! preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $caption ) ) {
-			return $figure_html;
-		}
-
-		if ( preg_match( '/<table\b[^>]*>\s*<caption\b/i', $figure_html ) ) {
-			return $figure_html;
-		}
-
-		$without = self::or_original(
-			preg_replace( '/<figcaption[^>]*>.*?<\/figcaption>/is', '', $figure_html ),
-			$figure_html
-		);
-
-		$inner = $caption[1];
-
-		$moved = preg_replace_callback(
-			'/<table\b[^>]*>/i',
-			static function ( array $matches ) use ( $inner ): string {
-				return $matches[0] . '<caption>' . $inner . '</caption>';
-			},
-			$without,
-			1
-		);
-
-		return self::or_original( $moved, $figure_html );
-	}
-
-	/**
-	 * Convert a <figure> element into a lazy-load image placeholder.
-	 *
-	 * @param array $matches Regex match array; $matches[0] is the full <figure> HTML.
-	 * @return string Placeholder div HTML, or empty string if no image src found.
-	 */
-	private static function figure_to_placeholder( $matches ) {
-		$figure_html = $matches[0];
-
-		// A match that stopped at a following `<figure` has no closing tag, so
-		// where this figure ends is a guess. Replacing it would delete whatever
-		// the guess took in: the prose between the two figures, and the second
-		// figure's own image and caption. Leave it to the passes below.
-		if ( ! preg_match( '/<\/figure\s*>$/i', $figure_html ) ) {
-			return $figure_html;
-		}
-
-		// The block editor wraps a table in a figure. An image in any cell would
-		// otherwise turn the whole table, cell text and all, into one placeholder.
-		if ( preg_match( '/<table\b/i', $figure_html ) ) {
-			return self::table_caption_from_figure( $figure_html );
-		}
-
-		$attributes = self::read_img_attrs( $figure_html );
-		$source     = self::pick_figure_source( $attributes );
-		$src        = $source['src'];
-		$srcset     = $source['srcset'];
-		$alt        = $attributes['alt'];
-
-		if ( ! $src ) {
-			return $figure_html;
-		}
-
-		$caption = '';
-		if ( preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $cap_match ) ) {
-			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
-		}
-
-		$label = ! empty( $alt )
+		$label = '' !== $alt
 			? sprintf(
 				/* translators: %s: image alt text. */
 				__( 'Image: %s', 'newspack-lite-site' ),
@@ -2086,20 +2688,32 @@ class Lite_Site {
 			)
 			: __( 'Image', 'newspack-lite-site' );
 
-		$attrs = sprintf( ' data-src="%s"', esc_url( $src ) );
-		if ( $srcset ) {
-			$attrs .= sprintf( ' data-srcset="%s"', $srcset );
+		$attrs = sprintf( ' data-src="%s"', $source['src'] );
+
+		if ( '' !== $source['srcset'] ) {
+			$attrs .= sprintf( ' data-srcset="%s"', $source['srcset'] );
 		}
-		if ( $alt ) {
+
+		if ( '' !== $alt ) {
 			$attrs .= sprintf( ' data-alt="%s"', esc_attr( $alt ) );
 		}
-		if ( $caption ) {
+
+		if ( '' !== $caption ) {
 			$attrs .= sprintf( ' data-caption="%s"', esc_attr( $caption ) );
 		}
 
-		$caption_html = $caption
+		// Carried so the figure can reserve the right space when it loads.
+		// Without them the article reflows under the reader on exactly the
+		// connections this page is for.
+		foreach ( [ 'width', 'height' ] as $side ) {
+			if ( null !== $image[ $side ] && $image[ $side ] > 0 ) {
+				$attrs .= sprintf( ' data-%s="%d"', $side, $image[ $side ] );
+			}
+		}
+
+		$caption_html = '' !== $caption
 			? sprintf(
-				'<p class="lite-image-caption">%s</p>',
+				'<span class="lite-image-caption">%s</span>',
 				esc_html(
 					sprintf(
 						/* translators: %s: image caption text */
@@ -2111,7 +2725,7 @@ class Lite_Site {
 			: '';
 
 		return sprintf(
-			'<div class="lite-image-placeholder"%s><p class="lite-image-label">%s</p>%s<button class="lite-image-load-btn" type="button">%s</button></div>',
+			'<span class="lite-image-placeholder"%s><span class="lite-image-label">%s</span>%s<button class="lite-image-load-btn" type="button">%s</button></span>',
 			$attrs,
 			esc_html( $label ),
 			$caption_html,
