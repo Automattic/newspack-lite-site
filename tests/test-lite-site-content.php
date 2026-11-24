@@ -663,6 +663,51 @@ class Test_Lite_Site_Content extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The block editor puts the anchor inside the figure, so the figure pass is
+	 * the one that has to carry it. A link set on an image in the editor reaches
+	 * the reader whichever editor wrote the markup.
+	 */
+	public function test_clean_content_keeps_a_link_wrapped_inside_a_figure() {
+		$content = Lite_Site::clean_content(
+			'<figure class="wp-block-image size-large"><a href="https://some-other-domain.test/bridge-report"><img src="https://some-other-domain.test/bridge-800x600.jpg" alt="Bridge inspection" width="800" height="600" /></a><figcaption class="wp-element-caption">Crews check for scour.</figcaption></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringContainsString( 'href="https://some-other-domain.test/bridge-report"', $content, 'And the link the editor set survives.' );
+		$this->assertStringContainsString( 'data-src="https://some-other-domain.test/bridge-800x600.jpg"', $content, 'The button still loads the image.' );
+		$this->assertStringContainsString( 'data-caption="Crews check for scour."', $content, 'The caption is carried too.' );
+		$this->assertStringContainsString( 'class="lite-site-external"', $content, 'And it is marked external like any other outbound link.' );
+	}
+
+	/**
+	 * A photo credit in the caption is a link in the caption. The image itself
+	 * is not a link, so the placeholder is not wrapped in one.
+	 */
+	public function test_clean_content_does_not_treat_a_caption_credit_as_an_image_link() {
+		$content = Lite_Site::clean_content(
+			'<figure><img src="https://some-other-domain.test/levee.jpg" alt="The levee" /><figcaption>Photo by <a href="https://some-other-domain.test/photographer">A. Reporter</a></figcaption></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringNotContainsString( 'photographer', $content, 'The credit does not become a link on the image.' );
+	}
+
+	/**
+	 * A figure's link reaches the reader only if the page may link to it, so a
+	 * scheme esc_url() refuses leaves the placeholder with no anchor at all
+	 * rather than an empty one pointing back at the page.
+	 */
+	public function test_clean_content_drops_a_figure_link_with_a_disallowed_scheme() {
+		$content = Lite_Site::clean_content(
+			'<figure><a href="javascript:alert(1)"><img src="https://some-other-domain.test/map.jpg" alt="Flood map" /></a></figure>'
+		);
+
+		$this->assertStringContainsString( 'lite-image-placeholder', $content, 'The image still becomes a placeholder.' );
+		$this->assertStringNotContainsString( 'javascript', $content, 'The refused scheme does not reach the page.' );
+		$this->assertStringNotContainsString( '<a', $content, 'And no empty anchor is left behind.' );
+	}
+
+	/**
 	 * A plugin can keep more markup through the allowlist filter, and without
 	 * the filter that markup is stripped.
 	 */

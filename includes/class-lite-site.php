@@ -2125,7 +2125,48 @@ class Lite_Site {
 			$caption = trim( wp_strip_all_tags( $cap_match[1] ) );
 		}
 
-		return self::build_image_placeholder( $source, $image, $caption );
+		return self::wrap_placeholder_in_figure_link(
+			$figure_html,
+			self::build_image_placeholder( $source, $image, $caption )
+		);
+	}
+
+	/**
+	 * Carry a figure's own link over to the placeholder that replaces it.
+	 *
+	 * The block editor puts the anchor inside the figure, so replacing the
+	 * figure would take the link with it. The bare path keeps a link for free,
+	 * since its pattern matches the <img> alone and leaves the anchor around
+	 * it in place; this is the same outcome for the markup the block editor
+	 * writes. The whole placeholder goes inside the anchor, which is the shape
+	 * the page's script already reads: a tap anywhere in it loads the image,
+	 * and the link works once the image is there.
+	 *
+	 * Only an anchor wrapping the image counts. A photo credit in the caption
+	 * is a link in the caption, not a link on the image. An anchor carrying a
+	 * '>' inside an attribute value is left alone, as elsewhere in this class,
+	 * which costs the link and nothing else.
+	 *
+	 * @param string $figure_html The full <figure> HTML being replaced.
+	 * @param string $placeholder The placeholder built from its image.
+	 * @return string The placeholder, wrapped in the figure's link if it had one.
+	 */
+	private static function wrap_placeholder_in_figure_link( string $figure_html, string $placeholder ): string {
+		$pattern = '/<a\b[^>]*\bhref\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)[^>]*>\s*<img\b/i';
+
+		if ( ! preg_match( $pattern, $figure_html, $matches ) ) {
+			return $placeholder;
+		}
+
+		$href = esc_url( trim( $matches[1], '"\'' ) );
+
+		// esc_url() empties an href the page must not link to, and an empty one
+		// would point the reader at the page they are already on.
+		if ( '' === $href ) {
+			return $placeholder;
+		}
+
+		return sprintf( '<a href="%s">%s</a>', $href, $placeholder );
 	}
 
 	/**
