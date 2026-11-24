@@ -35,6 +35,15 @@ export const FOOTER_LINKS: NavLink[] = [];
 export const DARK_MODE = true;
 
 /**
+ * Whether docs pages show the page tree as a sidebar at `md` and up (768px, the default
+ * MOBILE_MENU_QUERY). With `false` there is no sidebar column: the page and its table of
+ * contents take the width, and the header nav is the page list. Turn it off for a small site
+ * whose header nav already lists every page. The mobile menu keeps the site links and the docs
+ * tree either way.
+ */
+export const DOCS_SIDEBAR = true;
+
+/**
  * Below this width the header shows the menu button and the site follows the system color
  * scheme. Keep it equal to Tailwind's `md` breakpoint, which the header's classes use.
  */

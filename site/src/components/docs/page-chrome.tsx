@@ -11,6 +11,7 @@ import { TOCEmpty, TOCItem, TOCItems } from 'fumadocs-ui/components/toc/default'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'fumadocs-ui/components/ui/collapsible';
 import { useTreeContext, useTreePath } from 'fumadocs-ui/contexts/tree';
 import { useFooterItems } from 'fumadocs-ui/utils/use-footer-items';
+import { DOCS_SIDEBAR } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
 /*
@@ -91,7 +92,7 @@ function TOC() {
 		props: { aiChat },
 	} = useNotebookLayout();
 	if ( items.length === 0 ) {
-		return <div id="nd-toc-placeholder" className="hidden xl:layout:[--fd-toc-width:268px]" />;
+		return DOCS_SIDEBAR ? <div id="nd-toc-placeholder" className="hidden xl:layout:[--fd-toc-width:268px]" /> : null;
 	}
 	return (
 		<div
@@ -160,7 +161,10 @@ function TOCPopoverTrigger() {
 	return (
 		<CollapsibleTrigger
 			data-toc-popover-trigger=""
-			className="flex w-full h-10 items-center text-sm text-fd-muted-foreground gap-2.5 px-4 py-2.5 text-start focus-visible:outline-none md:px-6"
+			className={ cn(
+				'flex w-full h-10 items-center text-sm text-fd-muted-foreground gap-2.5 px-4 py-2.5 text-start focus-visible:outline-none md:px-6',
+				! DOCS_SIDEBAR && 'px-0 md:px-0'
+			) }
 		>
 			<ProgressCircle
 				value={ ( items.findLastIndex( ( item ) => item.active ) + 1 ) / Math.max( 1, items.length ) }
@@ -219,7 +223,7 @@ function TOCPopover() {
 				>
 					<TOCPopoverTrigger />
 					<CollapsibleContent data-toc-popover-content="">
-						<div className="flex flex-col px-4 max-h-[50vh] md:px-6">
+						<div className={ cn( 'flex flex-col px-4 max-h-[50vh] md:px-6', ! DOCS_SIDEBAR && 'px-0 md:px-0' ) }>
 							<TOCScrollArea>
 								<TOCItems>
 									{ items.length === 0 && <TOCEmpty /> }

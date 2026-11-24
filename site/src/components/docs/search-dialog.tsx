@@ -1,3 +1,5 @@
+"use client"
+
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { Icon, search as searchIcon } from '@wordpress/icons';

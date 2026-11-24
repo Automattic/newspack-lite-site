@@ -1,3 +1,5 @@
+"use client"
+
 import type { MouseEvent } from 'react';
 import { Icon, styles } from '@wordpress/icons';
 import { Button } from '@/components/ui/button';
