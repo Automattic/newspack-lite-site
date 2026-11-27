@@ -324,15 +324,7 @@ class Lite_Site {
 	public static function get_theme_primary_color() {
 		if ( wp_is_block_theme() ) {
 			$settings = wp_get_global_settings();
-			$palettes = $settings['color']['palette'] ?? [];
-			$palette  = [];
-			foreach ( [ 'custom', 'theme', 'default' ] as $origin ) {
-				if ( ! empty( $palettes[ $origin ] ) ) {
-					$palette = $palettes[ $origin ];
-					break;
-				}
-			}
-			return $palette[0]['color'] ?? 'currentcolor';
+			return self::get_palette_accent_color( $settings['color']['palette']['theme'] ?? [] );
 		}
 
 		if ( ! function_exists( 'newspack_get_primary_color' ) ) {
@@ -346,6 +338,26 @@ class Lite_Site {
 		}
 
 		return $primary_color;
+	}
+
+	/**
+	 * Find the accent color in a block theme's palette.
+	 *
+	 * Looked up by slug because a palette's first entry is usually the page
+	 * background, which would make links invisible. Site Editor changes to the
+	 * theme palette keep their slugs, so they are picked up too.
+	 *
+	 * @param array $palette The theme palette, as found under wp_get_global_settings()['color']['palette']['theme'].
+	 * @return string The accent color, or 'currentcolor' if the palette has none.
+	 */
+	public static function get_palette_accent_color( array $palette ): string {
+		foreach ( $palette as $entry ) {
+			if ( 'accent' === ( $entry['slug'] ?? '' ) && ! empty( $entry['color'] ) ) {
+				return $entry['color'];
+			}
+		}
+
+		return 'currentcolor';
 	}
 
 	/**
