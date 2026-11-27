@@ -35,6 +35,16 @@ class Test_Lite_Site_Primary_Color extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * The Live badge pairs the theme's link color with its page background,
+	 * so a light link color on a dark theme stays readable.
+	 */
+	public function test_live_badge_text_uses_theme_background() {
+		$this->use_block_theme();
+
+		$this->assertMatchesRegularExpression( '/\.liveblog-status\.enable\s*\{\s*background: #2255aa;\s*color: #111111;/', $this->render_template( 'liveblog-styles.php' ) );
+	}
+
+	/**
 	 * A Primary Color setting wins over the theme's link color.
 	 */
 	public function test_primary_color_setting_overrides_theme_link() {

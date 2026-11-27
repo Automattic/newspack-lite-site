@@ -11,6 +11,8 @@ defined( 'ABSPATH' ) || exit;
 
 // The badge text is white, so a currentcolor background would hide it.
 $nls_primary_color = Lite_Site::get_primary_color();
+// A theme's link color is chosen against its page background, so that pairing stays readable.
+$nls_background_color = Lite_Site::get_background_color();
 
 ?>
 <style>
@@ -27,6 +29,9 @@ $nls_primary_color = Lite_Site::get_primary_color();
 	<?php if ( 'currentcolor' !== $nls_primary_color ) : ?>
 	.liveblog-status.enable {
 		background: <?php echo esc_html( $nls_primary_color ); ?>;
+		<?php if ( $nls_background_color ) : ?>
+		color: <?php echo esc_html( $nls_background_color ); ?>;
+		<?php endif; ?>
 	}
 	<?php endif; ?>
 	.liveblog-entry {
