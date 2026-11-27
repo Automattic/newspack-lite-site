@@ -30,6 +30,13 @@ class Lite_Site {
 	private static $settings = null;
 
 	/**
+	 * The block theme's global styles, read once per request because core rebuilds them on every call.
+	 *
+	 * @var array|null
+	 */
+	private static $theme_styles = null;
+
+	/**
 	 * Lite paths that posts being updated in this request were published at
 	 * before the update, keyed by post ID.
 	 *
@@ -303,11 +310,16 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the primary color (admin override takes priority, then theme default).
+	 * Get the primary color: on a block theme, the theme's link color; otherwise the
+	 * admin setting, then the theme default.
 	 *
 	 * @return string The primary color.
 	 */
 	public static function get_primary_color() {
+		if ( wp_is_block_theme() ) {
+			return self::get_theme_primary_color();
+		}
+
 		$settings = self::get_settings();
 		if ( ! empty( $settings['primary_color'] ) ) {
 			return $settings['primary_color'];
@@ -323,8 +335,8 @@ class Lite_Site {
 	 */
 	public static function get_theme_primary_color() {
 		if ( wp_is_block_theme() ) {
-			$settings = wp_get_global_settings();
-			return self::get_palette_accent_color( $settings['color']['palette']['theme'] ?? [] );
+			$link_color = self::get_theme_style( [ 'elements', 'link', 'color', 'text' ] );
+			return '' !== $link_color ? $link_color : 'currentcolor';
 		}
 
 		if ( ! function_exists( 'newspack_get_primary_color' ) ) {
@@ -341,23 +353,101 @@ class Lite_Site {
 	}
 
 	/**
-	 * Find the accent color in a block theme's palette.
+	 * Get the page background color from the block theme's global styles.
 	 *
-	 * Looked up by slug because a palette's first entry is usually the page
-	 * background, which would make links invisible. Site Editor changes to the
-	 * theme palette keep their slugs, so they are picked up too.
-	 *
-	 * @param array $palette The theme palette, as found under wp_get_global_settings()['color']['palette']['theme'].
-	 * @return string The accent color, or 'currentcolor' if the palette has none.
+	 * @return string CSS color, or an empty string when the theme sets none.
 	 */
-	public static function get_palette_accent_color( array $palette ): string {
-		foreach ( $palette as $entry ) {
-			if ( 'accent' === ( $entry['slug'] ?? '' ) && ! empty( $entry['color'] ) ) {
-				return $entry['color'];
+	public static function get_background_color(): string {
+		return self::get_theme_style( [ 'color', 'background' ] );
+	}
+
+	/**
+	 * Get the page text color from the block theme's global styles.
+	 *
+	 * @return string CSS color, or an empty string when the theme sets none.
+	 */
+	public static function get_text_color(): string {
+		return self::get_theme_style( [ 'color', 'text' ] );
+	}
+
+	/**
+	 * Get one value from the block theme's global styles, which include Site Editor changes.
+	 *
+	 * Lite pages load no theme CSS, so preset references are resolved to their values here.
+	 *
+	 * @param string[] $path Path inside the global styles, such as [ 'color', 'text' ].
+	 * @return string Value safe to print in a style element, or an empty string.
+	 */
+	private static function get_theme_style( array $path ): string {
+		if ( null === self::$theme_styles ) {
+			self::$theme_styles = wp_is_block_theme() ? (array) wp_get_global_styles() : [];
+		}
+
+		$value = _wp_array_get( self::$theme_styles, $path, '' );
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		$value = self::get_css_value( self::resolve_preset( $value ) );
+
+		// Lite pages load no theme CSS, so a reference left unresolved would point at nothing.
+		return false === stripos( $value, 'var(' ) && false === stripos( $value, 'var:' ) ? $value : '';
+	}
+
+	/**
+	 * Resolve a color or font family preset reference to the preset's value.
+	 *
+	 * Accepts both forms theme.json uses: var:preset|color|base and
+	 * var(--wp--preset--color--base). Anything else is returned unchanged.
+	 *
+	 * @param string $value Raw style value.
+	 * @return string Resolved value.
+	 */
+	private static function resolve_preset( string $value ): string {
+		if ( ! preg_match( '/^var(?::preset\|([a-z-]+)\|([a-z0-9_-]+)|\(--wp--preset--([a-z-]+)--([a-z0-9_-]+)\))$/i', trim( $value ), $matches ) ) {
+			return $value;
+		}
+
+		$type    = '' !== $matches[1] ? $matches[1] : $matches[3];
+		$slug    = _wp_to_kebab_case( '' !== $matches[2] ? $matches[2] : $matches[4] );
+		$sources = [
+			'color'       => [ [ 'color', 'palette' ], 'color' ],
+			'font-family' => [ [ 'typography', 'fontFamilies' ], 'fontFamily' ],
+		];
+		if ( ! isset( $sources[ $type ] ) ) {
+			return $value;
+		}
+
+		[ $settings_path, $value_key ] = $sources[ $type ];
+		$presets                        = wp_get_global_settings( $settings_path );
+		foreach ( [ 'custom', 'theme', 'default' ] as $origin ) {
+			foreach ( (array) ( $presets[ $origin ] ?? [] ) as $preset ) {
+				if ( is_array( $preset ) && isset( $preset['slug'], $preset[ $value_key ] ) && _wp_to_kebab_case( $preset['slug'] ) === $slug ) {
+					return (string) $preset[ $value_key ];
+				}
 			}
 		}
 
-		return 'currentcolor';
+		return $value;
+	}
+
+	/**
+	 * Check a theme value before it is printed inside a style element.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The value, 'currentcolor' for any casing of it, or an empty string when unusable.
+	 */
+	public static function get_css_value( $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		$value = trim( $value );
+		if ( '' === $value || preg_match( '/[;{}<>]/', $value ) ) {
+			return '';
+		}
+
+		return 0 === strcasecmp( $value, 'currentcolor' ) ? 'currentcolor' : $value;
 	}
 
 	/**
@@ -371,13 +461,19 @@ class Lite_Site {
 	}
 
 	/**
-	 * Print the font provider stylesheet, when one is set.
+	 * Print the fonts the settings choose: on a block theme, the font faces of the chosen
+	 * theme fonts; otherwise the font provider stylesheet, when one is set.
 	 *
 	 * Lite pages write their own <head> without wp_head(), so this prints
 	 * only this stylesheet: not the rest of what the site enqueues, and not
 	 * the wp_print_styles callbacks, which can echo markup of their own.
 	 */
 	public static function print_font_stylesheet() {
+		if ( wp_is_block_theme() ) {
+			self::print_theme_font_faces();
+			return;
+		}
+
 		$font_import_url = self::get_font_import_url();
 		if ( ! $font_import_url ) {
 			return;
@@ -386,6 +482,86 @@ class Lite_Site {
 		// No version: a ver argument would change the URL the font provider receives.
 		wp_enqueue_style( 'newspack-lite-site-fonts', $font_import_url, [], null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 		wp_styles()->do_items( 'newspack-lite-site-fonts' );
+	}
+
+	/**
+	 * Print the font faces of the theme fonts chosen as Body Font and Heading Font, so only those families download.
+	 */
+	private static function print_theme_font_faces() {
+		$families = [];
+		foreach ( [ 'font_body', 'font_heading' ] as $setting ) {
+			$font = self::get_chosen_theme_font( $setting );
+			if ( null !== $font ) {
+				$families[ strtolower( $font['family'] ) ] = true;
+			}
+		}
+		if ( ! $families ) {
+			return;
+		}
+
+		$faces = array_filter(
+			\WP_Font_Face_Resolver::get_fonts_from_theme_json(),
+			static function ( $family_faces ) use ( $families ) {
+				return isset( $family_faces[0]['font-family'] ) && isset( $families[ strtolower( trim( $family_faces[0]['font-family'], " \t\"'" ) ) ] );
+			}
+		);
+		if ( $faces ) {
+			wp_print_font_faces( array_values( $faces ) );
+		}
+	}
+
+	/**
+	 * Get the font families a block theme registers, from theme.json and the Site Editor's font library.
+	 *
+	 * @return array[] Each with 'family', the first name in its stack, and 'stack', its CSS font-family value.
+	 */
+	public static function get_theme_fonts(): array {
+		if ( ! wp_is_block_theme() ) {
+			return [];
+		}
+
+		$generic_names = [ 'serif', 'sans-serif', 'monospace', 'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace', '-apple-system', 'blinkmacsystemfont' ];
+		$presets       = wp_get_global_settings( [ 'typography', 'fontFamilies' ] );
+		$fonts         = [];
+		foreach ( [ 'theme', 'custom' ] as $origin ) {
+			foreach ( (array) ( $presets[ $origin ] ?? [] ) as $preset ) {
+				if ( ! is_array( $preset ) || empty( $preset['fontFamily'] ) || ! is_string( $preset['fontFamily'] ) ) {
+					continue;
+				}
+				$family = trim( explode( ',', $preset['fontFamily'] )[0], " \t\"'" );
+				if ( '' === $family || isset( $fonts[ strtolower( $family ) ] ) || in_array( strtolower( $family ), $generic_names, true ) ) {
+					continue;
+				}
+				$fonts[ strtolower( $family ) ] = [
+					'family' => $family,
+					'stack'  => $preset['fontFamily'],
+				];
+			}
+		}
+
+		return array_values( $fonts );
+	}
+
+	/**
+	 * Get the theme font a font setting names, if it names one the theme registers.
+	 *
+	 * @param string $setting 'font_body' or 'font_heading'.
+	 * @return array|null The font, shaped as in get_theme_fonts(), or null.
+	 */
+	private static function get_chosen_theme_font( string $setting = 'font_body' ): ?array {
+		$settings = self::get_settings();
+		$name     = ! empty( $settings[ $setting ] ) ? (string) $settings[ $setting ] : '';
+		if ( '' === $name ) {
+			return null;
+		}
+
+		foreach ( self::get_theme_fonts() as $font ) {
+			if ( 0 === strcasecmp( $font['family'], $name ) ) {
+				return $font;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -430,12 +606,99 @@ class Lite_Site {
 	 * @return string CSS font-family value.
 	 */
 	public static function get_font_family(): string {
+		if ( wp_is_block_theme() ) {
+			$font   = self::get_chosen_theme_font();
+			$family = null !== $font ? self::build_font_family( $font['stack'] ) : '';
+
+			return '' !== $family ? $family : self::get_system_font_stack( self::get_theme_style( [ 'typography', 'fontFamily' ] ) );
+		}
+
 		$settings  = self::get_settings();
 		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
-
-		$family = self::build_font_family( (string) $font_body );
+		$family    = self::build_font_family( (string) $font_body );
 
 		return '' !== $family ? $family : 'system-ui, -apple-system, sans-serif';
+	}
+
+	/**
+	 * Get the font family for headings: a chosen Heading Font, or on a block theme the system
+	 * font of the same kind as the theme's heading font when it differs from the body.
+	 *
+	 * @return string CSS font-family value, or an empty string when headings follow the body text.
+	 */
+	public static function get_heading_font_family(): string {
+		$body_font    = self::get_chosen_theme_font();
+		$heading_font = self::get_chosen_theme_font( 'font_heading' );
+		if ( null !== $heading_font ) {
+			if ( null !== $body_font && $body_font['family'] === $heading_font['family'] ) {
+				return '';
+			}
+
+			return self::build_font_family( $heading_font['stack'] );
+		}
+
+		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
+		if ( '' === $theme_font ) {
+			$theme_font = self::get_theme_style( [ 'typography', 'fontFamily' ] );
+		}
+		if ( null === self::get_font_kind( $theme_font ) ) {
+			return '';
+		}
+
+		if ( null !== $body_font && 0 === strcasecmp( trim( explode( ',', $theme_font )[0], " \t\"'" ), $body_font['family'] ) ) {
+			return '';
+		}
+
+		$stack = self::get_system_font_stack( $theme_font );
+
+		return self::get_font_family() !== $stack ? $stack : '';
+	}
+
+	/**
+	 * Get the system font stack of the same kind as a theme font.
+	 *
+	 * Lite pages download no theme fonts, so a theme's web font is replaced by the
+	 * reader's own serif, sans-serif or monospace font, judged from the
+	 * generic family at the end of the theme's stack.
+	 *
+	 * @param string $theme_stack Theme font-family value.
+	 * @return string CSS font-family value, safe to print inside a style element.
+	 */
+	public static function get_system_font_stack( string $theme_stack ): string {
+		$stacks = [
+			'serif'     => 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+			'monospace' => 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+		];
+
+		$kind = self::get_font_kind( $theme_stack );
+
+		return null !== $kind && isset( $stacks[ $kind ] ) ? $stacks[ $kind ] : 'system-ui, -apple-system, sans-serif';
+	}
+
+	/**
+	 * Read the kind of font from the last generic family in a font stack.
+	 *
+	 * @param string $font_stack CSS font-family value.
+	 * @return string|null 'serif', 'sans-serif' or 'monospace', or null when the stack names none.
+	 */
+	private static function get_font_kind( string $font_stack ): ?string {
+		$kinds = [
+			'serif'        => 'serif',
+			'ui-serif'     => 'serif',
+			'monospace'    => 'monospace',
+			'ui-monospace' => 'monospace',
+			'sans-serif'   => 'sans-serif',
+			'system-ui'    => 'sans-serif',
+		];
+
+		foreach ( array_reverse( explode( ',', strtolower( $font_stack ) ) ) as $family ) {
+			$kind = $kinds[ trim( $family, " \t\"'" ) ] ?? null;
+			if ( null !== $kind ) {
+				return $kind;
+			}
+		}
+
+		return null;
 	}
 
 	/**

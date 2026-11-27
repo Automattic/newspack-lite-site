@@ -30,7 +30,75 @@ abstract class Lite_Site_TestCase extends WP_UnitTestCase {
 		delete_option( Lite_Site_Settings::OPTION_NAME );
 		self::reset_settings_cache();
 		self::remove_lite_rewrite_rules();
+		foreach ( $this->theme_json_filters as [ $hook, $callback ] ) {
+			remove_filter( $hook, $callback );
+		}
+		$this->theme_json_filters = [];
+		$this->restore_theme();
 		parent::tear_down();
+	}
+
+	/**
+	 * Theme directories and stylesheet to put back after use_block_theme().
+	 *
+	 * @var array|null
+	 */
+	private $theme_to_restore = null;
+
+	/**
+	 * Theme JSON filters added by filter_theme_json(), removed after each test.
+	 *
+	 * @var array
+	 */
+	private $theme_json_filters = [];
+
+	/**
+	 * Merge data into one theme.json origin for the rest of the test.
+	 *
+	 * @param string $hook Filter, such as wp_theme_json_data_theme or wp_theme_json_data_user.
+	 * @param array  $data theme.json data to merge in.
+	 */
+	protected function filter_theme_json( string $hook, array $data ) {
+		$callback = static function ( $theme_json ) use ( $data ) {
+			return $theme_json->update_with( array_merge( [ 'version' => 3 ], $data ) );
+		};
+		add_filter( $hook, $callback );
+		$this->theme_json_filters[] = [ $hook, $callback ];
+		wp_clean_theme_json_cache();
+		self::reset_settings_cache();
+	}
+
+	/**
+	 * Switch to the fixture block theme in tests/fixtures/themes.
+	 */
+	protected function use_block_theme() {
+		global $wp_theme_directories;
+		$this->theme_to_restore = [
+			'directories' => $wp_theme_directories,
+			'stylesheet'  => get_stylesheet(),
+		];
+		register_theme_directory( __DIR__ . '/fixtures/themes' );
+		search_theme_directories( true );
+		switch_theme( 'nls-block-theme' );
+		wp_clean_theme_json_cache();
+		self::reset_settings_cache();
+		$this->assertTrue( wp_is_block_theme(), 'The fixture theme should be a block theme.' );
+	}
+
+	/**
+	 * Undo use_block_theme().
+	 */
+	private function restore_theme() {
+		if ( null === $this->theme_to_restore ) {
+			return;
+		}
+		global $wp_theme_directories;
+		switch_theme( $this->theme_to_restore['stylesheet'] );
+		$wp_theme_directories = $this->theme_to_restore['directories']; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		search_theme_directories( true );
+		wp_clean_theme_json_cache();
+		self::reset_settings_cache();
+		$this->theme_to_restore = null;
 	}
 
 	/**
@@ -65,9 +133,11 @@ abstract class Lite_Site_TestCase extends WP_UnitTestCase {
 	 * into every later one.
 	 */
 	protected static function reset_settings_cache() {
-		$property = new ReflectionProperty( Lite_Site::class, 'settings' );
-		$property->setAccessible( true );
-		$property->setValue( null, null );
+		foreach ( [ 'settings', 'theme_styles' ] as $name ) {
+			$property = new ReflectionProperty( Lite_Site::class, $name );
+			$property->setAccessible( true );
+			$property->setValue( null, null );
+		}
 	}
 
 	/**

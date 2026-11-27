@@ -14,18 +14,24 @@ import { type PanelProps, type SettingsSection } from '../types/settings';
 import { APPEARANCE_FIELDS } from '../utils/settings-dataform';
 import { SettingsSections } from './SettingsSections';
 
+const IS_BLOCK_THEME = !! window.newspackLiteSite?.isBlockTheme;
+
+const COLORS_SECTION: SettingsSection = {
+	id: 'colors',
+	title: __( 'Colors', 'newspack-lite-site' ),
+	description: __( 'Used for links in stories and the divider lines.', 'newspack-lite-site' ),
+	fields: [ 'primary_color' ],
+};
+
 const SECTIONS: SettingsSection[] = [
-	{
-		id: 'colors',
-		title: __( 'Colors', 'newspack-lite-site' ),
-		description: __( 'Used for links in stories and the divider lines.', 'newspack-lite-site' ),
-		fields: [ 'primary_color' ],
-	},
+	...( IS_BLOCK_THEME ? [] : [ COLORS_SECTION ] ),
 	{
 		id: 'typography',
 		title: __( 'Typography', 'newspack-lite-site' ),
-		description: __( 'Load a web font for body text, or keep the reader’s system font.', 'newspack-lite-site' ),
-		fields: [ 'font_import_url', 'font_body' ],
+		description: IS_BLOCK_THEME
+			? __( 'Use the site’s fonts for headings and body text, or keep the reader’s system font.', 'newspack-lite-site' )
+			: __( 'Load a web font for body text, or keep the reader’s system font.', 'newspack-lite-site' ),
+		fields: IS_BLOCK_THEME ? [ 'font_heading', 'font_body' ] : [ 'font_import_url', 'font_body' ],
 	},
 	{
 		id: 'advanced',

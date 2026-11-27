@@ -111,6 +111,7 @@ class Lite_Site_Settings {
 					'primary_color'          => '',
 					'font_import_url'        => '',
 					'font_body'              => '',
+					'font_heading'           => '',
 				],
 				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
 				'show_in_rest'      => [
@@ -184,6 +185,10 @@ class Lite_Site_Settings {
 								'type'    => 'string',
 								'default' => '',
 							],
+							'font_heading'           => [
+								'type'    => 'string',
+								'default' => '',
+							],
 						],
 					],
 				],
@@ -248,7 +253,7 @@ class Lite_Site_Settings {
 		$ordered_categories = self::build_ordered_categories( $all_categories, 0, 0 );
 
 		$theme_color     = Lite_Site::get_theme_primary_color();
-		$default_color   = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+		$default_color   = preg_match( '/^#[0-9a-f]{3,8}$/i', $theme_color ) ? $theme_color : '#808080';
 		$interval_labels = RSS_Importer::get_interval_labels();
 
 		wp_localize_script(
@@ -258,6 +263,8 @@ class Lite_Site_Settings {
 				'rss'          => self::RSS_HOOK_SUFFIX === $hook_suffix ? self::get_rss_data() : null,
 				'rssEntries'   => self::RSS_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
 				'defaultColor' => $default_color,
+				'isBlockTheme' => wp_is_block_theme(),
+				'themeFonts'   => wp_list_pluck( Lite_Site::get_theme_fonts(), 'family' ),
 				'homeUrl'      => home_url( '/' ),
 				'categories'   => array_values(
 					array_map(
@@ -830,6 +837,7 @@ class Lite_Site_Settings {
 			'primary_color'          => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',
 			'font_import_url'        => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
 			'font_body'              => sanitize_text_field( $settings['font_body'] ?? '' ),
+			'font_heading'           => sanitize_text_field( $settings['font_heading'] ?? '' ),
 		];
 	}
 
