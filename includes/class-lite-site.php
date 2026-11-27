@@ -532,11 +532,6 @@ class Lite_Site {
 	 * @return string CSS font-family value, or an empty string when headings follow the body text.
 	 */
 	public static function get_heading_font_family(): string {
-		$settings = self::get_settings();
-		if ( ! empty( $settings['font_body'] ) ) {
-			return '';
-		}
-
 		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
 		if ( null === self::get_font_kind( $theme_font ) ) {
 			return '';

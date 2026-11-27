@@ -186,13 +186,13 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A Body Font setting wins over the theme for body text and headings.
+	 * A Body Font setting changes body text only; headings keep the theme's heading font.
 	 */
-	public function test_body_font_setting_wins_over_theme() {
+	public function test_body_font_setting_leaves_theme_heading_font() {
 		$this->use_block_theme();
 
 		$this->assertSame( '"Georgia"', $this->family_for( 'Georgia' ) );
-		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+		$this->assertSame( 'system-ui, -apple-system, sans-serif', Lite_Site::get_heading_font_family() );
 	}
 
 	/**

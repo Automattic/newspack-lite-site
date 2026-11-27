@@ -27,7 +27,7 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
 | `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color: on a block theme, the link color from its global styles, including changes made in the Site Editor; on a classic theme, the Newspack theme's primary color. Either way, the text color when the theme sets none. On a block theme, the page background and text color also come from its global styles. |
 | `font_import_url` | `string` | `''` | The address of a font stylesheet. |
-| `font_body` | `string` | `''` | The body font name. Empty uses a system font. On a block theme, body text uses the system font of the same kind as the theme's body font (serif, sans-serif or monospace), and headings follow the theme's heading font the same way. The theme's own font files are never downloaded. |
+| `font_body` | `string` | `''` | The body font name. Empty uses a system font. On a block theme, body text uses the system font of the same kind as the theme's body font (serif, sans-serif or monospace), and headings follow the theme's heading font the same way, whether or not this setting is set. The theme's own font files are never downloaded. |
 
 Turning Lite Site on or off, changing its path, or the option's first save marks the rewrite rules for a refresh, through the `nls_flush_rewrite_rules` transient.
 
