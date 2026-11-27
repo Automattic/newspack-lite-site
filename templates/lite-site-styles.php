@@ -12,6 +12,12 @@ defined( 'ABSPATH' ) || exit;
 ?>
 <style>
 	body {
+		<?php if ( Lite_Site::get_background_color() ) : ?>
+		background: <?php echo esc_html( Lite_Site::get_background_color() ); ?>;
+		<?php endif; ?>
+		<?php if ( Lite_Site::get_text_color() ) : ?>
+		color: <?php echo esc_html( Lite_Site::get_text_color() ); ?>;
+		<?php endif; ?>
 		font-family: <?php echo Lite_Site::get_font_family(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Quoted and stripped of characters that end a declaration or the style element; esc_html() would turn the quotes into entities. ?>;
 		font-size: clamp( 1.125rem, 0.929rem + 0.402vw, 1.25rem );
 		line-height: 1.6;

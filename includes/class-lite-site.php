@@ -323,8 +323,8 @@ class Lite_Site {
 	 */
 	public static function get_theme_primary_color() {
 		if ( wp_is_block_theme() ) {
-			$settings = wp_get_global_settings();
-			return self::get_palette_accent_color( $settings['color']['palette']['theme'] ?? [] );
+			$link_color = self::get_theme_style( [ 'elements', 'link', 'color', 'text' ] );
+			return '' !== $link_color ? $link_color : 'currentcolor';
 		}
 
 		if ( ! function_exists( 'newspack_get_primary_color' ) ) {
@@ -341,23 +341,95 @@ class Lite_Site {
 	}
 
 	/**
-	 * Find the accent color in a block theme's palette.
+	 * Get the page background color from the block theme's global styles.
 	 *
-	 * Looked up by slug because a palette's first entry is usually the page
-	 * background, which would make links invisible. Site Editor changes to the
-	 * theme palette keep their slugs, so they are picked up too.
-	 *
-	 * @param array $palette The theme palette, as found under wp_get_global_settings()['color']['palette']['theme'].
-	 * @return string The accent color, or 'currentcolor' if the palette has none.
+	 * @return string CSS color, or an empty string when the theme sets none.
 	 */
-	public static function get_palette_accent_color( array $palette ): string {
-		foreach ( $palette as $entry ) {
-			if ( 'accent' === ( $entry['slug'] ?? '' ) && ! empty( $entry['color'] ) ) {
-				return $entry['color'];
+	public static function get_background_color(): string {
+		return self::get_theme_style( [ 'color', 'background' ] );
+	}
+
+	/**
+	 * Get the page text color from the block theme's global styles.
+	 *
+	 * @return string CSS color, or an empty string when the theme sets none.
+	 */
+	public static function get_text_color(): string {
+		return self::get_theme_style( [ 'color', 'text' ] );
+	}
+
+	/**
+	 * Get one value from the block theme's global styles, which include Site Editor changes.
+	 *
+	 * Lite pages load no theme CSS, so preset references are resolved to their values here.
+	 *
+	 * @param string[] $path Path inside the global styles, such as [ 'color', 'text' ].
+	 * @return string Value safe to print in a style element, or an empty string.
+	 */
+	private static function get_theme_style( array $path ): string {
+		if ( ! wp_is_block_theme() ) {
+			return '';
+		}
+
+		$value = wp_get_global_styles( $path );
+
+		return self::get_css_value( is_string( $value ) ? self::resolve_preset( $value ) : $value );
+	}
+
+	/**
+	 * Resolve a color or font family preset reference to the preset's value.
+	 *
+	 * Accepts both forms theme.json uses: var:preset|color|base and
+	 * var(--wp--preset--color--base). Anything else is returned unchanged.
+	 *
+	 * @param string $value Raw style value.
+	 * @return string Resolved value.
+	 */
+	private static function resolve_preset( string $value ): string {
+		if ( ! preg_match( '/^var(?::preset\|([a-z-]+)\|([a-z0-9_-]+)|\(--wp--preset--([a-z-]+)--([a-z0-9_-]+)\))$/i', trim( $value ), $matches ) ) {
+			return $value;
+		}
+
+		$type    = '' !== $matches[1] ? $matches[1] : $matches[3];
+		$slug    = _wp_to_kebab_case( '' !== $matches[2] ? $matches[2] : $matches[4] );
+		$sources = [
+			'color'       => [ [ 'color', 'palette' ], 'color' ],
+			'font-family' => [ [ 'typography', 'fontFamilies' ], 'fontFamily' ],
+		];
+		if ( ! isset( $sources[ $type ] ) ) {
+			return $value;
+		}
+
+		[ $settings_path, $value_key ] = $sources[ $type ];
+		$presets                        = wp_get_global_settings( $settings_path );
+		foreach ( [ 'custom', 'theme', 'default' ] as $origin ) {
+			foreach ( (array) ( $presets[ $origin ] ?? [] ) as $preset ) {
+				if ( is_array( $preset ) && isset( $preset['slug'], $preset[ $value_key ] ) && _wp_to_kebab_case( $preset['slug'] ) === $slug ) {
+					return (string) $preset[ $value_key ];
+				}
 			}
 		}
 
-		return 'currentcolor';
+		return $value;
+	}
+
+	/**
+	 * Check a theme value before it is printed inside a style element.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The value, 'currentcolor' for any casing of it, or an empty string when unusable.
+	 */
+	public static function get_css_value( $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		$value = trim( $value );
+		if ( '' === $value || preg_match( '/[;{}<>]/', $value ) ) {
+			return '';
+		}
+
+		return 0 === strcasecmp( $value, 'currentcolor' ) ? 'currentcolor' : $value;
 	}
 
 	/**

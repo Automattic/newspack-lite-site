@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"color": {
+			"palette": [
+				{ "slug": "base", "color": "#111111", "name": "Base" },
+				{ "slug": "contrast", "color": "#eeeeee", "name": "Contrast" },
+				{ "slug": "accent", "color": "#ffc857", "name": "Accent" },
+				{ "slug": "link", "color": "#2255aa", "name": "Link" }
+			]
+		},
+		"typography": {
+			"fontFamilies": [
+				{ "slug": "newsreader", "fontFamily": "\"Newsreader\", ui-serif, serif", "name": "Newsreader" },
+				{ "slug": "cardo", "fontFamily": "Cardo", "name": "Cardo" }
+			]
+		}
+	},
+	"styles": {
+		"color": {
+			"background": "var:preset|color|base",
+			"text": "var(--wp--preset--color--contrast)"
+		},
+		"typography": {
+			"fontFamily": "var:preset|font-family|newsreader"
+		},
+		"elements": {
+			"link": {
+				"color": { "text": "var(--wp--preset--color--link)" }
+			},
+			"heading": {
+				"typography": { "fontFamily": "var(--wp--preset--font-family--cardo)" }
+			}
+		}
+	}
+}

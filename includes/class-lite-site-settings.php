@@ -248,7 +248,7 @@ class Lite_Site_Settings {
 		$ordered_categories = self::build_ordered_categories( $all_categories, 0, 0 );
 
 		$theme_color     = Lite_Site::get_theme_primary_color();
-		$default_color   = 'currentcolor' !== $theme_color ? $theme_color : '#808080';
+		$default_color   = preg_match( '/^#[0-9a-f]{3,8}$/i', $theme_color ) ? $theme_color : '#808080';
 		$interval_labels = RSS_Importer::get_interval_labels();
 
 		wp_localize_script(
