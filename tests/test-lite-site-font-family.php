@@ -274,4 +274,59 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 
 		$this->assertSame( '', get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) );
 	}
+
+	/**
+	 * A Heading Font that is one of the theme's fonts sets the headings.
+	 */
+	public function test_heading_font_setting_uses_theme_font() {
+		$this->use_block_theme();
+		self::set_settings( [ 'font_heading' => 'Cardo' ] );
+
+		$this->assertSame( '"Cardo"', Lite_Site::get_heading_font_family() );
+	}
+
+	/**
+	 * A Heading Font the theme does not register counts as the system font.
+	 */
+	public function test_unregistered_heading_font_falls_back() {
+		$this->use_block_theme();
+		self::set_settings( [ 'font_heading' => 'Georgia' ] );
+
+		$this->assertSame( 'system-ui, -apple-system, sans-serif', Lite_Site::get_heading_font_family() );
+	}
+
+	/**
+	 * Choosing a theme font for headings prints that family's font faces.
+	 */
+	public function test_chosen_heading_font_prints_its_font_faces() {
+		$this->use_block_theme();
+		self::set_settings( [ 'font_heading' => 'Inter' ] );
+
+		$this->assertStringContainsString( 'nls-block-theme/assets/fonts/inter.woff2', get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) );
+	}
+
+	/**
+	 * The same font chosen for body and headings is printed once, and headings follow the body.
+	 */
+	public function test_same_body_and_heading_font_prints_once() {
+		$this->use_block_theme();
+		self::set_settings(
+			[
+				'font_body'    => 'Inter',
+				'font_heading' => 'Inter',
+			]
+		);
+
+		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+		$this->assertSame( 1, substr_count( get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ), 'inter.woff2' ) );
+	}
+
+	/**
+	 * A classic theme ignores the Heading Font setting.
+	 */
+	public function test_classic_theme_ignores_heading_font() {
+		self::set_settings( [ 'font_heading' => 'Georgia' ] );
+
+		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+	}
 }

@@ -29,9 +29,9 @@ const SECTIONS: SettingsSection[] = [
 		id: 'typography',
 		title: __( 'Typography', 'newspack-lite-site' ),
 		description: IS_BLOCK_THEME
-			? __( 'Use one of the site’s fonts for body text, or keep the reader’s system font.', 'newspack-lite-site' )
+			? __( 'Use the site’s fonts for headings and body text, or keep the reader’s system font.', 'newspack-lite-site' )
 			: __( 'Load a web font for body text, or keep the reader’s system font.', 'newspack-lite-site' ),
-		fields: IS_BLOCK_THEME ? [ 'font_body' ] : [ 'font_import_url', 'font_body' ],
+		fields: IS_BLOCK_THEME ? [ 'font_heading', 'font_body' ] : [ 'font_import_url', 'font_body' ],
 	},
 	{
 		id: 'advanced',

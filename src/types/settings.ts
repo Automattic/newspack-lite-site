@@ -21,6 +21,7 @@ export interface SiteSettings {
 	primary_color: string;
 	font_import_url: string;
 	font_body: string;
+	font_heading: string;
 }
 
 /**

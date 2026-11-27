@@ -484,18 +484,24 @@ class Lite_Site {
 	}
 
 	/**
-	 * Print the font faces of the theme font chosen as the Body Font, so only that family downloads.
+	 * Print the font faces of the theme fonts chosen as Body Font and Heading Font, so only those families download.
 	 */
 	private static function print_theme_font_faces() {
-		$font = self::get_chosen_theme_font();
-		if ( null === $font ) {
+		$families = [];
+		foreach ( [ 'font_body', 'font_heading' ] as $setting ) {
+			$font = self::get_chosen_theme_font( $setting );
+			if ( null !== $font ) {
+				$families[ strtolower( $font['family'] ) ] = true;
+			}
+		}
+		if ( ! $families ) {
 			return;
 		}
 
 		$faces = array_filter(
 			\WP_Font_Face_Resolver::get_fonts_from_theme_json(),
-			static function ( $family_faces ) use ( $font ) {
-				return isset( $family_faces[0]['font-family'] ) && 0 === strcasecmp( trim( $family_faces[0]['font-family'], " \t\"'" ), $font['family'] );
+			static function ( $family_faces ) use ( $families ) {
+				return isset( $family_faces[0]['font-family'] ) && isset( $families[ strtolower( trim( $family_faces[0]['font-family'], " \t\"'" ) ) ] );
 			}
 		);
 		if ( $faces ) {
@@ -536,19 +542,20 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the theme font chosen as the Body Font, if the setting names one.
+	 * Get the theme font a font setting names, if it names one the theme registers.
 	 *
+	 * @param string $setting 'font_body' or 'font_heading'.
 	 * @return array|null The font, shaped as in get_theme_fonts(), or null.
 	 */
-	private static function get_chosen_theme_font(): ?array {
-		$settings  = self::get_settings();
-		$font_body = ! empty( $settings['font_body'] ) ? (string) $settings['font_body'] : '';
-		if ( '' === $font_body ) {
+	private static function get_chosen_theme_font( string $setting = 'font_body' ): ?array {
+		$settings = self::get_settings();
+		$name     = ! empty( $settings[ $setting ] ) ? (string) $settings[ $setting ] : '';
+		if ( '' === $name ) {
 			return null;
 		}
 
 		foreach ( self::get_theme_fonts() as $font ) {
-			if ( 0 === strcasecmp( $font['family'], $font_body ) ) {
+			if ( 0 === strcasecmp( $font['family'], $name ) ) {
 				return $font;
 			}
 		}
@@ -618,13 +625,22 @@ class Lite_Site {
 	 * @return string CSS font-family value, or an empty string when headings follow the body text.
 	 */
 	public static function get_heading_font_family(): string {
+		$body_font    = self::get_chosen_theme_font();
+		$heading_font = self::get_chosen_theme_font( 'font_heading' );
+		if ( null !== $heading_font ) {
+			if ( null !== $body_font && $body_font['family'] === $heading_font['family'] ) {
+				return '';
+			}
+
+			return self::build_font_family( $heading_font['stack'] );
+		}
+
 		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
 		if ( null === self::get_font_kind( $theme_font ) ) {
 			return '';
 		}
 
-		$chosen_font = self::get_chosen_theme_font();
-		if ( null !== $chosen_font && 0 === strcasecmp( trim( explode( ',', $theme_font )[0], " \t\"'" ), $chosen_font['family'] ) ) {
+		if ( null !== $body_font && 0 === strcasecmp( trim( explode( ',', $theme_font )[0], " \t\"'" ), $body_font['family'] ) ) {
 			return '';
 		}
 

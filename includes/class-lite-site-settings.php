@@ -111,6 +111,7 @@ class Lite_Site_Settings {
 					'primary_color'          => '',
 					'font_import_url'        => '',
 					'font_body'              => '',
+					'font_heading'           => '',
 				],
 				'sanitize_callback' => [ __CLASS__, 'sanitize_settings' ],
 				'show_in_rest'      => [
@@ -181,6 +182,10 @@ class Lite_Site_Settings {
 								'default' => '',
 							],
 							'font_body'              => [
+								'type'    => 'string',
+								'default' => '',
+							],
+							'font_heading'           => [
 								'type'    => 'string',
 								'default' => '',
 							],
@@ -832,6 +837,7 @@ class Lite_Site_Settings {
 			'primary_color'          => ! empty( $settings['primary_color'] ) ? ( sanitize_hex_color( $settings['primary_color'] ) ?? '' ) : '',
 			'font_import_url'        => self::sanitize_font_import_url( $settings['font_import_url'] ?? '' ),
 			'font_body'              => sanitize_text_field( $settings['font_body'] ?? '' ),
+			'font_heading'           => sanitize_text_field( $settings['font_heading'] ?? '' ),
 		];
 	}
 

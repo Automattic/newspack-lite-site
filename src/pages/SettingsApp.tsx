@@ -43,7 +43,9 @@ const SETTINGS_TABS = [
 	{
 		label: __( 'Appearance', 'newspack-lite-site' ),
 		path: '/appearance',
-		subTitle: __( 'Set colors and fonts. Keep it light so pages load fast on slow connections.', 'newspack-lite-site' ),
+		subTitle: window.newspackLiteSite?.isBlockTheme
+			? __( 'Set fonts. Keep it light so pages load fast on slow connections.', 'newspack-lite-site' )
+			: __( 'Set colors and fonts. Keep it light so pages load fast on slow connections.', 'newspack-lite-site' ),
 		Panel: AppearancePanel,
 	},
 ];

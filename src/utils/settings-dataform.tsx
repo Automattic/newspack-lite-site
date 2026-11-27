@@ -221,6 +221,24 @@ export const SETTINGS_FIELDS: Field< SiteSettings >[] = [
 ];
 
 /**
+ * A dropdown of the fonts a block theme registers, led by the reader's system font.
+ *
+ * @param id          Setting key.
+ * @param label       Field label.
+ * @param description Help text.
+ */
+const themeFontField = ( id: 'font_body' | 'font_heading', label: string, description: string ): Field< SiteSettings > => ( {
+	id,
+	label,
+	type: 'text',
+	elements: [
+		{ value: '', label: __( 'System font', 'newspack-lite-site' ) },
+		...( window.newspackLiteSite?.themeFonts ?? [] ).map( family => ( { value: family, label: family } ) ),
+	],
+	description,
+} );
+
+/**
  * Field definitions for the Appearance settings DataForm.
  */
 export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
@@ -234,29 +252,36 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'Font Embed Code or URL', 'newspack-lite-site' ),
 		Edit: FontImportUrlFieldEdit,
 	},
-	window.newspackLiteSite?.isBlockTheme
-		? {
-				id: 'font_body',
-				label: __( 'Body Font', 'newspack-lite-site' ),
-				type: 'text',
-				elements: [
-					{ value: '', label: __( 'System font', 'newspack-lite-site' ) },
-					...( window.newspackLiteSite?.themeFonts ?? [] ).map( family => ( { value: family, label: family } ) ),
-				],
-				description: __(
-					'The system font matches the style of the site’s fonts and loads nothing. Any other font adds a download to every page.',
-					'newspack-lite-site'
+	...( window.newspackLiteSite?.isBlockTheme
+		? [
+				themeFontField(
+					'font_body',
+					__( 'Body Font', 'newspack-lite-site' ),
+					__(
+						'The system font matches the style of the site’s body font and loads nothing. Any other font adds a download to every page.',
+						'newspack-lite-site'
+					)
 				),
-			}
-		: {
-				id: 'font_body',
-				label: __( 'Body Font', 'newspack-lite-site' ),
-				type: 'text',
-				description: __(
-					"Enter the font name exactly as the provider lists it, for example Open Sans. Leave empty to use each reader's system font.",
-					'newspack-lite-site'
+				themeFontField(
+					'font_heading',
+					__( 'Heading Font', 'newspack-lite-site' ),
+					__(
+						'The system font matches the style of the site’s heading font and loads nothing. Any other font adds a download to every page.',
+						'newspack-lite-site'
+					)
 				),
-			},
+			]
+		: [
+				{
+					id: 'font_body',
+					label: __( 'Body Font', 'newspack-lite-site' ),
+					type: 'text' as const,
+					description: __(
+						"Enter the font name exactly as the provider lists it, for example Open Sans. Leave empty to use each reader's system font.",
+						'newspack-lite-site'
+					),
+				},
+			] ),
 	{
 		id: 'custom_css',
 		label: __( 'Custom CSS', 'newspack-lite-site' ),

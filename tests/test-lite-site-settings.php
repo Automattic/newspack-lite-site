@@ -182,6 +182,7 @@ class Test_Lite_Site_Settings extends Lite_Site_TestCase {
 				'primary_color',
 				'font_import_url',
 				'font_body',
+				'font_heading',
 			] as $key
 		) {
 			$this->assertArrayHasKey( $key, $sanitized, sprintf( 'The %s key should always be present.', $key ) );
