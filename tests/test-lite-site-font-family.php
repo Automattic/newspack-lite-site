@@ -191,8 +191,18 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	public function test_body_font_setting_leaves_theme_heading_font() {
 		$this->use_block_theme();
 
-		$this->assertSame( '"Georgia"', $this->family_for( 'Georgia' ) );
+		$this->assertSame( '"Cardo"', $this->family_for( 'Cardo' ) );
 		$this->assertSame( 'system-ui, -apple-system, sans-serif', Lite_Site::get_heading_font_family() );
+	}
+
+	/**
+	 * Headings follow the body when the chosen body font is the theme's heading font.
+	 */
+	public function test_heading_follows_body_when_body_font_is_the_heading_font() {
+		$this->use_block_theme();
+
+		$this->assertSame( '"Inter", system-ui, sans-serif', $this->family_for( 'Inter' ) );
+		$this->assertSame( '', Lite_Site::get_heading_font_family() );
 	}
 
 	/**
@@ -200,5 +210,68 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	 */
 	public function test_classic_theme_keeps_default_fonts() {
 		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+	}
+
+	/**
+	 * A block theme offers each font family it registers, once, by family name.
+	 */
+	public function test_theme_fonts_are_the_registered_families() {
+		$this->use_block_theme();
+
+		$this->assertSame( [ 'Newsreader', 'Cardo', 'Inter' ], wp_list_pluck( Lite_Site::get_theme_fonts(), 'family' ) );
+	}
+
+	/**
+	 * A classic theme offers no theme fonts.
+	 */
+	public function test_classic_theme_has_no_theme_fonts() {
+		$this->assertSame( [], Lite_Site::get_theme_fonts() );
+	}
+
+	/**
+	 * A Body Font that is one of the theme's fonts uses the theme's own stack.
+	 */
+	public function test_registered_body_font_uses_theme_stack() {
+		$this->use_block_theme();
+
+		$this->assertSame( '"Inter", system-ui, sans-serif', $this->family_for( 'Inter' ) );
+	}
+
+	/**
+	 * On a block theme, a Body Font the theme does not register counts as the system font,
+	 * so the page matches what the settings screen shows.
+	 */
+	public function test_unregistered_body_font_falls_back_on_block_theme() {
+		$this->use_block_theme();
+
+		$this->assertSame( 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif', $this->family_for( 'Open Sans' ) );
+	}
+
+	/**
+	 * Choosing a theme font prints that family's font faces, and only that family's.
+	 */
+	public function test_chosen_theme_font_prints_its_font_faces() {
+		$this->use_block_theme();
+		self::set_settings(
+			[
+				'font_body'       => 'Inter',
+				'font_import_url' => 'https://fonts.googleapis.com/css2?family=Inter',
+			]
+		);
+
+		$output = get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] );
+
+		$this->assertStringContainsString( '@font-face', $output );
+		$this->assertStringContainsString( 'nls-block-theme/assets/fonts/inter.woff2', $output );
+		$this->assertStringNotContainsString( 'fonts.googleapis.com', $output, 'The embed field is not used on a block theme.' );
+	}
+
+	/**
+	 * The system font downloads nothing on a block theme.
+	 */
+	public function test_system_font_prints_no_font_faces() {
+		$this->use_block_theme();
+
+		$this->assertSame( '', get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) );
 	}
 }

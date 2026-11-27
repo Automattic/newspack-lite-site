@@ -310,11 +310,16 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the primary color (admin override takes priority, then theme default).
+	 * Get the primary color: on a block theme, the theme's link color; otherwise the
+	 * admin setting, then the theme default.
 	 *
 	 * @return string The primary color.
 	 */
 	public static function get_primary_color() {
+		if ( wp_is_block_theme() ) {
+			return self::get_theme_primary_color();
+		}
+
 		$settings = self::get_settings();
 		if ( ! empty( $settings['primary_color'] ) ) {
 			return $settings['primary_color'];
@@ -463,6 +468,11 @@ class Lite_Site {
 	 * the wp_print_styles callbacks, which can echo markup of their own.
 	 */
 	public static function print_font_stylesheet() {
+		if ( wp_is_block_theme() ) {
+			self::print_theme_font_faces();
+			return;
+		}
+
 		$font_import_url = self::get_font_import_url();
 		if ( ! $font_import_url ) {
 			return;
@@ -471,6 +481,79 @@ class Lite_Site {
 		// No version: a ver argument would change the URL the font provider receives.
 		wp_enqueue_style( 'newspack-lite-site-fonts', $font_import_url, [], null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 		wp_styles()->do_items( 'newspack-lite-site-fonts' );
+	}
+
+	/**
+	 * Print the font faces of the theme font chosen as the Body Font, so only that family downloads.
+	 */
+	private static function print_theme_font_faces() {
+		$font = self::get_chosen_theme_font();
+		if ( null === $font ) {
+			return;
+		}
+
+		$faces = array_filter(
+			\WP_Font_Face_Resolver::get_fonts_from_theme_json(),
+			static function ( $family_faces ) use ( $font ) {
+				return isset( $family_faces[0]['font-family'] ) && 0 === strcasecmp( trim( $family_faces[0]['font-family'], " \t\"'" ), $font['family'] );
+			}
+		);
+		if ( $faces ) {
+			wp_print_font_faces( array_values( $faces ) );
+		}
+	}
+
+	/**
+	 * Get the font families a block theme registers, from theme.json and the Site Editor's font library.
+	 *
+	 * @return array[] Each with 'family', the first name in its stack, and 'stack', its CSS font-family value.
+	 */
+	public static function get_theme_fonts(): array {
+		if ( ! wp_is_block_theme() ) {
+			return [];
+		}
+
+		$generic_names = [ 'serif', 'sans-serif', 'monospace', 'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace', '-apple-system', 'blinkmacsystemfont' ];
+		$presets       = wp_get_global_settings( [ 'typography', 'fontFamilies' ] );
+		$fonts         = [];
+		foreach ( [ 'theme', 'custom' ] as $origin ) {
+			foreach ( (array) ( $presets[ $origin ] ?? [] ) as $preset ) {
+				if ( ! is_array( $preset ) || empty( $preset['fontFamily'] ) || ! is_string( $preset['fontFamily'] ) ) {
+					continue;
+				}
+				$family = trim( explode( ',', $preset['fontFamily'] )[0], " \t\"'" );
+				if ( '' === $family || isset( $fonts[ strtolower( $family ) ] ) || in_array( strtolower( $family ), $generic_names, true ) ) {
+					continue;
+				}
+				$fonts[ strtolower( $family ) ] = [
+					'family' => $family,
+					'stack'  => $preset['fontFamily'],
+				];
+			}
+		}
+
+		return array_values( $fonts );
+	}
+
+	/**
+	 * Get the theme font chosen as the Body Font, if the setting names one.
+	 *
+	 * @return array|null The font, shaped as in get_theme_fonts(), or null.
+	 */
+	private static function get_chosen_theme_font(): ?array {
+		$settings  = self::get_settings();
+		$font_body = ! empty( $settings['font_body'] ) ? (string) $settings['font_body'] : '';
+		if ( '' === $font_body ) {
+			return null;
+		}
+
+		foreach ( self::get_theme_fonts() as $font ) {
+			if ( 0 === strcasecmp( $font['family'], $font_body ) ) {
+				return $font;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -515,15 +598,18 @@ class Lite_Site {
 	 * @return string CSS font-family value.
 	 */
 	public static function get_font_family(): string {
-		$settings  = self::get_settings();
-		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
+		if ( wp_is_block_theme() ) {
+			$font   = self::get_chosen_theme_font();
+			$family = null !== $font ? self::build_font_family( $font['stack'] ) : '';
 
-		$family = self::build_font_family( (string) $font_body );
-		if ( '' !== $family ) {
-			return $family;
+			return '' !== $family ? $family : self::get_system_font_stack( self::get_theme_style( [ 'typography', 'fontFamily' ] ) );
 		}
 
-		return self::get_system_font_stack( self::get_theme_style( [ 'typography', 'fontFamily' ] ) );
+		$settings  = self::get_settings();
+		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
+		$family    = self::build_font_family( (string) $font_body );
+
+		return '' !== $family ? $family : 'system-ui, -apple-system, sans-serif';
 	}
 
 	/**
@@ -534,6 +620,11 @@ class Lite_Site {
 	public static function get_heading_font_family(): string {
 		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
 		if ( null === self::get_font_kind( $theme_font ) ) {
+			return '';
+		}
+
+		$chosen_font = self::get_chosen_theme_font();
+		if ( null !== $chosen_font && 0 === strcasecmp( trim( explode( ',', $theme_font )[0], " \t\"'" ), $chosen_font['family'] ) ) {
 			return '';
 		}
 

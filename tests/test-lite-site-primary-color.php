@@ -45,13 +45,13 @@ class Test_Lite_Site_Primary_Color extends Lite_Site_TestCase {
 	}
 
 	/**
-	 * A Primary Color setting wins over the theme's link color.
+	 * On a block theme, colors come from the theme's styles, so a saved Primary Color is ignored.
 	 */
-	public function test_primary_color_setting_overrides_theme_link() {
+	public function test_primary_color_setting_ignored_on_block_theme() {
 		$this->use_block_theme();
 		self::set_settings( [ 'primary_color' => '#aa0000' ] );
 
-		$this->assertSame( '#aa0000', Lite_Site::get_primary_color() );
+		$this->assertSame( '#2255aa', Lite_Site::get_primary_color() );
 	}
 
 	/**
@@ -99,17 +99,6 @@ class Test_Lite_Site_Primary_Color extends Lite_Site_TestCase {
 		$this->use_block_theme();
 
 		$this->assertSame( '#00aa00', Lite_Site::get_primary_color() );
-	}
-
-	/**
-	 * A Primary Color setting was chosen against the badge's white text, so it keeps it.
-	 */
-	public function test_primary_color_setting_keeps_badge_text_white() {
-		$this->use_block_theme();
-		self::set_settings( [ 'primary_color' => '#aa0000' ] );
-
-		$output = $this->render_template( 'liveblog-styles.php' );
-		$this->assertMatchesRegularExpression( '/\.liveblog-status\.enable\s*\{\s*background: #aa0000;\s*\}/', $output );
 	}
 
 	/**

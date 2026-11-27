@@ -258,6 +258,8 @@ class Lite_Site_Settings {
 				'rss'          => self::RSS_HOOK_SUFFIX === $hook_suffix ? self::get_rss_data() : null,
 				'rssEntries'   => self::RSS_HOOK_SUFFIX === $hook_suffix ? self::get_rss_entries_data() : null,
 				'defaultColor' => $default_color,
+				'isBlockTheme' => wp_is_block_theme(),
+				'themeFonts'   => wp_list_pluck( Lite_Site::get_theme_fonts(), 'family' ),
 				'homeUrl'      => home_url( '/' ),
 				'categories'   => array_values(
 					array_map(

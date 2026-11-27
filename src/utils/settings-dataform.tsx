@@ -234,15 +234,29 @@ export const APPEARANCE_FIELDS: Field< SiteSettings >[] = [
 		label: __( 'Font Embed Code or URL', 'newspack-lite-site' ),
 		Edit: FontImportUrlFieldEdit,
 	},
-	{
-		id: 'font_body',
-		label: __( 'Body Font', 'newspack-lite-site' ),
-		type: 'text',
-		description: __(
-			"Enter the font name exactly as the provider lists it, for example Open Sans. Leave empty to use each reader's system font.",
-			'newspack-lite-site'
-		),
-	},
+	window.newspackLiteSite?.isBlockTheme
+		? {
+				id: 'font_body',
+				label: __( 'Body Font', 'newspack-lite-site' ),
+				type: 'text',
+				elements: [
+					{ value: '', label: __( 'System font', 'newspack-lite-site' ) },
+					...( window.newspackLiteSite?.themeFonts ?? [] ).map( family => ( { value: family, label: family } ) ),
+				],
+				description: __(
+					'The system font matches the style of the site’s fonts and loads nothing. Any other font adds a download to every page.',
+					'newspack-lite-site'
+				),
+			}
+		: {
+				id: 'font_body',
+				label: __( 'Body Font', 'newspack-lite-site' ),
+				type: 'text',
+				description: __(
+					"Enter the font name exactly as the provider lists it, for example Open Sans. Leave empty to use each reader's system font.",
+					'newspack-lite-site'
+				),
+			},
 	{
 		id: 'custom_css',
 		label: __( 'Custom CSS', 'newspack-lite-site' ),

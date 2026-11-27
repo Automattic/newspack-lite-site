@@ -12,8 +12,7 @@ defined( 'ABSPATH' ) || exit;
 // The badge text is white, so a currentcolor background would hide it.
 $nls_primary_color = Lite_Site::get_primary_color();
 // A theme's link color is chosen against its page background, so that pairing stays readable.
-// A Primary Color setting was chosen against the white text, so it keeps it.
-$nls_background_color = Lite_Site::get_theme_primary_color() === $nls_primary_color ? Lite_Site::get_background_color() : '';
+$nls_background_color = Lite_Site::get_background_color();
 
 ?>
 <style>

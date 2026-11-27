@@ -6,6 +6,8 @@ declare global {
 	interface Window {
 		newspackLiteSite?: {
 			defaultColor: string;
+			isBlockTheme: boolean;
+			themeFonts: string[];
 			homeUrl: string;
 			categories: Array< CategoryData >;
 			cronDisabled: boolean;

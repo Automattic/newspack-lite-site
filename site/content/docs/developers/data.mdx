@@ -25,9 +25,9 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `custom_css` | `string` | `''` | CSS added to every page, including the offline page. Stored as entered. On output, any `</style` is escaped so the CSS can't end the style element. |
 | `external_links_new_tab` | `bool` | `true` | Whether links to other sites open in a new tab. |
 | `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
-| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color: on a block theme, the link color from its global styles, including changes made in the Site Editor; on a classic theme, the Newspack theme's primary color. Either way, the text color when the theme sets none. On a block theme, the page background and text color also come from its global styles. |
-| `font_import_url` | `string` | `''` | The address of a font stylesheet. |
-| `font_body` | `string` | `''` | The body font name. Empty uses a system font. On a block theme, body text uses the system font of the same kind as the theme's body font (serif, sans-serif or monospace), and headings follow the theme's heading font the same way, whether or not this setting is set. The theme's own font files are never downloaded. |
+| `primary_color` | `string` | `''` | A hex color, used on classic themes. Empty uses the Newspack theme's primary color, or the text color when the theme has none. Ignored on a block theme, where the link color, page background and text color come from its global styles, including changes made in the Site Editor. |
+| `font_import_url` | `string` | `''` | The address of a font stylesheet. Ignored on a block theme. |
+| `font_body` | `string` | `''` | The body font name. Empty uses a system font. On a block theme, it must name a font family registered in its global styles, from theme.json or the font library; that family's font faces are printed, and any other value counts as empty. Empty there uses the system font of the same kind as the theme's body font (serif, sans-serif or monospace). Headings use the system font of the same kind as the theme's heading font, or follow the body when the theme sets none or names the chosen font. |
 
 Turning Lite Site on or off, changing its path, or the option's first save marks the rewrite rules for a refresh, through the `nls_flush_rewrite_rules` transient.
 

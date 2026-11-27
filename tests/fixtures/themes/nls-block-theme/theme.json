@@ -41,7 +41,17 @@
 				{
 					"slug": "inter",
 					"fontFamily": "\"Inter\", system-ui, sans-serif",
-					"name": "Inter"
+					"name": "Inter",
+					"fontFace": [
+						{
+							"fontFamily": "Inter",
+							"fontStyle": "normal",
+							"fontWeight": "100 900",
+							"src": [
+								"file:./assets/fonts/inter.woff2"
+							]
+						}
+					]
 				}
 			]
 		}
