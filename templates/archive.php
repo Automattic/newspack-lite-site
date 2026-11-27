@@ -9,7 +9,7 @@ namespace Newspack_Lite_Site;
 
 defined( 'ABSPATH' ) || exit;
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from Lite_Site::handle_lite_site_templates(), so these variables are local to that method.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Included from Lite_Site::include_archive_template(), so these variables are local to that method.
 
 $posts_per_page      = Lite_Site::get_posts_per_page();
 $categories          = Lite_Site::get_categories();
@@ -38,9 +38,18 @@ if ( ! empty( $excluded_tags ) ) {
 	$query_args['tag__not_in'] = $excluded_tags;
 }
 
-$query        = new \WP_Query( $query_args );
-$total_pages  = max( 1, (int) $query->max_num_pages );
-$current_page = min( $current_page, $total_pages );
+$query       = new \WP_Query( $query_args );
+$total_pages = max( 1, (int) $query->max_num_pages );
+
+// A page number past the end has no posts to show. Serving it as an empty
+// page leaves a reader unable to tell a stale link from a broken site, so
+// answer the way the rest of the web does.
+if ( $current_page > $total_pages ) {
+	require __DIR__ . '/not-found.php';
+	return;
+}
+
+$has_posts = ! empty( $query->posts );
 
 ?>
 <!DOCTYPE html>
@@ -64,9 +73,18 @@ $current_page = min( $current_page, $total_pages );
 	<main>
 		<h1><?php bloginfo( 'name' ); ?></h1>
 		<hr class="separator">
-		<ul class="post-list">
-			<?php require __DIR__ . '/post-list.php'; ?>
-		</ul>
+		<?php if ( $has_posts ) : ?>
+			<ul class="post-list">
+				<?php require __DIR__ . '/post-list.php'; ?>
+			</ul>
+		<?php else : ?>
+			<div class="content">
+				<p><?php esc_html_e( 'Nothing to show here yet.', 'newspack-lite-site' ); ?></p>
+				<?php if ( $categories || $tags || $excluded_categories || $excluded_tags ) : ?>
+					<p><?php esc_html_e( 'No published post matches the categories or tags this Lite Site is filtered to.', 'newspack-lite-site' ); ?></p>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
 
 		<?php
 		$pagination = paginate_links(

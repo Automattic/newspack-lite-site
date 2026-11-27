@@ -68,6 +68,51 @@ defined( 'ABSPATH' ) || exit;
 		font-size: 0.875rem;
 		margin-top: 0.5rem;
 	}
+	.lite-table-scroll {
+		margin: 0 0 1.5rem;
+		overflow-x: auto;
+	}
+	.content table,
+	.liveblog-entry-content table {
+		border-collapse: collapse;
+		margin: 0 0 1.5rem;
+		max-width: 100%;
+	}
+	.lite-table-scroll table {
+		margin: 0;
+		max-width: none;
+	}
+	.lite-table-scroll:focus-visible {
+		outline: 2px solid currentcolor;
+		outline-offset: 2px;
+	}
+	.content caption,
+	.liveblog-entry-content caption {
+		font-size: 0.875rem;
+		margin-bottom: 0.5rem;
+		text-align: left;
+	}
+	.liveblog-entry-content figcaption {
+		font-size: 0.875rem;
+		margin-top: 0.5rem;
+	}
+	.liveblog-entry-content figure img {
+		display: block;
+		max-width: 100%;
+	}
+	.content th,
+	.content td,
+	.liveblog-entry-content th,
+	.liveblog-entry-content td {
+		border: 1px solid currentcolor;
+		padding: 0.375rem 0.5rem;
+		text-align: left;
+		vertical-align: top;
+	}
+	.content th,
+	.liveblog-entry-content th {
+		font-weight: 700;
+	}
 	.lite-image-placeholder {
 		border: 1px solid currentcolor;
 		margin: 0 0 1.5rem;

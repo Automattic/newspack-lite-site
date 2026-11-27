@@ -23,6 +23,67 @@ class Lite_Site {
 	const MAX_DESCENDANTS_CLEARED = 100;
 
 	/**
+	 * The longest srcset, in characters, this page will carry.
+	 *
+	 * @var int
+	 */
+	const SRCSET_MAX_LENGTH = 2048;
+
+	/**
+	 * ASCII whitespace, as the HTML srcset grammar defines it.
+	 *
+	 * @var string
+	 */
+	const SRCSET_WHITESPACE = " \t\n\r\f";
+
+	/**
+	 * Image source attributes in the order a reader should get them, each
+	 * paired with the srcset belonging to the same image.
+	 *
+	 * @var array
+	 */
+	const IMAGE_SOURCE_PAIRS = [
+		[ 'data-src', 'data-srcset' ],
+		[ 'data-lazy-src', 'data-lazy-srcset' ],
+		[ 'data-original', '' ],
+		[ 'src', 'srcset' ],
+	];
+
+	/**
+	 * Every attribute of an <img> this class reads.
+	 *
+	 * @var array
+	 */
+	const IMAGE_ATTRIBUTES = [
+		'src',
+		'srcset',
+		'data-src',
+		'data-srcset',
+		'data-lazy-src',
+		'data-lazy-srcset',
+		'data-original',
+		'alt',
+	];
+
+	/**
+	 * Classes this plugin emits and the lite page's own script acts on.
+	 *
+	 * They are stripped from incoming content before any pass adds them, so a
+	 * class in a post or an imported feed item cannot stand in for one of
+	 * ours. A class is not provenance, and kses allows every piece of markup a
+	 * placeholder is made of.
+	 *
+	 * @var string[]
+	 */
+	const RESERVED_CLASSES = [
+		'lite-image-placeholder',
+		'lite-image-label',
+		'lite-image-caption',
+		'lite-image-load-btn',
+		'lite-table-scroll',
+	];
+
+	/**
 	 * In-memory cache for the plugin settings option.
 	 *
 	 * @var array|null
@@ -906,7 +967,7 @@ class Lite_Site {
 		remove_all_actions( 'wp_footer' );
 
 		if ( 'archive' === $is_lite ) {
-			include_once NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
+			echo self::render_archive_page(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is fully escaped at the template level.
 			exit;
 		}
 
@@ -946,6 +1007,46 @@ class Lite_Site {
 	}
 
 	/**
+	 * Whether the page being rendered is a lite not-found page.
+	 *
+	 * A not-found page must never be stored in the page cache: the post it
+	 * asked for may be published a moment later, and the cached 404 would
+	 * outlive it.
+	 *
+	 * @var bool
+	 */
+	private static bool $is_not_found = false;
+
+	/**
+	 * How many renders are on the stack.
+	 *
+	 * Only the outermost render owns the response. A nested one — a shortcode
+	 * or an after-footer callback rendering another lite page — must not hand
+	 * its own status and cache headers to the page that contains it.
+	 *
+	 * @var int
+	 */
+	private static int $render_depth = 0;
+
+	/**
+	 * Whether the page being rendered sits inside another render.
+	 *
+	 * @return bool
+	 */
+	public static function is_nested_render(): bool {
+		return self::$render_depth > 1;
+	}
+
+	/**
+	 * Record that the page being rendered is a lite not-found page.
+	 *
+	 * Called by the templates, which render the page themselves.
+	 */
+	public static function mark_not_found(): void {
+		self::$is_not_found = true;
+	}
+
+	/**
 	 * Render a lite single page and, when the request allows, store it in the page cache.
 	 *
 	 * The page renders as a signed-out reader sees it whether or not this
@@ -958,18 +1059,27 @@ class Lite_Site {
 	 * @return string The page HTML.
 	 */
 	public static function cache_single_page( string $cache_key ): string {
-		$reader_id = get_current_user_id();
+		$reader_id          = get_current_user_id();
+		$was_not_found      = self::$is_not_found;
+		self::$is_not_found = false;
 		wp_set_current_user( 0 );
+
+		$is_not_found = true;
+
+		++self::$render_depth;
 
 		ob_start();
 		try {
 			self::include_single_template();
+			$is_not_found = self::$is_not_found;
 		} finally {
-			$output = ob_get_clean();
+			$output             = ob_get_clean();
+			self::$is_not_found = $was_not_found;
+			--self::$render_depth;
 			wp_set_current_user( $reader_id );
 		}
 
-		if ( '' !== $cache_key && self::can_fill_page_cache() ) {
+		if ( '' !== $cache_key && ! $is_not_found && self::can_fill_page_cache() ) {
 			set_transient( $cache_key, $output, 15 * MINUTE_IN_SECONDS );
 		}
 
@@ -984,6 +1094,48 @@ class Lite_Site {
 	 */
 	private static function include_single_template() {
 		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/single.php';
+	}
+
+	/**
+	 * Render the lite archive page.
+	 *
+	 * The render is counted, and the not-found flag fenced, the way
+	 * cache_single_page() does both for a single page. Without the count an
+	 * after-footer callback rendering a missing lite page would hand its 404
+	 * and its no-store headers to an archive that rendered perfectly well.
+	 * Without the fence a missing archive nested inside a single render would
+	 * leave the flag set, and the article around it would go unstored though
+	 * it rendered fine. The archive itself is not stored: the page cache holds
+	 * single pages only.
+	 *
+	 * @return string The page HTML.
+	 */
+	public static function render_archive_page(): string {
+		$was_not_found      = self::$is_not_found;
+		self::$is_not_found = false;
+
+		++self::$render_depth;
+
+		ob_start();
+		try {
+			self::include_archive_template();
+		} finally {
+			$output             = ob_get_clean();
+			self::$is_not_found = $was_not_found;
+			--self::$render_depth;
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Include the lite archive template.
+	 *
+	 * Kept out of render_archive_page() so the template's variables can't
+	 * overwrite that method's own, such as the markup it returns.
+	 */
+	private static function include_archive_template() {
+		include NEWSPACK_LITE_SITE_PLUGIN_DIR . 'templates/archive.php';
 	}
 
 	/**
@@ -1606,24 +1758,47 @@ class Lite_Site {
 	 */
 	public static function clean_content( $content ) {
 		// Apply the full WP content pipeline without plugin callbacks from the_content.
-		$content = apply_filters( 'newspack_lite_site_post_content', $content );
+		// A third-party callback on this public filter can return anything, and
+		// the rest of this method needs a string.
+		$filtered = apply_filters( 'newspack_lite_site_post_content', $content );
+		$content  = is_string( $filtered ) ? $filtered : ( is_string( $content ) ? $content : '' );
 
 		// Remove HTML comments. The single-token `.` with the `s` modifier stays
 		// linear on an unclosed `<!--`, where alternation-based patterns
 		// backtrack catastrophically and preg_replace returns null.
-		$content = preg_replace( '/<!--.*?-->/s', '', $content );
-
-		// Replace figures with lazy-load placeholders before stripping.
-		$content = preg_replace_callback(
-			'/<figure\b[^>]*>.*?<\/figure>/is',
-			[ __CLASS__, 'figure_to_placeholder' ],
-			$content
-		);
+		$content = self::or_original( preg_replace( '/<!--.*?-->/s', '', $content ), $content );
 
 		// Remove script and style tags along with their contents — wp_kses
 		// would strip the tags but leave raw CSS/JS behind as text.
-		$content = preg_replace( '/<script.*?>.*?<\/script>/is', '', $content );
-		$content = preg_replace( '/<style.*?>.*?<\/style>/is', '', $content );
+		$content = self::or_original( preg_replace( '/<script.*?>.*?<\/script>/is', '', $content ), $content );
+		$content = self::or_original( preg_replace( '/<style.*?>.*?<\/style>/is', '', $content ), $content );
+
+		$content = self::unwrap_atomic_elements( $content );
+
+		// Clear the classes this plugin's own script acts on. This runs after
+		// the passes above because each of them can rewrite text: a comment
+		// inside a class value, say, is removed at this point rather than
+		// later, where it would join `lite-image-place<!---->holder` back into
+		// a reserved name after the walk had already passed over it. It runs
+		// before the figure pass below, which is where the plugin adds those
+		// names itself. See RESERVED_CLASSES.
+		$content = self::strip_reserved_classes( $content );
+
+		// Replace figures with lazy-load placeholders before stripping. The
+		// pattern stops at a following `<figure` as well as at a closing tag,
+		// so a figure left unclosed cannot swallow the content up to the next
+		// figure's close. A tempered pattern would say this more directly and
+		// is deliberately avoided: per-character alternation over figure
+		// content exhausts the PCRE JIT stack at about 24.6 KB of content and
+		// returns null, which blanks the article.
+		$content = self::or_original(
+			preg_replace_callback(
+				'/<figure\b[^>]*>.*?(?:(?=<figure\b)|<\/figure>)/is',
+				[ __CLASS__, 'figure_to_placeholder' ],
+				$content
+			),
+			$content
+		);
 
 		// Define allowed HTML elements for text-only content.
 		$allowed_html = [
@@ -1647,6 +1822,22 @@ class Lite_Site {
 				'title' => true,
 			],
 			'br'         => [],
+			'table'      => [],
+			'thead'      => [],
+			'tbody'      => [],
+			'tfoot'      => [],
+			'tr'         => [],
+			'th'         => [
+				'colspan' => true,
+				'rowspan' => true,
+				'scope'   => true,
+			],
+			'td'         => [
+				'colspan' => true,
+				'rowspan' => true,
+			],
+			'caption'    => [],
+			'figcaption' => [],
 			'div'        => [
 				'class'        => true,
 				'data-src'     => true,
@@ -1673,15 +1864,455 @@ class Lite_Site {
 		 *
 		 * @param array $allowed_html Allowed elements and their attributes, in wp_kses() form.
 		 */
-		$allowed_html = apply_filters( 'newspack_lite_site_allowed_html', $allowed_html );
+		$filtered_html = apply_filters( 'newspack_lite_site_allowed_html', $allowed_html );
+
+		// Same reasoning as the content filter above. A callback returning a
+		// string makes wp_kses_attr() index it as a string offset and throw;
+		// returning a scalar silently strips every tag on the page.
+		$allowed_html = is_array( $filtered_html ) ? $filtered_html : $allowed_html;
 
 		// Strip all HTML except allowed elements.
 		$content = wp_kses( $content, $allowed_html );
 
+		// Close what the content left open, and drop a closing tag with no
+		// opening one. `wpautop` writes a stray `</p>` after a figure that was
+		// never closed, and the allowlist keeps a closing tag whose opening tag
+		// it has just removed. This runs before the empty-paragraph pass below
+		// so a paragraph that balancing leaves empty is removed with the rest.
+		$content = force_balance_tags( $content );
+
 		// Clean up any empty paragraphs.
-		$content = preg_replace( '/<p>\s*<\/p>/', '', $content );
+		$content = self::or_original( preg_replace( '/<p>\s*<\/p>/', '', $content ), $content );
 
 		return self::add_external_link_attrs( $content );
+	}
+
+	/**
+	 * Put each top-level table in its own horizontal scroller.
+	 *
+	 * Called by the templates on already-sanitized markup, so the wrapper's own
+	 * attributes do not depend on what a kses allowlist happens to permit. A
+	 * wide table has to be able to overflow its column while staying a table,
+	 * so assistive technology still reads it as one, and the scroller is
+	 * focusable so it can be scrolled from the keyboard.
+	 *
+	 * Only outermost tables are wrapped: wrapping a nested one would close the
+	 * div inside the outer table, which the HTML parser drops, leaving the
+	 * wrapper open over the rest of the article.
+	 *
+	 * @param string $html Sanitized markup.
+	 * @return string
+	 */
+	public static function wrap_tables_for_scrolling( string $html ): string {
+		if ( ! preg_match_all( '/<\/?table\b[^>]*>/i', $html, $matches, PREG_OFFSET_CAPTURE ) ) {
+			return $html;
+		}
+
+		$depth  = 0;
+		$spans  = [];
+		$opened = 0;
+
+		foreach ( $matches[0] as $match ) {
+			$is_close = '/' === $match[0][1];
+
+			// <table /> survives sanitization and closes nothing, so counting it
+			// as an open would strand the walk and unwrap every later table.
+			if ( ! $is_close && preg_match( '/\/\s*>$/', $match[0] ) ) {
+				continue;
+			}
+
+			if ( ! $is_close ) {
+				if ( 0 === $depth ) {
+					$opened = $match[1];
+				}
+				++$depth;
+				continue;
+			}
+
+			if ( 0 === $depth ) {
+				continue;
+			}
+
+			--$depth;
+			if ( 0 === $depth ) {
+				$spans[] = [ $opened, $match[1] + strlen( $match[0] ) ];
+			}
+		}
+
+		foreach ( array_reverse( $spans ) as $span ) {
+			list( $from, $to ) = $span;
+			$html              = substr( $html, 0, $from )
+				. sprintf(
+					// The tab stop and the label are added by the page's own
+					// script, and only to a table that actually overflows. A
+					// two-column table on a phone does not, and announcing
+					// scrolling that cannot happen, behind an extra tab stop,
+					// is worse than saying nothing.
+					'<div class="lite-table-scroll" data-scroll-label="%s">',
+					esc_attr__( 'Table, scrolls sideways', 'newspack-lite-site' )
+				)
+				. substr( $html, $from, $to - $from )
+				. '</div>'
+				. substr( $html, $to );
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Fall back to the original string when a preg_* call fails.
+	 *
+	 * A pattern that hits a PCRE limit returns null, and passing that on blanks
+	 * the article — on the page a reader reaches when everything else is down.
+	 *
+	 * The parameters stay loosely typed on purpose, though clean_content() now
+	 * coerces its content to a string before the first call, so the non-string
+	 * branch should be unreachable. It is kept because the cost is a single
+	 * is_string() and the failure it guards against is a fatal on the page a
+	 * reader reaches when everything else is already down.
+	 *
+	 * @param string|null $result   The preg_* result.
+	 * @param mixed       $original The string passed in.
+	 * @return string
+	 */
+	private static function or_original( $result, $original ): string {
+		if ( is_string( $result ) ) {
+			return $result;
+		}
+
+		return is_string( $original ) ? $original : '';
+	}
+
+	/**
+	 * Remove the wrapper tags of elements the HTML parser treats as atomic.
+	 *
+	 * WP_HTML_Tag_Processor consumes TITLE, TEXTAREA, IFRAME, XMP, NOEMBED and
+	 * NOFRAMES together with everything inside them, so strip_reserved_classes()
+	 * never visits markup nested in one and cannot clear a class there. kses
+	 * then drops the wrapper and keeps the children, which is how a forged
+	 * placeholder hidden in a <textarea> reached the reader complete, from a
+	 * post any contributor can write or a feed item this plugin imported. An
+	 * unterminated wrapper is worse: the parser stops at it, so every tag after
+	 * it goes unvisited too.
+	 *
+	 * Only the wrapper tags go, not their contents, which is what kses does to
+	 * these elements anyway, so nothing a reader would have seen is lost. Their
+	 * contents become ordinary markup that the walk can reach.
+	 *
+	 * script and style are absent on purpose: they are removed whole, contents
+	 * and all, before this runs.
+	 *
+	 * @param string $html Post content.
+	 * @return string Content with those wrappers removed.
+	 */
+	private static function unwrap_atomic_elements( string $html ): string {
+		return self::or_original(
+			preg_replace( '/<\/?(?:title|textarea|iframe|xmp|noembed|noframes)\b[^>]*>/i', '', $html ),
+			$html
+		);
+	}
+
+	/**
+	 * Remove this plugin's own control classes from incoming content.
+	 *
+	 * Everything a placeholder is made of -- a container with data-src, a
+	 * classed button -- passes wp_kses(), so post content and imported feed
+	 * items can write one. The lite page's script would then act on it and a
+	 * reader's tap would fetch whatever host it named, from the page whose
+	 * promise is that nothing third-party loads unasked.
+	 *
+	 * Scoping the script's selector cannot fix that: a class is not
+	 * provenance. Clearing these names before any pass adds them is what makes
+	 * a placeholder on the page one this plugin built.
+	 *
+	 * @param string $html Post content.
+	 * @return string Content with the reserved classes cleared.
+	 */
+	private static function strip_reserved_classes( string $html ): string {
+		// Gate on something that cannot be written any other way. A class
+		// VALUE can spell a reserved name with character references, as
+		// lite&#45;image-placeholder, which kses later decodes back into the
+		// real name -- so a test for the name itself is evadable. An attribute
+		// NAME is never entity-decoded, so `class` is always spelled out.
+		if ( false === stripos( $html, 'class' ) ) {
+			return $html;
+		}
+
+		$processor = new \WP_HTML_Tag_Processor( $html );
+
+		while ( $processor->next_tag() ) {
+			foreach ( self::RESERVED_CLASSES as $class ) {
+				if ( true === $processor->has_class( $class ) ) {
+					$processor->remove_class( $class );
+				}
+			}
+		}
+
+		$html = $processor->get_updated_html();
+
+		// The walk and kses do not always read the same markup, and where they
+		// disagree the reader gets kses's reading. An unterminated <script>
+		// pauses the processor at an incomplete token and everything after it
+		// goes unwalked; a `>` inside a quoted attribute hides a tag from the
+		// processor that kses later treats as real markup. Either way a
+		// reserved name can still be in the string. The walk above is what
+		// catches a name spelled with character references, which this cannot
+		// see; this is what catches the markup the walk never reached. Nothing
+		// legitimate carries these names yet, since the passes that add them
+		// run after this one, so removing what is left costs nothing.
+		foreach ( self::RESERVED_CLASSES as $class ) {
+			if ( false === stripos( $html, $class ) ) {
+				continue;
+			}
+
+			$html = self::or_original(
+				preg_replace( '/' . preg_quote( $class, '/' ) . '/i', '', $html ),
+				$html
+			);
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Rebuild a srcset from candidates this plugin would accept as a source.
+	 *
+	 * The placeholder's data-src is checked with esc_url(), but data-srcset was
+	 * copied through with nothing but attribute escaping. Per the HTML standard
+	 * a srcset candidate REPLACES src rather than supplementing it, so an
+	 * unvetted candidate here is the image the browser actually loads.
+	 *
+	 * What this does and does not buy: esc_url() vets the PROTOCOL, so it stops
+	 * an inline data: payload and a javascript: URL. It does not stop a
+	 * third-party host, which an author could equally have put in src.
+	 *
+	 * One rejected candidate drops the whole list. A partly filtered set would
+	 * still change which image a given screen gets, and the reader still has
+	 * the vetted data-src to load.
+	 *
+	 * @param string $srcset Raw srcset value.
+	 * @return string Escaped srcset, or an empty string.
+	 */
+	private static function safe_image_srcset( string $srcset ): string {
+		// Bound the work, not only the output. Without this a megabyte of
+		// candidates is parsed and escaped in full before the budget below
+		// throws the result away.
+		if ( strlen( $srcset ) > self::SRCSET_MAX_LENGTH * 10 ) {
+			return '';
+		}
+
+		$parts = [];
+
+		foreach ( self::parse_srcset( $srcset ) as $candidate ) {
+			// A descriptor is a width or a pixel density, nothing else. The
+			// grammar tracks parentheses and parse_srcset() does not, so
+			// without this a descriptor like `1x(,)` splits off a second
+			// candidate whose URL is `)`, and esc_url() turns that into
+			// `http://)`, which is not empty and so slips the test below.
+			if ( '' !== $candidate['descriptor'] && 1 !== preg_match( '/^[0-9.]+[wx]$/', $candidate['descriptor'] ) ) {
+				return '';
+			}
+
+			// esc_url() does not reject a document-relative path, it moves it:
+			// photos/flood.jpg becomes http://photos/flood.jpg, a plaintext
+			// request to a host named "photos". Because a candidate replaces
+			// src, that is the request the browser would actually make.
+			$has_scheme = 1 === preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $candidate['url'] );
+
+			if ( ! $has_scheme && ! str_starts_with( $candidate['url'], '/' ) ) {
+				return '';
+			}
+
+			$url = esc_url( $candidate['url'] );
+
+			if ( '' === $url ) {
+				return '';
+			}
+
+			// The descriptor is digits, a dot and w or x by the test above, so
+			// there is nothing left in it to escape.
+			$parts[] = '' === $candidate['descriptor']
+				? $url
+				: $url . ' ' . $candidate['descriptor'];
+		}
+
+		if ( ! $parts ) {
+			return '';
+		}
+
+		$result = implode( ', ', $parts );
+
+		// Measured after escaping, so the budget counts the bytes the page
+		// actually carries rather than the bytes the author wrote.
+		return strlen( $result ) > self::SRCSET_MAX_LENGTH ? '' : $result;
+	}
+
+	/**
+	 * Split a srcset into its candidates, the way the HTML grammar does.
+	 *
+	 * A URL is collected up to the first ASCII whitespace, not the first comma,
+	 * so a CDN path holding a transform like w_800,h_600 survives intact.
+	 *
+	 * @param string $srcset Raw srcset value.
+	 * @return array<int,array{url:string,descriptor:string}> Candidates, in order.
+	 */
+	private static function parse_srcset( string $srcset ): array {
+		$candidates = [];
+		$length     = strlen( $srcset );
+		$position   = 0;
+
+		while ( $position < $length ) {
+			$position += strspn( $srcset, self::SRCSET_WHITESPACE . ',', $position );
+
+			if ( $position >= $length ) {
+				break;
+			}
+
+			$url_length = strcspn( $srcset, self::SRCSET_WHITESPACE, $position );
+			$url        = substr( $srcset, $position, $url_length );
+			$position  += $url_length;
+			$descriptor = '';
+
+			if ( str_ends_with( $url, ',' ) ) {
+				$url = rtrim( $url, ',' );
+			} else {
+				$position         += strspn( $srcset, self::SRCSET_WHITESPACE, $position );
+				$descriptor_length = strcspn( $srcset, ',', $position );
+				$descriptor        = trim( substr( $srcset, $position, $descriptor_length ) );
+				$position         += $descriptor_length + 1;
+			}
+
+			if ( '' !== $url ) {
+				$candidates[] = [
+					'url'        => $url,
+					'descriptor' => $descriptor,
+				];
+			}
+		}
+
+		return $candidates;
+	}
+
+	/**
+	 * Read the attributes of the first <img> in a fragment.
+	 *
+	 * The values come from the parser rather than from a pattern over the tag's
+	 * text. A pattern reads a literal data-src="..." written inside the value of
+	 * some other attribute as though it were an attribute of its own, so a
+	 * source forged in a title or a caption is chosen over the real one, and the
+	 * image the reader gets is not the image the browser would have loaded.
+	 *
+	 * A fragment with no img the parser can reach yields no source, and the
+	 * caller hands the figure back untouched, which is what it does for a figure
+	 * that never had an image.
+	 *
+	 * @param string $html A fragment expected to contain an <img> tag.
+	 * @return array The attributes in IMAGE_ATTRIBUTES, each '' when the tag does not carry it.
+	 */
+	private static function read_img_attrs( string $html ): array {
+		$attributes = array_fill_keys( self::IMAGE_ATTRIBUTES, '' );
+		$processor  = new \WP_HTML_Tag_Processor( $html );
+
+		if ( ! $processor->next_tag( [ 'tag_name' => 'IMG' ] ) ) {
+			return $attributes;
+		}
+
+		foreach ( self::IMAGE_ATTRIBUTES as $name ) {
+			$value = $processor->get_attribute( $name );
+
+			// An attribute written without a value reads as true, and one the tag
+			// does not carry as null. Only a string holds a source or a caption.
+			if ( is_string( $value ) ) {
+				$attributes[ $name ] = $value;
+			}
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Choose which of an <img> tag's source attributes the reader should get.
+	 *
+	 * A lazy loader leaves the real image in a data attribute and puts a stub in
+	 * src, so the literal src is the last choice rather than the first. Reading
+	 * src alone drops a figure whose image carries no src at all, which is what
+	 * Jetpack Lazy Images and WP Rocket emit.
+	 *
+	 * The pair is chosen together because a srcset candidate replaces src rather
+	 * than supplementing it, so taking the source from the real image and the
+	 * srcset from the stub would still load the stub.
+	 *
+	 * @param array $attributes The attributes read by read_img_attrs().
+	 * @return array {
+	 *     @type string $src    The chosen source, not yet escaped, or ''.
+	 *     @type string $srcset The srcset belonging to it, already vetted, or ''.
+	 * }
+	 */
+	private static function pick_figure_source( array $attributes ): array {
+		foreach ( self::IMAGE_SOURCE_PAIRS as $pair ) {
+			list( $src_attr, $srcset_attr ) = $pair;
+
+			$src = $attributes[ $src_attr ];
+
+			if ( '' === $src ) {
+				continue;
+			}
+
+			return [
+				'src'    => $src,
+				'srcset' => '' === $srcset_attr
+					? ''
+					: self::safe_image_srcset( $attributes[ $srcset_attr ] ),
+			];
+		}
+
+		return [
+			'src'    => '',
+			'srcset' => '',
+		];
+	}
+
+	/**
+	 * Give a table figure's caption to the table itself.
+	 *
+	 * The allowlist keeps `figcaption` but drops `figure`, so a Table block's
+	 * caption reaches the reader as loose text after the table with nothing
+	 * tying the two together. A screen reader announces the table and then,
+	 * separately, a sentence. `caption` is the element that belongs to a
+	 * table, and the allowlist already keeps it.
+	 *
+	 * A table that captions itself keeps its own; only a figure's caption is
+	 * moved, and only into a table that has none.
+	 *
+	 * @param string $figure_html A figure known to hold a table.
+	 * @return string The figure with its caption moved into the table.
+	 */
+	private static function table_caption_from_figure( string $figure_html ): string {
+		if ( ! preg_match( '/<figcaption[^>]*>(.*?)<\/figcaption>/is', $figure_html, $caption ) ) {
+			return $figure_html;
+		}
+
+		if ( preg_match( '/<table\b[^>]*>\s*<caption\b/i', $figure_html ) ) {
+			return $figure_html;
+		}
+
+		$without = self::or_original(
+			preg_replace( '/<figcaption[^>]*>.*?<\/figcaption>/is', '', $figure_html ),
+			$figure_html
+		);
+
+		$inner = $caption[1];
+
+		$moved = preg_replace_callback(
+			'/<table\b[^>]*>/i',
+			static function ( array $matches ) use ( $inner ): string {
+				return $matches[0] . '<caption>' . $inner . '</caption>';
+			},
+			$without,
+			1
+		);
+
+		return self::or_original( $moved, $figure_html );
 	}
 
 	/**
@@ -1693,22 +2324,25 @@ class Lite_Site {
 	private static function figure_to_placeholder( $matches ) {
 		$figure_html = $matches[0];
 
-		$src    = '';
-		$srcset = '';
-		$alt    = '';
-
-		if ( preg_match( '/<img\b([^>]*)>/i', $figure_html, $img_match ) ) {
-			$attrs = $img_match[1];
-			if ( preg_match( '/\bsrc=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-				$src = $m[1];
-			}
-			if ( preg_match( '/\bsrcset=["\']([^"\']+)["\']/', $attrs, $m ) ) {
-				$srcset = $m[1];
-			}
-			if ( preg_match( '/\balt=["\']([^"\']*)["\']/', $attrs, $m ) ) {
-				$alt = $m[1];
-			}
+		// A match that stopped at a following `<figure` has no closing tag, so
+		// where this figure ends is a guess. Replacing it would delete whatever
+		// the guess took in: the prose between the two figures, and the second
+		// figure's own image and caption. Leave it to the passes below.
+		if ( ! preg_match( '/<\/figure\s*>$/i', $figure_html ) ) {
+			return $figure_html;
 		}
+
+		// The block editor wraps a table in a figure. An image in any cell would
+		// otherwise turn the whole table, cell text and all, into one placeholder.
+		if ( preg_match( '/<table\b/i', $figure_html ) ) {
+			return self::table_caption_from_figure( $figure_html );
+		}
+
+		$attributes = self::read_img_attrs( $figure_html );
+		$source     = self::pick_figure_source( $attributes );
+		$src        = $source['src'];
+		$srcset     = $source['srcset'];
+		$alt        = $attributes['alt'];
 
 		if ( ! $src ) {
 			return $figure_html;
@@ -1729,7 +2363,7 @@ class Lite_Site {
 
 		$attrs = sprintf( ' data-src="%s"', esc_url( $src ) );
 		if ( $srcset ) {
-			$attrs .= sprintf( ' data-srcset="%s"', esc_attr( $srcset ) );
+			$attrs .= sprintf( ' data-srcset="%s"', $srcset );
 		}
 		if ( $alt ) {
 			$attrs .= sprintf( ' data-alt="%s"', esc_attr( $alt ) );

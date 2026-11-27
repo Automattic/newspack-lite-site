@@ -14,8 +14,8 @@ defined( 'ABSPATH' ) || exit;
 $current_post = Lite_Site::resolve_post( get_query_var( 'lite_path' ) );
 
 if ( ! $current_post || ! in_array( $current_post->post_type, Lite_Site::get_supported_post_types(), true ) ) {
-	status_header( 404 );
-	exit( esc_html__( 'Page not found.', 'newspack-lite-site' ) );
+	require __DIR__ . '/not-found.php';
+	return;
 }
 
 $is_liveblog  = Lite_Site::is_liveblog( $current_post );
@@ -64,7 +64,7 @@ if ( $is_liveblog ) {
 
 			<?php if ( $post_content ) : ?>
 				<div class="content">
-					<?php echo wp_kses_post( $post_content ); ?>
+					<?php echo Lite_Site::wrap_tables_for_scrolling( wp_kses_post( $post_content ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized above; the wrapper adds only balanced div tags and an esc_attr__() label. ?>
 				</div>
 				<?php if ( $is_liveblog ) : ?>
 					<hr class="separator">
@@ -95,7 +95,7 @@ if ( $is_liveblog ) {
 									<?php endif; ?>
 								</div>
 								<div class="liveblog-entry-content">
-									<?php echo wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ); ?>
+									<?php echo Lite_Site::wrap_tables_for_scrolling( wp_kses_post( Lite_Site::clean_content( $entry->comment_content ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized above; the wrapper adds only balanced div tags and an esc_attr__() label. ?>
 								</div>
 							</div>
 						<?php endforeach; ?>
@@ -136,13 +136,17 @@ if ( $is_liveblog ) {
 			}
 
 			handleClick( e ) {
-				const btn = e.target.closest( '.lite-image-load-btn' );
+				// Only a button, and only one carrying a class that reached the
+				// page from this plugin rather than from post content. The
+				// class is cleared from incoming content before any pass adds
+				// it, which is what makes that true; see RESERVED_CLASSES.
+				const btn = e.target.closest( 'button.lite-image-load-btn' );
 				if ( ! btn ) {
 					return;
 				}
 
 				const placeholder = btn.closest( '.lite-image-placeholder' );
-				if ( ! placeholder ) {
+				if ( ! placeholder || ! placeholder.dataset.src ) {
 					return;
 				}
 
@@ -181,6 +185,43 @@ if ( $is_liveblog ) {
 		}
 
 		new ImageLoader();
+
+		// A table wrapper is a tab stop, and announces that it scrolls, only
+		// once it actually overflows. The server cannot know: the same table
+		// fits in landscape and scrolls in portrait. Re-checked on resize so
+		// turning the phone is enough to change it.
+		( function () {
+			const wrappers = document.querySelectorAll( '.lite-table-scroll' );
+
+			if ( ! wrappers.length ) {
+				return;
+			}
+
+			function sync() {
+				wrappers.forEach( function ( wrapper ) {
+					const scrolls = wrapper.scrollWidth > wrapper.clientWidth;
+
+					if ( scrolls ) {
+						wrapper.setAttribute( 'tabindex', '0' );
+						wrapper.setAttribute( 'role', 'group' );
+						wrapper.setAttribute( 'aria-label', wrapper.dataset.scrollLabel || '' );
+						return;
+					}
+
+					wrapper.removeAttribute( 'tabindex' );
+					wrapper.removeAttribute( 'role' );
+					wrapper.removeAttribute( 'aria-label' );
+				} );
+			}
+
+			sync();
+
+			let pending = null;
+			window.addEventListener( 'resize', function () {
+				window.clearTimeout( pending );
+				pending = window.setTimeout( sync, 150 );
+			} );
+		} )();
 	</script>
 </body>
 </html>

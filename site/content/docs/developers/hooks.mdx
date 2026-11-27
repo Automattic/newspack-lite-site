@@ -39,7 +39,7 @@ It runs just before `wp_kses()`, after scripts and styles are removed and figure
 | --- | --- | --- |
 | `$allowed_html` | `array` | Allowed elements and their attributes, in `wp_kses()` form. Return the changed array. |
 
-By default the list keeps `p` (with `class`), `h1` to `h6`, `ul`, `ol`, `li`, `blockquote`, `strong`, `em`, `b`, `i`, `br`, `a` (with `href` and `title`), `div` (with `class` and the image placeholder's `data-src`, `data-srcset`, `data-alt`, and `data-caption`), and `button` (with `class` and `type`).
+By default the list keeps `p` (with `class`), `h1` to `h6`, `ul`, `ol`, `li`, `blockquote`, `strong`, `em`, `b`, `i`, `br`, `a` (with `href` and `title`), `table`, `thead`, `tbody`, `tfoot`, `tr`, `th` (with `colspan`, `rowspan` and `scope`), `td` (with `colspan` and `rowspan`), `caption`, `figcaption`, `div` (with `class` and the image placeholder's `data-src`, `data-srcset`, `data-alt`, and `data-caption`), and `button` (with `class` and `type`).
 
 ```php
 add_filter( 'newspack_lite_site_allowed_html', function ( $allowed_html ) {
@@ -96,7 +96,7 @@ add_action( 'newspack_lite_site_liveblog_styles', function () {
 
 ## Footers
 
-These three actions run after the footer on each kind of page, so they are the place to add a notice, a link, or a tracking pixel. Whatever a callback prints is part of the page. Keep it small, since the point of Lite Site is a light page.
+These four actions run after the footer on each kind of page, so they are the place to add a notice, a link, or a tracking pixel. Whatever a callback prints is part of the page. Keep it small, since the point of Lite Site is a light page.
 
 ### `newspack_lite_site_single_after_footer`
 
@@ -124,6 +124,18 @@ Runs after the footer of the Lite Site homepage. It has no arguments.
 ```php
 add_action( 'newspack_lite_site_archive_after_footer', function () {
 	echo '<p>Send tips to tips@yourgroovydomain.com.</p>';
+} );
+```
+
+### `newspack_lite_site_not_found_after_footer`
+
+Runs after the footer of the page a reader gets when a lite address has nothing behind it, either a missing article or a page number past the end of the list. It has no arguments.
+
+The page answers 404 and is never stored, so a callback here runs on every request for an address with nothing behind it.
+
+```php
+add_action( 'newspack_lite_site_not_found_after_footer', function () {
+	echo '<p>Emergency updates are on the homepage.</p>';
 } );
 ```
 
