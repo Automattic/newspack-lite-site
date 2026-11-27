@@ -13,88 +13,86 @@ use Newspack_Lite_Site\Lite_Site;
 class Test_Lite_Site_Primary_Color extends Lite_Site_TestCase {
 
 	/**
-	 * The accent is found by slug, not by position, so a palette that opens
-	 * with the page background does not paint links white.
+	 * Palettes and the color each should resolve to.
+	 *
+	 * @return array
 	 */
-	public function test_picks_accent_slug_not_first_entry() {
-		$palettes = [
-			'theme' => [
+	public function palette_provider() {
+		return [
+			'accent found by slug, not position' => [
 				[
-					'slug'  => 'base',
-					'color' => '#ffffff',
+					[
+						'slug'  => 'base',
+						'color' => '#ffffff',
+					],
+					[
+						'slug'  => 'accent',
+						'color' => '#003DA5',
+					],
 				],
-				[
-					'slug'  => 'accent',
-					'color' => '#003DA5',
-				],
+				'#003DA5',
 			],
+			'no accent falls back to text color' => [
+				[
+					[
+						'slug'  => 'base',
+						'color' => '#FFFFFF',
+					],
+					[
+						'slug'  => 'accent-1',
+						'color' => '#FFEE58',
+					],
+				],
+				'currentcolor',
+			],
+			'empty palette falls back'           => [ [], 'currentcolor' ],
 		];
-
-		$this->assertSame( '#003DA5', Lite_Site::get_palette_accent_color( $palettes ) );
 	}
 
 	/**
-	 * A custom palette's accent wins over the theme's.
+	 * The accent is found by slug, so a palette that opens with the page
+	 * background does not paint links white.
+	 *
+	 * @dataProvider palette_provider
+	 *
+	 * @param array  $palette  Theme palette.
+	 * @param string $expected Resolved color.
 	 */
-	public function test_custom_accent_wins_over_theme() {
-		$palettes = [
-			'custom' => [
-				[
-					'slug'  => 'accent',
-					'color' => '#aa0000',
-				],
-			],
-			'theme'  => [
-				[
-					'slug'  => 'accent',
-					'color' => '#003DA5',
-				],
-			],
-		];
-
-		$this->assertSame( '#aa0000', Lite_Site::get_palette_accent_color( $palettes ) );
+	public function test_palette_accent_color( $palette, $expected ) {
+		$this->assertSame( $expected, Lite_Site::get_palette_accent_color( $palette ) );
 	}
 
 	/**
-	 * A theme accent is still found when the custom palette has no accent.
+	 * Without a usable color, the Live badge keeps its gray background
+	 * instead of turning white behind its white text.
 	 */
-	public function test_falls_through_custom_without_accent() {
-		$palettes = [
-			'custom' => [
-				[
-					'slug'  => 'custom-1',
-					'color' => '#123456',
-				],
-			],
-			'theme'  => [
-				[
-					'slug'  => 'accent',
-					'color' => '#003DA5',
-				],
-			],
-		];
+	public function test_live_badge_keeps_gray_without_color() {
+		$this->assertSame( 'currentcolor', Lite_Site::get_primary_color(), 'The test theme should have no primary color.' );
 
-		$this->assertSame( '#003DA5', Lite_Site::get_palette_accent_color( $palettes ) );
+		$output = $this->render_liveblog_styles();
+
+		$this->assertStringNotContainsString( '.liveblog-status.enable', $output );
 	}
 
 	/**
-	 * Without an accent, links follow the text color.
+	 * A set primary color fills the Live badge.
 	 */
-	public function test_no_accent_uses_currentcolor() {
-		$palettes = [
-			'theme' => [
-				[
-					'slug'  => 'base',
-					'color' => '#FFFFFF',
-				],
-				[
-					'slug'  => 'contrast',
-					'color' => '#111111',
-				],
-			],
-		];
+	public function test_live_badge_uses_primary_color() {
+		self::set_settings( [ 'primary_color' => '#aa0000' ] );
 
-		$this->assertSame( 'currentcolor', Lite_Site::get_palette_accent_color( $palettes ) );
-		$this->assertSame( 'currentcolor', Lite_Site::get_palette_accent_color( [] ) );
+		$output = $this->render_liveblog_styles();
+
+		$this->assertMatchesRegularExpression( '/\.liveblog-status\.enable\s*\{\s*background: #aa0000;/', $output );
+	}
+
+	/**
+	 * Render the liveblog styles template.
+	 *
+	 * @return string
+	 */
+	private function render_liveblog_styles() {
+		ob_start();
+		include dirname( __DIR__ ) . '/templates/liveblog-styles.php';
+		return ob_get_clean();
 	}
 }

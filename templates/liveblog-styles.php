@@ -9,6 +9,9 @@ namespace Newspack_Lite_Site;
 
 defined( 'ABSPATH' ) || exit;
 
+// The badge text is white, so a currentcolor background would hide it.
+$nls_primary_color = Lite_Site::get_primary_color();
+
 ?>
 <style>
 	.liveblog-status {
@@ -21,9 +24,11 @@ defined( 'ABSPATH' ) || exit;
 		padding: 0.25rem 0.5rem;
 		text-transform: uppercase;
 	}
+	<?php if ( 'currentcolor' !== $nls_primary_color ) : ?>
 	.liveblog-status.enable {
-		background: <?php echo esc_html( Lite_Site::get_primary_color() ); ?>;
+		background: <?php echo esc_html( $nls_primary_color ); ?>;
 	}
+	<?php endif; ?>
 	.liveblog-entry {
 		border-bottom: 1px solid currentcolor;
 		margin-bottom: 1.5rem;
