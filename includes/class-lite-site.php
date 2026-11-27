@@ -324,15 +324,7 @@ class Lite_Site {
 	public static function get_theme_primary_color() {
 		if ( wp_is_block_theme() ) {
 			$settings = wp_get_global_settings();
-			$palettes = $settings['color']['palette'] ?? [];
-			$palette  = [];
-			foreach ( [ 'custom', 'theme', 'default' ] as $origin ) {
-				if ( ! empty( $palettes[ $origin ] ) ) {
-					$palette = $palettes[ $origin ];
-					break;
-				}
-			}
-			return $palette[0]['color'] ?? 'currentcolor';
+			return self::get_palette_accent_color( $settings['color']['palette'] ?? [] );
 		}
 
 		if ( ! function_exists( 'newspack_get_primary_color' ) ) {
@@ -346,6 +338,27 @@ class Lite_Site {
 		}
 
 		return $primary_color;
+	}
+
+	/**
+	 * Find the accent color in a block theme's palettes.
+	 *
+	 * Looked up by slug because a palette's first entry is usually the page
+	 * background, which would make links invisible.
+	 *
+	 * @param array $palettes Palettes keyed by origin, as returned by wp_get_global_settings().
+	 * @return string The accent color, or 'currentcolor' if no palette has one.
+	 */
+	public static function get_palette_accent_color( $palettes ) {
+		foreach ( [ 'custom', 'theme', 'default' ] as $origin ) {
+			foreach ( $palettes[ $origin ] ?? [] as $entry ) {
+				if ( 'accent' === ( $entry['slug'] ?? '' ) && ! empty( $entry['color'] ) ) {
+					return $entry['color'];
+				}
+			}
+		}
+
+		return 'currentcolor';
 	}
 
 	/**

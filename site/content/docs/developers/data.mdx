@@ -25,7 +25,7 @@ All settings are one option, `newspack_lite_site_settings`, stored as an array. 
 | `custom_css` | `string` | `''` | CSS added to every page, including the offline page. Stored as entered. On output, any `</style` is escaped so the CSS can't end the style element. |
 | `external_links_new_tab` | `bool` | `true` | Whether links to other sites open in a new tab. |
 | `ga4_measurement_id` | `string` | `''` | The Google Analytics 4 measurement ID. |
-| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color: on a block theme, the first color of the palette (custom, then theme, then WordPress's default); on a classic theme, the Newspack theme's primary color, otherwise the text color. |
+| `primary_color` | `string` | `''` | A hex color. Empty uses the theme's color: on a block theme, the palette color with the `accent` slug (custom, then theme, then WordPress's default), otherwise the text color; on a classic theme, the Newspack theme's primary color, otherwise the text color. |
 | `font_import_url` | `string` | `''` | The address of a font stylesheet. |
 | `font_body` | `string` | `''` | The body font name. |
 
