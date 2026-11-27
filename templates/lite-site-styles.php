@@ -30,6 +30,11 @@ defined( 'ABSPATH' ) || exit;
 		line-height: 1.25;
 		margin: 0 0 2rem;
 	}
+	<?php if ( Lite_Site::get_heading_font_family() ) : ?>
+	h1, h2, h3, h4, h5, h6 {
+		font-family: <?php echo Lite_Site::get_heading_font_family(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A fixed system font stack; esc_html() would turn its quotes into entities. ?>;
+	}
+	<?php endif; ?>
 	ul.post-list {
 		list-style: none;
 		padding-left: 0;

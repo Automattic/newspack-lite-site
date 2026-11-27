@@ -119,4 +119,76 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 		$this->assertStringContainsString( 'font-family: "Source Serif 4";', $output );
 		$this->assertStringNotContainsString( '&quot;', $output );
 	}
+
+	/**
+	 * Theme font stacks and the system stack each maps to.
+	 *
+	 * @return array
+	 */
+	public function data_theme_font_stacks() {
+		$sans  = 'system-ui, -apple-system, sans-serif';
+		$serif = 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif';
+		$mono  = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+		return [
+			'sans-serif web font' => [ '"Inter", system-ui, sans-serif', $sans ],
+			'serif web font'      => [ '"EB Garamond", ui-serif, serif', $serif ],
+			'monospace web font'  => [ '"Fira Code", monospace', $mono ],
+			'unquoted sans-serif' => [ 'Manrope, sans-serif', $sans ],
+			'no generic family'   => [ 'Cardo', $sans ],
+			'empty'               => [ '', $sans ],
+		];
+	}
+
+	/**
+	 * A theme font becomes the system font of the same kind, so nothing is downloaded.
+	 *
+	 * @dataProvider data_theme_font_stacks
+	 *
+	 * @param string $theme_stack Theme font-family value.
+	 * @param string $expected    System font stack.
+	 */
+	public function test_theme_font_maps_to_system_font_of_same_kind( $theme_stack, $expected ) {
+		$this->assertSame( $expected, Lite_Site::get_system_font_stack( $theme_stack ) );
+	}
+
+	/**
+	 * The body font follows the kind of the block theme's body font.
+	 */
+	public function test_body_font_follows_theme() {
+		$this->use_block_theme();
+
+		$this->assertSame( 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif', Lite_Site::get_font_family() );
+	}
+
+	/**
+	 * Headings follow the theme's heading font when it differs in kind from the body.
+	 */
+	public function test_heading_font_follows_theme() {
+		$this->use_block_theme();
+
+		$this->assertSame( 'system-ui, -apple-system, sans-serif', Lite_Site::get_heading_font_family() );
+
+		ob_start();
+		include dirname( __DIR__ ) . '/templates/lite-site-styles.php';
+		$output = ob_get_clean();
+		$this->assertMatchesRegularExpression( '/h1, h2, h3, h4, h5, h6 \{\s*font-family: system-ui, -apple-system, sans-serif;/', $output );
+	}
+
+	/**
+	 * A Body Font setting wins over the theme for body text and headings.
+	 */
+	public function test_body_font_setting_wins_over_theme() {
+		$this->use_block_theme();
+
+		$this->assertSame( '"Georgia"', $this->family_for( 'Georgia' ) );
+		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+	}
+
+	/**
+	 * A classic theme keeps the default font and prints no heading font.
+	 */
+	public function test_classic_theme_keeps_default_fonts() {
+		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+	}
 }

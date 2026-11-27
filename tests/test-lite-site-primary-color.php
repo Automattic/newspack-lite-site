@@ -13,53 +13,6 @@ use Newspack_Lite_Site\Lite_Site;
 class Test_Lite_Site_Primary_Color extends Lite_Site_TestCase {
 
 	/**
-	 * Theme directories registered before the test.
-	 *
-	 * @var array
-	 */
-	private $original_theme_directories;
-
-	/**
-	 * Theme active before the test.
-	 *
-	 * @var string
-	 */
-	private $original_stylesheet;
-
-	/**
-	 * Make the fixture block theme available.
-	 */
-	public function set_up() {
-		parent::set_up();
-		global $wp_theme_directories;
-		$this->original_theme_directories = $wp_theme_directories;
-		$this->original_stylesheet        = get_stylesheet();
-		register_theme_directory( __DIR__ . '/fixtures/themes' );
-		search_theme_directories( true );
-	}
-
-	/**
-	 * Put the original theme back.
-	 */
-	public function tear_down() {
-		global $wp_theme_directories;
-		switch_theme( $this->original_stylesheet );
-		$wp_theme_directories = $this->original_theme_directories; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-		search_theme_directories( true );
-		wp_clean_theme_json_cache();
-		parent::tear_down();
-	}
-
-	/**
-	 * Switch to the fixture block theme.
-	 */
-	private function use_block_theme() {
-		switch_theme( 'nls-block-theme' );
-		wp_clean_theme_json_cache();
-		$this->assertTrue( wp_is_block_theme(), 'The fixture theme should be a block theme.' );
-	}
-
-	/**
 	 * Links follow the theme's link style, not a palette color picked by position or name.
 	 */
 	public function test_link_color_comes_from_theme_link_style() {

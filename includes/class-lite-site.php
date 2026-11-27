@@ -506,8 +506,66 @@ class Lite_Site {
 		$font_body = ! empty( $settings['font_body'] ) ? $settings['font_body'] : '';
 
 		$family = self::build_font_family( (string) $font_body );
+		if ( '' !== $family ) {
+			return $family;
+		}
 
-		return '' !== $family ? $family : 'system-ui, -apple-system, sans-serif';
+		return self::get_system_font_stack( self::get_theme_style( [ 'typography', 'fontFamily' ] ) );
+	}
+
+	/**
+	 * Get the font family for headings, when a block theme gives them a different kind of font.
+	 *
+	 * @return string CSS font-family value, or an empty string when headings follow the body text.
+	 */
+	public static function get_heading_font_family(): string {
+		$settings = self::get_settings();
+		if ( ! empty( $settings['font_body'] ) ) {
+			return '';
+		}
+
+		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
+		if ( '' === $theme_font ) {
+			return '';
+		}
+
+		$stack = self::get_system_font_stack( $theme_font );
+
+		return self::get_font_family() !== $stack ? $stack : '';
+	}
+
+	/**
+	 * Get the system font stack of the same kind as a theme font.
+	 *
+	 * Lite pages download no fonts, so a theme's web font is replaced by the
+	 * reader's own serif, sans-serif or monospace font, judged from the
+	 * generic family at the end of the theme's stack.
+	 *
+	 * @param string $theme_stack Theme font-family value.
+	 * @return string CSS font-family value, safe to print inside a style element.
+	 */
+	public static function get_system_font_stack( string $theme_stack ): string {
+		$stacks = [
+			'serif'     => 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+			'monospace' => 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+		];
+		$kinds  = [
+			'serif'        => 'serif',
+			'ui-serif'     => 'serif',
+			'monospace'    => 'monospace',
+			'ui-monospace' => 'monospace',
+			'sans-serif'   => 'sans-serif',
+		];
+
+		$families = array_reverse( array_map( 'trim', explode( ',', strtolower( $theme_stack ) ) ) );
+		foreach ( $families as $family ) {
+			$kind = $kinds[ trim( $family, '"\'' ) ] ?? null;
+			if ( null !== $kind ) {
+				return $stacks[ $kind ] ?? 'system-ui, -apple-system, sans-serif';
+			}
+		}
+
+		return 'system-ui, -apple-system, sans-serif';
 	}
 
 	/**
