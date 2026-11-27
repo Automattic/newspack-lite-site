@@ -31,7 +31,17 @@
 				{
 					"slug": "newsreader",
 					"fontFamily": "\"Newsreader\", ui-serif, serif",
-					"name": "Newsreader"
+					"name": "Newsreader",
+					"fontFace": [
+						{
+							"fontFamily": "Newsreader",
+							"fontStyle": "normal",
+							"fontWeight": "200 800",
+							"src": [
+								"file:./assets/fonts/newsreader.woff2"
+							]
+						}
+					]
 				},
 				{
 					"slug": "cardo",

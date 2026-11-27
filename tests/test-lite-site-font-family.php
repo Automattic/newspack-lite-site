@@ -329,4 +329,61 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 
 		$this->assertSame( '', Lite_Site::get_heading_font_family() );
 	}
+
+	/**
+	 * Only the chosen family's font faces print, not every font the theme registers.
+	 */
+	public function test_only_the_chosen_family_prints() {
+		$this->use_block_theme();
+		self::set_settings( [ 'font_body' => 'Inter' ] );
+
+		$this->assertStringNotContainsString( 'newsreader.woff2', get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) );
+	}
+
+	/**
+	 * A font installed through the Site Editor's font library can be chosen and loads from its own address.
+	 */
+	public function test_font_library_font_can_be_chosen() {
+		$this->filter_theme_json(
+			'wp_theme_json_data_user',
+			[
+				'settings' => [
+					'typography' => [
+						'fontFamilies' => [
+							[
+								'slug'       => 'library-font',
+								'name'       => 'Library Font',
+								'fontFamily' => '"Library Font", serif',
+								'fontFace'   => [
+									[
+										'fontFamily' => 'Library Font',
+										'fontStyle'  => 'normal',
+										'fontWeight' => '400',
+										'src'        => [ 'https://example.test/wp-content/uploads/fonts/library.woff2' ],
+									],
+								],
+							],
+						],
+					],
+				],
+			]
+		);
+		$this->use_block_theme();
+		self::set_settings( [ 'font_body' => 'Library Font' ] );
+
+		$this->assertContains( 'Library Font', wp_list_pluck( Lite_Site::get_theme_fonts(), 'family' ) );
+		$this->assertStringContainsString( 'https://example.test/wp-content/uploads/fonts/library.woff2', get_echo( [ Lite_Site::class, 'print_font_stylesheet' ] ) );
+	}
+
+	/**
+	 * With no theme heading font, System font for headings follows the style of the theme's body font,
+	 * not a web font chosen for the body.
+	 */
+	public function test_system_heading_font_without_theme_heading_font_matches_theme_body() {
+		$this->filter_theme_json( 'wp_theme_json_data_theme', [ 'styles' => [ 'elements' => [ 'heading' => [ 'typography' => [ 'fontFamily' => '' ] ] ] ] ] );
+		$this->use_block_theme();
+		self::set_settings( [ 'font_body' => 'Inter' ] );
+
+		$this->assertSame( 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif', Lite_Site::get_heading_font_family() );
+	}
 }

@@ -37,6 +37,7 @@ function getDefaultSettings(): SiteSettings {
 		primary_color: '',
 		font_import_url: '',
 		font_body: '',
+		font_heading: '',
 	};
 }
 

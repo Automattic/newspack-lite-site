@@ -461,7 +461,8 @@ class Lite_Site {
 	}
 
 	/**
-	 * Print the font provider stylesheet, when one is set.
+	 * Print the fonts the settings choose: on a block theme, the font faces of the chosen
+	 * theme fonts; otherwise the font provider stylesheet, when one is set.
 	 *
 	 * Lite pages write their own <head> without wp_head(), so this prints
 	 * only this stylesheet: not the rest of what the site enqueues, and not
@@ -620,7 +621,8 @@ class Lite_Site {
 	}
 
 	/**
-	 * Get the font family for headings, when a block theme gives them a different kind of font.
+	 * Get the font family for headings: a chosen Heading Font, or on a block theme the system
+	 * font of the same kind as the theme's heading font when it differs from the body.
 	 *
 	 * @return string CSS font-family value, or an empty string when headings follow the body text.
 	 */
@@ -636,6 +638,9 @@ class Lite_Site {
 		}
 
 		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
+		if ( '' === $theme_font ) {
+			$theme_font = self::get_theme_style( [ 'typography', 'fontFamily' ] );
+		}
 		if ( null === self::get_font_kind( $theme_font ) ) {
 			return '';
 		}

@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
 	}
 	<?php if ( Lite_Site::get_heading_font_family() ) : ?>
 	h1, h2, h3, h4, h5, h6 {
-		font-family: <?php echo Lite_Site::get_heading_font_family(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A fixed system font stack; esc_html() would turn its quotes into entities. ?>;
+		font-family: <?php echo Lite_Site::get_heading_font_family(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Quoted and stripped of characters that end a declaration or the style element; esc_html() would turn the quotes into entities. ?>;
 	}
 	<?php endif; ?>
 	ul.post-list {
