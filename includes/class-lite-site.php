@@ -30,6 +30,13 @@ class Lite_Site {
 	private static $settings = null;
 
 	/**
+	 * The block theme's global styles, read once per request because core rebuilds them on every call.
+	 *
+	 * @var array|null
+	 */
+	private static $theme_styles = null;
+
+	/**
 	 * Lite paths that posts being updated in this request were published at
 	 * before the update, keyed by post ID.
 	 *
@@ -367,13 +374,19 @@ class Lite_Site {
 	 * @return string Value safe to print in a style element, or an empty string.
 	 */
 	private static function get_theme_style( array $path ): string {
-		if ( ! wp_is_block_theme() ) {
+		if ( null === self::$theme_styles ) {
+			self::$theme_styles = wp_is_block_theme() ? (array) wp_get_global_styles() : [];
+		}
+
+		$value = _wp_array_get( self::$theme_styles, $path, '' );
+		if ( ! is_string( $value ) ) {
 			return '';
 		}
 
-		$value = wp_get_global_styles( $path );
+		$value = self::get_css_value( self::resolve_preset( $value ) );
 
-		return self::get_css_value( is_string( $value ) ? self::resolve_preset( $value ) : $value );
+		// Lite pages load no theme CSS, so a reference left unresolved would point at nothing.
+		return false === stripos( $value, 'var(' ) && false === stripos( $value, 'var:' ) ? $value : '';
 	}
 
 	/**
@@ -525,7 +538,7 @@ class Lite_Site {
 		}
 
 		$theme_font = self::get_theme_style( [ 'elements', 'heading', 'typography', 'fontFamily' ] );
-		if ( '' === $theme_font ) {
+		if ( null === self::get_font_kind( $theme_font ) ) {
 			return '';
 		}
 
@@ -537,7 +550,7 @@ class Lite_Site {
 	/**
 	 * Get the system font stack of the same kind as a theme font.
 	 *
-	 * Lite pages download no fonts, so a theme's web font is replaced by the
+	 * Lite pages download no theme fonts, so a theme's web font is replaced by the
 	 * reader's own serif, sans-serif or monospace font, judged from the
 	 * generic family at the end of the theme's stack.
 	 *
@@ -549,23 +562,36 @@ class Lite_Site {
 			'serif'     => 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
 			'monospace' => 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
 		];
-		$kinds  = [
+
+		$kind = self::get_font_kind( $theme_stack );
+
+		return null !== $kind && isset( $stacks[ $kind ] ) ? $stacks[ $kind ] : 'system-ui, -apple-system, sans-serif';
+	}
+
+	/**
+	 * Read the kind of font from the last generic family in a font stack.
+	 *
+	 * @param string $font_stack CSS font-family value.
+	 * @return string|null 'serif', 'sans-serif' or 'monospace', or null when the stack names none.
+	 */
+	private static function get_font_kind( string $font_stack ): ?string {
+		$kinds = [
 			'serif'        => 'serif',
 			'ui-serif'     => 'serif',
 			'monospace'    => 'monospace',
 			'ui-monospace' => 'monospace',
 			'sans-serif'   => 'sans-serif',
+			'system-ui'    => 'sans-serif',
 		];
 
-		$families = array_reverse( array_map( 'trim', explode( ',', strtolower( $theme_stack ) ) ) );
-		foreach ( $families as $family ) {
-			$kind = $kinds[ trim( $family, '"\'' ) ] ?? null;
+		foreach ( array_reverse( explode( ',', strtolower( $font_stack ) ) ) as $family ) {
+			$kind = $kinds[ trim( $family, " \t\"'" ) ] ?? null;
 			if ( null !== $kind ) {
-				return $stacks[ $kind ] ?? 'system-ui, -apple-system, sans-serif';
+				return $kind;
 			}
 		}
 
-		return 'system-ui, -apple-system, sans-serif';
+		return null;
 	}
 
 	/**

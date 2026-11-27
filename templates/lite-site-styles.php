@@ -83,6 +83,7 @@ defined( 'ABSPATH' ) || exit;
 	.lite-image-load-btn {
 		background: transparent;
 		border: 1px solid currentcolor;
+		color: inherit;
 		cursor: pointer;
 		font-family: inherit;
 		padding: 0.375rem 0.75rem;

@@ -4,16 +4,45 @@
 	"settings": {
 		"color": {
 			"palette": [
-				{ "slug": "base", "color": "#111111", "name": "Base" },
-				{ "slug": "contrast", "color": "#eeeeee", "name": "Contrast" },
-				{ "slug": "accent", "color": "#ffc857", "name": "Accent" },
-				{ "slug": "link", "color": "#2255aa", "name": "Link" }
+				{
+					"slug": "base",
+					"color": "#111111",
+					"name": "Base"
+				},
+				{
+					"slug": "contrast",
+					"color": "#eeeeee",
+					"name": "Contrast"
+				},
+				{
+					"slug": "accent",
+					"color": "#ffc857",
+					"name": "Accent"
+				},
+				{
+					"slug": "link",
+					"color": "#2255aa",
+					"name": "Link"
+				}
 			]
 		},
 		"typography": {
 			"fontFamilies": [
-				{ "slug": "newsreader", "fontFamily": "\"Newsreader\", ui-serif, serif", "name": "Newsreader" },
-				{ "slug": "cardo", "fontFamily": "Cardo", "name": "Cardo" }
+				{
+					"slug": "newsreader",
+					"fontFamily": "\"Newsreader\", ui-serif, serif",
+					"name": "Newsreader"
+				},
+				{
+					"slug": "cardo",
+					"fontFamily": "Cardo",
+					"name": "Cardo"
+				},
+				{
+					"slug": "inter",
+					"fontFamily": "\"Inter\", system-ui, sans-serif",
+					"name": "Inter"
+				}
 			]
 		}
 	},
@@ -27,10 +56,14 @@
 		},
 		"elements": {
 			"link": {
-				"color": { "text": "var(--wp--preset--color--link)" }
+				"color": {
+					"text": "var(--wp--preset--color--link)"
+				}
 			},
 			"heading": {
-				"typography": { "fontFamily": "var(--wp--preset--font-family--cardo)" }
+				"typography": {
+					"fontFamily": "var(--wp--preset--font-family--inter)"
+				}
 			}
 		}
 	}

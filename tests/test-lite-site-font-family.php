@@ -176,6 +176,16 @@ class Test_Lite_Site_Font_Family extends Lite_Site_TestCase {
 	}
 
 	/**
+	 * A heading font that does not say whether it is serif or sans-serif follows the body.
+	 */
+	public function test_heading_font_without_kind_follows_body() {
+		$this->filter_theme_json( 'wp_theme_json_data_theme', [ 'styles' => [ 'elements' => [ 'heading' => [ 'typography' => [ 'fontFamily' => 'Cardo' ] ] ] ] ] );
+		$this->use_block_theme();
+
+		$this->assertSame( '', Lite_Site::get_heading_font_family() );
+	}
+
+	/**
 	 * A Body Font setting wins over the theme for body text and headings.
 	 */
 	public function test_body_font_setting_wins_over_theme() {

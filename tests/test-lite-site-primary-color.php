@@ -58,21 +58,65 @@ class Test_Lite_Site_Primary_Color extends Lite_Site_TestCase {
 	 * A theme whose links use the text color leaves the Live badge gray.
 	 */
 	public function test_current_color_link_keeps_badge_gray() {
-		$set_link_to_current_color = static function ( $theme_json ) {
-			return $theme_json->update_with(
-				[
-					'version' => 3,
-					'styles'  => [ 'elements' => [ 'link' => [ 'color' => [ 'text' => 'currentColor' ] ] ] ],
-				]
-			);
-		};
-		add_filter( 'wp_theme_json_data_theme', $set_link_to_current_color );
+		$this->filter_theme_json( 'wp_theme_json_data_theme', [ 'styles' => [ 'elements' => [ 'link' => [ 'color' => [ 'text' => 'currentColor' ] ] ] ] ] );
 		$this->use_block_theme();
 
 		$this->assertSame( 'currentcolor', Lite_Site::get_primary_color() );
 		$this->assertStringNotContainsString( '.liveblog-status.enable', $this->render_template( 'liveblog-styles.php' ) );
+	}
 
-		remove_filter( 'wp_theme_json_data_theme', $set_link_to_current_color );
+	/**
+	 * A reference Lite Site cannot resolve counts as unset, because lite pages
+	 * load no theme CSS to define it.
+	 */
+	public function test_unresolved_reference_falls_back() {
+		$this->filter_theme_json( 'wp_theme_json_data_theme', [ 'styles' => [ 'elements' => [ 'link' => [ 'color' => [ 'text' => 'var(--wp--custom--link)' ] ] ] ] ] );
+		$this->use_block_theme();
+
+		$this->assertSame( 'currentcolor', Lite_Site::get_primary_color() );
+	}
+
+	/**
+	 * A palette color changed in the Site Editor wins over the theme's own value.
+	 */
+	public function test_site_editor_palette_change_wins() {
+		$this->filter_theme_json(
+			'wp_theme_json_data_user',
+			[
+				'settings' => [
+					'color' => [
+						'palette' => [
+							[
+								'slug'  => 'link',
+								'color' => '#00aa00',
+								'name'  => 'Link',
+							],
+						],
+					],
+				],
+			]
+		);
+		$this->use_block_theme();
+
+		$this->assertSame( '#00aa00', Lite_Site::get_primary_color() );
+	}
+
+	/**
+	 * A Primary Color setting was chosen against the badge's white text, so it keeps it.
+	 */
+	public function test_primary_color_setting_keeps_badge_text_white() {
+		$this->use_block_theme();
+		self::set_settings( [ 'primary_color' => '#aa0000' ] );
+
+		$output = $this->render_template( 'liveblog-styles.php' );
+		$this->assertMatchesRegularExpression( '/\.liveblog-status\.enable\s*\{\s*background: #aa0000;\s*\}/', $output );
+	}
+
+	/**
+	 * The image load button follows the page text color; buttons do not inherit it.
+	 */
+	public function test_load_image_button_follows_text_color() {
+		$this->assertMatchesRegularExpression( '/\.lite-image-load-btn\s*\{[^}]*color: inherit;/', $this->render_template( 'lite-site-styles.php' ) );
 	}
 
 	/**
